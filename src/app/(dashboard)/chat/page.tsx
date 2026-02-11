@@ -279,6 +279,8 @@ export default function ChatPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={handleChannelCreated}
+        teamMembers={teamMembers}
+        currentUserId={currentUserId}
       />
     </div>
   )
