@@ -256,39 +256,35 @@ async function main() {
   // ============================================================
   // TASKS (10 distribuiti, mix di status TODO/IN_PROGRESS/DONE)
   // ============================================================
-  await prisma.task.createMany({
-    data: [
-      // TechVision (5 task)
-      { projectId: projTechvision.id, milestoneId: ms1.id, assigneeId: raffaele.id, creatorId: stefano.id, title: 'Setup progetto Next.js + Prisma', status: 'DONE', priority: 'HIGH', boardColumn: 'done', dueDate: daysAgo(30), completedAt: daysAgo(28), estimatedHours: 8 },
-      { projectId: projTechvision.id, milestoneId: ms1.id, assigneeId: raffaele.id, creatorId: stefano.id, title: 'Implementazione autenticazione JWT', status: 'DONE', priority: 'HIGH', boardColumn: 'done', dueDate: daysAgo(20), completedAt: daysAgo(18), estimatedHours: 16 },
-      { projectId: projTechvision.id, milestoneId: ms1.id, assigneeId: matar.id, creatorId: stefano.id, title: 'Dashboard KPI con grafici', status: 'IN_PROGRESS', priority: 'HIGH', boardColumn: 'in_progress', dueDate: daysFromNow(10), estimatedHours: 24 },
-      { projectId: projTechvision.id, milestoneId: ms2.id, assigneeId: raffaele.id, creatorId: stefano.id, title: 'API CRUD ordini', status: 'TODO', priority: 'HIGH', boardColumn: 'todo', dueDate: daysFromNow(25), estimatedHours: 32 },
-      { projectId: projTechvision.id, milestoneId: ms2.id, assigneeId: matar.id, creatorId: stefano.id, title: 'Frontend lista ordini + filtri', status: 'TODO', priority: 'MEDIUM', boardColumn: 'todo', dueDate: daysFromNow(30), estimatedHours: 24 },
-      // BarberShop (3 task)
-      { projectId: projBarbershop.id, assigneeId: raffo.id, creatorId: emanuele.id, title: 'Raccolta contenuti e foto', status: 'IN_PROGRESS', priority: 'HIGH', boardColumn: 'in_progress', dueDate: daysFromNow(10), estimatedHours: 8 },
-      { projectId: projBarbershop.id, assigneeId: angelo.id, creatorId: emanuele.id, title: 'Wireframe e mockup Figma', status: 'TODO', priority: 'HIGH', boardColumn: 'todo', dueDate: daysFromNow(14), estimatedHours: 16 },
-      { projectId: projBarbershop.id, assigneeId: angelo.id, creatorId: emanuele.id, title: 'Sviluppo frontend responsive', status: 'TODO', priority: 'MEDIUM', boardColumn: 'todo', dueDate: daysFromNow(30), estimatedHours: 24 },
-      // CRM Interno (2 task)
-      { projectId: projCommerciale.id, assigneeId: riccardo.id, creatorId: emanuele.id, title: 'Definizione pipeline e status CRM', status: 'DONE', priority: 'HIGH', boardColumn: 'done', dueDate: daysAgo(10), completedAt: daysAgo(8), estimatedHours: 4 },
-      { projectId: projCommerciale.id, assigneeId: riccardo.id, creatorId: emanuele.id, title: 'Import lead da foglio Excel', status: 'IN_PROGRESS', priority: 'MEDIUM', boardColumn: 'in_progress', dueDate: daysFromNow(5), estimatedHours: 6 },
-    ],
-    skipDuplicates: true,
-  })
+  const [taskSetup, taskAuth, taskDashboard, taskApiOrdini, taskFrontendOrdini] = await Promise.all([
+    prisma.task.create({ data: { projectId: projTechvision.id, milestoneId: ms1.id, assigneeId: raffaele.id, creatorId: stefano.id, title: 'Setup progetto Next.js + Prisma', status: 'DONE', priority: 'HIGH', boardColumn: 'done', dueDate: daysAgo(30), completedAt: daysAgo(28), estimatedHours: 8 } }),
+    prisma.task.create({ data: { projectId: projTechvision.id, milestoneId: ms1.id, assigneeId: raffaele.id, creatorId: stefano.id, title: 'Implementazione autenticazione JWT', status: 'DONE', priority: 'HIGH', boardColumn: 'done', dueDate: daysAgo(20), completedAt: daysAgo(18), estimatedHours: 16 } }),
+    prisma.task.create({ data: { projectId: projTechvision.id, milestoneId: ms1.id, assigneeId: matar.id, creatorId: stefano.id, title: 'Dashboard KPI con grafici', status: 'IN_PROGRESS', priority: 'HIGH', boardColumn: 'in_progress', dueDate: daysFromNow(10), estimatedHours: 24 } }),
+    prisma.task.create({ data: { projectId: projTechvision.id, milestoneId: ms2.id, assigneeId: raffaele.id, creatorId: stefano.id, title: 'API CRUD ordini', status: 'TODO', priority: 'HIGH', boardColumn: 'todo', dueDate: daysFromNow(25), estimatedHours: 32 } }),
+    prisma.task.create({ data: { projectId: projTechvision.id, milestoneId: ms2.id, assigneeId: matar.id, creatorId: stefano.id, title: 'Frontend lista ordini + filtri', status: 'TODO', priority: 'MEDIUM', boardColumn: 'todo', dueDate: daysFromNow(30), estimatedHours: 24 } }),
+  ])
+  const [, , , taskPipeline] = await Promise.all([
+    prisma.task.create({ data: { projectId: projBarbershop.id, assigneeId: raffo.id, creatorId: emanuele.id, title: 'Raccolta contenuti e foto', status: 'IN_PROGRESS', priority: 'HIGH', boardColumn: 'in_progress', dueDate: daysFromNow(10), estimatedHours: 8 } }),
+    prisma.task.create({ data: { projectId: projBarbershop.id, assigneeId: angelo.id, creatorId: emanuele.id, title: 'Wireframe e mockup Figma', status: 'TODO', priority: 'HIGH', boardColumn: 'todo', dueDate: daysFromNow(14), estimatedHours: 16 } }),
+    prisma.task.create({ data: { projectId: projBarbershop.id, assigneeId: angelo.id, creatorId: emanuele.id, title: 'Sviluppo frontend responsive', status: 'TODO', priority: 'MEDIUM', boardColumn: 'todo', dueDate: daysFromNow(30), estimatedHours: 24 } }),
+    prisma.task.create({ data: { projectId: projCommerciale.id, assigneeId: riccardo.id, creatorId: emanuele.id, title: 'Definizione pipeline e status CRM', status: 'DONE', priority: 'HIGH', boardColumn: 'done', dueDate: daysAgo(10), completedAt: daysAgo(8), estimatedHours: 4 } }),
+    prisma.task.create({ data: { projectId: projCommerciale.id, assigneeId: riccardo.id, creatorId: emanuele.id, title: 'Import lead da foglio Excel', status: 'IN_PROGRESS', priority: 'MEDIUM', boardColumn: 'in_progress', dueDate: daysFromNow(5), estimatedHours: 6 } }),
+  ])
   console.log('  Tasks created (10)')
 
   // ============================================================
-  // TIME ENTRIES
+  // TIME ENTRIES (linked to tasks)
   // ============================================================
   await prisma.timeEntry.createMany({
     data: [
-      { userId: raffaele.id, projectId: projTechvision.id, date: daysAgo(30), hours: 6, description: 'Setup progetto, configurazione Docker', billable: true },
-      { userId: raffaele.id, projectId: projTechvision.id, date: daysAgo(28), hours: 8, description: 'Implementazione auth JWT + middleware', billable: true },
-      { userId: raffaele.id, projectId: projTechvision.id, date: daysAgo(20), hours: 7, description: 'API autenticazione + refresh token', billable: true },
-      { userId: matar.id, projectId: projTechvision.id, date: daysAgo(10), hours: 6, description: 'Setup Recharts + primi grafici KPI', billable: true },
-      { userId: matar.id, projectId: projTechvision.id, date: daysAgo(5), hours: 8, description: 'Dashboard layout e card metriche', billable: true },
-      { userId: angelo.id, projectId: projTechvision.id, date: daysAgo(8), hours: 5, description: 'Design system: Button, Card, Badge, Input', billable: true },
+      { userId: raffaele.id, projectId: projTechvision.id, taskId: taskSetup.id, date: daysAgo(30), hours: 6, description: 'Setup progetto, configurazione Docker', billable: true },
+      { userId: raffaele.id, projectId: projTechvision.id, taskId: taskAuth.id, date: daysAgo(28), hours: 8, description: 'Implementazione auth JWT + middleware', billable: true },
+      { userId: raffaele.id, projectId: projTechvision.id, taskId: taskAuth.id, date: daysAgo(20), hours: 7, description: 'API autenticazione + refresh token', billable: true },
+      { userId: matar.id, projectId: projTechvision.id, taskId: taskDashboard.id, date: daysAgo(10), hours: 6, description: 'Setup Recharts + primi grafici KPI', billable: true },
+      { userId: matar.id, projectId: projTechvision.id, taskId: taskDashboard.id, date: daysAgo(5), hours: 8, description: 'Dashboard layout e card metriche', billable: true },
+      { userId: angelo.id, projectId: projTechvision.id, taskId: taskDashboard.id, date: daysAgo(8), hours: 5, description: 'Design system: Button, Card, Badge, Input', billable: true },
       { userId: stefano.id, projectId: projTechvision.id, date: daysAgo(14), hours: 3, description: 'Review sprint + planning', billable: false },
-      { userId: riccardo.id, projectId: projCommerciale.id, date: daysAgo(10), hours: 4, description: 'Definizione pipeline CRM con team', billable: false },
+      { userId: riccardo.id, projectId: projCommerciale.id, taskId: taskPipeline.id, date: daysAgo(10), hours: 4, description: 'Definizione pipeline CRM con team', billable: false },
     ],
     skipDuplicates: true,
   })

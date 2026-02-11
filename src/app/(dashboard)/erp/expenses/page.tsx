@@ -21,20 +21,21 @@ interface Expense {
   receipt: string | null
 }
 
+const CATEGORY_LABEL: Record<string, string> = {
+  hosting: 'Hosting', software: 'Software', hardware: 'Hardware', dominio: 'Domini',
+  marketing: 'Marketing', formazione: 'Formazione', office: 'Ufficio', travel: 'Viaggi',
+  meals: 'Pasti', other: 'Altro',
+}
+
 const CATEGORY_OPTIONS = [
   { value: '', label: 'Tutte le categorie' },
-  { value: 'marketing', label: 'Marketing' },
-  { value: 'software', label: 'Software' },
-  { value: 'hardware', label: 'Hardware' },
-  { value: 'office', label: 'Ufficio' },
-  { value: 'travel', label: 'Viaggi' },
-  { value: 'meals', label: 'Pasti' },
-  { value: 'other', label: 'Altro' },
+  ...Object.entries(CATEGORY_LABEL).map(([value, label]) => ({ value, label })),
 ]
 
 const CATEGORY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  marketing: 'default', software: 'success', hardware: 'warning', office: 'outline',
-  travel: 'default', meals: 'warning', other: 'outline',
+  hosting: 'default', software: 'success', hardware: 'warning', dominio: 'outline',
+  marketing: 'default', formazione: 'success', office: 'outline', travel: 'default',
+  meals: 'warning', other: 'outline',
 }
 
 const FORM_CATEGORIES = CATEGORY_OPTIONS.filter((o) => o.value !== '')
@@ -170,7 +171,7 @@ export default function ExpensesPage() {
                   <td className="py-3 pr-4">{new Date(exp.date).toLocaleDateString('it-IT')}</td>
                   <td className="py-3 pr-4">
                     <Badge variant={CATEGORY_BADGE[exp.category] || 'default'}>
-                      {exp.category}
+                      {CATEGORY_LABEL[exp.category] || exp.category}
                     </Badge>
                   </td>
                   <td className="py-3 pr-4">{exp.description}</td>

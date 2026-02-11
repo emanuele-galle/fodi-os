@@ -74,6 +74,7 @@ export function RichTextEditor({
     ],
     content: content ? (() => { try { return JSON.parse(content) } catch { return content } })() : '',
     editable,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onChange(JSON.stringify(editor.getJSON()))
     },
