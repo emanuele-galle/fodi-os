@@ -2,9 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Search, Plus, Hash, Lock, Users, FolderKanban, ChevronDown, ChevronRight } from 'lucide-react'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
+import { Search, Plus, Hash, Lock, Users, FolderKanban, ChevronDown, ChevronRight, MessageCircle } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { ChatUnreadBadge } from './ChatUnreadBadge'
 
@@ -46,6 +44,17 @@ const TYPE_ICON: Record<string, React.ElementType> = {
   PROJECT: FolderKanban,
 }
 
+const ROLE_COLORS: Record<string, string> = {
+  ADMIN: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+  MANAGER: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
+  SALES: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  PM: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  DEVELOPER: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400',
+  CONTENT: 'bg-pink-500/15 text-pink-600 dark:text-pink-400',
+  SUPPORT: 'bg-orange-500/15 text-orange-600 dark:text-orange-400',
+  CLIENT: 'bg-gray-500/15 text-gray-600 dark:text-gray-400',
+}
+
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
   MANAGER: 'Manager',
@@ -60,7 +69,7 @@ const ROLE_LABELS: Record<string, string> = {
 function isRecentlyActive(lastLoginAt: string | null): boolean {
   if (!lastLoginAt) return false
   const diff = Date.now() - new Date(lastLoginAt).getTime()
-  return diff < 30 * 60 * 1000 // 30 minutes
+  return diff < 30 * 60 * 1000
 }
 
 export function ChannelList({ channels, selectedId, onSelect, onNewChannel, teamMembers = [], currentUserId }: ChannelListProps) {
@@ -77,57 +86,77 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border/50">
+      {/* Header */}
+      <div className="p-4 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Chat</h2>
-          <Button size="icon" variant="ghost" onClick={onNewChannel} title="Nuovo Canale">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-bold tracking-tight">Chat</h2>
+          </div>
+          <button
+            onClick={onNewChannel}
+            title="Nuovo Canale"
+            className="h-8 w-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-all duration-200 hover:scale-105"
+          >
             <Plus className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-          <Input
-            placeholder="Cerca canale..."
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+          <input
+            placeholder="Cerca..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-9"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-secondary/60 border-0 placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:bg-secondary transition-all duration-200"
           />
         </div>
       </div>
 
-      {/* Team members section */}
+      {/* Team members */}
       {teamMembers.length > 0 && (
-        <div className="border-b border-border/50">
+        <div className="px-2">
           <button
             onClick={() => setTeamExpanded(!teamExpanded)}
-            className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-secondary/50 transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-left rounded-md hover:bg-secondary/50 transition-colors duration-150"
           >
-            {teamExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted" /> : <ChevronRight className="h-3.5 w-3.5 text-muted" />}
-            <span className="text-xs font-semibold text-muted uppercase tracking-wider">Team</span>
+            <span className={cn(
+              'transition-transform duration-200',
+              teamExpanded ? 'rotate-0' : '-rotate-90'
+            )}>
+              <ChevronDown className="h-3 w-3 text-muted-foreground/60" />
+            </span>
+            <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Team</span>
             {onlineCount > 0 && (
-              <span className="text-[10px] text-green-600 font-medium ml-auto">{onlineCount} online</span>
+              <span className="ml-auto flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">{onlineCount}</span>
+              </span>
             )}
           </button>
           {teamExpanded && (
-            <div className="px-3 pb-2.5 space-y-0.5 max-h-44 overflow-y-auto">
+            <div className="pb-2 space-y-0.5 max-h-48 overflow-y-auto">
               {onlineMembers.map((member) => (
-                <div key={member.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-secondary/50 transition-colors">
+                <div key={member.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-all duration-150 cursor-pointer group">
                   <div className="relative flex-shrink-0">
-                    <Avatar name={`${member.firstName} ${member.lastName}`} src={member.avatarUrl} size="sm" className="!h-7 !w-7 !text-[10px]" />
-                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-green-500" />
+                    <Avatar name={`${member.firstName} ${member.lastName}`} src={member.avatarUrl} size="sm" className="!h-7 !w-7 !text-[10px] ring-2 ring-emerald-500/20 group-hover:ring-emerald-500/40 transition-all" />
+                    <span className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-[2px] border-card bg-emerald-500 shadow-sm" />
                   </div>
-                  <span className="text-sm text-foreground truncate">{member.firstName} {member.lastName}</span>
-                  <span className="text-[10px] text-muted ml-auto flex-shrink-0">{ROLE_LABELS[member.role] || member.role}</span>
+                  <span className="text-[13px] text-foreground truncate font-medium">{member.firstName} {member.lastName}</span>
+                  <span className={cn('text-[10px] font-semibold ml-auto flex-shrink-0 px-1.5 py-0.5 rounded-md', ROLE_COLORS[member.role] || 'bg-gray-500/10 text-gray-500')}>
+                    {ROLE_LABELS[member.role] || member.role}
+                  </span>
                 </div>
               ))}
               {offlineMembers.map((member) => (
-                <div key={member.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-secondary/50 transition-colors opacity-60">
+                <div key={member.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-all duration-150 cursor-pointer group opacity-50 hover:opacity-70">
                   <div className="relative flex-shrink-0">
-                    <Avatar name={`${member.firstName} ${member.lastName}`} src={member.avatarUrl} size="sm" className="!h-7 !w-7 !text-[10px]" />
-                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-gray-400" />
+                    <Avatar name={`${member.firstName} ${member.lastName}`} src={member.avatarUrl} size="sm" className="!h-7 !w-7 !text-[10px] grayscale-[30%]" />
+                    <span className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-[2px] border-card bg-gray-400" />
                   </div>
-                  <span className="text-sm text-foreground truncate">{member.firstName} {member.lastName}</span>
-                  <span className="text-[10px] text-muted ml-auto flex-shrink-0">{ROLE_LABELS[member.role] || member.role}</span>
+                  <span className="text-[13px] text-foreground truncate">{member.firstName} {member.lastName}</span>
+                  <span className={cn('text-[10px] font-semibold ml-auto flex-shrink-0 px-1.5 py-0.5 rounded-md', ROLE_COLORS[member.role] || 'bg-gray-500/10 text-gray-500')}>
+                    {ROLE_LABELS[member.role] || member.role}
+                  </span>
                 </div>
               ))}
             </div>
@@ -135,14 +164,23 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
         </div>
       )}
 
-      {/* Channels header */}
-      <div className="px-4 pt-3 pb-1">
-        <span className="text-xs font-semibold text-muted uppercase tracking-wider">Canali</span>
+      {/* Channels */}
+      <div className="px-2 pt-1">
+        <div className="flex items-center gap-2 px-2 py-1.5">
+          <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Canali</span>
+          <span className="text-[10px] text-muted-foreground/50 font-medium">{filtered.length}</span>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-1">
+      <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
         {filtered.length === 0 ? (
-          <p className="text-sm text-muted text-center py-8">Nessun canale trovato</p>
+          <div className="text-center py-10 px-4">
+            <div className="h-10 w-10 rounded-xl bg-secondary/80 mx-auto mb-3 flex items-center justify-center">
+              <MessageCircle className="h-5 w-5 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm text-muted-foreground/70 font-medium">Nessun canale</p>
+            <p className="text-xs text-muted-foreground/40 mt-1">Crea il primo canale per iniziare</p>
+          </div>
         ) : (
           filtered.map((channel) => {
             const Icon = TYPE_ICON[channel.type] || Hash
@@ -153,40 +191,48 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                 key={channel.id}
                 onClick={() => onSelect(channel.id)}
                 className={cn(
-                  'w-full flex items-start gap-3 px-4 py-2.5 text-left transition-colors relative',
+                  'w-full flex items-start gap-2.5 px-3 py-2.5 text-left rounded-lg transition-all duration-150 relative group',
                   isSelected
-                    ? 'bg-primary/10 border-l-3 border-primary'
-                    : 'hover:bg-secondary border-l-3 border-transparent'
+                    ? 'bg-primary/10 shadow-sm'
+                    : 'hover:bg-secondary/60'
                 )}
               >
-                <div className="flex-shrink-0 mt-0.5">
-                  <Icon className={cn('h-4 w-4', isSelected ? 'text-primary' : 'text-muted')} />
+                <div className={cn(
+                  'flex-shrink-0 mt-0.5 h-8 w-8 rounded-lg flex items-center justify-center transition-colors',
+                  isSelected ? 'bg-primary/20 text-primary' : 'bg-secondary/80 text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'
+                )}>
+                  <Icon className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <span className={cn(
-                      'text-sm font-medium truncate',
-                      isSelected ? 'text-primary' : 'text-foreground',
-                      channel.hasUnread && !isSelected && 'font-bold'
+                      'text-[13px] truncate leading-tight',
+                      isSelected ? 'text-primary font-semibold' : 'text-foreground font-medium',
+                      channel.hasUnread && !isSelected && 'font-bold text-foreground'
                     )}>
                       {channel.name}
                     </span>
-                    {channel.lastMessage && (
-                      <span className="text-xs text-muted flex-shrink-0 ml-2">
-                        {formatTime(channel.lastMessage.createdAt)}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {channel.lastMessage && (
+                        <span className="text-[10px] text-muted-foreground/60">
+                          {formatTime(channel.lastMessage.createdAt)}
+                        </span>
+                      )}
+                      {channel.hasUnread && !isSelected && (
+                        <ChatUnreadBadge />
+                      )}
+                    </div>
                   </div>
                   {channel.lastMessage && (
-                    <p className="text-xs text-muted truncate mt-0.5">
+                    <p className={cn(
+                      'text-[12px] truncate mt-0.5 leading-tight',
+                      channel.hasUnread && !isSelected ? 'text-muted-foreground/80' : 'text-muted-foreground/50'
+                    )}>
                       <span className="font-medium">{channel.lastMessage.authorName.split(' ')[0]}:</span>{' '}
                       {channel.lastMessage.content}
                     </p>
                   )}
                 </div>
-                {channel.hasUnread && !isSelected && (
-                  <ChatUnreadBadge />
-                )}
               </button>
             )
           })

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MessageCircle, Video } from 'lucide-react'
+import { MessageCircle, Video, Hash } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ChannelList } from '@/components/chat/ChannelList'
 import { MessageThread } from '@/components/chat/MessageThread'
@@ -198,10 +198,12 @@ export default function ChatPage() {
     setNewMessages([])
   }
 
+  const selectedChannel = channels.find((c) => c.id === selectedId)
+
   return (
     <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-4rem)] -mx-4 -mt-4 -mb-20 md:-mx-6 md:-mt-6 md:-mb-6 relative overflow-hidden">
       {/* Left panel - Channel list */}
-      <div className={`w-full md:w-80 border-r border-border flex-shrink-0 bg-card ${selectedId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
+      <div className={`w-full md:w-[320px] lg:w-[340px] border-r border-border/50 flex-shrink-0 bg-card/95 backdrop-blur-sm ${selectedId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
         <ChannelList
           channels={channels}
           selectedId={selectedId}
@@ -217,32 +219,37 @@ export default function ChatPage() {
         {selectedId ? (
           <>
             {/* Channel header */}
-            <div className="border-b border-border px-4 md:px-6 py-3 flex items-center gap-3 bg-card">
+            <div className="border-b border-border/50 px-4 md:px-6 py-2.5 flex items-center gap-3 bg-card/80 backdrop-blur-sm">
               <button
                 onClick={handleBack}
-                className="md:hidden p-1 rounded-md hover:bg-secondary mr-1 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="md:hidden p-1.5 rounded-lg hover:bg-secondary/80 mr-1 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h2 className="font-semibold">
-                {channels.find((c) => c.id === selectedId)?.name || 'Chat'}
-              </h2>
-              <span className="text-xs text-muted">
-                {channels.find((c) => c.id === selectedId)?.memberCount || 0} membri
-              </span>
-              <div className="ml-auto">
-                <Button
-                  size="sm"
-                  variant="outline"
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Hash className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-[15px] truncate leading-tight">
+                    {selectedChannel?.name || 'Chat'}
+                  </h2>
+                  <span className="text-[11px] text-muted-foreground/60 font-medium">
+                    {selectedChannel?.memberCount || 0} membri
+                  </span>
+                </div>
+              </div>
+              <div className="ml-auto flex-shrink-0">
+                <button
                   onClick={handleQuickMeet}
                   disabled={creatingMeet}
-                  title="Avvia Google Meet"
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-secondary/80 hover:bg-secondary text-foreground/80 hover:text-foreground transition-all duration-150 disabled:opacity-50"
                 >
-                  <Video className="h-4 w-4 mr-1.5" />
-                  <span className="hidden sm:inline">{creatingMeet ? 'Creazione...' : 'Avvia Meet'}</span>
-                </Button>
+                  <Video className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{creatingMeet ? 'Avvio...' : 'Meet'}</span>
+                </button>
               </div>
             </div>
 
@@ -254,12 +261,16 @@ export default function ChatPage() {
             <MessageInput onSend={handleSend} disabled={sending} />
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <EmptyState
-              icon={MessageCircle}
-              title="Chat Team"
-              description="Seleziona un canale per iniziare a chattare, oppure creane uno nuovo."
-            />
+          <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-background to-secondary/20">
+            <div className="text-center px-6">
+              <div className="h-16 w-16 rounded-2xl bg-primary/10 mx-auto mb-4 flex items-center justify-center">
+                <MessageCircle className="h-8 w-8 text-primary/60" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground/80 mb-1">Chat Team</h3>
+              <p className="text-sm text-muted-foreground/60 max-w-xs">
+                Seleziona un canale per iniziare a chattare, oppure creane uno nuovo.
+              </p>
+            </div>
           </div>
         )}
       </div>
