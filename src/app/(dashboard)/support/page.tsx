@@ -229,13 +229,46 @@ export default function SupportPage() {
         />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-lg border border-border/80 shadow-[var(--shadow-sm)]">
+          {/* Mobile card view */}
+          <div className="md:hidden space-y-3">
+            {tickets.map((ticket) => (
+              <div
+                key={ticket.id}
+                onClick={() => router.push(`/support/${ticket.id}`)}
+                className="glass-card p-4 space-y-2.5 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)] accent-line-left"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="text-xs text-muted font-medium">#{ticket.number}</span>
+                    <p className="font-medium text-sm line-clamp-2 mt-0.5">{ticket.subject}</p>
+                  </div>
+                  <Badge variant={STATUS_BADGE[ticket.status] || 'default'} className="flex-shrink-0 text-xs">
+                    {STATUS_LABELS[ticket.status] || ticket.status}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={PRIORITY_BADGE[ticket.priority] || 'default'} className="text-[10px]">
+                      {PRIORITY_LABELS[ticket.priority] || ticket.priority}
+                    </Badge>
+                    {ticket.client && (
+                      <span className="truncate max-w-[120px]">{ticket.client.companyName}</span>
+                    )}
+                  </div>
+                  <span>{new Date(ticket.createdAt).toLocaleDateString('it-IT')}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80 shadow-[var(--shadow-sm)]">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/40">
                   <th className="py-3 pr-4 pl-3 font-medium text-xs uppercase tracking-wider">#</th>
                   <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider">Oggetto</th>
-                  <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider hidden md:table-cell">Cliente</th>
+                  <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider">Cliente</th>
                   <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider">Stato</th>
                   <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider">Priorita</th>
                   <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider hidden lg:table-cell">Assegnato a</th>
@@ -251,7 +284,7 @@ export default function SupportPage() {
                   >
                     <td className="py-3 pr-4 pl-3 font-medium text-muted">{ticket.number}</td>
                     <td className="py-3 pr-4 font-medium">{ticket.subject}</td>
-                    <td className="py-3 pr-4 text-muted hidden md:table-cell">
+                    <td className="py-3 pr-4 text-muted">
                       {ticket.client?.companyName || '—'}
                     </td>
                     <td className="py-3 pr-4">

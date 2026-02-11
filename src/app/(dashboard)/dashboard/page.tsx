@@ -256,26 +256,28 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8 animate-stagger">
-        {[
-          { label: 'Nuovo Cliente', icon: UserPlus, href: '/crm', color: 'text-primary' },
-          { label: 'Nuovo Progetto', icon: FolderKanban, href: '/projects', color: 'text-accent' },
-          { label: 'Nuovo Preventivo', icon: FilePlus2, href: '/erp/quotes/new', color: 'text-[var(--color-warning)]' },
-          { label: 'Nuovo Ticket', icon: TicketPlus, href: '/support', color: 'text-destructive' },
-          { label: 'Registra Ore', icon: ClockPlus, href: '/time', color: 'text-muted' },
-        ].map((action) => (
-          <button
-            key={action.label}
-            onClick={() => router.push(action.href)}
-            className="group flex flex-col items-center gap-2.5 rounded-xl border border-border/50 bg-card p-4 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:-translate-y-1 hover:border-primary/20 transition-all duration-200"
-          >
-            <div className={`p-2.5 rounded-xl ${action.color} transition-transform duration-200 group-hover:scale-110`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
-              <action.icon className="h-5 w-5" />
-            </div>
-            <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{action.label}</span>
-          </button>
-        ))}
+      {/* Quick Actions - horizontal scroll on mobile, grid on desktop */}
+      <div className="mb-8 animate-stagger">
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 lg:grid-cols-5 md:overflow-visible scrollbar-none">
+          {[
+            { label: 'Nuovo Cliente', icon: UserPlus, href: '/crm', color: 'text-primary' },
+            { label: 'Nuovo Progetto', icon: FolderKanban, href: '/projects', color: 'text-accent' },
+            { label: 'Nuovo Preventivo', icon: FilePlus2, href: '/erp/quotes/new', color: 'text-[var(--color-warning)]' },
+            { label: 'Nuovo Ticket', icon: TicketPlus, href: '/support', color: 'text-destructive' },
+            { label: 'Registra Ore', icon: ClockPlus, href: '/time', color: 'text-muted' },
+          ].map((action) => (
+            <button
+              key={action.label}
+              onClick={() => router.push(action.href)}
+              className="group flex flex-col items-center gap-2.5 rounded-xl border border-border/50 bg-card p-4 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:-translate-y-1 hover:border-primary/20 transition-all duration-200 touch-manipulation active:scale-95 min-w-[100px] flex-shrink-0 md:min-w-0"
+            >
+              <div className={`p-2.5 rounded-xl ${action.color} transition-transform duration-200 group-hover:scale-110`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+                <action.icon className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors whitespace-nowrap">{action.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -393,11 +395,11 @@ export default function DashboardPage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+              <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 md:overflow-visible scrollbar-none">
                 {notes.map((note) => (
                   <div
                     key={note.id}
-                    className={`relative rounded-xl border p-3 min-h-[100px] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-shadow duration-200 ${note.color}`}
+                    className={`relative rounded-xl border p-3 min-h-[100px] min-w-[200px] flex-shrink-0 md:min-w-0 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-shadow duration-200 ${note.color}`}
                   >
                     <div className="absolute top-1.5 right-1.5 flex gap-0.5">
                       <button

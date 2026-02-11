@@ -5,8 +5,11 @@ export const metadata: Metadata = {
   title: 'FODI OS - Piattaforma Gestionale',
   description: 'Piattaforma di gestione aziendale FODI Srl',
   icons: {
-    icon: '/favicon.svg',
-    apple: '/icons/icon-192.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/icons/apple-touch-icon.png',
   },
   manifest: '/manifest.json',
   other: {

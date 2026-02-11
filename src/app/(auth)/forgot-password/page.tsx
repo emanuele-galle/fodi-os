@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Logo } from '@/components/ui/Logo'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -30,9 +31,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 bg-card rounded-xl shadow-lg border border-border">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            FODI<span className="text-primary">OS</span>
-          </h1>
+          <Logo variant="auto" width={140} height={49} />
           <p className="text-muted mt-2">Recupero Password</p>
         </div>
 

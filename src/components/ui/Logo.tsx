@@ -16,7 +16,7 @@ export function Logo({ variant = 'light', width = 120, height = 42, className }:
     return (
       <>
         <Image
-          src="/logo-fodi.png"
+          src="/logo-dark.png"
           alt="FODI"
           width={width}
           height={height}
@@ -24,7 +24,7 @@ export function Logo({ variant = 'light', width = 120, height = 42, className }:
           className={cn('logo-light-only', className)}
         />
         <Image
-          src="/logo-fodi.png"
+          src="/logo-light.png"
           alt="FODI"
           width={width}
           height={height}
@@ -37,15 +37,12 @@ export function Logo({ variant = 'light', width = 120, height = 42, className }:
 
   return (
     <Image
-      src="/logo-fodi.png"
+      src={variant === 'light' ? '/logo-dark.png' : '/logo-light.png'}
       alt="FODI"
       width={width}
       height={height}
       priority
-      className={cn(
-        variant === 'dark' && 'logo-inverted',
-        className
-      )}
+      className={className}
     />
   )
 }

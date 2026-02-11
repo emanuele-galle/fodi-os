@@ -337,7 +337,7 @@ export default function CalendarPage() {
                         >
                           {dayNum}
                         </div>
-                        <div className="space-y-0.5">
+                        <div className="space-y-0.5 md:space-y-0.5">
                           {dayEvents.slice(0, 3).map((ev) => {
                             const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
                             const color = EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
@@ -347,7 +347,7 @@ export default function CalendarPage() {
                               <button
                                 key={ev.id}
                                 onClick={() => setSelectedEvent(ev)}
-                                className="w-full text-left rounded px-1.5 py-0.5 text-[10px] truncate text-white transition-opacity hover:opacity-80"
+                                className="w-full text-left rounded px-1.5 py-1 md:py-0.5 text-[10px] md:text-[10px] truncate text-white transition-opacity hover:opacity-80 touch-manipulation min-h-[24px] md:min-h-0"
                                 style={{ backgroundColor: color }}
                                 title={`${isAllDay ? '' : formatTime(ev.start.dateTime) + ' '}${ev.summary}`}
                               >
@@ -359,9 +359,15 @@ export default function CalendarPage() {
                             )
                           })}
                           {dayEvents.length > 3 && (
-                            <div className="text-[10px] text-muted pl-1">
+                            <button
+                              onClick={() => {
+                                // Show the first event of overflow as a way to open details
+                                if (dayEvents[3]) setSelectedEvent(dayEvents[3])
+                              }}
+                              className="text-[10px] text-muted pl-1 touch-manipulation min-h-[20px]"
+                            >
                               +{dayEvents.length - 3} altri
-                            </div>
+                            </button>
                           )}
                         </div>
                       </>

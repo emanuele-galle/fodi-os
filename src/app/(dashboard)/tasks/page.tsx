@@ -249,7 +249,60 @@ export default function TasksPage() {
           }
         />
       ) : view === 'list' ? (
-        <ListView tasks={tasks} onTaskClick={openTask} />
+        <>
+          {/* Mobile card view */}
+          <div className="md:hidden space-y-3">
+            {tasks.map((task) => {
+              const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE' && task.status !== 'CANCELLED'
+              return (
+                <div
+                  key={task.id}
+                  onClick={() => openTask(task.id)}
+                  className="glass-card p-4 space-y-2.5 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)]"
+                  style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-medium text-sm line-clamp-2">{task.title}</span>
+                    <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} pulse={task.priority === 'URGENT'}>
+                      {PRIORITY_LABELS[task.priority] || task.priority}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant={STATUS_BADGE[task.status] || 'default'}>
+                      {STATUS_LABELS[task.status] || task.status}
+                    </Badge>
+                    {task.project && (
+                      <span className="text-xs text-muted truncate max-w-[120px]">{task.project.name}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted">
+                    <div className="flex items-center gap-2">
+                      {task.assignee && (
+                        <div className="flex items-center gap-1.5">
+                          <Avatar
+                            name={`${task.assignee.firstName} ${task.assignee.lastName}`}
+                            src={task.assignee.avatarUrl}
+                            size="sm"
+                          />
+                          <span>{task.assignee.firstName}</span>
+                        </div>
+                      )}
+                    </div>
+                    {task.dueDate && (
+                      <span className={isOverdue ? 'text-destructive font-medium' : ''}>
+                        {new Date(task.dueDate).toLocaleDateString('it-IT')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {/* Desktop table view */}
+          <div className="hidden md:block">
+            <ListView tasks={tasks} onTaskClick={openTask} />
+          </div>
+        </>
       ) : (
         <KanbanView tasks={tasks} onTaskClick={openTask} />
       )}

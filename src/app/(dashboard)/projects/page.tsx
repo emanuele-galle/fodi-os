@@ -214,18 +214,18 @@ export default function ProjectsPage() {
               return (
                 <Card
                   key={p.id}
-                  className="glass-card cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.01] transition-all duration-200"
+                  className="glass-card cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98]"
                   onClick={() => router.push(`/projects/${p.id}`)}
                   style={{ borderTop: `3px solid ${STATUS_COLORS[p.status] || 'var(--color-primary)'}` }}
                 >
                   <CardContent>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold truncate">{p.name}</span>
+                      <span className="font-semibold truncate text-sm md:text-base">{p.name}</span>
                     </div>
                     {p.client && (
                       <p className="text-xs text-muted mb-3">{p.client.companyName}</p>
                     )}
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
                       <Badge variant={STATUS_BADGE[p.status] || 'default'}>
                         {STATUS_LABELS[p.status] || p.status}
                       </Badge>
@@ -242,14 +242,19 @@ export default function ProjectsPage() {
                       )}
                     </div>
                     {totalTasks > 0 && (
-                      <div className="mt-2 h-2 bg-secondary rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${(doneTasks / totalTasks) * 100}%`,
-                            background: 'var(--gold-gradient)',
-                          }}
-                        />
+                      <div className="mt-2.5 relative">
+                        <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${(doneTasks / totalTasks) * 100}%`,
+                              background: 'var(--gold-gradient)',
+                            }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-muted mt-1 block text-right">
+                          {Math.round((doneTasks / totalTasks) * 100)}%
+                        </span>
                       </div>
                     )}
                   </CardContent>

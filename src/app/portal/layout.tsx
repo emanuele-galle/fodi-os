@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Logo } from '@/components/ui/Logo'
 
 interface PortalUser {
   firstName: string
@@ -52,10 +53,7 @@ export default function PortalLayout({
       <header className="border-b border-border bg-card">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm">
-              F
-            </div>
-            <span className="font-semibold text-foreground">FODI OS</span>
+            <Logo variant="auto" width={100} height={35} />
           </div>
 
           <div className="flex items-center gap-4">

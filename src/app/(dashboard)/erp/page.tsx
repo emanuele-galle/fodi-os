@@ -96,22 +96,22 @@ export default function ErpPage() {
           return (
             <Card
               key={section.href}
-              className="glass-card accent-line-top cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:scale-[1.01] transition-all duration-200"
+              className="glass-card accent-line-top cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98]"
               onClick={() => router.push(section.href)}
             >
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div className="p-2.5 rounded-xl bg-primary/10">
+                  <div className="p-3 md:p-2.5 rounded-xl bg-primary/10">
                     <Icon className="h-6 w-6 text-primary" />
                   </div>
                   {loading ? (
                     <Skeleton className="h-6 w-24" />
                   ) : section.stat ? (
-                    <Badge variant="outline">{section.stat}</Badge>
+                    <Badge variant="outline" className="text-xs md:text-sm">{section.stat}</Badge>
                   ) : null}
                 </div>
-                <CardTitle className="mt-3">{section.title}</CardTitle>
-                <CardDescription>{section.description}</CardDescription>
+                <CardTitle className="mt-3 text-base md:text-lg">{section.title}</CardTitle>
+                <CardDescription className="text-sm">{section.description}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button variant="ghost" size="sm" className="p-0 text-primary">

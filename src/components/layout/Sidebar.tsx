@@ -173,9 +173,9 @@ export function Sidebar({ userRole }: SidebarProps) {
         ) : (
           <Link
             href="/dashboard"
-            className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground font-bold text-sm"
+            className="flex items-center justify-center w-8 h-8"
           >
-            F
+            <img src="/logo-official.png" alt="FODI" width={28} height={28} />
           </Link>
         )}
         <button
