@@ -1,37 +1,42 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Flag } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Clock,
+  MapPin,
+  ExternalLink,
+  Link2Off,
+} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Card, CardContent, CardTitle } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
+import { Card, CardContent } from '@/components/ui/Card'
+import { Modal } from '@/components/ui/Modal'
+import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { EmptyState } from '@/components/ui/EmptyState'
 
-interface CalendarTask {
+interface CalendarEvent {
   id: string
-  title: string
-  dueDate: string
-  priority: string
-  status: string
-  project?: { name: string } | null
+  summary: string
+  description?: string
+  location?: string
+  start: { dateTime?: string; date?: string }
+  end: { dateTime?: string; date?: string }
+  htmlLink?: string
+  attendees?: { email: string; responseStatus?: string }[]
+  colorId?: string
 }
 
-interface CalendarMilestone {
+interface CalendarInfo {
   id: string
-  name: string
-  dueDate: string
-  status: string
-  project: { name: string }
+  summary: string
+  backgroundColor: string
+  primary: boolean
 }
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
-
-const PRIORITY_COLORS: Record<string, string> = {
-  LOW: 'bg-slate-100 text-slate-700',
-  MEDIUM: 'bg-blue-100 text-blue-700',
-  HIGH: 'bg-amber-100 text-amber-700',
-  URGENT: 'bg-red-100 text-red-700',
-}
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate()
@@ -39,117 +44,215 @@ function getDaysInMonth(year: number, month: number) {
 
 function getFirstDayOfMonth(year: number, month: number) {
   const day = new Date(year, month, 1).getDay()
-  return day === 0 ? 6 : day - 1 // Monday = 0
+  return day === 0 ? 6 : day - 1
 }
 
 function formatMonthYear(year: number, month: number) {
   return new Date(year, month).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
 }
 
-function dateKey(date: Date) {
-  return date.toISOString().split('T')[0]
+function formatTime(dateStr?: string) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
 }
+
+function formatDateRange(start: CalendarEvent['start'], end: CalendarEvent['end']) {
+  const startTime = formatTime(start.dateTime)
+  const endTime = formatTime(end.dateTime)
+  if (start.date) return 'Tutto il giorno'
+  return `${startTime} - ${endTime}`
+}
+
+function getEventDate(event: CalendarEvent): string {
+  const dt = event.start.dateTime || event.start.date || ''
+  return dt.split('T')[0]
+}
+
+const EVENT_COLORS = [
+  '#039BE5', '#7986CB', '#33B679', '#8E24AA', '#E67C73',
+  '#F6BF26', '#F4511E', '#039BE5', '#616161', '#3F51B5',
+  '#0B8043', '#D50000',
+]
 
 export default function CalendarPage() {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
-  const [tasks, setTasks] = useState<CalendarTask[]>([])
-  const [milestones, setMilestones] = useState<CalendarMilestone[]>([])
+  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [calendars, setCalendars] = useState<CalendarInfo[]>([])
   const [loading, setLoading] = useState(true)
+  const [connected, setConnected] = useState<boolean | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [showNewEvent, setShowNewEvent] = useState(false)
+  const [newEvent, setNewEvent] = useState({
+    summary: '',
+    description: '',
+    location: '',
+    startDate: '',
+    startTime: '',
+    endDate: '',
+    endTime: '',
+  })
+  const [creating, setCreating] = useState(false)
+
+  const fetchEvents = useCallback(async () => {
+    setLoading(true)
+    const timeMin = new Date(year, month, 1).toISOString()
+    const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString()
+
+    try {
+      const res = await fetch(`/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}`)
+      const data = await res.json()
+      if (data.connected === false) {
+        setConnected(false)
+        return
+      }
+      setConnected(true)
+      setEvents(data.events || [])
+    } catch {
+      setConnected(false)
+    } finally {
+      setLoading(false)
+    }
+  }, [year, month])
+
+  const fetchCalendars = useCallback(async () => {
+    try {
+      const res = await fetch('/api/calendar')
+      const data = await res.json()
+      if (data.calendars) setCalendars(data.calendars)
+    } catch {
+      // ignore
+    }
+  }, [])
 
   useEffect(() => {
-    setLoading(true)
-    const from = new Date(year, month, 1).toISOString().split('T')[0]
-    const to = new Date(year, month + 1, 0).toISOString().split('T')[0]
+    fetchEvents()
+    fetchCalendars()
+  }, [fetchEvents, fetchCalendars])
 
-    Promise.all([
-      fetch(`/api/tasks?from=${from}&to=${to}&limit=200`).then((r) => r.ok ? r.json() : null),
-      fetch(`/api/projects?limit=100`).then((r) => r.ok ? r.json() : null),
-    ])
-      .then(([tasksData, projectsData]) => {
-        const taskItems: CalendarTask[] = (tasksData?.items || []).filter(
-          (t: CalendarTask) => t.dueDate
-        )
-        setTasks(taskItems)
+  const handleCreateEvent = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newEvent.summary || !newEvent.startDate || !newEvent.startTime) return
+    setCreating(true)
 
-        // Extract milestones from projects
-        const ms: CalendarMilestone[] = []
-        const projects = projectsData?.items || []
-        projects.forEach((p: { name: string; milestones?: { id: string; name: string; dueDate: string; status: string }[] }) => {
-          (p.milestones || []).forEach((m) => {
-            if (m.dueDate && m.dueDate >= from && m.dueDate <= to) {
-              ms.push({ ...m, project: { name: p.name } })
-            }
-          })
-        })
-        setMilestones(ms)
+    const start = `${newEvent.startDate}T${newEvent.startTime}:00`
+    const end = newEvent.endDate && newEvent.endTime
+      ? `${newEvent.endDate}T${newEvent.endTime}:00`
+      : `${newEvent.startDate}T${newEvent.endTime || newEvent.startTime}:00`
+
+    try {
+      const res = await fetch('/api/calendar/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          summary: newEvent.summary,
+          description: newEvent.description,
+          location: newEvent.location,
+          start,
+          end,
+        }),
       })
-      .finally(() => setLoading(false))
-  }, [year, month])
+
+      if (res.ok) {
+        setShowNewEvent(false)
+        setNewEvent({ summary: '', description: '', location: '', startDate: '', startTime: '', endDate: '', endTime: '' })
+        fetchEvents()
+      }
+    } finally {
+      setCreating(false)
+    }
+  }
 
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = getFirstDayOfMonth(year, month)
   const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7
 
-  // Map tasks and milestones by date
-  const tasksByDate = new Map<string, CalendarTask[]>()
-  tasks.forEach((t) => {
-    const key = t.dueDate.split('T')[0]
-    if (!tasksByDate.has(key)) tasksByDate.set(key, [])
-    tasksByDate.get(key)!.push(t)
+  const eventsByDate = new Map<string, CalendarEvent[]>()
+  events.forEach((ev) => {
+    const key = getEventDate(ev)
+    if (!eventsByDate.has(key)) eventsByDate.set(key, [])
+    eventsByDate.get(key)!.push(ev)
   })
 
-  const milestonesByDate = new Map<string, CalendarMilestone[]>()
-  milestones.forEach((m) => {
-    const key = m.dueDate.split('T')[0]
-    if (!milestonesByDate.has(key)) milestonesByDate.set(key, [])
-    milestonesByDate.get(key)!.push(m)
-  })
-
-  const todayKey = dateKey(today)
+  const todayKey = today.toISOString().split('T')[0]
 
   function prevMonth() {
-    if (month === 0) {
-      setMonth(11)
-      setYear(year - 1)
-    } else {
-      setMonth(month - 1)
-    }
+    if (month === 0) { setMonth(11); setYear(year - 1) }
+    else setMonth(month - 1)
   }
 
   function nextMonth() {
-    if (month === 11) {
-      setMonth(0)
-      setYear(year + 1)
-    } else {
-      setMonth(month + 1)
-    }
+    if (month === 11) { setMonth(0); setYear(year + 1) }
+    else setMonth(month + 1)
+  }
+
+  // Not connected state
+  if (connected === false) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold mb-6">Calendario</h1>
+        <EmptyState
+          icon={Link2Off}
+          title="Google Calendar non connesso"
+          description="Collega il tuo account Google per visualizzare e gestire i tuoi eventi direttamente da FODI OS."
+          action={
+            <Button onClick={() => window.location.href = '/api/auth/google'}>
+              <img src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png" alt="" className="h-5 w-5 mr-2" />
+              Connetti Google Calendar
+            </Button>
+          }
+        />
+      </div>
+    )
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Calendario</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={prevMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium min-w-[160px] text-center capitalize">
-            {formatMonthYear(year, month)}
-          </span>
-          <Button variant="outline" size="sm" onClick={nextMonth}>
-            <ChevronRight className="h-4 w-4" />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={prevMonth}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium min-w-[160px] text-center capitalize">
+              {formatMonthYear(year, month)}
+            </span>
+            <Button variant="outline" size="sm" onClick={nextMonth}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button size="sm" onClick={() => {
+            const d = new Date()
+            const dateStr = d.toISOString().split('T')[0]
+            const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+            setNewEvent(prev => ({ ...prev, startDate: dateStr, startTime: timeStr, endDate: dateStr, endTime: timeStr }))
+            setShowNewEvent(true)
+          }}>
+            <Plus className="h-4 w-4 mr-1" />
+            Nuovo Evento
           </Button>
         </div>
       </div>
+
+      {/* Calendar legend */}
+      {calendars.length > 1 && (
+        <div className="flex flex-wrap items-center gap-3 mb-4 text-xs">
+          {calendars.map((cal) => (
+            <div key={cal.id} className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cal.backgroundColor }} />
+              <span className="text-muted">{cal.summary}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <Skeleton className="h-[600px] w-full" />
       ) : (
         <Card>
           <CardContent className="p-0">
-            {/* Day headers */}
             <div className="grid grid-cols-7 border-b border-border">
               {DAYS.map((day) => (
                 <div key={day} className="py-2 text-center text-xs font-medium text-muted">
@@ -158,61 +261,56 @@ export default function CalendarPage() {
               ))}
             </div>
 
-            {/* Calendar grid */}
             <div className="grid grid-cols-7">
               {Array.from({ length: totalCells }).map((_, i) => {
                 const dayNum = i - firstDay + 1
                 const isCurrentMonth = dayNum >= 1 && dayNum <= daysInMonth
                 const cellDate = isCurrentMonth
-                  ? new Date(year, month, dayNum).toISOString().split('T')[0]
+                  ? `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`
                   : null
                 const isToday = cellDate === todayKey
-                const dayTasks = cellDate ? tasksByDate.get(cellDate) || [] : []
-                const dayMilestones = cellDate ? milestonesByDate.get(cellDate) || [] : []
+                const dayEvents = cellDate ? eventsByDate.get(cellDate) || [] : []
 
                 return (
                   <div
                     key={i}
                     className={`min-h-[100px] border-b border-r border-border p-1.5 ${
                       !isCurrentMonth ? 'bg-secondary/30' : ''
-                    }`}
+                    } ${isToday ? 'bg-primary/5' : ''}`}
                   >
                     {isCurrentMonth && (
                       <>
                         <div
                           className={`text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${
-                            isToday
-                              ? 'bg-primary text-primary-foreground'
-                              : 'text-foreground'
+                            isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'
                           }`}
                         >
                           {dayNum}
                         </div>
                         <div className="space-y-0.5">
-                          {dayMilestones.slice(0, 2).map((m) => (
-                            <div
-                              key={m.id}
-                              className="flex items-center gap-1 rounded px-1 py-0.5 bg-purple-100 text-purple-700 text-[10px] truncate"
-                              title={`${m.name} (${m.project.name})`}
-                            >
-                              <Flag className="h-2.5 w-2.5 flex-shrink-0" />
-                              <span className="truncate">{m.name}</span>
-                            </div>
-                          ))}
-                          {dayTasks.slice(0, 3).map((t) => (
-                            <div
-                              key={t.id}
-                              className={`rounded px-1 py-0.5 text-[10px] truncate ${
-                                PRIORITY_COLORS[t.priority] || 'bg-secondary text-foreground'
-                              }`}
-                              title={`${t.title}${t.project ? ` (${t.project.name})` : ''}`}
-                            >
-                              {t.title}
-                            </div>
-                          ))}
-                          {dayTasks.length + dayMilestones.length > 5 && (
+                          {dayEvents.slice(0, 3).map((ev) => {
+                            const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
+                            const color = EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
+                            const isAllDay = !!ev.start.date
+
+                            return (
+                              <button
+                                key={ev.id}
+                                onClick={() => setSelectedEvent(ev)}
+                                className="w-full text-left rounded px-1.5 py-0.5 text-[10px] truncate text-white transition-opacity hover:opacity-80"
+                                style={{ backgroundColor: color }}
+                                title={`${isAllDay ? '' : formatTime(ev.start.dateTime) + ' '}${ev.summary}`}
+                              >
+                                {!isAllDay && (
+                                  <span className="font-medium mr-0.5">{formatTime(ev.start.dateTime)}</span>
+                                )}
+                                {ev.summary}
+                              </button>
+                            )
+                          })}
+                          {dayEvents.length > 3 && (
                             <div className="text-[10px] text-muted pl-1">
-                              +{dayTasks.length + dayMilestones.length - 5} altri
+                              +{dayEvents.length - 3} altri
                             </div>
                           )}
                         </div>
@@ -226,25 +324,137 @@ export default function CalendarPage() {
         </Card>
       )}
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 text-xs text-muted">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-purple-100 border border-purple-200" />
-          <span>Milestone</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-blue-100 border border-blue-200" />
-          <span>Task</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-amber-100 border border-amber-200" />
-          <span>Alta priorita</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-red-100 border border-red-200" />
-          <span>Urgente</span>
-        </div>
-      </div>
+      {/* Event detail modal */}
+      <Modal
+        open={!!selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        title={selectedEvent?.summary || 'Evento'}
+      >
+        {selectedEvent && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-muted">
+              <Clock className="h-4 w-4" />
+              <span>{formatDateRange(selectedEvent.start, selectedEvent.end)}</span>
+            </div>
+
+            {selectedEvent.location && (
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <MapPin className="h-4 w-4" />
+                <span>{selectedEvent.location}</span>
+              </div>
+            )}
+
+            {selectedEvent.description && (
+              <p className="text-sm whitespace-pre-wrap">{selectedEvent.description}</p>
+            )}
+
+            {selectedEvent.attendees && selectedEvent.attendees.length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-2">Partecipanti</p>
+                <div className="space-y-1">
+                  {selectedEvent.attendees.map((a) => (
+                    <div key={a.email} className="flex items-center gap-2 text-sm">
+                      <div className={`w-2 h-2 rounded-full ${
+                        a.responseStatus === 'accepted' ? 'bg-green-500' :
+                        a.responseStatus === 'declined' ? 'bg-red-500' :
+                        'bg-amber-500'
+                      }`} />
+                      <span>{a.email}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedEvent.htmlLink && (
+              <a
+                href={selectedEvent.htmlLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Apri in Google Calendar
+              </a>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* New event modal */}
+      <Modal open={showNewEvent} onClose={() => setShowNewEvent(false)} title="Nuovo Evento">
+        <form onSubmit={handleCreateEvent} className="space-y-4">
+          <Input
+            id="summary"
+            label="Titolo"
+            value={newEvent.summary}
+            onChange={(e) => setNewEvent({ ...newEvent, summary: e.target.value })}
+            required
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              id="startDate"
+              label="Data inizio"
+              type="date"
+              value={newEvent.startDate}
+              onChange={(e) => setNewEvent({ ...newEvent, startDate: e.target.value })}
+              required
+            />
+            <Input
+              id="startTime"
+              label="Ora inizio"
+              type="time"
+              value={newEvent.startTime}
+              onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              id="endDate"
+              label="Data fine"
+              type="date"
+              value={newEvent.endDate}
+              onChange={(e) => setNewEvent({ ...newEvent, endDate: e.target.value })}
+            />
+            <Input
+              id="endTime"
+              label="Ora fine"
+              type="time"
+              value={newEvent.endTime}
+              onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
+            />
+          </div>
+
+          <Input
+            id="location"
+            label="Luogo"
+            value={newEvent.location}
+            onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
+          />
+
+          <div>
+            <label htmlFor="desc" className="block text-sm font-medium mb-1">Descrizione</label>
+            <textarea
+              id="desc"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm min-h-[80px]"
+              value={newEvent.description}
+              onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setShowNewEvent(false)}>
+              Annulla
+            </Button>
+            <Button type="submit" disabled={creating}>
+              {creating ? 'Creazione...' : 'Crea Evento'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

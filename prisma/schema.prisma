@@ -44,10 +44,28 @@ model User {
   reviewComments   ReviewComment[]
   clientPortal     Client?         @relation("ClientPortalUser")
   assignedLeads    Lead[]          @relation("LeadAssignee")
+  googleToken      GoogleToken?
 
   @@index([email])
   @@index([role])
   @@map("users")
+}
+
+model GoogleToken {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  accessToken  String   @db.Text
+  refreshToken String   @db.Text
+  expiresAt    DateTime
+  scope        String
+  email        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("google_tokens")
 }
 
 model RefreshToken {
