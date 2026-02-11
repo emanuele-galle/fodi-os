@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Receipt, FileText, CreditCard, BarChart3, ArrowRight } from 'lucide-react'
+import { Receipt, FileText, CreditCard, BarChart3, ArrowRight, Landmark } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -79,9 +79,14 @@ export default function ErpPage() {
   return (
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">ERP</h1>
-          <p className="text-sm text-muted mt-1">Gestione preventivi, fatture, spese e report</p>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <Landmark className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">ERP</h1>
+            <p className="text-sm text-muted">Gestione preventivi, fatture, spese e report</p>
+          </div>
         </div>
       </div>
 
@@ -91,12 +96,14 @@ export default function ErpPage() {
           return (
             <Card
               key={section.href}
-              className="cursor-pointer hover:scale-[1.01] transition-all duration-200"
+              className="glass-card accent-line-top cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:scale-[1.01] transition-all duration-200"
               onClick={() => router.push(section.href)}
             >
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <Icon className="h-8 w-8 text-primary" />
+                  <div className="p-2.5 rounded-xl bg-primary/10">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
                   {loading ? (
                     <Skeleton className="h-6 w-24" />
                   ) : section.stat ? (

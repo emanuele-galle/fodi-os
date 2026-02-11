@@ -118,7 +118,7 @@ export default function DashboardLayout({
         />
 
         {/* Topbar: hidden on mobile, visible on md+ */}
-        <div className="hidden md:block">
+        <div className="hidden md:block relative z-40">
           <Topbar
             user={user}
             onOpenCommandPalette={() => setCommandPaletteOpen(true)}

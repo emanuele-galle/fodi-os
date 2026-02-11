@@ -126,7 +126,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
   }
 
   return (
-    <header className="h-16 bg-card/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 shadow-[var(--shadow-sm)]">
+    <header className="h-16 bg-card/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 shadow-[var(--shadow-sm)] relative z-40">
       {/* Search trigger */}
       <button
         onClick={onOpenCommandPalette}

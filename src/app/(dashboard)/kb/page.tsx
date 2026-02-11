@@ -229,9 +229,17 @@ export default function KnowledgeBasePage() {
   const [showTree, setShowTree] = useState(false)
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full animate-fade-in">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold">Knowledge Base</h1>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <BookOpen className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Knowledge Base</h1>
+            <p className="text-sm text-muted">Documenti, guide e procedure del team</p>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowTree(!showTree)}
@@ -276,7 +284,7 @@ export default function KnowledgeBasePage() {
             ))}
           </div>
 
-          <div className="border border-border rounded-lg p-2 max-h-[60vh] overflow-auto animate-fade-in">
+          <div className="border border-border rounded-lg p-2 max-h-[60vh] overflow-auto animate-fade-in glass-card">
             {loading ? (
               <div className="space-y-2 p-2">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -302,7 +310,7 @@ export default function KnowledgeBasePage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 border border-border rounded-lg p-6 min-h-[400px] animate-fade-in">
+        <div className="flex-1 border border-border rounded-lg p-6 min-h-[400px] animate-fade-in glass-card">
           {loadingPage ? (
             <div className="space-y-4">
               <Skeleton className="h-8 w-64" />

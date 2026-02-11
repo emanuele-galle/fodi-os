@@ -11,6 +11,7 @@ import {
   Link2Off,
   Video,
   Users,
+  Calendar,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -223,8 +224,16 @@ export default function CalendarPage() {
   // Not connected state
   if (connected === false) {
     return (
-      <div>
-        <h1 className="text-2xl font-bold mb-6">Calendario</h1>
+      <div className="animate-fade-in">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <Calendar className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Calendario</h1>
+            <p className="text-sm text-muted">Visualizza e gestisci i tuoi eventi</p>
+          </div>
+        </div>
         <EmptyState
           icon={Link2Off}
           title="Google Calendar non connesso"
@@ -241,9 +250,17 @@ export default function CalendarPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
-        <h1 className="text-2xl font-semibold">Calendario</h1>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <Calendar className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Calendario</h1>
+            <p className="text-sm text-muted">Visualizza e gestisci i tuoi eventi</p>
+          </div>
+        </div>
         <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" onClick={prevMonth}>

@@ -6,6 +6,7 @@ import {
   Users, FolderKanban, Receipt, Clock, TrendingUp, AlertCircle,
   ArrowRight, Activity, UserPlus, FileText, CheckCircle2, TicketCheck,
   Plus, Zap, TicketPlus, FilePlus2, ClockPlus, X, Pencil,
+  LayoutDashboard, CalendarCheck, BarChart3, Wallet, StickyNote, History,
 } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -216,11 +217,16 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">
-          {getGreeting()}{userName ? <>, <span className="gold-accent">{userName}</span>!</> : '!'}
-        </h1>
-        <p className="text-sm text-muted mt-1 capitalize">{formatTodayDate()}</p>
+      <div className="mb-8 flex items-start gap-4">
+        <div className="p-3 rounded-xl shadow-[var(--shadow-md)]" style={{ background: 'var(--gold-gradient)' }}>
+          <LayoutDashboard className="h-7 w-7 text-white" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {getGreeting()}{userName ? <>, <span className="gold-accent">{userName}</span>!</> : '!'}
+          </h1>
+          <p className="text-sm text-muted mt-1 capitalize">{formatTodayDate()}</p>
+        </div>
       </div>
 
       {loading ? (
@@ -232,18 +238,18 @@ export default function DashboardPage() {
           {stats.map((stat) => (
             <Card
               key={stat.label}
-              className="cursor-pointer"
+              className="cursor-pointer shadow-lift glow-gold accent-line-top group"
               onClick={() => router.push(stat.href)}
             >
               <CardContent className="flex items-center gap-4">
-                <div className={`p-3 rounded-full ${stat.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+                <div className={`p-3 rounded-xl ${stat.color} transition-transform duration-200 group-hover:scale-110`} style={{ background: `color-mix(in srgb, currentColor 12%, transparent)` }}>
                   <stat.icon className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted uppercase tracking-wide font-medium">{stat.label}</p>
-                  <p className="text-3xl font-bold animate-count-up mt-0.5">{stat.value}</p>
+                  <p className="text-[11px] text-muted uppercase tracking-wider font-medium">{stat.label}</p>
+                  <p className="text-3xl font-bold animate-count-up mt-1 tracking-tight">{stat.value}</p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted/50" />
+                <ArrowRight className="h-4 w-4 text-muted/40 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
               </CardContent>
             </Card>
           ))}
@@ -262,24 +268,29 @@ export default function DashboardPage() {
           <button
             key={action.label}
             onClick={() => router.push(action.href)}
-            className="flex flex-col items-center gap-2 rounded-lg border border-border/50 bg-card p-4 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] hover:-translate-y-0.5 transition-all duration-200"
+            className="group flex flex-col items-center gap-2.5 rounded-xl border border-border/50 bg-card p-4 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:-translate-y-1 hover:border-primary/20 transition-all duration-200"
           >
-            <div className={`p-2.5 rounded-full ${action.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+            <div className={`p-2.5 rounded-xl ${action.color} transition-transform duration-200 group-hover:scale-110`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
               <action.icon className="h-5 w-5" />
             </div>
-            <span className="text-xs font-medium text-foreground">{action.label}</span>
+            <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{action.label}</span>
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="accent-line-top">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <Card className="accent-line-top shadow-lift">
           <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <CardTitle>Task in Scadenza</CardTitle>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-secondary text-primary">
+                  <CalendarCheck className="h-5 w-5" />
+                </div>
+                <CardTitle>Task in Scadenza</CardTitle>
+              </div>
               <button
                 onClick={() => router.push('/projects')}
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
               >
                 Vedi tutti
               </button>
@@ -287,13 +298,13 @@ export default function DashboardPage() {
             {tasks.length === 0 ? (
               <p className="text-sm text-muted py-4">Nessun task in scadenza.</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-1">
                 {tasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                  <div key={task.id} className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg border-b border-border/50 last:border-0 hover:bg-secondary/50 transition-colors">
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{task.title}</p>
                       {task.project && (
-                        <p className="text-xs text-muted">{task.project.name}</p>
+                        <p className="text-xs text-muted mt-0.5">{task.project.name}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0 ml-4">
@@ -301,7 +312,7 @@ export default function DashboardPage() {
                         {task.priority}
                       </Badge>
                       {task.dueDate && (
-                        <span className="text-xs text-muted">
+                        <span className="text-xs text-muted tabular-nums">
                           {new Date(task.dueDate).toLocaleDateString('it-IT')}
                         </span>
                       )}
@@ -313,25 +324,40 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="accent-line-top">
+        <Card className="accent-line-top shadow-lift">
           <CardContent>
-            <CardTitle className="mb-4">Pipeline Commerciale</CardTitle>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 rounded-lg bg-secondary text-accent">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <CardTitle>Pipeline Commerciale</CardTitle>
+            </div>
             <PipelineFunnel />
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <Card className="accent-line-top">
+        <Card className="accent-line-top shadow-lift">
           <CardContent>
-            <CardTitle className="mb-4">Fatturato Mensile</CardTitle>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 rounded-lg bg-secondary text-accent">
+                <BarChart3 className="h-5 w-5" />
+              </div>
+              <CardTitle>Fatturato Mensile</CardTitle>
+            </div>
             <RevenueChart />
           </CardContent>
         </Card>
 
-        <Card className="accent-line-top">
+        <Card className="accent-line-top shadow-lift">
           <CardContent>
-            <CardTitle className="mb-4">Cash Flow</CardTitle>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 rounded-lg bg-secondary text-[var(--color-warning)]">
+                <Wallet className="h-5 w-5" />
+              </div>
+              <CardTitle>Cash Flow</CardTitle>
+            </div>
             <CashFlowChart />
           </CardContent>
         </Card>
@@ -339,10 +365,15 @@ export default function DashboardPage() {
 
       {/* Sticky Notes */}
       <div className="mt-6">
-        <Card className="accent-line-left">
+        <Card className="accent-line-left shadow-lift">
           <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <CardTitle>Note Rapide</CardTitle>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-secondary text-[var(--color-warning)]">
+                  <StickyNote className="h-5 w-5" />
+                </div>
+                <CardTitle>Note Rapide</CardTitle>
+              </div>
               {notes.length < 5 && (
                 <Button variant="ghost" size="sm" onClick={addNote}>
                   <Plus className="h-4 w-4 mr-1" />
@@ -351,7 +382,10 @@ export default function DashboardPage() {
               )}
             </div>
             {notes.length === 0 ? (
-              <div className="text-center py-6">
+              <div className="text-center py-8">
+                <div className="inline-flex p-3 rounded-full bg-secondary text-muted mb-3">
+                  <StickyNote className="h-6 w-6" />
+                </div>
                 <p className="text-sm text-muted mb-3">Nessuna nota. Aggiungi un promemoria rapido.</p>
                 <Button variant="outline" size="sm" onClick={addNote}>
                   <Plus className="h-4 w-4 mr-1" />
@@ -363,7 +397,7 @@ export default function DashboardPage() {
                 {notes.map((note) => (
                   <div
                     key={note.id}
-                    className={`relative rounded-lg border p-3 min-h-[100px] ${note.color}`}
+                    className={`relative rounded-xl border p-3 min-h-[100px] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-shadow duration-200 ${note.color}`}
                   >
                     <div className="absolute top-1.5 right-1.5 flex gap-0.5">
                       <button
@@ -409,30 +443,35 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6">
-        <Card className="accent-line-left">
+        <Card className="accent-line-left shadow-lift">
           <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <CardTitle>Attività Recenti</CardTitle>
-              <Activity className="h-4 w-4 text-muted" />
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-secondary text-muted">
+                  <History className="h-5 w-5" />
+                </div>
+                <CardTitle>Attività Recenti</CardTitle>
+              </div>
+              <Activity className="h-4 w-4 text-muted/40" />
             </div>
             {activities.length === 0 ? (
               <p className="text-sm text-muted py-4">Nessuna attività recente.</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-1">
                 {activities.map((activity) => {
                   const ActionIcon = ACTIVITY_ICONS[activity.entityType] || Activity
                   const label = getActivityLabel(activity)
                   return (
-                    <div key={activity.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
-                      <div className="p-1.5 rounded-md bg-secondary text-muted flex-shrink-0 mt-0.5">
+                    <div key={activity.id} className="flex items-start gap-3 py-2.5 px-3 -mx-3 rounded-lg border-b border-border/50 last:border-0 hover:bg-secondary/50 transition-colors">
+                      <div className="p-1.5 rounded-lg bg-secondary text-muted flex-shrink-0 mt-0.5">
                         <ActionIcon className="h-3.5 w-3.5" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm">
-                          <span className="font-medium">{activity.user.firstName} {activity.user.lastName}</span>
+                          <span className="font-semibold">{activity.user.firstName} {activity.user.lastName}</span>
                           {' '}{label}
                         </p>
-                        <p className="text-xs text-muted mt-0.5">
+                        <p className="text-xs text-muted/70 mt-0.5">
                           {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: it })}
                         </p>
                       </div>

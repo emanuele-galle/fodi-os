@@ -150,9 +150,17 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Progetti</h1>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <FolderKanban className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Progetti</h1>
+            <p className="text-sm text-muted">Gestione e monitoraggio progetti attivi</p>
+          </div>
+        </div>
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Progetto
@@ -206,7 +214,7 @@ export default function ProjectsPage() {
               return (
                 <Card
                   key={p.id}
-                  className="cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200"
+                  className="glass-card cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.01] transition-all duration-200"
                   onClick={() => router.push(`/projects/${p.id}`)}
                   style={{ borderTop: `3px solid ${STATUS_COLORS[p.status] || 'var(--color-primary)'}` }}
                 >

@@ -99,9 +99,17 @@ export default function SocialPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Social Calendar</h1>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <CalendarDays className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Social Calendar</h1>
+            <p className="text-sm text-muted">Pianifica e pubblica i tuoi contenuti social</p>
+          </div>
+        </div>
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Post
@@ -146,7 +154,7 @@ export default function SocialPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {posts.map((post) => (
-            <Card key={post.id} className="p-4 shadow-lift">
+            <Card key={post.id} className="p-4 shadow-lift glass-card accent-line-top">
               <div className="flex items-center justify-between mb-3">
                 <Badge variant={PLATFORM_BADGE[post.platform] || 'default'}>
                   {post.platform}

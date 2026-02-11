@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { Settings } from 'lucide-react'
 
 interface UserProfile {
   id: string
@@ -110,7 +111,15 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl animate-fade-in">
-      <h1 className="text-2xl font-semibold mb-6">Impostazioni</h1>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+          <Settings className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">Impostazioni</h1>
+          <p className="text-sm text-muted">Gestisci il tuo profilo e le integrazioni</p>
+        </div>
+      </div>
 
       {message && (
         <div className={`mb-4 p-3 rounded-md text-sm ${
@@ -125,7 +134,7 @@ export default function SettingsPage() {
       )}
 
       {/* Profile */}
-      <Card className="mb-6">
+      <Card className="mb-6 glass-card accent-line-top">
         <CardTitle>Profilo</CardTitle>
         <CardContent>
           <form onSubmit={handleSave} className="space-y-4">
@@ -168,7 +177,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Google Workspace Integration */}
-      <Card>
+      <Card className="glass-card accent-line-top">
         <CardTitle>Integrazioni Google Workspace</CardTitle>
         <CardContent>
           {googleLoading ? (

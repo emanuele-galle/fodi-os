@@ -135,9 +135,17 @@ export default function CrmPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Clienti</h1>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <Users className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Clienti</h1>
+            <p className="text-sm text-muted">Gestione clienti e relazioni commerciali</p>
+          </div>
+        </div>
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Cliente
@@ -189,7 +197,7 @@ export default function CrmPage() {
             {clients.map((client) => (
               <Card
                 key={client.id}
-                className="!p-4 cursor-pointer active:bg-secondary/30 transition-colors touch-manipulation"
+                className="!p-4 accent-line-left cursor-pointer active:bg-secondary/30 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200 touch-manipulation"
                 onClick={() => router.push(`/crm/${client.id}`)}
               >
                 <div className="flex items-center gap-3 mb-2">
@@ -211,7 +219,7 @@ export default function CrmPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">

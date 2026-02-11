@@ -49,7 +49,7 @@ export function FileUpload({
   onUpload,
   accept,
   maxFiles = 10,
-  maxSize = 50 * 1024 * 1024, // 50MB default
+  maxSize = 500 * 1024 * 1024, // 500MB default
   className,
 }: FileUploadProps) {
   const [entries, setEntries] = useState<FileEntry[]>([])

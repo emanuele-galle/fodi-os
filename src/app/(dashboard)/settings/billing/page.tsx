@@ -118,8 +118,13 @@ export default function BillingSettingsPage() {
   return (
     <div className="max-w-2xl animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
-        <Building2 className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-semibold">Fatturazione</h1>
+        <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+          <Building2 className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">Fatturazione</h1>
+          <p className="text-sm text-muted">Profilo azienda e dati fiscali</p>
+        </div>
       </div>
 
       {message && (
@@ -132,7 +137,7 @@ export default function BillingSettingsPage() {
         </div>
       )}
 
-      <Card>
+      <Card className="glass-card accent-line-top">
         <CardTitle>Profilo Azienda (CedentePrestatore)</CardTitle>
         <CardContent>
           <p className="text-sm text-muted mb-4">

@@ -120,9 +120,17 @@ export default function TimeTrackingPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Time Tracking</h1>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <Clock className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Time Tracking</h1>
+            <p className="text-sm text-muted">Registrazione e analisi ore lavorate</p>
+          </div>
+        </div>
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Registra Ore
@@ -130,36 +138,36 @@ export default function TimeTrackingPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-stagger">
-        <Card className="shadow-lift">
+        <Card className="shadow-lift accent-line-top">
           <CardContent className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-secondary text-primary">
+            <div className="p-3 rounded-full bg-primary/10 text-primary">
               <Clock className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-muted">Ore Totali</p>
-              <p className="text-xl font-bold">{totalHours.toFixed(1)}h</p>
+              <p className="text-xs text-muted uppercase tracking-wider font-medium">Ore Totali</p>
+              <p className="text-2xl font-bold">{totalHours.toFixed(1)}h</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="shadow-lift">
+        <Card className="shadow-lift accent-line-top">
           <CardContent className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-secondary text-primary">
+            <div className="p-3 rounded-full bg-primary/10 text-primary">
               <Clock className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-muted">Ore Fatturabili</p>
-              <p className="text-xl font-bold">{billableHours.toFixed(1)}h</p>
+              <p className="text-xs text-muted uppercase tracking-wider font-medium">Ore Fatturabili</p>
+              <p className="text-2xl font-bold">{billableHours.toFixed(1)}h</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="shadow-lift">
+        <Card className="shadow-lift accent-line-top">
           <CardContent className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-secondary text-accent">
+            <div className="p-3 rounded-full bg-accent/10 text-accent">
               <Clock className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-muted">Ore Non Fatturabili</p>
-              <p className="text-xl font-bold">{(totalHours - billableHours).toFixed(1)}h</p>
+              <p className="text-xs text-muted uppercase tracking-wider font-medium">Ore Non Fatturabili</p>
+              <p className="text-2xl font-bold">{(totalHours - billableHours).toFixed(1)}h</p>
             </div>
           </CardContent>
         </Card>
@@ -211,23 +219,23 @@ export default function TimeTrackingPage() {
           }
         />
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg border border-border/80 shadow-[var(--shadow-sm)]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-muted">
-                <th className="pb-3 pr-4 font-medium">Data</th>
-                <th className="pb-3 pr-4 font-medium">Utente</th>
-                <th className="pb-3 pr-4 font-medium hidden md:table-cell">Task</th>
-                <th className="pb-3 pr-4 font-medium">Ore</th>
-                <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Descrizione</th>
-                <th className="pb-3 pr-4 font-medium">Fatturabile</th>
-                <th className="pb-3 font-medium hidden lg:table-cell text-right">Tariffa</th>
+              <tr className="border-b border-border text-left text-muted bg-secondary/40">
+                <th className="py-3 px-4 font-medium text-xs uppercase tracking-wider">Data</th>
+                <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider">Utente</th>
+                <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider hidden md:table-cell">Task</th>
+                <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider">Ore</th>
+                <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider hidden lg:table-cell">Descrizione</th>
+                <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider">Fatturabile</th>
+                <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider hidden lg:table-cell text-right">Tariffa</th>
               </tr>
             </thead>
             <tbody>
               {entries.map((entry) => (
-                <tr key={entry.id} className="border-b border-border">
-                  <td className="py-3 pr-4">{new Date(entry.date).toLocaleDateString('it-IT')}</td>
+                <tr key={entry.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors even:bg-secondary/20">
+                  <td className="py-3 px-4">{new Date(entry.date).toLocaleDateString('it-IT')}</td>
                   <td className="py-3 pr-4">{entry.user.firstName} {entry.user.lastName}</td>
                   <td className="py-3 pr-4 text-muted hidden md:table-cell truncate max-w-xs">
                     {entry.task?.title || '—'}

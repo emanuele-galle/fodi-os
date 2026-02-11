@@ -166,9 +166,17 @@ export default function SupportPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Supporto</h1>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <LifeBuoy className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Supporto</h1>
+            <p className="text-sm text-muted">Gestione ticket e assistenza clienti</p>
+          </div>
+        </div>
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Ticket
@@ -221,17 +229,17 @@ export default function SupportPage() {
         />
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg border border-border/80 shadow-[var(--shadow-sm)]">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                  <th className="py-3 pr-4 pl-3 font-medium">#</th>
-                  <th className="py-3 pr-4 font-medium">Oggetto</th>
-                  <th className="py-3 pr-4 font-medium hidden md:table-cell">Cliente</th>
-                  <th className="py-3 pr-4 font-medium">Stato</th>
-                  <th className="py-3 pr-4 font-medium">Priorita</th>
-                  <th className="py-3 pr-4 font-medium hidden lg:table-cell">Assegnato a</th>
-                  <th className="py-3 font-medium hidden lg:table-cell">Data</th>
+                <tr className="border-b border-border text-left text-muted bg-secondary/40">
+                  <th className="py-3 pr-4 pl-3 font-medium text-xs uppercase tracking-wider">#</th>
+                  <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider">Oggetto</th>
+                  <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider hidden md:table-cell">Cliente</th>
+                  <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider">Stato</th>
+                  <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider">Priorita</th>
+                  <th className="py-3 pr-4 font-medium text-xs uppercase tracking-wider hidden lg:table-cell">Assegnato a</th>
+                  <th className="py-3 font-medium text-xs uppercase tracking-wider hidden lg:table-cell">Data</th>
                 </tr>
               </thead>
               <tbody>
@@ -241,7 +249,7 @@ export default function SupportPage() {
                     onClick={() => router.push(`/support/${ticket.id}`)}
                     className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-all duration-200 even:bg-secondary/20"
                   >
-                    <td className="py-3 pr-4 font-medium text-muted">{ticket.number}</td>
+                    <td className="py-3 pr-4 pl-3 font-medium text-muted">{ticket.number}</td>
                     <td className="py-3 pr-4 font-medium">{ticket.subject}</td>
                     <td className="py-3 pr-4 text-muted hidden md:table-cell">
                       {ticket.client?.companyName || '—'}

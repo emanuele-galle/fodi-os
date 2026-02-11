@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Film, ClipboardCheck, CalendarDays, ArrowRight } from 'lucide-react'
+import { Film, ClipboardCheck, CalendarDays, ArrowRight, LayoutGrid } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -68,11 +68,16 @@ export default function ContentPage() {
   ]
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Contenuti</h1>
-          <p className="text-sm text-muted mt-1">Gestisci asset, review e social media</p>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <LayoutGrid className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Contenuti</h1>
+            <p className="text-sm text-muted">Gestisci asset, review e social media</p>
+          </div>
         </div>
       </div>
 
@@ -83,12 +88,14 @@ export default function ContentPage() {
           return (
             <Card
               key={section.href}
-              className="cursor-pointer hover:scale-[1.01] transition-all duration-200"
+              className="cursor-pointer hover:scale-[1.01] transition-all duration-200 glass-card accent-line-top shadow-lift"
               onClick={() => router.push(section.href)}
             >
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <Icon className="h-8 w-8 text-primary" />
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
                   {loading ? (
                     <Skeleton className="h-6 w-16" />
                   ) : (

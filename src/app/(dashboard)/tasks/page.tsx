@@ -159,10 +159,18 @@ export default function TasksPage() {
   ]
 
   return (
-    <div>
+    <div className="animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">I Miei Task</h1>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <CheckSquare className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">I Miei Task</h1>
+            <p className="text-sm text-muted">Gestione attivita e scadenze</p>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-md border border-border overflow-hidden">
             <Tooltip content="Vista lista">
@@ -188,7 +196,7 @@ export default function TasksPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 animate-stagger">
         {stats.map((s) => (
-          <Card key={s.label}>
+          <Card key={s.label} className="accent-line-top shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
             <CardContent className="flex items-center gap-4">
               <div className={`p-3 rounded-full ${s.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
                 <s.icon className="h-5 w-5" />
@@ -261,11 +269,11 @@ export default function TasksPage() {
 
 function ListView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: string) => void }) {
   return (
-    <div className="rounded-lg border border-border/80 overflow-hidden">
+    <div className="rounded-lg border border-border/80 overflow-hidden shadow-[var(--shadow-sm)]">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-border bg-secondary/30">
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase">Titolo</th>
+          <tr className="border-b border-border bg-secondary/40">
+            <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Titolo</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden md:table-cell">Stato</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden md:table-cell">Priorità</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden lg:table-cell">Assegnato</th>

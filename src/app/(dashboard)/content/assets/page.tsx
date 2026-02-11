@@ -224,7 +224,7 @@ function MinioAssetsTab() {
 
       {/* Upload Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Carica Asset" size="lg">
-        <FileUpload onUpload={() => { fetchAssets(); setModalOpen(false) }} maxFiles={10} maxSize={50 * 1024 * 1024} />
+        <FileUpload onUpload={() => { fetchAssets(); setModalOpen(false) }} maxFiles={10} maxSize={500 * 1024 * 1024} />
       </Modal>
     </>
   )
