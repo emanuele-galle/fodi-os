@@ -64,6 +64,15 @@ const PRIORITY_OPTIONS = [
   { value: 'URGENT', label: 'Urgente' },
 ]
 
+const STATUS_COLORS: Record<string, string> = {
+  PLANNING: '#C4A052',
+  IN_PROGRESS: '#22C55E',
+  ON_HOLD: '#F59E0B',
+  REVIEW: '#3B82F6',
+  COMPLETED: '#64748B',
+  CANCELLED: '#EF4444',
+}
+
 export default function ProjectsPage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
@@ -197,8 +206,9 @@ export default function ProjectsPage() {
               return (
                 <Card
                   key={p.id}
-                  className="cursor-pointer hover:scale-[1.01] transition-all duration-200"
+                  className="cursor-pointer overflow-hidden"
                   onClick={() => router.push(`/projects/${p.id}`)}
+                  style={{ borderTop: `3px solid ${STATUS_COLORS[p.status] || '#C4A052'}` }}
                 >
                   <CardContent>
                     <div className="flex items-center justify-between mb-2">
@@ -226,7 +236,7 @@ export default function ProjectsPage() {
                     {totalTasks > 0 && (
                       <div className="mt-2 h-1.5 bg-secondary rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-primary rounded-full transition-all"
+                          className="h-full rounded-full transition-all bg-gradient-to-r from-[#C4A052] to-[#E8C97A]"
                           style={{ width: `${(doneTasks / totalTasks) * 100}%` }}
                         />
                       </div>

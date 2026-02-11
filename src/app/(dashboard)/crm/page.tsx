@@ -214,7 +214,7 @@ export default function CrmPage() {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted">
+                <tr className="border-b border-border text-left text-muted bg-secondary/30">
                   <th className="pb-3 pr-4 font-medium">Cliente</th>
                   <th className="pb-3 pr-4 font-medium">Stato</th>
                   <th className="pb-3 pr-4 font-medium">Settore</th>
@@ -228,7 +228,7 @@ export default function CrmPage() {
                   <tr
                     key={client.id}
                     onClick={() => router.push(`/crm/${client.id}`)}
-                    className="border-b border-border hover:bg-secondary/50 cursor-pointer transition-all duration-200 hover:shadow-sm"
+                    className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-all duration-200 even:bg-secondary/20"
                   >
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-3">

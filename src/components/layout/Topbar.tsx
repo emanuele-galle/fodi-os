@@ -75,11 +75,11 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
   }
 
   return (
-    <header className="h-16 bg-card flex items-center justify-between px-6" style={{ borderBottom: '1px solid transparent', borderImage: 'linear-gradient(to right, #C4A052 0%, #E2E8F0 30%, transparent 100%) 1' }}>
+    <header className="h-16 bg-card/80 backdrop-blur-md flex items-center justify-between px-6 shadow-[var(--shadow-sm)]" style={{ borderBottom: '1px solid transparent', borderImage: 'linear-gradient(to right, #C4A052 0%, #E2E8F0 30%, transparent 100%) 1' }}>
       {/* Search trigger */}
       <button
         onClick={onOpenCommandPalette}
-        className="flex items-center gap-2 h-9 px-4 rounded-full border border-border bg-background text-muted text-sm hover:border-primary/50 transition-colors w-80"
+        className="flex items-center gap-2 h-9 px-4 rounded-full border border-border/50 bg-secondary/50 backdrop-blur-sm text-muted text-sm hover:border-primary/40 hover:bg-secondary/80 transition-all duration-200 w-80"
       >
         <Search className="h-4.5 w-4.5 text-primary" />
         <span>Cerca o premi Cmd+K...</span>
@@ -105,7 +105,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-card rounded-lg border border-border shadow-lg z-50 animate-scale-in">
+            <div className="absolute right-0 mt-2 w-80 bg-card rounded-lg border border-border/50 shadow-[var(--shadow-xl)] z-50 animate-scale-in">
               <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                 <p className="text-sm font-medium">Notifiche</p>
                 {unreadCount > 0 && (
@@ -173,7 +173,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-card rounded-lg border border-border shadow-lg py-1 z-50 animate-scale-in">
+            <div className="absolute right-0 mt-2 w-56 bg-card rounded-lg border border-border/50 shadow-[var(--shadow-xl)] py-1 z-50 animate-scale-in">
               <div className="px-4 py-2 border-b border-border">
                 <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
                 <p className="text-xs text-muted">{user.email}</p>

@@ -193,7 +193,7 @@ export function Sidebar({ userRole }: SidebarProps) {
       </div>
 
       {/* Divider */}
-      <div className="border-b border-white/5 mx-2" />
+      <div className="border-b border-white/8 mx-2" />
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2">
@@ -214,8 +214,8 @@ export function Sidebar({ userRole }: SidebarProps) {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200 relative',
                   isActive
-                    ? 'bg-sidebar-active/15 text-[#D4B566] border-l-3 border-sidebar-active'
-                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-white/5 border-l-3 border-transparent'
+                    ? 'bg-gradient-to-r from-sidebar-active/20 to-transparent text-[#D4B566] border-l-3 border-sidebar-active shadow-[inset_0_0_20px_rgba(196,160,82,0.05)]'
+                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-white/8 border-l-3 border-transparent'
                 )}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
@@ -253,8 +253,8 @@ export function Sidebar({ userRole }: SidebarProps) {
                       className={cn(
                         'block px-3 py-1.5 rounded-md text-sm transition-colors duration-200',
                         pathname === child.href
-                          ? 'text-[#D4B566] bg-white/10'
-                          : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80'
+                          ? 'text-[#D4B566] bg-gradient-to-r from-white/10 to-transparent'
+                          : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-white/5'
                       )}
                     >
                       {child.label}

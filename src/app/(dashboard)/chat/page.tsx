@@ -182,7 +182,7 @@ export default function ChatPage() {
   return (
     <div className="flex h-[calc(100vh-7rem)] md:h-[calc(100vh-7rem)] h-[calc(100vh-8rem)] -m-4 md:-m-6 relative">
       {/* Left panel - Channel list */}
-      <div className={`w-full md:w-80 border-r border-border/10 bg-sidebar/50 md:flex-shrink-0 ${selectedId ? 'hidden md:block' : 'block'}`}>
+      <div className={`w-full md:w-80 border-r border-border/10 bg-sidebar/50 md:flex-shrink-0 backdrop-blur-sm ${selectedId ? 'hidden md:block' : 'block'}`}>
         <ChannelList
           channels={channels}
           selectedId={selectedId}
@@ -196,7 +196,7 @@ export default function ChatPage() {
         {selectedId ? (
           <>
             {/* Channel header */}
-            <div className="border-b border-border/10 px-4 md:px-6 py-3 flex items-center gap-3">
+            <div className="border-b border-border/10 px-4 md:px-6 py-3 flex items-center gap-3 bg-card/50 backdrop-blur-sm">
               <button
                 onClick={handleBack}
                 className="md:hidden p-1 rounded-md hover:bg-secondary mr-1 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"

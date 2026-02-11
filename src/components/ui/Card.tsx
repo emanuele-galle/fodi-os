@@ -1,13 +1,25 @@
 import { cn } from '@/lib/utils'
 
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'glass'
+}
+
 export function Card({
   className,
+  variant = 'default',
   children,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: CardProps) {
   return (
     <div
-      className={cn('rounded-lg border border-border/80 bg-card p-6 shadow-sm glow-gold transition-all duration-200', className)}
+      className={cn(
+        'rounded-lg border border-border/50 p-6 transition-all duration-200',
+        variant === 'glass'
+          ? 'glass-card'
+          : 'bg-card shadow-[var(--shadow-md)]',
+        'hover:shadow-[var(--shadow-lg)] hover:-translate-y-0.5 hover:border-primary/20',
+        className
+      )}
       {...props}
     >
       {children}

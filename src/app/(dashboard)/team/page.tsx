@@ -137,7 +137,7 @@ export default function TeamPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
           {filtered.map((member) => (
-            <Card key={member.id} className="hover:scale-[1.02] transition-all duration-200">
+            <Card key={member.id}>
               <CardContent>
                 <div className="flex items-start gap-4">
                   <Avatar

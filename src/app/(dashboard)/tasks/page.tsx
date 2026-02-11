@@ -87,6 +87,13 @@ const PRIORITY_LABELS: Record<string, string> = {
   URGENT: 'Urgente',
 }
 
+const PRIORITY_COLORS: Record<string, string> = {
+  LOW: '#64748B',
+  MEDIUM: '#C4A052',
+  HIGH: '#F59E0B',
+  URGENT: '#EF4444',
+}
+
 const KANBAN_COLUMNS = [
   { key: 'TODO', label: 'Da fare', color: 'border-gray-500' },
   { key: 'IN_PROGRESS', label: 'In Corso', color: 'border-blue-500' },
@@ -255,7 +262,7 @@ function ListView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: str
     <div className="rounded-lg border border-border/80 overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-border bg-card/50">
+          <tr className="border-b border-border bg-secondary/30">
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase">Titolo</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden md:table-cell">Stato</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden md:table-cell">Priorità</th>
@@ -269,7 +276,7 @@ function ListView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: str
             <tr
               key={task.id}
               onClick={() => onTaskClick(task.id)}
-              className="border-b border-border/50 hover:bg-card/80 cursor-pointer transition-colors"
+              className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-colors even:bg-secondary/20"
             >
               <td className="px-4 py-3">
                 <span className="text-sm font-medium">{task.title}</span>
@@ -335,7 +342,7 @@ function KanbanView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: s
         const columnTasks = tasks.filter((t) => t.status === col.key)
         return (
           <div key={col.key} className="flex flex-col min-w-[280px] md:min-w-0">
-            <div className={`flex items-center gap-2 mb-3 pb-2 border-b-2 ${col.color}`}>
+            <div className={`flex items-center gap-2 mb-3 pb-2 border-b-2 ${col.color} bg-gradient-to-r from-secondary/50 to-transparent rounded-t-lg px-2 pt-2`}>
               <h3 className="text-sm font-semibold">{col.label}</h3>
               <span className="text-xs text-muted bg-card rounded-full px-2 py-0.5">
                 {columnTasks.length}
@@ -345,8 +352,9 @@ function KanbanView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: s
               {columnTasks.map((task) => (
                 <Card
                   key={task.id}
-                  className="!p-3 cursor-pointer hover:border-primary/30 hover:scale-[1.01] transition-all duration-200"
+                  className="!p-3 cursor-pointer"
                   onClick={() => onTaskClick(task.id)}
+                  style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || '#C4A052'}` }}
                 >
                   <p className="text-sm font-medium mb-2 line-clamp-2">{task.title}</p>
                   <div className="flex items-center gap-1.5 flex-wrap">

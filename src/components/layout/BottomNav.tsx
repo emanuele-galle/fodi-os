@@ -94,7 +94,7 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="absolute bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 bg-card border-t border-border rounded-t-2xl max-h-[60vh] overflow-y-auto z-50 animate-menu-slide-up">
+          <div className="absolute bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 bg-card border-t border-border/50 rounded-t-2xl max-h-[60vh] overflow-y-auto z-50 animate-menu-slide-up shadow-[var(--shadow-xl)]">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <span className="text-sm font-semibold">Menu</span>
               <button
@@ -116,8 +116,8 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
                     className={cn(
                       'flex items-center gap-3 px-4 py-3 text-sm transition-colors touch-manipulation',
                       isActive
-                        ? 'text-[#C4A052] bg-primary/5 font-medium'
-                        : 'text-foreground hover:bg-secondary'
+                        ? 'text-[#C4A052] bg-gradient-to-r from-primary/10 to-transparent font-medium'
+                        : 'text-foreground hover:bg-secondary/50'
                     )}
                   >
                     <Icon className="h-5 w-5 flex-shrink-0" />
@@ -141,11 +141,11 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
                 key={tab.href}
                 onClick={() => handleTabClick(tab.href)}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[44px] transition-colors touch-manipulation',
+                  'flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[44px] transition-all duration-200 touch-manipulation',
                   active ? 'text-[#C4A052]' : 'text-muted'
                 )}
               >
-                <div className="relative">
+                <div className={cn('relative p-1 rounded-lg transition-all duration-200', active && 'bg-[#C4A052]/10')}>
                   <Icon className="h-5 w-5" />
                   {tab.href === '/chat' && unreadChat > 0 && (
                     <span className="absolute -top-1 -right-1.5 h-4 min-w-4 px-0.5 flex items-center justify-center text-[10px] font-bold bg-destructive text-white rounded-full">

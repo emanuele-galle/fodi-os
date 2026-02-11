@@ -218,7 +218,7 @@ export default function DashboardPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold">
-          {getGreeting()}{userName ? `, ${userName}!` : '!'}
+          {getGreeting()}{userName ? <>, <span className="gold-accent">{userName}</span>!</> : '!'}
         </h1>
         <p className="text-sm text-muted mt-1 capitalize">{formatTodayDate()}</p>
       </div>
@@ -232,18 +232,18 @@ export default function DashboardPage() {
           {stats.map((stat) => (
             <Card
               key={stat.label}
-              className="cursor-pointer hover:scale-[1.02] transition-all duration-200"
+              className="cursor-pointer"
               onClick={() => router.push(stat.href)}
             >
               <CardContent className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg bg-gradient-to-br from-secondary to-secondary/60 ${stat.color}`}>
+                <div className={`p-3 rounded-xl ${stat.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
                   <stat.icon className="h-6 w-6" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted">{stat.label}</p>
-                  <p className="text-2xl font-bold animate-count-up">{stat.value}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted uppercase tracking-wide font-medium">{stat.label}</p>
+                  <p className="text-3xl font-bold animate-count-up mt-0.5">{stat.value}</p>
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted" />
+                <ArrowRight className="h-4 w-4 text-muted/50" />
               </CardContent>
             </Card>
           ))}
@@ -262,9 +262,9 @@ export default function DashboardPage() {
           <button
             key={action.label}
             onClick={() => router.push(action.href)}
-            className="flex flex-col items-center gap-2 rounded-lg border border-border/80 bg-card p-4 shadow-sm glow-gold hover:scale-[1.02] transition-all duration-200"
+            className="flex flex-col items-center gap-2 rounded-lg border border-border/50 bg-card p-4 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] hover:-translate-y-0.5 transition-all duration-200"
           >
-            <div className={`p-2 rounded-lg bg-secondary ${action.color}`}>
+            <div className={`p-2.5 rounded-xl ${action.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
               <action.icon className="h-5 w-5" />
             </div>
             <span className="text-xs font-medium text-foreground">{action.label}</span>
@@ -273,7 +273,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="accent-line-top">
           <CardContent>
             <div className="flex items-center justify-between mb-4">
               <CardTitle>Task in Scadenza</CardTitle>
@@ -313,7 +313,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="accent-line-top">
           <CardContent>
             <CardTitle className="mb-4">Pipeline Commerciale</CardTitle>
             <PipelineFunnel />
@@ -322,14 +322,14 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <Card>
+        <Card className="accent-line-top">
           <CardContent>
             <CardTitle className="mb-4">Fatturato Mensile</CardTitle>
             <RevenueChart />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="accent-line-top">
           <CardContent>
             <CardTitle className="mb-4">Cash Flow</CardTitle>
             <CashFlowChart />
@@ -339,7 +339,7 @@ export default function DashboardPage() {
 
       {/* Sticky Notes */}
       <div className="mt-6">
-        <Card>
+        <Card className="accent-line-left">
           <CardContent>
             <div className="flex items-center justify-between mb-4">
               <CardTitle>Note Rapide</CardTitle>
@@ -409,7 +409,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6">
-        <Card>
+        <Card className="accent-line-left">
           <CardContent>
             <div className="flex items-center justify-between mb-4">
               <CardTitle>Attività Recenti</CardTitle>
