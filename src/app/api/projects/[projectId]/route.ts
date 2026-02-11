@@ -17,6 +17,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         workspace: { select: { id: true, name: true } },
         client: { select: { id: true, companyName: true } },
         milestones: { orderBy: { sortOrder: 'asc' } },
+        tasks: {
+          include: {
+            assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+            dependsOn: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
         _count: { select: { tasks: true } },
       },
     })
