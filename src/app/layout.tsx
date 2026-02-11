@@ -4,6 +4,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'FODI OS - Piattaforma Gestionale',
   description: 'Piattaforma di gestione aziendale FODI Srl',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({

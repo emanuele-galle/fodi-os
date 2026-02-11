@@ -343,9 +343,11 @@ export default function KnowledgeBasePage() {
                 </div>
               ) : (
                 <>
-                  <div
-                    className="prose prose-sm max-w-none text-foreground"
-                    dangerouslySetInnerHTML={{ __html: selectedPage.content || '<p class="text-muted">Nessun contenuto.</p>' }}
+                  <RichTextEditor
+                    content={selectedPage.content || ''}
+                    onChange={() => {}}
+                    editable={false}
+                    placeholder="Nessun contenuto."
                   />
                   <div className="mt-6 pt-4 border-t border-border">
                     <Button variant="outline" size="sm" onClick={startEditing}>

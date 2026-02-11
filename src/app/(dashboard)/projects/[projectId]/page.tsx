@@ -74,6 +74,17 @@ const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destru
 const TASK_STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
   TODO: 'default', IN_PROGRESS: 'success', IN_REVIEW: 'warning', DONE: 'outline', CANCELLED: 'destructive',
 }
+const STATUS_LABEL: Record<string, string> = {
+  PLANNING: 'Pianificazione', IN_PROGRESS: 'In Corso', ON_HOLD: 'In Pausa',
+  REVIEW: 'In Revisione', COMPLETED: 'Completato', CANCELLED: 'Cancellato',
+}
+const PRIORITY_LABEL: Record<string, string> = {
+  LOW: 'Bassa', MEDIUM: 'Media', HIGH: 'Alta', URGENT: 'Urgente',
+}
+const TASK_STATUS_LABEL: Record<string, string> = {
+  TODO: 'Da Fare', IN_PROGRESS: 'In Corso', IN_REVIEW: 'In Revisione',
+  DONE: 'Completato', CANCELLED: 'Cancellato',
+}
 
 const BOARD_COLUMNS = [
   { key: 'todo', label: 'Da Fare' },
@@ -245,10 +256,10 @@ export default function ProjectDetailPage() {
                   {task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : '—'}
                 </td>
                 <td className="py-3 pr-4">
-                  <Badge variant={TASK_STATUS_BADGE[task.status] || 'default'}>{task.status}</Badge>
+                  <Badge variant={TASK_STATUS_BADGE[task.status] || 'default'}>{TASK_STATUS_LABEL[task.status] || task.status}</Badge>
                 </td>
                 <td className="py-3 pr-4">
-                  <Badge variant={PRIORITY_BADGE[task.priority] || 'default'}>{task.priority}</Badge>
+                  <Badge variant={PRIORITY_BADGE[task.priority] || 'default'}>{PRIORITY_LABEL[task.priority] || task.priority}</Badge>
                 </td>
                 <td className="py-3 text-muted">
                   {task.dueDate ? new Date(task.dueDate).toLocaleDateString('it-IT') : '—'}
@@ -332,8 +343,8 @@ export default function ProjectDetailPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={STATUS_BADGE[project.status] || 'default'}>{project.status}</Badge>
-          <Badge variant={PRIORITY_BADGE[project.priority] || 'default'}>{project.priority}</Badge>
+          <Badge variant={STATUS_BADGE[project.status] || 'default'}>{STATUS_LABEL[project.status] || project.status}</Badge>
+          <Badge variant={PRIORITY_BADGE[project.priority] || 'default'}>{PRIORITY_LABEL[project.priority] || project.priority}</Badge>
           <Button variant="outline" size="sm">
             <Edit className="h-4 w-4 mr-2" />
             Modifica
