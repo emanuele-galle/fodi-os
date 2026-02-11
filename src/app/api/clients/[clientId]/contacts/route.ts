@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createContactSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ clientId: string }> }) {
@@ -30,11 +31,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { clientId } = await params
     const body = await request.json()
-    const { firstName, lastName, email, phone, role: contactRole, isPrimary } = body
-
-    if (!firstName || !lastName) {
-      return NextResponse.json({ error: 'firstName and lastName are required' }, { status: 400 })
+    const parsed = createContactSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { firstName, lastName, email, phone, role: contactRole, isPrimary } = parsed.data
 
     // If setting as primary, unset others first
     if (isPrimary) {

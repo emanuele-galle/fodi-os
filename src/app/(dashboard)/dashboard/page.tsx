@@ -4,12 +4,26 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Users, FolderKanban, Receipt, Clock, TrendingUp, AlertCircle,
-  ArrowRight,
+  ArrowRight, Activity, UserPlus, FileText, CheckCircle2, TicketCheck,
 } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
+import { RevenueChart } from '@/components/dashboard/RevenueChart'
+import { CashFlowChart } from '@/components/dashboard/CashFlowChart'
+import { PipelineFunnel } from '@/components/dashboard/PipelineFunnel'
+import { formatDistanceToNow } from 'date-fns'
+import { it } from 'date-fns/locale'
+
+interface ActivityItem {
+  id: string
+  action: string
+  entityType: string
+  metadata: Record<string, unknown> | null
+  createdAt: string
+  user: { firstName: string; lastName: string }
+}
 
 interface StatCard {
   label: string
@@ -31,6 +45,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [stats, setStats] = useState<StatCard[]>([])
   const [tasks, setTasks] = useState<TaskItem[]>([])
+  const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -78,10 +93,49 @@ export default function DashboardPage() {
         if (d?.items) setTasks(d.items)
         else if (Array.isArray(d)) setTasks(d)
       })
+
+    fetch('/api/activity?limit=10')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.items) setActivities(d.items)
+      })
   }, [])
 
   const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
     LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
+  }
+
+  const ACTIVITY_ICONS: Record<string, typeof Activity> = {
+    project: FolderKanban,
+    client: UserPlus,
+    quote: FileText,
+    invoice: Receipt,
+    task: CheckCircle2,
+    ticket: TicketCheck,
+  }
+
+  function getActivityLabel(activity: ActivityItem): string {
+    const meta = activity.metadata || {}
+    const name = (meta.name || meta.title || meta.number || '') as string
+    const ACTION_LABELS: Record<string, string> = {
+      create: 'ha creato',
+      update: 'ha aggiornato',
+      complete: 'ha completato',
+      approve: 'ha approvato',
+      pay: 'ha registrato il pagamento di',
+      delete: 'ha eliminato',
+    }
+    const ENTITY_LABELS: Record<string, string> = {
+      project: 'il progetto',
+      client: 'il cliente',
+      quote: 'il preventivo',
+      invoice: 'la fattura',
+      task: 'il task',
+      ticket: 'il ticket',
+    }
+    const actionLabel = ACTION_LABELS[activity.action] || activity.action
+    const entityLabel = ENTITY_LABELS[activity.entityType] || activity.entityType
+    return `${actionLabel} ${entityLabel}${name ? ` "${name}"` : ''}`
   }
 
   return (
@@ -158,10 +212,61 @@ export default function DashboardPage() {
 
         <Card>
           <CardContent>
+            <CardTitle className="mb-4">Pipeline Commerciale</CardTitle>
+            <PipelineFunnel />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <Card>
+          <CardContent>
+            <CardTitle className="mb-4">Fatturato Mensile</CardTitle>
+            <RevenueChart />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <CardTitle className="mb-4">Cash Flow</CardTitle>
+            <CashFlowChart />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card>
+          <CardContent>
             <div className="flex items-center justify-between mb-4">
               <CardTitle>Attivita Recenti</CardTitle>
+              <Activity className="h-4 w-4 text-muted" />
             </div>
-            <p className="text-sm text-muted py-4">Timeline attivita in costruzione.</p>
+            {activities.length === 0 ? (
+              <p className="text-sm text-muted py-4">Nessuna attivita recente.</p>
+            ) : (
+              <div className="space-y-3">
+                {activities.map((activity) => {
+                  const ActionIcon = ACTIVITY_ICONS[activity.entityType] || Activity
+                  const label = getActivityLabel(activity)
+                  return (
+                    <div key={activity.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+                      <div className="p-1.5 rounded-md bg-secondary text-muted flex-shrink-0 mt-0.5">
+                        <ActionIcon className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm">
+                          <span className="font-medium">{activity.user.firstName} {activity.user.lastName}</span>
+                          {' '}{label}
+                        </p>
+                        <p className="text-xs text-muted mt-0.5">
+                          {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: it })}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createReviewSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ assetId: string }> }) {
@@ -36,7 +37,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { assetId } = await params
     const body = await request.json()
-    const { dueDate } = body
+    const parsed = createReviewSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+    const { dueDate } = parsed.data
 
     const asset = await prisma.asset.findUnique({ where: { id: assetId } })
     if (!asset) {

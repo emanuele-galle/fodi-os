@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { slugify } from '@/lib/utils'
+import { updateWikiPageSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
@@ -59,7 +60,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { pageId } = await params
     const body = await request.json()
-    const { title, content, contentText, category, icon, isPublished } = body
+    const parsed = updateWikiPageSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+    const { title, content, contentText, category, icon, isPublished, changeNote } = parsed.data
 
     const existing = await prisma.wikiPage.findUnique({ where: { id: pageId } })
     if (!existing) {
@@ -95,7 +103,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           editorId: userId,
           content,
           version: (latestVersion?.version || 0) + 1,
-          changeNote: body.changeNote || null,
+          changeNote: changeNote || null,
         },
       })
     }

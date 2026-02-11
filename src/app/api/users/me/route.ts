@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { updateProfileSchema } from '@/lib/validation'
 
 export async function PATCH(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id')!
     const body = await request.json()
-    const { firstName, lastName, phone, avatarUrl } = body
+    const parsed = updateProfileSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+    const { firstName, lastName, phone, avatarUrl } = parsed.data
 
     const user = await prisma.user.update({
       where: { id: userId },

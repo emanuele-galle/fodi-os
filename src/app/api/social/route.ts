@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createSocialPostSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -44,11 +45,14 @@ export async function POST(request: NextRequest) {
     requirePermission(role, 'content', 'write')
 
     const body = await request.json()
-    const { platform, content, mediaUrls, scheduledAt, status } = body
-
-    if (!platform || !content) {
-      return NextResponse.json({ error: 'platform and content are required' }, { status: 400 })
+    const parsed = createSocialPostSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { platform, content, mediaUrls, scheduledAt, status } = parsed.data
 
     const post = await prisma.socialPost.create({
       data: {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createReviewCommentSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ reviewId: string }> }) {
@@ -34,11 +35,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { reviewId } = await params
     const body = await request.json()
-    const { content, timestamp } = body
-
-    if (!content) {
-      return NextResponse.json({ error: 'content is required' }, { status: 400 })
+    const parsed = createReviewCommentSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { content, timestamp } = parsed.data
 
     const review = await prisma.assetReview.findUnique({ where: { id: reviewId } })
     if (!review) {

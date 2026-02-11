@@ -14,6 +14,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { KanbanBoard } from '@/components/projects/KanbanBoard'
+import { GanttChart } from '@/components/projects/GanttChart'
 
 interface Task {
   id: string
@@ -123,6 +125,34 @@ export default function ProjectDetailPage() {
     setTaskModalOpen(true)
   }
 
+  const COLUMN_STATUS_MAP: Record<string, string> = {
+    todo: 'TODO',
+    in_progress: 'IN_PROGRESS',
+    in_review: 'IN_REVIEW',
+    done: 'DONE',
+  }
+
+  async function handleColumnChange(taskId: string, newColumn: string) {
+    // Optimistic update
+    setProject((prev) => {
+      if (!prev) return prev
+      const tasks = prev.tasks.map((t) =>
+        t.id === taskId ? { ...t, boardColumn: newColumn, status: COLUMN_STATUS_MAP[newColumn] || t.status } : t
+      )
+      return { ...prev, tasks }
+    })
+
+    // PATCH API
+    await fetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        boardColumn: newColumn,
+        status: COLUMN_STATUS_MAP[newColumn] || undefined,
+      }),
+    })
+  }
+
   async function handleAddTask(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
@@ -185,51 +215,11 @@ export default function ProjectDetailPage() {
   }
 
   const boardTab = (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {BOARD_COLUMNS.map((col) => (
-        <div key={col.key} className="flex-shrink-0 w-72 bg-secondary/30 rounded-lg p-3">
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-medium text-sm">{col.label}</span>
-            <span className="text-xs text-muted bg-secondary rounded-full px-2 py-0.5">
-              {tasksByColumn[col.key].length}
-            </span>
-          </div>
-          <div className="space-y-2 mb-2">
-            {tasksByColumn[col.key].map((task) => (
-              <div key={task.id} className="bg-card rounded-md border border-border p-3">
-                <p className="font-medium text-sm mb-2">{task.title}</p>
-                <div className="flex items-center justify-between">
-                  <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} className="text-[10px]">
-                    {task.priority}
-                  </Badge>
-                  <div className="flex items-center gap-2">
-                    {task.dueDate && (
-                      <span className="text-[10px] text-muted">
-                        {new Date(task.dueDate).toLocaleDateString('it-IT')}
-                      </span>
-                    )}
-                    {task.assignee && (
-                      <Avatar
-                        name={`${task.assignee.firstName} ${task.assignee.lastName}`}
-                        src={task.assignee.avatarUrl}
-                        size="sm"
-                        className="!h-6 !w-6 !text-[10px]"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={() => openAddTask(col.key)}
-            className="w-full text-sm text-muted hover:text-foreground hover:bg-secondary rounded-md py-2 transition-colors"
-          >
-            + Aggiungi task
-          </button>
-        </div>
-      ))}
-    </div>
+    <KanbanBoard
+      tasksByColumn={tasksByColumn}
+      onColumnChange={handleColumnChange}
+      onAddTask={openAddTask}
+    />
   )
 
   const listTab = (
@@ -273,38 +263,14 @@ export default function ProjectDetailPage() {
 
   const milestonesTab = (
     <div>
-      {(project.milestones || []).length === 0 ? (
-        <p className="text-sm text-muted text-center py-8">Nessuna milestone definita.</p>
+      {allTasks.length === 0 && (project.milestones || []).length === 0 ? (
+        <p className="text-sm text-muted text-center py-8">Nessun task o milestone con date definite.</p>
       ) : (
-        <div className="space-y-4">
-          {project.milestones.map((m) => (
-            <Card key={m.id}>
-              <CardContent>
-                <div className="flex items-center justify-between mb-3">
-                  <CardTitle>{m.name}</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={m.status === 'completed' ? 'success' : 'default'}>{m.status}</Badge>
-                    {m.dueDate && (
-                      <span className="text-xs text-muted">
-                        {new Date(m.dueDate).toLocaleDateString('it-IT')}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {m.tasks.length > 0 && (
-                  <ul className="space-y-1">
-                    {m.tasks.map((t) => (
-                      <li key={t.id} className="flex items-center gap-2 text-sm text-muted">
-                        <CheckCircle2 className={`h-4 w-4 ${t.status === 'DONE' ? 'text-green-500' : 'text-muted/40'}`} />
-                        <span className={t.status === 'DONE' ? 'line-through' : ''}>{t.title}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <GanttChart
+          tasks={allTasks}
+          milestones={project.milestones || []}
+          onTaskClick={() => {}}
+        />
       )}
     </div>
   )

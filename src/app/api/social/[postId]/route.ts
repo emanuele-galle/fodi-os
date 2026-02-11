@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { updateSocialPostSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ postId: string }> }) {
@@ -10,7 +11,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { postId } = await params
     const body = await request.json()
-    const { content, scheduledAt, status, mediaUrls } = body
+    const parsed = updateSocialPostSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+    const { content, scheduledAt, status, mediaUrls } = parsed.data
 
     const data: Record<string, unknown> = {}
     if (content !== undefined) data.content = content

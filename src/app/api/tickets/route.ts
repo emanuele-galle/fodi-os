@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createTicketSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -62,11 +63,14 @@ export async function POST(request: NextRequest) {
     requirePermission(role, 'support', 'write')
 
     const body = await request.json()
-    const { clientId, projectId, subject, description, priority, category } = body
-
-    if (!clientId || !subject || !description) {
-      return NextResponse.json({ error: 'clientId, subject, and description are required' }, { status: 400 })
+    const parsed = createTicketSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { clientId, projectId, subject, description, priority, category } = parsed.data
 
     // Generate ticket number: T-YYYY-NNN
     const year = new Date().getFullYear()

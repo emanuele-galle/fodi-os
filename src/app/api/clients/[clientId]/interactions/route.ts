@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createInteractionSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ clientId: string }> }) {
@@ -35,11 +36,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { clientId } = await params
     const body = await request.json()
-    const { type, subject, content, contactId, date } = body
-
-    if (!type || !subject) {
-      return NextResponse.json({ error: 'type and subject are required' }, { status: 400 })
+    const parsed = createInteractionSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { type, subject, content, contactId, date } = parsed.data
 
     const interaction = await prisma.interaction.create({
       data: {

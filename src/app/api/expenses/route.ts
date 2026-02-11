@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createExpenseSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -55,11 +56,14 @@ export async function POST(request: NextRequest) {
     requirePermission(role, 'erp', 'write')
 
     const body = await request.json()
-    const { category, description, amount, date, invoiceId, receipt } = body
-
-    if (!category || !description || amount === undefined || !date) {
-      return NextResponse.json({ error: 'category, description, amount, and date are required' }, { status: 400 })
+    const parsed = createExpenseSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { category, description, amount, date, invoiceId, receipt } = parsed.data
 
     const expense = await prisma.expense.create({
       data: {

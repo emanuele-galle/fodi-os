@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createTimeEntrySchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -59,11 +60,14 @@ export async function POST(request: NextRequest) {
 
     const userId = request.headers.get('x-user-id')!
     const body = await request.json()
-    const { taskId, projectId, date, hours, description, billable, hourlyRate } = body
-
-    if (!date || !hours) {
-      return NextResponse.json({ error: 'date and hours are required' }, { status: 400 })
+    const parsed = createTimeEntrySchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { taskId, projectId, date, hours, description, billable, hourlyRate } = parsed.data
 
     const entry = await prisma.timeEntry.create({
       data: {

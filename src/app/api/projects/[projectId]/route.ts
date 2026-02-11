@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { updateProjectSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
@@ -46,7 +47,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { projectId } = await params
     const body = await request.json()
-    const { name, description, status, priority, startDate, endDate, deadline, budgetAmount, budgetHours, color, clientId } = body
+    const parsed = updateProjectSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+    const { name, description, status, priority, startDate, endDate, deadline, budgetAmount, budgetHours, color, clientId } = parsed.data
 
     const project = await prisma.project.update({
       where: { id: projectId },

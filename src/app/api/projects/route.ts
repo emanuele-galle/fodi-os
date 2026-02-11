@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { slugify } from '@/lib/utils'
+import { createProjectSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -57,11 +58,14 @@ export async function POST(request: NextRequest) {
     requirePermission(role, 'pm', 'write')
 
     const body = await request.json()
-    const { workspaceId, clientId, name, description, priority, startDate, endDate, deadline, budgetAmount, budgetHours, color } = body
-
-    if (!workspaceId || !name) {
-      return NextResponse.json({ error: 'workspaceId and name are required' }, { status: 400 })
+    const parsed = createProjectSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { workspaceId, clientId, name, description, priority, startDate, endDate, deadline, budgetAmount, budgetHours, color } = parsed.data
 
     const slug = slugify(name)
 

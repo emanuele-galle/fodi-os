@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { FileUpload } from '@/components/shared/FileUpload'
 
 interface Asset {
   id: string
@@ -63,7 +64,6 @@ export default function AssetsPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [detailAsset, setDetailAsset] = useState<Asset | null>(null)
-  const [submitting, setSubmitting] = useState(false)
 
   const fetchAssets = useCallback(async () => {
     setLoading(true)
@@ -84,37 +84,6 @@ export default function AssetsPage() {
   useEffect(() => {
     fetchAssets()
   }, [fetchAssets])
-
-  async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setSubmitting(true)
-    const form = new FormData(e.currentTarget)
-    const body: Record<string, unknown> = {}
-    form.forEach((v, k) => {
-      if (typeof v === 'string' && v.trim()) {
-        if (k === 'tags') {
-          body[k] = v.split(',').map((t) => t.trim()).filter(Boolean)
-        } else if (k === 'fileSize') {
-          body[k] = parseInt(v, 10) || 0
-        } else {
-          body[k] = v.trim()
-        }
-      }
-    })
-    try {
-      const res = await fetch('/api/assets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (res.ok) {
-        setModalOpen(false)
-        fetchAssets()
-      }
-    } finally {
-      setSubmitting(false)
-    }
-  }
 
   return (
     <div>
@@ -286,38 +255,14 @@ export default function AssetsPage() {
 
       {/* Upload Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Carica Asset" size="lg">
-        <form onSubmit={handleUpload} className="space-y-4">
-          <Input name="fileName" label="Nome File *" required />
-          <Input name="fileUrl" label="URL File (S3) *" required placeholder="https://..." />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input name="fileSize" label="Dimensione (bytes)" type="number" />
-            <Input name="mimeType" label="Tipo MIME *" required placeholder="image/png" />
-          </div>
-          <Select name="category" label="Categoria" options={[
-            { value: 'image', label: 'Immagine' },
-            { value: 'video', label: 'Video' },
-            { value: 'audio', label: 'Audio' },
-            { value: 'document', label: 'Documento' },
-            { value: 'other', label: 'Altro' },
-          ]} />
-          <Input name="tags" label="Tag (separati da virgola)" placeholder="brand, logo, social" />
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-foreground">Descrizione</label>
-            <textarea
-              name="description"
-              rows={3}
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
-              Annulla
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Caricamento...' : 'Carica Asset'}
-            </Button>
-          </div>
-        </form>
+        <FileUpload
+          onUpload={() => {
+            fetchAssets()
+            setModalOpen(false)
+          }}
+          maxFiles={10}
+          maxSize={50 * 1024 * 1024}
+        />
       </Modal>
     </div>
   )

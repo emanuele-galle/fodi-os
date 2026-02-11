@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { updateQuoteSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ quoteId: string }> }) {
@@ -39,7 +40,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { quoteId } = await params
     const body = await request.json()
-    const { title, status, taxRate, discount, notes, validUntil, lineItems, projectId } = body
+    const parsed = updateQuoteSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+    const { title, status, taxRate, discount, notes, validUntil, lineItems, projectId } = parsed.data
 
     const data: Record<string, unknown> = {}
     if (title !== undefined) data.title = title

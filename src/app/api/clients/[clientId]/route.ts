@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { updateClientSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ clientId: string }> }) {
@@ -41,8 +42,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { clientId } = await params
     const body = await request.json()
-
-    const { companyName, vatNumber, fiscalCode, pec, sdi, website, industry, source, status, notes, tags } = body
+    const parsed = updateClientSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+    const { companyName, vatNumber, fiscalCode, pec, sdi, website, industry, source, status, notes, tags } = parsed.data
 
     const client = await prisma.client.update({
       where: { id: clientId },

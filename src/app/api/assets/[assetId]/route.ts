@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { deleteFile } from '@/lib/s3'
+import { updateAssetSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ assetId: string }> }) {
@@ -46,7 +47,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { assetId } = await params
     const body = await request.json()
-    const { tags, category, description } = body
+    const parsed = updateAssetSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+    const { tags, category, description } = parsed.data
 
     const asset = await prisma.asset.update({
       where: { id: assetId },

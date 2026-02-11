@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createAssetSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -60,11 +61,14 @@ export async function POST(request: NextRequest) {
     requirePermission(role, 'content', 'write')
 
     const body = await request.json()
-    const { projectId, fileName, fileUrl, fileSize, mimeType, category, tags, description } = body
-
-    if (!fileName || !fileUrl || fileSize === undefined || !mimeType) {
-      return NextResponse.json({ error: 'fileName, fileUrl, fileSize, and mimeType are required' }, { status: 400 })
+    const parsed = createAssetSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { projectId, fileName, fileUrl, fileSize, mimeType, category, tags, description } = parsed.data
 
     const asset = await prisma.asset.create({
       data: {

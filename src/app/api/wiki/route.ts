@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { slugify } from '@/lib/utils'
+import { createWikiPageSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -48,11 +49,14 @@ export async function POST(request: NextRequest) {
     requirePermission(role, 'kb', 'write')
 
     const body = await request.json()
-    const { parentId, title, content, contentText, category, icon } = body
-
-    if (!title) {
-      return NextResponse.json({ error: 'title is required' }, { status: 400 })
+    const parsed = createWikiPageSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { parentId, title, content, contentText, category, icon } = parsed.data
 
     const slug = slugify(title)
 

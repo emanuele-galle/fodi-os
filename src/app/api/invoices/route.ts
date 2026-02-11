@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createInvoiceSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -56,11 +57,14 @@ export async function POST(request: NextRequest) {
 
     const userId = request.headers.get('x-user-id')!
     const body = await request.json()
-    const { clientId, projectId, quoteId, title, lineItems: bodyLineItems, taxRate, discount, notes, dueDate } = body
-
-    if (!clientId || !title) {
-      return NextResponse.json({ error: 'clientId and title are required' }, { status: 400 })
+    const parsed = createInvoiceSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { clientId, projectId, quoteId, title, lineItems: bodyLineItems, taxRate, discount, notes, dueDate } = parsed.data
 
     // Generate invoice number F-YYYY-NNN
     const year = new Date().getFullYear()

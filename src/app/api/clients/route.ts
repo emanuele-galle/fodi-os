@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { slugify } from '@/lib/utils'
+import { createClientSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -54,11 +55,14 @@ export async function POST(request: NextRequest) {
     requirePermission(role, 'crm', 'write')
 
     const body = await request.json()
-    const { companyName, vatNumber, pec, sdi, website, industry, source, status, notes, tags } = body
-
-    if (!companyName) {
-      return NextResponse.json({ error: 'companyName is required' }, { status: 400 })
+    const parsed = createClientSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { companyName, vatNumber, pec, sdi, website, industry, source, status, notes, tags } = parsed.data
 
     const slug = slugify(companyName)
 

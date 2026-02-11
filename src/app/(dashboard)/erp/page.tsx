@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
+import { MarginChart } from '@/components/erp/MarginChart'
 
 export default function ErpPage() {
   const router = useRouter()
@@ -112,6 +113,16 @@ export default function ErpPage() {
           )
         })}
       </div>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Margine per Progetto</CardTitle>
+          <CardDescription>Confronto ricavi vs costi per ciascun progetto</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MarginChart />
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { markNotificationsReadSchema } from '@/lib/validation'
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,7 +33,14 @@ export async function PATCH(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id')!
     const body = await request.json()
-    const { ids, all } = body
+    const parsed = markNotificationsReadSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+    const { ids, all } = parsed.data
 
     if (all) {
       await prisma.notification.updateMany({
@@ -44,8 +52,6 @@ export async function PATCH(request: NextRequest) {
         where: { id: { in: ids }, userId },
         data: { isRead: true },
       })
-    } else {
-      return NextResponse.json({ error: 'ids or all is required' }, { status: 400 })
     }
 
     return NextResponse.json({ success: true })

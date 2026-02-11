@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { BookOpen, Plus, Search, ChevronRight, FolderOpen, FileText } from 'lucide-react'
+import { BookOpen, Plus, Search, ChevronRight, FolderOpen, FileText, Edit } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { RichTextEditor } from '@/components/shared/RichTextEditor'
 
 interface WikiPage {
   id: string
@@ -111,6 +112,10 @@ export default function KnowledgeBasePage() {
   const [loadingPage, setLoadingPage] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [editorContent, setEditorContent] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [editContent, setEditContent] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
 
   const fetchPages = useCallback(async () => {
     setLoading(true)
@@ -177,6 +182,7 @@ export default function KnowledgeBasePage() {
     form.forEach((v, k) => {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
     })
+    if (editorContent) body.content = editorContent
     try {
       const res = await fetch('/api/wiki', {
         method: 'POST',
@@ -185,10 +191,37 @@ export default function KnowledgeBasePage() {
       })
       if (res.ok) {
         setModalOpen(false)
+        setEditorContent('')
         fetchPages()
       }
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  function startEditing() {
+    if (!selectedPage) return
+    setEditContent(selectedPage.content || '')
+    setEditing(true)
+  }
+
+  async function saveEdit() {
+    if (!selectedPage) return
+    setSavingEdit(true)
+    try {
+      const res = await fetch(`/api/wiki/${selectedPage.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: editContent }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setSelectedPage(updated)
+        setEditing(false)
+        fetchPages()
+      }
+    } finally {
+      setSavingEdit(false)
     }
   }
 
@@ -292,16 +325,36 @@ export default function KnowledgeBasePage() {
                 </Badge>
               </div>
 
-              <div
-                className="prose prose-sm max-w-none text-foreground"
-                dangerouslySetInnerHTML={{ __html: selectedPage.content || '<p class="text-muted">Nessun contenuto.</p>' }}
-              />
-
-              <div className="mt-6 pt-4 border-t border-border">
-                <Button variant="outline" size="sm">
-                  Modifica
-                </Button>
-              </div>
+              {editing ? (
+                <div className="space-y-4">
+                  <RichTextEditor
+                    content={editContent}
+                    onChange={setEditContent}
+                    placeholder="Scrivi il contenuto della pagina..."
+                  />
+                  <div className="flex items-center gap-3">
+                    <Button size="sm" onClick={saveEdit} disabled={savingEdit}>
+                      {savingEdit ? 'Salvataggio...' : 'Salva'}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setEditing(false)}>
+                      Annulla
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div
+                    className="prose prose-sm max-w-none text-foreground"
+                    dangerouslySetInnerHTML={{ __html: selectedPage.content || '<p class="text-muted">Nessun contenuto.</p>' }}
+                  />
+                  <div className="mt-6 pt-4 border-t border-border">
+                    <Button variant="outline" size="sm" onClick={startEditing}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Modifica
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center">
@@ -322,10 +375,9 @@ export default function KnowledgeBasePage() {
           <Select name="category" label="Categoria *" options={CATEGORY_OPTIONS} />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-foreground">Contenuto</label>
-            <textarea
-              name="content"
-              rows={8}
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            <RichTextEditor
+              content={editorContent}
+              onChange={setEditorContent}
               placeholder="Scrivi il contenuto della pagina..."
             />
           </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createTaskSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
@@ -47,11 +48,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { projectId } = await params
     const userId = request.headers.get('x-user-id')!
     const body = await request.json()
-    const { title, description, milestoneId, assigneeId, priority, boardColumn, dueDate, estimatedHours, tags } = body
-
-    if (!title) {
-      return NextResponse.json({ error: 'title is required' }, { status: 400 })
+    const parsed = createTaskSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { title, description, milestoneId, assigneeId, priority, boardColumn, dueDate, estimatedHours, tags } = parsed.data
 
     const task = await prisma.task.create({
       data: {

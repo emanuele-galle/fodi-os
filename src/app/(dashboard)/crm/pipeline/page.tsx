@@ -1,11 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Badge } from '@/components/ui/Badge'
-import { Avatar } from '@/components/ui/Avatar'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { formatCurrency } from '@/lib/utils'
+import { PipelineKanban } from '@/components/crm/PipelineKanban'
 
 interface Client {
   id: string
@@ -15,16 +12,9 @@ interface Client {
   totalRevenue: string
 }
 
-const COLUMNS = [
-  { status: 'LEAD', label: 'Lead', variant: 'default' as const },
-  { status: 'PROSPECT', label: 'Prospect', variant: 'warning' as const },
-  { status: 'ACTIVE', label: 'Attivo', variant: 'success' as const },
-  { status: 'INACTIVE', label: 'Inattivo', variant: 'outline' as const },
-  { status: 'CHURNED', label: 'Perso', variant: 'destructive' as const },
-]
+const STATUSES = ['LEAD', 'PROSPECT', 'ACTIVE', 'INACTIVE', 'CHURNED']
 
 export default function PipelinePage() {
-  const router = useRouter()
   const [clientsByStatus, setClientsByStatus] = useState<Record<string, Client[]>>({})
   const [loading, setLoading] = useState(true)
 
@@ -35,7 +25,7 @@ export default function PipelinePage() {
         if (res.ok) {
           const data = await res.json()
           const grouped: Record<string, Client[]> = {}
-          for (const col of COLUMNS) grouped[col.status] = []
+          for (const s of STATUSES) grouped[s] = []
           for (const client of data.items || []) {
             if (grouped[client.status]) {
               grouped[client.status].push(client)
@@ -50,6 +40,40 @@ export default function PipelinePage() {
     load()
   }, [])
 
+  async function handleStatusChange(clientId: string, newStatus: string) {
+    // Optimistic update
+    setClientsByStatus((prev) => {
+      const updated = { ...prev }
+      let movedClient: Client | undefined
+
+      // Remove from old column
+      for (const status of STATUSES) {
+        const idx = updated[status]?.findIndex((c) => c.id === clientId)
+        if (idx !== undefined && idx >= 0) {
+          movedClient = updated[status][idx]
+          updated[status] = [...updated[status]]
+          updated[status].splice(idx, 1)
+          break
+        }
+      }
+
+      // Add to new column
+      if (movedClient) {
+        movedClient = { ...movedClient, status: newStatus }
+        updated[newStatus] = [...(updated[newStatus] || []), movedClient]
+      }
+
+      return updated
+    })
+
+    // PATCH API
+    await fetch(`/api/clients/${clientId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    })
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -58,8 +82,8 @@ export default function PipelinePage() {
 
       {loading ? (
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {COLUMNS.map((col) => (
-            <div key={col.status} className="flex-shrink-0 w-64">
+          {STATUSES.map((s) => (
+            <div key={s} className="flex-shrink-0 w-64">
               <Skeleton className="h-8 w-full mb-3" />
               <Skeleton className="h-24 w-full mb-2" />
               <Skeleton className="h-24 w-full mb-2" />
@@ -67,50 +91,10 @@ export default function PipelinePage() {
           ))}
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {COLUMNS.map((col) => {
-            const clients = clientsByStatus[col.status] || []
-            return (
-              <div
-                key={col.status}
-                className="flex-shrink-0 w-72 bg-secondary/30 rounded-lg p-3"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={col.variant}>{col.label}</Badge>
-                  </div>
-                  <span className="text-xs text-muted font-medium bg-secondary rounded-full px-2 py-0.5">
-                    {clients.length}
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  {clients.map((client) => (
-                    <div
-                      key={client.id}
-                      onClick={() => router.push(`/crm/${client.id}`)}
-                      className="bg-card rounded-md border border-border p-3 cursor-pointer hover:shadow-sm transition-shadow"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Avatar name={client.companyName} size="sm" />
-                        <span className="font-medium text-sm truncate">
-                          {client.companyName}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-muted">
-                        <span>{client.industry || 'N/D'}</span>
-                        <span className="font-medium">{formatCurrency(client.totalRevenue)}</span>
-                      </div>
-                    </div>
-                  ))}
-                  {clients.length === 0 && (
-                    <p className="text-xs text-muted text-center py-4">Nessun cliente</p>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <PipelineKanban
+          clientsByStatus={clientsByStatus}
+          onStatusChange={handleStatusChange}
+        />
       )}
     </div>
   )

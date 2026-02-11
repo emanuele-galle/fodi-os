@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { createQuoteSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -56,11 +57,14 @@ export async function POST(request: NextRequest) {
 
     const userId = request.headers.get('x-user-id')!
     const body = await request.json()
-    const { clientId, projectId, title, lineItems, taxRate, discount, notes, validUntil } = body
-
-    if (!clientId || !title || !lineItems?.length) {
-      return NextResponse.json({ error: 'clientId, title, and lineItems are required' }, { status: 400 })
+    const parsed = createQuoteSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     }
+    const { clientId, projectId, title, lineItems, taxRate, discount, notes, validUntil } = parsed.data
 
     // Generate quote number Q-YYYY-NNN
     const year = new Date().getFullYear()
