@@ -129,11 +129,19 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
     if (!taskId || saving) return
     setSaving(true)
     try {
+      const STATUS_TO_COLUMN: Record<string, string> = {
+        TODO: 'todo',
+        IN_PROGRESS: 'in_progress',
+        IN_REVIEW: 'in_review',
+        DONE: 'done',
+        CANCELLED: 'cancelled',
+      }
       const body: Record<string, unknown> = {
         title,
         description: description || null,
         status,
         priority,
+        boardColumn: STATUS_TO_COLUMN[status] || status.toLowerCase(),
         assigneeId: assigneeId || null,
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
       }
@@ -224,7 +232,7 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
               onChange={(e) => setStatus(e.target.value)}
             />
             <Select
-              label="Priorita"
+              label="Priorità"
               options={PRIORITY_OPTIONS}
               value={priority}
               onChange={(e) => setPriority(e.target.value)}

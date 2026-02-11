@@ -50,7 +50,7 @@ const STATUS_OPTIONS = [
 ]
 
 const PRIORITY_OPTIONS = [
-  { value: '', label: 'Tutte le priorita' },
+  { value: '', label: 'Tutte le priorità' },
   { value: 'LOW', label: 'Bassa' },
   { value: 'MEDIUM', label: 'Media' },
   { value: 'HIGH', label: 'Alta' },

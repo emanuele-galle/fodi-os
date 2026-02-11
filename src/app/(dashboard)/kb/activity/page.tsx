@@ -31,7 +31,7 @@ export default function KBActivityPage() {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold mb-6">Attivita Recenti</h1>
+      <h1 className="text-2xl font-bold mb-6">Attività Recenti</h1>
 
       {loading ? (
         <div className="space-y-3">
@@ -48,7 +48,7 @@ export default function KBActivityPage() {
       ) : items.length === 0 ? (
         <EmptyState
           icon={Activity}
-          title="Nessuna attivita"
+          title="Nessuna attività"
           description="Le modifiche e i commenti alle pagine della Knowledge Base appariranno qui."
         />
       ) : (

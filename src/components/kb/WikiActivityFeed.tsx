@@ -2,6 +2,7 @@
 
 import { Edit, MessageSquare } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
+import { timeAgo } from '@/lib/utils'
 
 export interface ActivityItem {
   type: 'edit' | 'comment'
@@ -18,21 +19,10 @@ export interface ActivityItem {
   createdAt: string
 }
 
-function timeAgo(date: string): string {
-  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
-  if (seconds < 60) return 'ora'
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m fa`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h fa`
-  const days = Math.floor(hours / 24)
-  return `${days}g fa`
-}
-
 export function WikiActivityFeed({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) {
     return (
-      <p className="text-sm text-muted text-center py-8">Nessuna attivita recente.</p>
+      <p className="text-sm text-muted text-center py-8">Nessuna attività recente.</p>
     )
   }
 

@@ -16,6 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       include: {
         assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
         creator: { select: { id: true, firstName: true, lastName: true } },
+        project: { select: { id: true, name: true } },
         milestone: { select: { id: true, name: true } },
         subtasks: {
           orderBy: { sortOrder: 'asc' },

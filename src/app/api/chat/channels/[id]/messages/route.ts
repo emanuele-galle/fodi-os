@@ -27,11 +27,17 @@ export async function GET(
     const cursor = searchParams.get('cursor')
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')))
 
+    let cursorDate: Date | undefined
+    if (cursor) {
+      const cursorMsg = await prisma.chatMessage.findUnique({ where: { id: cursor }, select: { createdAt: true } })
+      if (cursorMsg) cursorDate = cursorMsg.createdAt
+    }
+
     const messages = await prisma.chatMessage.findMany({
       where: {
         channelId,
         deletedAt: null,
-        ...(cursor && { createdAt: { lt: (await prisma.chatMessage.findUnique({ where: { id: cursor } }))?.createdAt } }),
+        ...(cursorDate && { createdAt: { lt: cursorDate } }),
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
