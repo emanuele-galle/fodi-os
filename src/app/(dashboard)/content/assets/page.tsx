@@ -172,7 +172,7 @@ function MinioAssetsTab() {
                 className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
                 onClick={() => setDetailAsset(asset)}
               >
-                <div className="h-32 bg-secondary flex items-center justify-center overflow-hidden">
+                <div className="h-32 bg-secondary/50 flex items-center justify-center overflow-hidden">
                   {isImage ? (
                     <img src={asset.fileUrl} alt={asset.fileName} className="w-full h-full object-cover" />
                   ) : (
@@ -475,7 +475,7 @@ export default function AssetsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Asset Library</h1>
+        <h1 className="text-2xl font-semibold">Asset Library</h1>
       </div>
 
       {/* Tab navigation */}

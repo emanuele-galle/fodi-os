@@ -116,7 +116,7 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
                     className={cn(
                       'flex items-center gap-3 px-4 py-3 text-sm transition-colors touch-manipulation',
                       isActive
-                        ? 'text-[#C4A052] bg-gradient-to-r from-primary/10 to-transparent font-medium'
+                        ? 'text-primary bg-primary/10 font-medium'
                         : 'text-foreground hover:bg-secondary/50'
                     )}
                   >
@@ -142,10 +142,10 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
                 onClick={() => handleTabClick(tab.href)}
                 className={cn(
                   'flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[44px] transition-all duration-200 touch-manipulation',
-                  active ? 'text-[#C4A052]' : 'text-muted'
+                  active ? 'text-primary' : 'text-muted'
                 )}
               >
-                <div className={cn('relative p-1 rounded-lg transition-all duration-200', active && 'bg-[#C4A052]/10')}>
+                <div className={cn('relative p-1 rounded-lg transition-all duration-200', active && 'bg-primary/10')}>
                   <Icon className="h-5 w-5" />
                   {tab.href === '/chat' && unreadChat > 0 && (
                     <span className="absolute -top-1 -right-1.5 h-4 min-w-4 px-0.5 flex items-center justify-center text-[10px] font-bold bg-destructive text-white rounded-full">

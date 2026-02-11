@@ -75,7 +75,7 @@ export default function InvoicesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Fatture</h1>
+        <h1 className="text-2xl font-semibold">Fatture</h1>
         <Button onClick={() => router.push('/erp/invoices/new')}>
           <Plus className="h-4 w-4 mr-2" />
           Nuova Fattura
@@ -142,14 +142,14 @@ export default function InvoicesPage() {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted">
-                  <th className="pb-3 pr-4 font-medium">Numero</th>
-                  <th className="pb-3 pr-4 font-medium">Titolo</th>
-                  <th className="pb-3 pr-4 font-medium">Cliente</th>
-                  <th className="pb-3 pr-4 font-medium">Stato</th>
-                  <th className="pb-3 pr-4 font-medium text-right">Totale</th>
-                  <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Scadenza</th>
-                  <th className="pb-3 font-medium hidden lg:table-cell">Pagata il</th>
+                <tr className="border-b border-border text-left text-muted bg-secondary/30">
+                  <th className="py-3 pr-4 pl-3 font-medium">Numero</th>
+                  <th className="py-3 pr-4 font-medium">Titolo</th>
+                  <th className="py-3 pr-4 font-medium">Cliente</th>
+                  <th className="py-3 pr-4 font-medium">Stato</th>
+                  <th className="py-3 pr-4 font-medium text-right">Totale</th>
+                  <th className="py-3 pr-4 font-medium hidden lg:table-cell">Scadenza</th>
+                  <th className="py-3 font-medium hidden lg:table-cell">Pagata il</th>
                 </tr>
               </thead>
               <tbody>
@@ -157,7 +157,7 @@ export default function InvoicesPage() {
                   <tr
                     key={inv.id}
                     onClick={() => router.push(`/erp/invoices/${inv.id}`)}
-                    className="border-b border-border hover:bg-secondary/50 cursor-pointer transition-colors"
+                    className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 cursor-pointer transition-colors"
                   >
                     <td className="py-3 pr-4 font-medium">{inv.number}</td>
                     <td className="py-3 pr-4">{inv.title}</td>

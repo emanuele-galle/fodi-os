@@ -168,7 +168,7 @@ export default function SupportPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Supporto</h1>
+        <h1 className="text-2xl font-semibold">Supporto</h1>
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Ticket
@@ -225,13 +225,13 @@ export default function SupportPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                  <th className="pb-3 pr-4 font-medium">#</th>
-                  <th className="pb-3 pr-4 font-medium">Oggetto</th>
-                  <th className="pb-3 pr-4 font-medium hidden md:table-cell">Cliente</th>
-                  <th className="pb-3 pr-4 font-medium">Stato</th>
-                  <th className="pb-3 pr-4 font-medium">Priorità</th>
-                  <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Assegnato a</th>
-                  <th className="pb-3 font-medium hidden lg:table-cell">Data</th>
+                  <th className="py-3 pr-4 pl-3 font-medium">#</th>
+                  <th className="py-3 pr-4 font-medium">Oggetto</th>
+                  <th className="py-3 pr-4 font-medium hidden md:table-cell">Cliente</th>
+                  <th className="py-3 pr-4 font-medium">Stato</th>
+                  <th className="py-3 pr-4 font-medium">Priorita</th>
+                  <th className="py-3 pr-4 font-medium hidden lg:table-cell">Assegnato a</th>
+                  <th className="py-3 font-medium hidden lg:table-cell">Data</th>
                 </tr>
               </thead>
               <tbody>

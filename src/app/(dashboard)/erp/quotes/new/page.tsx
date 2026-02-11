@@ -111,7 +111,7 @@ export default function NewQuotePage() {
         Torna ai preventivi
       </button>
 
-      <h1 className="text-2xl font-bold mb-6">Nuovo Preventivo</h1>
+      <h1 className="text-2xl font-semibold mb-6">Nuovo Preventivo</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>

@@ -72,7 +72,7 @@ export default function SystemStatsPage() {
   if (loading) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-6">Sistema</h1>
+        <h1 className="text-2xl font-semibold mb-6">Sistema</h1>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
         </div>
@@ -87,7 +87,7 @@ export default function SystemStatsPage() {
   if (error || !stats) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-6">Sistema</h1>
+        <h1 className="text-2xl font-semibold mb-6">Sistema</h1>
         <Card>
           <CardContent>
             <p className="text-sm text-destructive">{error || 'Errore nel caricamento dei dati.'}</p>
@@ -102,13 +102,13 @@ export default function SystemStatsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Sistema</h1>
+      <h1 className="text-2xl font-semibold mb-6">Sistema</h1>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="hover:scale-[1.02] transition-all duration-200">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-stagger">
+        <Card className="shadow-lift">
           <CardContent className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-gradient-to-br from-secondary to-secondary/60 text-blue-500">
+            <div className="p-3 rounded-full bg-secondary text-primary">
               <Users className="h-6 w-6" />
             </div>
             <div>
@@ -119,9 +119,9 @@ export default function SystemStatsPage() {
           </CardContent>
         </Card>
 
-        <Card className="hover:scale-[1.02] transition-all duration-200">
+        <Card className="shadow-lift">
           <CardContent className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-gradient-to-br from-secondary to-secondary/60 text-green-500">
+            <div className="p-3 rounded-full bg-secondary text-primary">
               <Briefcase className="h-6 w-6" />
             </div>
             <div>
@@ -132,9 +132,9 @@ export default function SystemStatsPage() {
           </CardContent>
         </Card>
 
-        <Card className="hover:scale-[1.02] transition-all duration-200">
+        <Card className="shadow-lift">
           <CardContent className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-gradient-to-br from-secondary to-secondary/60 text-purple-500">
+            <div className="p-3 rounded-full bg-secondary text-primary">
               <FolderKanban className="h-6 w-6" />
             </div>
             <div>

@@ -17,7 +17,7 @@ export function Card({
         variant === 'glass'
           ? 'glass-card'
           : 'bg-card shadow-[var(--shadow-md)]',
-        'hover:shadow-[var(--shadow-lg)] hover:-translate-y-0.5 hover:border-primary/20',
+        'hover:border-primary/20',
         className
       )}
       {...props}

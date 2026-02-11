@@ -97,19 +97,21 @@ export default function ExpensesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Spese</h1>
+        <h1 className="text-2xl font-semibold">Spese</h1>
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuova Spesa
         </Button>
       </div>
 
-      <Card className="mb-6">
-        <CardContent className="flex items-center gap-3">
-          <Receipt className="h-5 w-5 text-primary" />
+      <Card className="mb-6 shadow-lift">
+        <CardContent className="flex items-center gap-4">
+          <div className="p-3 rounded-full bg-secondary text-primary">
+            <Receipt className="h-5 w-5" />
+          </div>
           <div>
             <p className="text-xs text-muted">Totale Spese</p>
-            <p className="text-lg font-bold">{formatCurrency(totalAmount)}</p>
+            <p className="text-xl font-bold">{formatCurrency(totalAmount)}</p>
           </div>
         </CardContent>
       </Card>
@@ -158,16 +160,16 @@ export default function ExpensesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-muted">
-                <th className="pb-3 pr-4 font-medium">Data</th>
-                <th className="pb-3 pr-4 font-medium">Categoria</th>
-                <th className="pb-3 pr-4 font-medium">Descrizione</th>
-                <th className="pb-3 font-medium text-right">Importo</th>
+              <tr className="border-b border-border text-left text-muted bg-secondary/30">
+                <th className="py-3 pr-4 pl-3 font-medium">Data</th>
+                <th className="py-3 pr-4 font-medium">Categoria</th>
+                <th className="py-3 pr-4 font-medium">Descrizione</th>
+                <th className="py-3 font-medium text-right">Importo</th>
               </tr>
             </thead>
             <tbody>
               {expenses.map((exp) => (
-                <tr key={exp.id} className="border-b border-border">
+                <tr key={exp.id} className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 transition-colors">
                   <td className="py-3 pr-4">{new Date(exp.date).toLocaleDateString('it-IT')}</td>
                   <td className="py-3 pr-4">
                     <Badge variant={CATEGORY_BADGE[exp.category] || 'default'}>

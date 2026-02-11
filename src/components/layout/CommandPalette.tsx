@@ -100,7 +100,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 animate-fade-in" onClick={onClose}>
       <div
-        className="max-w-lg mx-auto mt-[20vh] bg-card rounded-xl border border-border shadow-2xl overflow-hidden animate-scale-in"
+        className="max-w-lg mx-auto mt-[20vh] bg-card rounded-xl border border-border shadow-[var(--shadow-xl)] overflow-hidden animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}

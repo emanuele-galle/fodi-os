@@ -69,9 +69,11 @@ export default function ContentPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Contenuti</h1>
-        <p className="text-sm text-muted mt-1">Gestisci asset, review e social media</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Contenuti</h1>
+          <p className="text-sm text-muted mt-1">Gestisci asset, review e social media</p>
+        </div>
       </div>
 
       {/* Section Cards */}

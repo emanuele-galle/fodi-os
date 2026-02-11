@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
-import { Card } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -88,17 +88,17 @@ const PRIORITY_LABELS: Record<string, string> = {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  LOW: '#64748B',
-  MEDIUM: '#C4A052',
-  HIGH: '#F59E0B',
-  URGENT: '#EF4444',
+  LOW: 'var(--color-muted)',
+  MEDIUM: 'var(--color-primary)',
+  HIGH: 'var(--color-warning)',
+  URGENT: 'var(--color-destructive)',
 }
 
 const KANBAN_COLUMNS = [
-  { key: 'TODO', label: 'Da fare', color: 'border-gray-500' },
-  { key: 'IN_PROGRESS', label: 'In Corso', color: 'border-blue-500' },
-  { key: 'IN_REVIEW', label: 'In Revisione', color: 'border-amber-500' },
-  { key: 'DONE', label: 'Completato', color: 'border-green-500' },
+  { key: 'TODO', label: 'Da fare', color: 'border-muted' },
+  { key: 'IN_PROGRESS', label: 'In Corso', color: 'border-primary' },
+  { key: 'IN_REVIEW', label: 'In Revisione', color: 'border-accent' },
+  { key: 'DONE', label: 'Completato', color: 'border-primary' },
 ]
 
 type ViewMode = 'list' | 'kanban'
@@ -152,17 +152,17 @@ export default function TasksPage() {
   }
 
   const stats = [
-    { label: 'Totale', value: totalTasks, icon: Target, color: 'text-[#C4A052]' },
-    { label: 'In Corso', value: inProgressCount, icon: Clock, color: 'text-blue-400' },
-    { label: 'Scaduti', value: overdueCount, icon: AlertTriangle, color: 'text-red-400' },
-    { label: 'Completati', value: completedCount, icon: CheckCircle2, color: 'text-green-400' },
+    { label: 'Totale', value: totalTasks, icon: Target, color: 'text-primary' },
+    { label: 'In Corso', value: inProgressCount, icon: Clock, color: 'text-accent' },
+    { label: 'Scaduti', value: overdueCount, icon: AlertTriangle, color: 'text-destructive' },
+    { label: 'Completati', value: completedCount, icon: CheckCircle2, color: 'text-accent' },
   ]
 
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">I Miei Task</h1>
+        <h1 className="text-2xl font-semibold">I Miei Task</h1>
         <div className="flex items-center gap-2">
           <div className="flex rounded-md border border-border overflow-hidden">
             <Tooltip content="Vista lista">
@@ -186,16 +186,18 @@ export default function TasksPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 animate-stagger">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 animate-stagger">
         {stats.map((s) => (
-          <Card key={s.label} className="!p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted">{s.label}</p>
-                <p className="text-2xl font-bold mt-1 animate-count-up">{s.value}</p>
+          <Card key={s.label}>
+            <CardContent className="flex items-center gap-4">
+              <div className={`p-3 rounded-full ${s.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+                <s.icon className="h-5 w-5" />
               </div>
-              <s.icon className={`h-8 w-8 ${s.color} opacity-70`} />
-            </div>
+              <div>
+                <p className="text-xs text-muted uppercase tracking-wider font-medium">{s.label}</p>
+                <p className="text-2xl font-bold animate-count-up">{s.value}</p>
+              </div>
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -312,7 +314,7 @@ function ListView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: str
                   <span
                     className={`text-sm ${
                       new Date(task.dueDate) < new Date() && task.status !== 'DONE'
-                        ? 'text-red-400'
+                        ? 'text-destructive'
                         : 'text-muted'
                     }`}
                   >
@@ -354,7 +356,7 @@ function KanbanView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: s
                   key={task.id}
                   className="!p-3 cursor-pointer"
                   onClick={() => onTaskClick(task.id)}
-                  style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || '#C4A052'}` }}
+                  style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
                 >
                   <p className="text-sm font-medium mb-2 line-clamp-2">{task.title}</p>
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -381,7 +383,7 @@ function KanbanView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: s
                       <span
                         className={`text-xs ${
                           new Date(task.dueDate) < new Date() && task.status !== 'DONE'
-                            ? 'text-red-400'
+                            ? 'text-destructive'
                             : 'text-muted'
                         }`}
                       >

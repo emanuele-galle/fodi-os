@@ -74,7 +74,7 @@ export default function QuotesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Preventivi</h1>
+        <h1 className="text-2xl font-semibold">Preventivi</h1>
         <Button onClick={() => router.push('/erp/quotes/new')}>
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Preventivo
@@ -141,14 +141,14 @@ export default function QuotesPage() {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted">
-                  <th className="pb-3 pr-4 font-medium">Numero</th>
-                  <th className="pb-3 pr-4 font-medium">Titolo</th>
-                  <th className="pb-3 pr-4 font-medium">Cliente</th>
-                  <th className="pb-3 pr-4 font-medium">Stato</th>
-                  <th className="pb-3 pr-4 font-medium text-right">Totale</th>
-                  <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Valido fino a</th>
-                  <th className="pb-3 font-medium hidden lg:table-cell">Creato</th>
+                <tr className="border-b border-border text-left text-muted bg-secondary/30">
+                  <th className="py-3 pr-4 pl-3 font-medium">Numero</th>
+                  <th className="py-3 pr-4 font-medium">Titolo</th>
+                  <th className="py-3 pr-4 font-medium">Cliente</th>
+                  <th className="py-3 pr-4 font-medium">Stato</th>
+                  <th className="py-3 pr-4 font-medium text-right">Totale</th>
+                  <th className="py-3 pr-4 font-medium hidden lg:table-cell">Valido fino a</th>
+                  <th className="py-3 font-medium hidden lg:table-cell">Creato</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,7 +156,7 @@ export default function QuotesPage() {
                   <tr
                     key={q.id}
                     onClick={() => router.push(`/erp/quotes/${q.id}`)}
-                    className="border-b border-border hover:bg-secondary/50 cursor-pointer transition-colors"
+                    className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 cursor-pointer transition-colors"
                   >
                     <td className="py-3 pr-4 font-medium">{q.number}</td>
                     <td className="py-3 pr-4">{q.title}</td>

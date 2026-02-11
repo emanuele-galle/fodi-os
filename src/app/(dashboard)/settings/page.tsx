@@ -109,16 +109,16 @@ export default function SettingsPage() {
   if (!user) return null
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Impostazioni</h1>
+    <div className="max-w-2xl animate-fade-in">
+      <h1 className="text-2xl font-semibold mb-6">Impostazioni</h1>
 
       {message && (
         <div className={`mb-4 p-3 rounded-md text-sm ${
           message.includes('successo') || message.includes('connesso con successo')
-            ? 'bg-green-50 text-green-700 border border-green-200'
+            ? 'bg-primary/10 text-primary border border-primary/20'
             : message.includes('Errore') || message.includes('errore')
-            ? 'bg-red-50 text-red-700 border border-red-200'
-            : 'bg-blue-50 text-blue-700 border border-blue-200'
+            ? 'bg-destructive/10 text-destructive border border-destructive/20'
+            : 'bg-secondary text-foreground border border-border'
         }`}>
           {message}
         </div>
@@ -179,7 +179,7 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
                     <svg viewBox="0 0 48 48" className="h-6 w-6">
                       <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                       <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>

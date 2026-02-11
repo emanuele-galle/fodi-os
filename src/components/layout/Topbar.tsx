@@ -75,7 +75,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
   }
 
   return (
-    <header className="h-16 bg-card/80 backdrop-blur-md flex items-center justify-between px-6 shadow-[var(--shadow-sm)]" style={{ borderBottom: '1px solid transparent', borderImage: 'linear-gradient(to right, #C4A052 0%, #E2E8F0 30%, transparent 100%) 1' }}>
+    <header className="h-16 bg-card/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 shadow-[var(--shadow-sm)]">
       {/* Search trigger */}
       <button
         onClick={onOpenCommandPalette}

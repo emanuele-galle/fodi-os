@@ -39,7 +39,7 @@ export default function UsersAdminPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Gestione Utenti</h1>
+        <h1 className="text-2xl font-semibold">Gestione Utenti</h1>
       </div>
 
       <Card>
@@ -50,7 +50,7 @@ export default function UsersAdminPage() {
           ) : (
             <div className="divide-y divide-border">
               {users.map((u) => (
-                <div key={u.id} className="flex items-center gap-4 py-3">
+                <div key={u.id} className="flex items-center gap-4 py-3 hover:bg-secondary/30 transition-colors px-2 -mx-2 rounded-md">
                   <Avatar name={`${u.firstName} ${u.lastName}`} size="sm" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{u.firstName} {u.lastName}</p>

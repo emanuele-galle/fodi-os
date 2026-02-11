@@ -77,7 +77,10 @@ export default function PipelinePage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Pipeline Commerciale</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">Pipeline Commerciale</h1>
+          <p className="text-sm text-muted mt-1">Gestisci lo stato dei clienti nella pipeline</p>
+        </div>
       </div>
 
       {loading ? (

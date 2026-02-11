@@ -129,31 +129,37 @@ export default function TimeTrackingPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardContent className="flex items-center gap-3">
-            <Clock className="h-5 w-5 text-primary" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-stagger">
+        <Card className="shadow-lift">
+          <CardContent className="flex items-center gap-4">
+            <div className="p-3 rounded-full bg-secondary text-primary">
+              <Clock className="h-5 w-5" />
+            </div>
             <div>
               <p className="text-xs text-muted">Ore Totali</p>
-              <p className="text-lg font-bold">{totalHours.toFixed(1)}h</p>
+              <p className="text-xl font-bold">{totalHours.toFixed(1)}h</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3">
-            <Clock className="h-5 w-5 text-green-500" />
+        <Card className="shadow-lift">
+          <CardContent className="flex items-center gap-4">
+            <div className="p-3 rounded-full bg-secondary text-primary">
+              <Clock className="h-5 w-5" />
+            </div>
             <div>
               <p className="text-xs text-muted">Ore Fatturabili</p>
-              <p className="text-lg font-bold">{billableHours.toFixed(1)}h</p>
+              <p className="text-xl font-bold">{billableHours.toFixed(1)}h</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3">
-            <Clock className="h-5 w-5 text-amber-500" />
+        <Card className="shadow-lift">
+          <CardContent className="flex items-center gap-4">
+            <div className="p-3 rounded-full bg-secondary text-accent">
+              <Clock className="h-5 w-5" />
+            </div>
             <div>
               <p className="text-xs text-muted">Ore Non Fatturabili</p>
-              <p className="text-lg font-bold">{(totalHours - billableHours).toFixed(1)}h</p>
+              <p className="text-xl font-bold">{(totalHours - billableHours).toFixed(1)}h</p>
             </div>
           </CardContent>
         </Card>

@@ -110,7 +110,7 @@ export default function QuoteDetailPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{quote.number}</h1>
+            <h1 className="text-2xl font-semibold">{quote.number}</h1>
             <Badge variant={STATUS_BADGE[quote.status] || 'default'}>
               {STATUS_LABELS[quote.status] || quote.status}
             </Badge>
@@ -163,18 +163,18 @@ export default function QuoteDetailPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted">
-                  <th className="pb-3 pr-4 font-medium">Descrizione</th>
-                  <th className="pb-3 pr-4 font-medium text-right">Quantita</th>
-                  <th className="pb-3 pr-4 font-medium text-right">Prezzo Unitario</th>
-                  <th className="pb-3 font-medium text-right">Totale</th>
+                <tr className="border-b border-border text-left text-muted bg-secondary/30">
+                  <th className="py-3 pr-4 pl-3 font-medium">Descrizione</th>
+                  <th className="py-3 pr-4 font-medium text-right">Quantita</th>
+                  <th className="py-3 pr-4 font-medium text-right">Prezzo Unitario</th>
+                  <th className="py-3 font-medium text-right">Totale</th>
                 </tr>
               </thead>
               <tbody>
                 {quote.lineItems
                   .sort((a, b) => a.sortOrder - b.sortOrder)
                   .map((item) => (
-                    <tr key={item.id} className="border-b border-border">
+                    <tr key={item.id} className="border-b border-border/50 even:bg-secondary/20">
                       <td className="py-3 pr-4">{item.description}</td>
                       <td className="py-3 pr-4 text-right">{item.quantity}</td>
                       <td className="py-3 pr-4 text-right">{formatCurrency(item.unitPrice)}</td>

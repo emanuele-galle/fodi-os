@@ -22,7 +22,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={id}
           className={cn(
-            'flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm transition-colors',
+            'flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
             error ? 'border-destructive' : 'border-border',
             className

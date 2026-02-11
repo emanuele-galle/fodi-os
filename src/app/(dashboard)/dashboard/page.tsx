@@ -148,12 +148,12 @@ export default function DashboardPage() {
           .reduce((s: number, i: { total: string }) => s + parseFloat(i.total), 0)
 
         setStats([
-          { label: 'Clienti Attivi', value: String(clientsRes?.total ?? 0), icon: Users, color: 'text-blue-500', href: '/crm?status=ACTIVE' },
-          { label: 'Progetti in Corso', value: String(projectsRes?.total ?? 0), icon: FolderKanban, color: 'text-green-500', href: '/projects?status=IN_PROGRESS' },
-          { label: 'Preventivi Aperti', value: String(quotesRes?.total ?? 0), icon: Receipt, color: 'text-amber-500', href: '/erp/quotes?status=SENT' },
-          { label: 'Ore Questa Settimana', value: weekHours.toFixed(1) + 'h', icon: Clock, color: 'text-purple-500', href: '/time' },
-          { label: 'Revenue MTD', value: formatCurrency(revenueMTD), icon: TrendingUp, color: 'text-emerald-500', href: '/erp/reports' },
-          { label: 'Ticket Aperti', value: '—', icon: AlertCircle, color: 'text-red-500', href: '/support' },
+          { label: 'Clienti Attivi', value: String(clientsRes?.total ?? 0), icon: Users, color: 'text-primary', href: '/crm?status=ACTIVE' },
+          { label: 'Progetti in Corso', value: String(projectsRes?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
+          { label: 'Preventivi Aperti', value: String(quotesRes?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
+          { label: 'Ore Questa Settimana', value: weekHours.toFixed(1) + 'h', icon: Clock, color: 'text-muted', href: '/time' },
+          { label: 'Revenue MTD', value: formatCurrency(revenueMTD), icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
+          { label: 'Ticket Aperti', value: '—', icon: AlertCircle, color: 'text-destructive', href: '/support' },
         ])
       } finally {
         setLoading(false)
@@ -217,7 +217,7 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-semibold">
           {getGreeting()}{userName ? <>, <span className="gold-accent">{userName}</span>!</> : '!'}
         </h1>
         <p className="text-sm text-muted mt-1 capitalize">{formatTodayDate()}</p>
@@ -236,7 +236,7 @@ export default function DashboardPage() {
               onClick={() => router.push(stat.href)}
             >
               <CardContent className="flex items-center gap-4">
-                <div className={`p-3 rounded-xl ${stat.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+                <div className={`p-3 rounded-full ${stat.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
                   <stat.icon className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -253,18 +253,18 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8 animate-stagger">
         {[
-          { label: 'Nuovo Cliente', icon: UserPlus, href: '/crm', color: 'text-blue-500' },
-          { label: 'Nuovo Progetto', icon: FolderKanban, href: '/projects', color: 'text-green-500' },
-          { label: 'Nuovo Preventivo', icon: FilePlus2, href: '/erp/quotes/new', color: 'text-amber-500' },
-          { label: 'Nuovo Ticket', icon: TicketPlus, href: '/support', color: 'text-red-500' },
-          { label: 'Registra Ore', icon: ClockPlus, href: '/time', color: 'text-purple-500' },
+          { label: 'Nuovo Cliente', icon: UserPlus, href: '/crm', color: 'text-primary' },
+          { label: 'Nuovo Progetto', icon: FolderKanban, href: '/projects', color: 'text-accent' },
+          { label: 'Nuovo Preventivo', icon: FilePlus2, href: '/erp/quotes/new', color: 'text-[var(--color-warning)]' },
+          { label: 'Nuovo Ticket', icon: TicketPlus, href: '/support', color: 'text-destructive' },
+          { label: 'Registra Ore', icon: ClockPlus, href: '/time', color: 'text-muted' },
         ].map((action) => (
           <button
             key={action.label}
             onClick={() => router.push(action.href)}
             className="flex flex-col items-center gap-2 rounded-lg border border-border/50 bg-card p-4 shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] hover:-translate-y-0.5 transition-all duration-200"
           >
-            <div className={`p-2.5 rounded-xl ${action.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+            <div className={`p-2.5 rounded-full ${action.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
               <action.icon className="h-5 w-5" />
             </div>
             <span className="text-xs font-medium text-foreground">{action.label}</span>

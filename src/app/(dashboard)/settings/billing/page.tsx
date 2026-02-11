@@ -116,17 +116,17 @@ export default function BillingSettingsPage() {
   if (loading) return null
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
         <Building2 className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">Fatturazione</h1>
+        <h1 className="text-2xl font-semibold">Fatturazione</h1>
       </div>
 
       {message && (
         <div className={`mb-4 p-3 rounded-md text-sm ${
           message.includes('successo')
-            ? 'bg-green-50 text-green-700 border border-green-200'
-            : 'bg-red-50 text-red-700 border border-red-200'
+            ? 'bg-primary/10 text-primary border border-primary/20'
+            : 'bg-destructive/10 text-destructive border border-destructive/20'
         }`}>
           {message}
         </div>

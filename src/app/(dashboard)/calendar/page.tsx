@@ -216,7 +216,7 @@ export default function CalendarPage() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
-        <h1 className="text-2xl font-bold">Calendario</h1>
+        <h1 className="text-2xl font-semibold">Calendario</h1>
         <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" onClick={prevMonth}>

@@ -314,7 +314,7 @@ export default function ClientDetailPage() {
           {client.projects.map((p) => (
             <Card
               key={p.id}
-              className="cursor-pointer hover:shadow-sm transition-shadow"
+              className="cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200"
               onClick={() => router.push(`/projects/${p.id}`)}
             >
               <CardContent className="flex items-center justify-between">
@@ -340,7 +340,7 @@ export default function ClientDetailPage() {
           {client.quotes.map((q) => (
             <Card
               key={q.id}
-              className="cursor-pointer hover:shadow-sm transition-shadow"
+              className="cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200"
               onClick={() => router.push(`/erp/quotes/${q.id}`)}
             >
               <CardContent className="flex items-center justify-between">
@@ -374,7 +374,7 @@ export default function ClientDetailPage() {
         <div className="flex items-center gap-4">
           <Avatar name={client.companyName} size="lg" />
           <div>
-            <h1 className="text-2xl font-bold">{client.companyName}</h1>
+            <h1 className="text-2xl font-semibold">{client.companyName}</h1>
             <Badge variant={STATUS_BADGE[client.status] || 'default'}>
               {STATUS_LABELS[client.status] || client.status}
             </Badge>
@@ -440,10 +440,12 @@ export default function ClientDetailPage() {
 
 function InfoRow({ icon: Icon, label, value }: { icon: typeof Hash; label: string; value: string | null }) {
   return (
-    <div className="flex items-center gap-3 text-sm">
-      <Icon className="h-4 w-4 text-muted flex-shrink-0" />
-      <span className="text-muted">{label}:</span>
-      <span className="font-medium">{value || '—'}</span>
+    <div className="flex items-center gap-3 text-sm py-1.5">
+      <div className="p-1.5 rounded-md bg-secondary/50 text-muted flex-shrink-0">
+        <Icon className="h-3.5 w-3.5" />
+      </div>
+      <span className="text-muted min-w-[60px]">{label}:</span>
+      <span className="font-medium truncate">{value || '—'}</span>
     </div>
   )
 }

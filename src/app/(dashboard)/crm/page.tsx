@@ -137,7 +137,7 @@ export default function CrmPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Clienti</h1>
+        <h1 className="text-2xl font-semibold">Clienti</h1>
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Cliente
@@ -215,12 +215,12 @@ export default function CrmPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                  <th className="pb-3 pr-4 font-medium">Cliente</th>
-                  <th className="pb-3 pr-4 font-medium">Stato</th>
-                  <th className="pb-3 pr-4 font-medium">Settore</th>
-                  <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Contatti</th>
-                  <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Progetti</th>
-                  <th className="pb-3 font-medium text-right">Revenue</th>
+                  <th className="py-3 px-4 font-medium">Cliente</th>
+                  <th className="py-3 px-4 font-medium">Stato</th>
+                  <th className="py-3 px-4 font-medium">Settore</th>
+                  <th className="py-3 px-4 font-medium hidden lg:table-cell">Contatti</th>
+                  <th className="py-3 px-4 font-medium hidden lg:table-cell">Progetti</th>
+                  <th className="py-3 px-4 font-medium text-right">Revenue</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,27 +230,27 @@ export default function CrmPage() {
                     onClick={() => router.push(`/crm/${client.id}`)}
                     className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-all duration-200 even:bg-secondary/20"
                   >
-                    <td className="py-3 pr-4">
+                    <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         <Avatar name={client.companyName} size="sm" />
                         <span className="font-medium">{client.companyName}</span>
                       </div>
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className="py-3 px-4">
                       <Badge variant={STATUS_BADGE[client.status] || 'default'}>
                         {STATUS_LABELS[client.status] || client.status}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-4 text-muted">
+                    <td className="py-3 px-4 text-muted">
                       {client.industry || '—'}
                     </td>
-                    <td className="py-3 pr-4 hidden lg:table-cell text-muted">
+                    <td className="py-3 px-4 hidden lg:table-cell text-muted">
                       {client._count?.contacts ?? 0}
                     </td>
-                    <td className="py-3 pr-4 hidden lg:table-cell text-muted">
+                    <td className="py-3 px-4 hidden lg:table-cell text-muted">
                       {client._count?.projects ?? 0}
                     </td>
-                    <td className="py-3 text-right font-medium">
+                    <td className="py-3 px-4 text-right font-medium">
                       {formatCurrency(client.totalRevenue)}
                     </td>
                   </tr>

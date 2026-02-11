@@ -112,7 +112,10 @@ export default function LeadsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Leads</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">Leads</h1>
+          <p className="text-sm text-muted mt-1">Lead da form e webhook esterni</p>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -150,39 +153,39 @@ export default function LeadsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted">
-                  <th className="pb-3 pr-4 font-medium">Nome</th>
-                  <th className="pb-3 pr-4 font-medium">Email</th>
-                  <th className="pb-3 pr-4 font-medium hidden md:table-cell">Azienda</th>
-                  <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Servizio</th>
-                  <th className="pb-3 pr-4 font-medium">Stato</th>
-                  <th className="pb-3 pr-4 font-medium hidden md:table-cell">Data</th>
-                  <th className="pb-3 font-medium text-right">Azioni</th>
+                <tr className="border-b border-border text-left text-muted bg-secondary/30">
+                  <th className="py-3 px-4 font-medium">Nome</th>
+                  <th className="py-3 px-4 font-medium">Email</th>
+                  <th className="py-3 px-4 font-medium hidden md:table-cell">Azienda</th>
+                  <th className="py-3 px-4 font-medium hidden lg:table-cell">Servizio</th>
+                  <th className="py-3 px-4 font-medium">Stato</th>
+                  <th className="py-3 px-4 font-medium hidden md:table-cell">Data</th>
+                  <th className="py-3 px-4 font-medium text-right">Azioni</th>
                 </tr>
               </thead>
               <tbody>
                 {leads.map((lead) => (
                   <tr
                     key={lead.id}
-                    className="border-b border-border hover:bg-secondary/50 transition-colors"
+                    className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-colors duration-200 even:bg-secondary/20"
                   >
-                    <td className="py-3 pr-4 font-medium">{lead.name}</td>
-                    <td className="py-3 pr-4 text-muted">{lead.email}</td>
-                    <td className="py-3 pr-4 hidden md:table-cell text-muted">
+                    <td className="py-3 px-4 font-medium">{lead.name}</td>
+                    <td className="py-3 px-4 text-muted">{lead.email}</td>
+                    <td className="py-3 px-4 hidden md:table-cell text-muted">
                       {lead.company || '—'}
                     </td>
-                    <td className="py-3 pr-4 hidden lg:table-cell text-muted">
+                    <td className="py-3 px-4 hidden lg:table-cell text-muted">
                       {lead.service || '—'}
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className="py-3 px-4">
                       <Badge variant={STATUS_BADGE[lead.status] || 'default'}>
                         {STATUS_LABELS[lead.status] || lead.status}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-4 hidden md:table-cell text-muted">
+                    <td className="py-3 px-4 hidden md:table-cell text-muted">
                       {new Date(lead.createdAt).toLocaleDateString('it-IT')}
                     </td>
-                    <td className="py-3 text-right">
+                    <td className="py-3 px-4 text-right">
                       {lead.status !== 'CONVERTED' && (
                         <Button
                           variant="outline"

@@ -115,16 +115,16 @@ export default function ReportsPage() {
   }, [])
 
   const statCards = [
-    { label: 'Revenue MTD', value: stats.revenueMTD, icon: TrendingUp, color: 'text-emerald-500' },
-    { label: 'Fatturato Totale', value: stats.invoiced, icon: Receipt, color: 'text-blue-500' },
-    { label: 'Incassato', value: stats.paid, icon: CheckCircle2, color: 'text-green-500' },
-    { label: 'Da Incassare', value: stats.outstanding, icon: AlertCircle, color: 'text-amber-500' },
+    { label: 'Revenue MTD', value: stats.revenueMTD, icon: TrendingUp, color: 'text-primary' },
+    { label: 'Fatturato Totale', value: stats.invoiced, icon: Receipt, color: 'text-primary' },
+    { label: 'Incassato', value: stats.paid, icon: CheckCircle2, color: 'text-primary' },
+    { label: 'Da Incassare', value: stats.outstanding, icon: AlertCircle, color: 'text-accent' },
   ]
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Report Finanziari</h1>
+        <h1 className="text-2xl font-semibold">Report Finanziari</h1>
       </div>
 
       {loading ? (
@@ -132,11 +132,11 @@ export default function ReportsPage() {
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-stagger">
           {statCards.map((stat) => (
-            <Card key={stat.label}>
+            <Card key={stat.label} className="shadow-lift">
               <CardContent className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg bg-secondary ${stat.color}`}>
+                <div className={`p-3 rounded-full bg-secondary ${stat.color}`}>
                   <stat.icon className="h-6 w-6" />
                 </div>
                 <div>
@@ -159,7 +159,7 @@ export default function ReportsPage() {
                 <XAxis dataKey="month" />
                 <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
                 <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Bar dataKey="revenue" fill="#22C55E" />
+                <Bar dataKey="revenue" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -173,7 +173,7 @@ export default function ReportsPage() {
                 <XAxis type="number" tickFormatter={(v) => `\u20AC${v}`} />
                 <YAxis type="category" dataKey="category" width={100} />
                 <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Bar dataKey="amount" fill="#3B82F6" />
+                <Bar dataKey="amount" fill="var(--color-primary)" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

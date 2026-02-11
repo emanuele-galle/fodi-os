@@ -77,10 +77,12 @@ export default function ErpPage() {
   ]
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">ERP</h1>
-        <p className="text-sm text-muted mt-1">Gestione preventivi, fatture, spese e report</p>
+    <div className="animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">ERP</h1>
+          <p className="text-sm text-muted mt-1">Gestione preventivi, fatture, spese e report</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-stagger">
@@ -114,7 +116,7 @@ export default function ErpPage() {
         })}
       </div>
 
-      <Card className="mt-6">
+      <Card className="mt-6 accent-line-top">
         <CardHeader>
           <CardTitle>Margine per Progetto</CardTitle>
           <CardDescription>Confronto ricavi vs costi per ciascun progetto</CardDescription>

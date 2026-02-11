@@ -161,7 +161,7 @@ export default function TicketDetailPage() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-muted font-medium">#{ticket.number}</span>
-            <h1 className="text-xl font-bold">{ticket.subject}</h1>
+            <h1 className="text-xl font-semibold">{ticket.subject}</h1>
             <Badge variant={STATUS_BADGE[ticket.status] || 'default'}>
               {STATUS_LABELS[ticket.status] || ticket.status}
             </Badge>

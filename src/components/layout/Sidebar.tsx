@@ -179,7 +179,7 @@ export function Sidebar({ userRole }: SidebarProps) {
         ) : (
           <Link
             href="/dashboard"
-            className="flex items-center justify-center w-8 h-8 rounded-md bg-[#C4A052] text-[#1E293B] font-bold text-sm"
+            className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground font-bold text-sm"
           >
             F
           </Link>
@@ -214,7 +214,7 @@ export function Sidebar({ userRole }: SidebarProps) {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200 relative',
                   isActive
-                    ? 'bg-gradient-to-r from-sidebar-active/20 to-transparent text-[#D4B566] border-l-3 border-sidebar-active shadow-[inset_0_0_20px_rgba(196,160,82,0.05)]'
+                    ? 'bg-primary/15 text-primary border-l-3 border-primary'
                     : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-white/8 border-l-3 border-transparent'
                 )}
               >
@@ -253,7 +253,7 @@ export function Sidebar({ userRole }: SidebarProps) {
                       className={cn(
                         'block px-3 py-1.5 rounded-md text-sm transition-colors duration-200',
                         pathname === child.href
-                          ? 'text-[#D4B566] bg-gradient-to-r from-white/10 to-transparent'
+                          ? 'text-primary bg-primary/10'
                           : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-white/5'
                       )}
                     >

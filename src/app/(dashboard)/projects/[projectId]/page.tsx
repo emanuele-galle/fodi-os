@@ -240,28 +240,28 @@ export default function ProjectDetailPage() {
       ) : (
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border text-left text-muted">
-              <th className="pb-3 pr-4 font-medium">Titolo</th>
-              <th className="pb-3 pr-4 font-medium">Assegnato</th>
-              <th className="pb-3 pr-4 font-medium">Stato</th>
-              <th className="pb-3 pr-4 font-medium">Priorità</th>
-              <th className="pb-3 font-medium">Scadenza</th>
+            <tr className="border-b border-border text-left text-muted bg-secondary/30">
+              <th className="py-3 px-4 font-medium">Titolo</th>
+              <th className="py-3 px-4 font-medium hidden md:table-cell">Assegnato</th>
+              <th className="py-3 px-4 font-medium">Stato</th>
+              <th className="py-3 px-4 font-medium hidden sm:table-cell">Priorità</th>
+              <th className="py-3 px-4 font-medium hidden sm:table-cell">Scadenza</th>
             </tr>
           </thead>
           <tbody>
             {allTasks.map((task) => (
-              <tr key={task.id} className="border-b border-border">
-                <td className="py-3 pr-4 font-medium">{task.title}</td>
-                <td className="py-3 pr-4 text-muted">
+              <tr key={task.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors duration-200 even:bg-secondary/20">
+                <td className="py-3 px-4 font-medium">{task.title}</td>
+                <td className="py-3 px-4 text-muted hidden md:table-cell">
                   {task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : '—'}
                 </td>
-                <td className="py-3 pr-4">
+                <td className="py-3 px-4">
                   <Badge variant={TASK_STATUS_BADGE[task.status] || 'default'}>{TASK_STATUS_LABEL[task.status] || task.status}</Badge>
                 </td>
-                <td className="py-3 pr-4">
+                <td className="py-3 px-4 hidden sm:table-cell">
                   <Badge variant={PRIORITY_BADGE[task.priority] || 'default'}>{PRIORITY_LABEL[task.priority] || task.priority}</Badge>
                 </td>
-                <td className="py-3 text-muted">
+                <td className="py-3 px-4 text-muted hidden sm:table-cell">
                   {task.dueDate ? new Date(task.dueDate).toLocaleDateString('it-IT') : '—'}
                 </td>
               </tr>
@@ -294,24 +294,24 @@ export default function ProjectDetailPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-muted">
-                <th className="pb-3 pr-4 font-medium">Data</th>
-                <th className="pb-3 pr-4 font-medium">Utente</th>
-                <th className="pb-3 pr-4 font-medium">Task</th>
-                <th className="pb-3 pr-4 font-medium">Ore</th>
-                <th className="pb-3 pr-4 font-medium">Descrizione</th>
-                <th className="pb-3 font-medium">Fatturabile</th>
+              <tr className="border-b border-border text-left text-muted bg-secondary/30">
+                <th className="py-3 px-4 font-medium">Data</th>
+                <th className="py-3 px-4 font-medium hidden sm:table-cell">Utente</th>
+                <th className="py-3 px-4 font-medium hidden md:table-cell">Task</th>
+                <th className="py-3 px-4 font-medium">Ore</th>
+                <th className="py-3 px-4 font-medium hidden lg:table-cell">Descrizione</th>
+                <th className="py-3 px-4 font-medium">Fatturabile</th>
               </tr>
             </thead>
             <tbody>
               {timeEntries.map((entry) => (
-                <tr key={entry.id} className="border-b border-border">
-                  <td className="py-3 pr-4">{new Date(entry.date).toLocaleDateString('it-IT')}</td>
-                  <td className="py-3 pr-4">{entry.user.firstName} {entry.user.lastName}</td>
-                  <td className="py-3 pr-4 text-muted">{entry.task?.title || '—'}</td>
-                  <td className="py-3 pr-4 font-medium">{entry.hours}h</td>
-                  <td className="py-3 pr-4 text-muted truncate max-w-xs">{entry.description || '—'}</td>
-                  <td className="py-3">
+                <tr key={entry.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors duration-200 even:bg-secondary/20">
+                  <td className="py-3 px-4">{new Date(entry.date).toLocaleDateString('it-IT')}</td>
+                  <td className="py-3 px-4 hidden sm:table-cell">{entry.user.firstName} {entry.user.lastName}</td>
+                  <td className="py-3 px-4 text-muted hidden md:table-cell">{entry.task?.title || '—'}</td>
+                  <td className="py-3 px-4 font-medium">{entry.hours}h</td>
+                  <td className="py-3 px-4 text-muted truncate max-w-xs hidden lg:table-cell">{entry.description || '—'}</td>
+                  <td className="py-3 px-4">
                     <Badge variant={entry.billable ? 'success' : 'outline'}>
                       {entry.billable ? 'Si' : 'No'}
                     </Badge>
@@ -337,7 +337,7 @@ export default function ProjectDetailPage() {
 
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold">{project.name}</h1>
+          <h1 className="text-2xl font-semibold">{project.name}</h1>
           {project.client && (
             <p className="text-sm text-muted mt-1">{project.client.companyName} - {project.workspace.name}</p>
           )}
@@ -352,40 +352,48 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 animate-stagger">
         <Card>
-          <CardContent className="flex items-center gap-3">
-            <Target className="h-5 w-5 text-primary" />
+          <CardContent className="flex items-center gap-4">
+            <div className="p-3 rounded-full text-primary" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+              <Target className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-xs text-muted">Task Totali</p>
-              <p className="text-lg font-bold">{allTasks.length}</p>
+              <p className="text-xs text-muted uppercase tracking-wider font-medium">Task Totali</p>
+              <p className="text-2xl font-bold animate-count-up">{allTasks.length}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
+          <CardContent className="flex items-center gap-4">
+            <div className="p-3 rounded-full text-accent" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-xs text-muted">Completati</p>
-              <p className="text-lg font-bold">{doneTasks}</p>
+              <p className="text-xs text-muted uppercase tracking-wider font-medium">Completati</p>
+              <p className="text-2xl font-bold animate-count-up">{doneTasks}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-3">
-            <Timer className="h-5 w-5 text-amber-500" />
+          <CardContent className="flex items-center gap-4">
+            <div className="p-3 rounded-full text-[var(--color-warning)]" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+              <Timer className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-xs text-muted">Ore Stimate</p>
-              <p className="text-lg font-bold">{totalEstimated}h</p>
+              <p className="text-xs text-muted uppercase tracking-wider font-medium">Ore Stimate</p>
+              <p className="text-2xl font-bold animate-count-up">{totalEstimated}h</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-3">
-            <Clock className="h-5 w-5 text-purple-500" />
+          <CardContent className="flex items-center gap-4">
+            <div className="p-3 rounded-full text-muted" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+              <Clock className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-xs text-muted">Ore Registrate</p>
-              <p className="text-lg font-bold">{totalLogged}h</p>
+              <p className="text-xs text-muted uppercase tracking-wider font-medium">Ore Registrate</p>
+              <p className="text-2xl font-bold animate-count-up">{totalLogged}h</p>
             </div>
           </CardContent>
         </Card>

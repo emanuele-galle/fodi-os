@@ -65,12 +65,12 @@ const PRIORITY_OPTIONS = [
 ]
 
 const STATUS_COLORS: Record<string, string> = {
-  PLANNING: '#C4A052',
-  IN_PROGRESS: '#22C55E',
-  ON_HOLD: '#F59E0B',
-  REVIEW: '#3B82F6',
-  COMPLETED: '#64748B',
-  CANCELLED: '#EF4444',
+  PLANNING: 'var(--color-primary)',
+  IN_PROGRESS: 'var(--color-accent)',
+  ON_HOLD: 'var(--color-warning)',
+  REVIEW: 'var(--color-primary)',
+  COMPLETED: 'var(--color-muted)',
+  CANCELLED: 'var(--color-destructive)',
 }
 
 export default function ProjectsPage() {
@@ -152,7 +152,7 @@ export default function ProjectsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Progetti</h1>
+        <h1 className="text-2xl font-semibold">Progetti</h1>
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Progetto
@@ -206,9 +206,9 @@ export default function ProjectsPage() {
               return (
                 <Card
                   key={p.id}
-                  className="cursor-pointer overflow-hidden"
+                  className="cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200"
                   onClick={() => router.push(`/projects/${p.id}`)}
-                  style={{ borderTop: `3px solid ${STATUS_COLORS[p.status] || '#C4A052'}` }}
+                  style={{ borderTop: `3px solid ${STATUS_COLORS[p.status] || 'var(--color-primary)'}` }}
                 >
                   <CardContent>
                     <div className="flex items-center justify-between mb-2">
@@ -234,10 +234,13 @@ export default function ProjectsPage() {
                       )}
                     </div>
                     {totalTasks > 0 && (
-                      <div className="mt-2 h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <div className="mt-2 h-2 bg-secondary rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all bg-gradient-to-r from-[#C4A052] to-[#E8C97A]"
-                          style={{ width: `${(doneTasks / totalTasks) * 100}%` }}
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${(doneTasks / totalTasks) * 100}%`,
+                            background: 'var(--gold-gradient)',
+                          }}
                         />
                       </div>
                     )}
