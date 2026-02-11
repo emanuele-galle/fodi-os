@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import {
   Users, FolderKanban, Receipt, Clock, TrendingUp, AlertCircle,
   ArrowRight, Activity, UserPlus, FileText, CheckCircle2, TicketCheck,
+  Plus, Zap, TicketPlus, FilePlus2, ClockPlus, X, Pencil,
 } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 import { RevenueChart } from '@/components/dashboard/RevenueChart'
@@ -41,12 +43,86 @@ interface TaskItem {
   project?: { name: string } | null
 }
 
+interface StickyNote {
+  id: string
+  text: string
+  color: string
+}
+
+const NOTE_COLORS = [
+  { value: 'bg-yellow-100 border-yellow-200', label: 'Giallo' },
+  { value: 'bg-green-100 border-green-200', label: 'Verde' },
+  { value: 'bg-blue-100 border-blue-200', label: 'Blu' },
+  { value: 'bg-pink-100 border-pink-200', label: 'Rosa' },
+]
+
+const STORAGE_KEY = 'fodi-os-sticky-notes'
+
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Buongiorno'
+  if (hour < 18) return 'Buon pomeriggio'
+  return 'Buonasera'
+}
+
+function formatTodayDate(): string {
+  return new Date().toLocaleDateString('it-IT', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [stats, setStats] = useState<StatCard[]>([])
   const [tasks, setTasks] = useState<TaskItem[]>([])
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [userName, setUserName] = useState('')
+  const [notes, setNotes] = useState<StickyNote[]>([])
+  const [editingNote, setEditingNote] = useState<string | null>(null)
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) setNotes(JSON.parse(stored))
+    } catch {}
+  }, [])
+
+  function saveNotes(updated: StickyNote[]) {
+    setNotes(updated)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+  }
+
+  function addNote() {
+    if (notes.length >= 5) return
+    const colorIndex = notes.length % NOTE_COLORS.length
+    const newNote: StickyNote = {
+      id: Date.now().toString(),
+      text: '',
+      color: NOTE_COLORS[colorIndex].value,
+    }
+    saveNotes([...notes, newNote])
+    setEditingNote(newNote.id)
+  }
+
+  function updateNote(id: string, text: string) {
+    saveNotes(notes.map((n) => (n.id === id ? { ...n, text: text.slice(0, 200) } : n)))
+  }
+
+  function deleteNote(id: string) {
+    saveNotes(notes.filter((n) => n.id !== id))
+    if (editingNote === id) setEditingNote(null)
+  }
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.firstName) setUserName(d.firstName) })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     async function loadDashboard() {
@@ -140,7 +216,12 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">
+          {getGreeting()}{userName ? `, ${userName}!` : '!'}
+        </h1>
+        <p className="text-sm text-muted mt-1 capitalize">{formatTodayDate()}</p>
+      </div>
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -151,11 +232,11 @@ export default function DashboardPage() {
           {stats.map((stat) => (
             <Card
               key={stat.label}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className="cursor-pointer hover:scale-[1.02] transition-all duration-200"
               onClick={() => router.push(stat.href)}
             >
               <CardContent className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg bg-secondary ${stat.color}`}>
+                <div className={`p-3 rounded-lg bg-gradient-to-br from-secondary to-secondary/60 ${stat.color}`}>
                   <stat.icon className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
@@ -168,6 +249,28 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+        {[
+          { label: 'Nuovo Cliente', icon: UserPlus, href: '/crm', color: 'text-blue-500' },
+          { label: 'Nuovo Progetto', icon: FolderKanban, href: '/projects', color: 'text-green-500' },
+          { label: 'Nuovo Preventivo', icon: FilePlus2, href: '/erp/quotes/new', color: 'text-amber-500' },
+          { label: 'Nuovo Ticket', icon: TicketPlus, href: '/support', color: 'text-red-500' },
+          { label: 'Registra Ore', icon: ClockPlus, href: '/time', color: 'text-purple-500' },
+        ].map((action) => (
+          <button
+            key={action.label}
+            onClick={() => router.push(action.href)}
+            className="flex flex-col items-center gap-2 rounded-lg border border-border/80 bg-card p-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200"
+          >
+            <div className={`p-2 rounded-lg bg-secondary ${action.color}`}>
+              <action.icon className="h-5 w-5" />
+            </div>
+            <span className="text-xs font-medium text-foreground">{action.label}</span>
+          </button>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -230,6 +333,77 @@ export default function DashboardPage() {
           <CardContent>
             <CardTitle className="mb-4">Cash Flow</CardTitle>
             <CashFlowChart />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Sticky Notes */}
+      <div className="mt-6">
+        <Card>
+          <CardContent>
+            <div className="flex items-center justify-between mb-4">
+              <CardTitle>Note Rapide</CardTitle>
+              {notes.length < 5 && (
+                <Button variant="ghost" size="sm" onClick={addNote}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Aggiungi
+                </Button>
+              )}
+            </div>
+            {notes.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-sm text-muted mb-3">Nessuna nota. Aggiungi un promemoria rapido.</p>
+                <Button variant="outline" size="sm" onClick={addNote}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Prima nota
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                {notes.map((note) => (
+                  <div
+                    key={note.id}
+                    className={`relative rounded-lg border p-3 min-h-[100px] ${note.color}`}
+                  >
+                    <div className="absolute top-1.5 right-1.5 flex gap-0.5">
+                      <button
+                        onClick={() => setEditingNote(editingNote === note.id ? null : note.id)}
+                        className="p-1 rounded hover:bg-black/5 text-foreground/50 hover:text-foreground/80"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => deleteNote(note.id)}
+                        className="p-1 rounded hover:bg-black/5 text-foreground/50 hover:text-red-500"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                    {editingNote === note.id ? (
+                      <textarea
+                        autoFocus
+                        value={note.text}
+                        onChange={(e) => updateNote(note.id, e.target.value)}
+                        onBlur={() => setEditingNote(null)}
+                        maxLength={200}
+                        className="w-full h-full min-h-[70px] bg-transparent text-xs resize-none focus:outline-none"
+                        placeholder="Scrivi una nota..."
+                      />
+                    ) : (
+                      <p
+                        className="text-xs whitespace-pre-wrap cursor-pointer pr-10"
+                        onClick={() => setEditingNote(note.id)}
+                      >
+                        {note.text || 'Clicca per scrivere...'}
+                      </p>
+                    )}
+                    <div className="absolute bottom-1.5 right-2 text-[9px] text-foreground/30">
+                      {note.text.length}/200
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

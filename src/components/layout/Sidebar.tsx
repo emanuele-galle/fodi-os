@@ -1,16 +1,19 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   Users,
   FolderKanban,
+  CalendarDays,
   Receipt,
   BookOpen,
   Film,
   LifeBuoy,
+  UsersRound,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -40,6 +43,7 @@ const navigation: NavItem[] = [
     children: [
       { label: 'Clienti', href: '/crm' },
       { label: 'Pipeline', href: '/crm/pipeline' },
+      { label: 'Leads', href: '/crm/leads' },
     ],
   },
   {
@@ -51,6 +55,11 @@ const navigation: NavItem[] = [
       { label: 'Lista', href: '/projects' },
       { label: 'Time Tracking', href: '/time' },
     ],
+  },
+  {
+    label: 'Calendario',
+    href: '/calendar',
+    icon: CalendarDays,
   },
   {
     label: 'Finanze',
@@ -88,9 +97,19 @@ const navigation: NavItem[] = [
     roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'],
   },
   {
+    label: 'Team',
+    href: '/team',
+    icon: UsersRound,
+  },
+  {
     label: 'Impostazioni',
     href: '/settings',
     icon: Settings,
+    children: [
+      { label: 'Profilo', href: '/settings' },
+      { label: 'Utenti', href: '/settings/users' },
+      { label: 'Sistema', href: '/settings/system' },
+    ],
   },
 ]
 
@@ -115,19 +134,35 @@ export function Sidebar({ userRole }: SidebarProps) {
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-white/10">
-        {!collapsed && (
-          <Link href="/dashboard" className="text-xl font-bold tracking-tight">
-            FODI<span className="text-sidebar-active">OS</span>
+      <div className="flex items-center justify-between h-16 px-4">
+        {!collapsed ? (
+          <Link href="/dashboard" className="flex items-center">
+            <Image
+              src="/logo-fodi.png"
+              alt="FODI"
+              width={120}
+              height={42}
+              priority
+            />
+          </Link>
+        ) : (
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-center w-8 h-8 rounded-md bg-[#C4A052] text-[#1E293B] font-bold text-sm"
+          >
+            F
           </Link>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-md hover:bg-white/10 transition-colors"
+          className="p-1.5 rounded-md hover:bg-white/10 transition-colors duration-200"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
       </div>
+
+      {/* Divider */}
+      <div className="border-b border-white/5 mx-2" />
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2">
@@ -147,10 +182,10 @@ export function Sidebar({ userRole }: SidebarProps) {
                   }
                 }}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200 relative',
                   isActive
-                    ? 'bg-sidebar-active text-white'
-                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-white/5'
+                    ? 'bg-sidebar-active/15 text-[#D4B566] border-l-3 border-sidebar-active'
+                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-white/5 border-l-3 border-transparent'
                 )}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
@@ -160,7 +195,7 @@ export function Sidebar({ userRole }: SidebarProps) {
                     {item.children && (
                       <ChevronRight
                         className={cn(
-                          'h-4 w-4 transition-transform',
+                          'h-4 w-4 transition-transform duration-200',
                           isExpanded && 'rotate-90'
                         )}
                       />
@@ -177,9 +212,9 @@ export function Sidebar({ userRole }: SidebarProps) {
                       key={child.href}
                       href={child.href}
                       className={cn(
-                        'block px-3 py-1.5 rounded-md text-sm transition-colors',
+                        'block px-3 py-1.5 rounded-md text-sm transition-colors duration-200',
                         pathname === child.href
-                          ? 'text-white bg-white/10'
+                          ? 'text-[#D4B566] bg-white/10'
                           : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80'
                       )}
                     >

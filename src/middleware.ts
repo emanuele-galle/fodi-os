@@ -55,6 +55,11 @@ export async function middleware(request: NextRequest) {
 
   // API paths - verify Bearer token or cookie
   if (isApi(pathname)) {
+    // Allow POST /api/leads without auth (external webhooks)
+    if (pathname === '/api/leads' && request.method === 'POST') {
+      return NextResponse.next()
+    }
+
     const authHeader = request.headers.get('authorization')
     const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
     const cookieToken = request.cookies.get('fodi_access')?.value

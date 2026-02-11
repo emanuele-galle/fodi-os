@@ -74,13 +74,13 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
   }
 
   return (
-    <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6">
+    <header className="h-16 bg-card flex items-center justify-between px-6" style={{ borderBottom: '1px solid transparent', borderImage: 'linear-gradient(to right, #C4A052 0%, #E2E8F0 30%, transparent 100%) 1' }}>
       {/* Search trigger */}
       <button
         onClick={onOpenCommandPalette}
-        className="flex items-center gap-2 h-9 px-3 rounded-md border border-border bg-background text-muted text-sm hover:border-primary/50 transition-colors w-80"
+        className="flex items-center gap-2 h-9 px-4 rounded-full border border-border bg-background text-muted text-sm hover:border-primary/50 transition-colors w-80"
       >
-        <Search className="h-4 w-4" />
+        <Search className="h-4.5 w-4.5 text-primary" />
         <span>Cerca o premi Cmd+K...</span>
         <kbd className="ml-auto text-xs bg-secondary px-1.5 py-0.5 rounded">⌘K</kbd>
       </button>
@@ -92,6 +92,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative p-2 rounded-md hover:bg-secondary transition-colors"
+            title="Notifiche"
           >
             <Bell className="h-5 w-5 text-muted" />
             {unreadCount > 0 && (
@@ -157,6 +158,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center gap-2 hover:bg-secondary rounded-md p-1.5 transition-colors"
+            title="Menu utente"
           >
             <Avatar
               name={`${user.firstName} ${user.lastName}`}

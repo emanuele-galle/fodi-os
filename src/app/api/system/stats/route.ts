@@ -1,0 +1,64 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { requirePermission } from '@/lib/permissions'
+import type { Role } from '@/generated/prisma/client'
+
+export async function GET(request: NextRequest) {
+  try {
+    const role = request.headers.get('x-user-role') as Role
+    requirePermission(role, 'admin', 'read')
+
+    const [
+      totalUsers,
+      activeUsers,
+      clientsByStatus,
+      projectsByStatus,
+      recentLogins,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { isActive: true } }),
+      prisma.client.groupBy({ by: ['status'], _count: { id: true } }),
+      prisma.project.groupBy({ by: ['status'], _count: { id: true } }),
+      prisma.user.findMany({
+        where: { lastLoginAt: { not: null } },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
+          avatarUrl: true,
+          lastLoginAt: true,
+        },
+        orderBy: { lastLoginAt: 'desc' },
+        take: 5,
+      }),
+    ])
+
+    const clientsMap: Record<string, number> = {}
+    clientsByStatus.forEach((c) => {
+      clientsMap[c.status] = c._count.id
+    })
+
+    const projectsMap: Record<string, number> = {}
+    projectsByStatus.forEach((p) => {
+      projectsMap[p.status] = p._count.id
+    })
+
+    return NextResponse.json({
+      users: { total: totalUsers, active: activeUsers },
+      clients: clientsMap,
+      projects: projectsMap,
+      recentLogins,
+      app: {
+        name: 'FODI OS',
+        version: '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+      },
+    })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Internal server error'
+    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
+}
