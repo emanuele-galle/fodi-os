@@ -89,10 +89,14 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('PM', 'crm', 'write')).toBe(false)
     })
 
-    it('PM NON ha accesso a erp, content, support, admin, portal', () => {
+    it('PM ha read su support', () => {
+      expect(hasPermission('PM', 'support', 'read')).toBe(true)
+      expect(hasPermission('PM', 'support', 'write')).toBe(false)
+    })
+
+    it('PM NON ha accesso a erp, content, admin, portal', () => {
       expect(hasPermission('PM', 'erp', 'read')).toBe(false)
       expect(hasPermission('PM', 'content', 'read')).toBe(false)
-      expect(hasPermission('PM', 'support', 'read')).toBe(false)
       expect(hasPermission('PM', 'admin', 'read')).toBe(false)
     })
   })
@@ -108,6 +112,11 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('DEVELOPER', 'pm', 'delete')).toBe(false)
     })
 
+    it('DEVELOPER ha read su support', () => {
+      expect(hasPermission('DEVELOPER', 'support', 'read')).toBe(true)
+      expect(hasPermission('DEVELOPER', 'support', 'write')).toBe(false)
+    })
+
     it('DEVELOPER NON ha accesso a crm, erp', () => {
       expect(hasPermission('DEVELOPER', 'crm', 'read')).toBe(false)
       expect(hasPermission('DEVELOPER', 'erp', 'read')).toBe(false)
@@ -120,10 +129,14 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('CONTENT', 'content', 'write')).toBe(true)
     })
 
-    it('CONTENT NON ha accesso a crm, erp, pm', () => {
+    it('CONTENT ha read su pm', () => {
+      expect(hasPermission('CONTENT', 'pm', 'read')).toBe(true)
+      expect(hasPermission('CONTENT', 'pm', 'write')).toBe(false)
+    })
+
+    it('CONTENT NON ha accesso a crm, erp', () => {
       expect(hasPermission('CONTENT', 'crm', 'read')).toBe(false)
       expect(hasPermission('CONTENT', 'erp', 'read')).toBe(false)
-      expect(hasPermission('CONTENT', 'pm', 'read')).toBe(false)
     })
   })
 
@@ -211,8 +224,8 @@ describe('Permissions - Matrice accesso moduli per API', () => {
   const accessMatrix: Record<string, { module: Module; rolesAllowed: Role[]; rolesDenied: Role[] }> = {
     'Tasks API (pm:read)': {
       module: 'pm',
-      rolesAllowed: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES'],
-      rolesDenied: ['CONTENT', 'SUPPORT', 'CLIENT'],
+      rolesAllowed: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT'],
+      rolesDenied: ['SUPPORT', 'CLIENT'],
     },
     'Chat API (chat:read)': {
       module: 'chat',
@@ -233,6 +246,11 @@ describe('Permissions - Matrice accesso moduli per API', () => {
       module: 'erp',
       rolesAllowed: ['ADMIN', 'MANAGER', 'SALES'],
       rolesDenied: ['PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT'],
+    },
+    'Support API (support:read)': {
+      module: 'support',
+      rolesAllowed: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'],
+      rolesDenied: ['SALES', 'CONTENT', 'CLIENT'],
     },
   }
 

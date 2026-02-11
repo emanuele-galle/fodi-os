@@ -38,15 +38,18 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     crm: ['read'],
     pm: ['read', 'write', 'approve'],
     kb: ['read', 'write'],
+    support: ['read'],
     chat: ['read', 'write'],
   },
   DEVELOPER: {
     pm: ['read', 'write'],
     kb: ['read', 'write'],
+    support: ['read'],
     chat: ['read', 'write'],
   },
   CONTENT: {
     content: ['read', 'write'],
+    pm: ['read'],
     kb: ['read', 'write'],
     chat: ['read', 'write'],
   },

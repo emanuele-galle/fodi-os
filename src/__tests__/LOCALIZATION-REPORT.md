@@ -84,6 +84,38 @@ Questi ruoli vedono voci nella sidebar ma ricevono 403 dalle API corrispondenti:
 
 **Soluzione consigliata:** Allineare o la sidebar (rimuovere le voci) oppure i permessi (aggiungere read).
 
+## Fix Applicati (Round 2 - Nuove funzionalita)
+
+### Localizzazione API Routes Google/Calendar/Drive/Meet
+
+Tutte le nuove routes aggiunte dagli agenti avevano `'Unauthorized'` in inglese:
+- `src/app/api/meetings/quick/route.ts` - `'Unauthorized'` -> `'Non autorizzato'`
+- `src/app/api/calendar/events/route.ts` - `'Unauthorized'` (x2) -> `'Non autorizzato'`
+- `src/app/api/calendar/route.ts` - `'Unauthorized'` -> `'Non autorizzato'`
+- `src/app/api/drive/files/route.ts` - `'Unauthorized'` -> `'Non autorizzato'`
+- `src/app/api/drive/upload/route.ts` - `'Unauthorized'` -> `'Non autorizzato'`
+- `src/app/api/drive/folder/route.ts` - `'Unauthorized'` -> `'Non autorizzato'`
+- `src/app/api/auth/google/status/route.ts` - `'Unauthorized'` -> `'Non autorizzato'`
+- `src/app/api/auth/google/disconnect/route.ts` - `'Unauthorized'` -> `'Non autorizzato'`
+- `src/app/api/team/route.ts` - `'Unauthorized'` -> `'Non autorizzato'`
+- `src/app/api/chat/stream/route.ts` - `'Unauthorized'` -> `'Non autorizzato'`
+
+### Localizzazione componenti UI
+
+- `src/components/ui/ThemeSwitcher.tsx` - `'Midnight'` -> `'Mezzanotte'`
+- `src/app/api/meetings/quick/route.ts` - `'Quick Meet'` (default summary) -> `'Riunione veloce'`
+
+### Bug Coerenza BottomNav vs Permessi API (Nuovi)
+
+Stessi problemi della Sidebar trovati anche nel BottomNav mobile:
+
+| Ruolo | Voce Menu | Permesso API | Risultato |
+|-------|-----------|--------------|-----------|
+| CONTENT | Progetti | pm:read = false | 403 Forbidden |
+| CLIENT | Knowledge Base | kb:read = false | 403 Forbidden |
+| PM | Supporto | support:read = false | 403 Forbidden |
+| DEVELOPER | Supporto | support:read = false | 403 Forbidden |
+
 ## Stato Localizzazione Positivo
 
 La maggior parte dell'interfaccia e correttamente in italiano:
@@ -95,3 +127,22 @@ La maggior parte dell'interfaccia e correttamente in italiano:
 - Le date usano `date-fns` con formato italiano
 - La valuta usa `formatCurrency` con `it-IT` locale e EUR
 - I titoli delle pagine e breadcrumb sono in italiano
+- Le nuove API routes (ERP company-profile, FatturaPA) hanno messaggi in italiano
+- Il componente MeetButton ha label `'Partecipa a Meet'` (gia italiano)
+- Il ThemeSwitcher ha tutte le label in italiano dopo il fix
+
+## Nota su Middleware
+
+`src/middleware.ts` contiene ancora `'Unauthorized'` e `'Token expired or invalid'` in inglese.
+Questi NON sono stati modificati perche il middleware e un file condiviso sensibile
+e i messaggi 401 del middleware vengono intercettati prima di raggiungere le API routes.
+
+## Test Suite
+
+**233 test totali, tutti passano:**
+- `permissions.test.ts` - 78 test (matrice permessi completa)
+- `api/validation.test.ts` - 47 test (schemi Zod)
+- `fatturapa.test.ts` - 37 test (generazione XML FatturaPA)
+- `roles/sidebar-navigation.test.ts` - 32 test (coerenza sidebar)
+- `roles/bottomnav-navigation.test.ts` - 22 test (coerenza BottomNav mobile)
+- `utils.test.ts` - 17 test (utility functions)

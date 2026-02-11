@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
     if (!role) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
     }
 
     const workspaceId = request.nextUrl.searchParams.get('workspace') || undefined

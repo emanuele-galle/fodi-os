@@ -34,7 +34,7 @@ const MENU_ITEMS = [
   { label: 'Progetti', href: '/projects', icon: FolderKanban, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'] as Role[] },
   { label: 'Calendario', href: '/calendar', icon: CalendarDays },
   { label: 'Finanze', href: '/erp', icon: Receipt, roles: ['ADMIN', 'MANAGER', 'SALES'] as Role[] },
-  { label: 'Knowledge Base', href: '/kb', icon: BookOpen },
+  { label: 'Knowledge Base', href: '/kb', icon: BookOpen, roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'] as Role[] },
   { label: 'Contenuti', href: '/content', icon: Film, roles: ['ADMIN', 'MANAGER', 'CONTENT'] as Role[] },
   { label: 'Supporto', href: '/support', icon: LifeBuoy, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'] as Role[] },
   { label: 'Team', href: '/team', icon: UsersRound },

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}))
-  const summary = body.summary || 'Quick Meet'
+  const summary = body.summary || 'Riunione veloce'
 
   const now = new Date()
   const end = new Date(now.getTime() + 30 * 60 * 1000)
