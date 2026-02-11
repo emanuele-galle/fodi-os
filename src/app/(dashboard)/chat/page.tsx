@@ -36,6 +36,15 @@ interface Message {
   }
 }
 
+interface TeamMember {
+  id: string
+  firstName: string
+  lastName: string
+  avatarUrl: string | null
+  role: string
+  lastLoginAt: string | null
+}
+
 export default function ChatPage() {
   const [channels, setChannels] = useState<ChannelItem[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -43,6 +52,7 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false)
   const [currentUserId, setCurrentUserId] = useState('')
   const [newMessages, setNewMessages] = useState<Message[]>([])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const selectedIdRef = useRef(selectedId)
   selectedIdRef.current = selectedId
 
@@ -52,6 +62,15 @@ export default function ChatPage() {
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data?.user) setCurrentUserId(data.user.id)
+      })
+  }, [])
+
+  // Fetch team members
+  useEffect(() => {
+    fetch('/api/team')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.items) setTeamMembers(data.items)
       })
   }, [])
 
@@ -180,23 +199,25 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] md:h-[calc(100vh-7rem)] h-[calc(100vh-8rem)] -m-4 md:-m-6 relative">
+    <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-4rem)] -mx-4 -mt-4 -mb-20 md:-mx-6 md:-mt-6 md:-mb-6 relative overflow-hidden">
       {/* Left panel - Channel list */}
-      <div className={`w-full md:w-80 border-r border-border/10 bg-sidebar/50 md:flex-shrink-0 backdrop-blur-sm ${selectedId ? 'hidden md:block' : 'block'}`}>
+      <div className={`w-full md:w-80 border-r border-border flex-shrink-0 bg-card ${selectedId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
         <ChannelList
           channels={channels}
           selectedId={selectedId}
           onSelect={handleSelectChannel}
           onNewChannel={() => setModalOpen(true)}
+          teamMembers={teamMembers}
+          currentUserId={currentUserId}
         />
       </div>
 
       {/* Right panel - Messages */}
-      <div className={`flex-1 flex flex-col min-w-0 ${!selectedId ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 bg-background ${!selectedId ? 'hidden md:flex' : 'flex'}`}>
         {selectedId ? (
           <>
             {/* Channel header */}
-            <div className="border-b border-border/10 px-4 md:px-6 py-3 flex items-center gap-3 bg-card/50 backdrop-blur-sm">
+            <div className="border-b border-border px-4 md:px-6 py-3 flex items-center gap-3 bg-card">
               <button
                 onClick={handleBack}
                 className="md:hidden p-1 rounded-md hover:bg-secondary mr-1 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"

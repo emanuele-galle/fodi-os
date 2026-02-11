@@ -40,7 +40,7 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
   }
 
   return (
-    <div className="border-t border-border/10 p-4">
+    <div className="border-t border-border p-4 bg-card">
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}

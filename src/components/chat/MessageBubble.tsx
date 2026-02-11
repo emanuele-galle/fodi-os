@@ -48,7 +48,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
       )}
       <div className={cn('max-w-[70%] min-w-0', isOwn && 'items-end')}>
         {!isOwn && (
-          <span className="text-xs font-medium text-[#D4B566] mb-0.5 block">
+          <span className="text-xs font-medium text-primary mb-0.5 block">
             {authorName}
           </span>
         )}
@@ -56,7 +56,7 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
           className={cn(
             'rounded-lg px-3 py-2 text-sm break-words',
             isOwn
-              ? 'bg-[#C4A052]/20 text-foreground rounded-tr-sm'
+              ? 'bg-primary/10 text-foreground rounded-tr-sm'
               : 'bg-secondary text-foreground rounded-tl-sm'
           )}
         >
