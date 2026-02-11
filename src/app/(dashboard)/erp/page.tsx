@@ -1,0 +1,117 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Receipt, FileText, CreditCard, BarChart3, ArrowRight } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { formatCurrency } from '@/lib/utils'
+
+export default function ErpPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    draftQuotes: 0,
+    unpaidInvoices: 0,
+    monthExpenses: 0,
+  })
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/quotes?status=DRAFT&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
+      fetch('/api/invoices?status=SENT&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
+      fetch('/api/expenses?limit=100').then((r) => (r.ok ? r.json() : { items: [] })),
+    ])
+      .then(([quotesData, invoicesData, expensesData]) => {
+        const now = new Date()
+        const thisMonth = expensesData.items?.filter((e: { date: string }) => {
+          const d = new Date(e.date)
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+        }) || []
+        const monthTotal = thisMonth.reduce(
+          (s: number, e: { amount: string }) => s + parseFloat(e.amount),
+          0
+        )
+
+        setStats({
+          draftQuotes: quotesData.total || 0,
+          unpaidInvoices: invoicesData.total || 0,
+          monthExpenses: monthTotal,
+        })
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const sections = [
+    {
+      title: 'Preventivi',
+      description: 'Crea e gestisci preventivi per i clienti',
+      icon: FileText,
+      href: '/erp/quotes',
+      stat: loading ? null : `${stats.draftQuotes} bozze`,
+    },
+    {
+      title: 'Fatture',
+      description: 'Emissione e tracking pagamenti',
+      icon: Receipt,
+      href: '/erp/invoices',
+      stat: loading ? null : `${stats.unpaidInvoices} da pagare`,
+    },
+    {
+      title: 'Spese',
+      description: 'Registrazione e analisi costi',
+      icon: CreditCard,
+      href: '/erp/expenses',
+      stat: loading ? null : `${formatCurrency(stats.monthExpenses)} questo mese`,
+    },
+    {
+      title: 'Report',
+      description: 'Analisi finanziaria e statistiche',
+      icon: BarChart3,
+      href: '/erp/reports',
+      stat: null,
+    },
+  ]
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">ERP</h1>
+        <p className="text-sm text-muted mt-1">Gestione preventivi, fatture, spese e report</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {sections.map((section) => {
+          const Icon = section.icon
+          return (
+            <Card
+              key={section.href}
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => router.push(section.href)}
+            >
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <Icon className="h-8 w-8 text-primary" />
+                  {loading ? (
+                    <Skeleton className="h-6 w-24" />
+                  ) : section.stat ? (
+                    <Badge variant="outline">{section.stat}</Badge>
+                  ) : null}
+                </div>
+                <CardTitle className="mt-3">{section.title}</CardTitle>
+                <CardDescription>{section.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="ghost" size="sm" className="p-0 text-primary">
+                  Vai alla sezione <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
