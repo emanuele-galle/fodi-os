@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Plus, Trash2 } from 'lucide-react'
+import { ChevronLeft, Plus, Trash2, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
+import { Modal } from '@/components/ui/Modal'
 import { RichTextEditor } from '@/components/shared/RichTextEditor'
 import { formatCurrency } from '@/lib/utils'
 
@@ -25,6 +26,15 @@ export default function NewQuotePage() {
   const router = useRouter()
   const [clients, setClients] = useState<Client[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [showNewClientModal, setShowNewClientModal] = useState(false)
+  const [newClientData, setNewClientData] = useState({
+    companyName: '',
+    vatNumber: '',
+    pec: '',
+    phone: '',
+  })
+  const [newClientError, setNewClientError] = useState('')
+  const [creatingClient, setCreatingClient] = useState(false)
 
   const [clientId, setClientId] = useState('')
   const [title, setTitle] = useState('')
@@ -96,6 +106,53 @@ export default function NewQuotePage() {
     }
   }
 
+  async function handleCreateClient() {
+    if (!newClientData.companyName.trim()) {
+      setNewClientError('Ragione sociale obbligatoria')
+      return
+    }
+    setCreatingClient(true)
+    setNewClientError('')
+    try {
+      const res = await fetch('/api/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: newClientData.companyName.trim(),
+          vatNumber: newClientData.vatNumber.trim() || undefined,
+          pec: newClientData.pec.trim() || undefined,
+          status: 'ACTIVE',
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        setNewClientError(err.error || 'Errore nella creazione del cliente')
+        return
+      }
+      const created = await res.json()
+      setClients((prev) => [created, ...prev])
+      setClientId(created.id)
+      setShowNewClientModal(false)
+      setNewClientData({ companyName: '', vatNumber: '', pec: '', phone: '' })
+
+      // Se e' stato fornito un telefono, crea un contatto primario
+      if (newClientData.phone.trim()) {
+        fetch(`/api/clients/${created.id}/contacts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName: newClientData.companyName.trim(),
+            lastName: 'Contatto',
+            phone: newClientData.phone.trim(),
+            isPrimary: true,
+          }),
+        })
+      }
+    } finally {
+      setCreatingClient(false)
+    }
+  }
+
   const clientOptions = [
     { value: '', label: 'Seleziona cliente...' },
     ...clients.map((c) => ({ value: c.id, label: c.companyName })),
@@ -118,12 +175,28 @@ export default function NewQuotePage() {
           <CardContent>
             <CardTitle className="mb-4">Informazioni Generali</CardTitle>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                label="Cliente *"
-                options={clientOptions}
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
-              />
+              <div>
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <Select
+                      label="Cliente *"
+                      options={clientOptions}
+                      value={clientId}
+                      onChange={(e) => setClientId(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-10 px-3"
+                    onClick={() => setShowNewClientModal(true)}
+                  >
+                    <UserPlus className="h-4 w-4 mr-1" />
+                    Nuovo
+                  </Button>
+                </div>
+              </div>
               <Input
                 label="Titolo *"
                 value={title}
@@ -256,6 +329,67 @@ export default function NewQuotePage() {
           </Button>
         </div>
       </form>
+
+      <Modal
+        open={showNewClientModal}
+        onClose={() => {
+          setShowNewClientModal(false)
+          setNewClientError('')
+        }}
+        title="Nuovo Cliente"
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Ragione Sociale *"
+            value={newClientData.companyName}
+            onChange={(e) => setNewClientData((d) => ({ ...d, companyName: e.target.value }))}
+            placeholder="es. Acme S.r.l."
+          />
+          <Input
+            label="P.IVA"
+            value={newClientData.vatNumber}
+            onChange={(e) => setNewClientData((d) => ({ ...d, vatNumber: e.target.value }))}
+            placeholder="es. IT01234567890"
+          />
+          <Input
+            label="Email / PEC"
+            type="email"
+            value={newClientData.pec}
+            onChange={(e) => setNewClientData((d) => ({ ...d, pec: e.target.value }))}
+            placeholder="es. info@azienda.it"
+          />
+          <Input
+            label="Telefono"
+            type="tel"
+            value={newClientData.phone}
+            onChange={(e) => setNewClientData((d) => ({ ...d, phone: e.target.value }))}
+            placeholder="es. +39 02 1234567"
+          />
+          {newClientError && (
+            <p className="text-sm text-destructive">{newClientError}</p>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowNewClientModal(false)
+                setNewClientError('')
+              }}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCreateClient}
+              disabled={creatingClient || !newClientData.companyName.trim()}
+            >
+              {creatingClient ? 'Creazione...' : 'Crea Cliente'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

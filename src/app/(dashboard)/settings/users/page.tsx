@@ -1,9 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardTitle, CardContent } from '@/components/ui/Card'
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { EmptyState } from '@/components/ui/EmptyState'
+import {
+  Users,
+  UserPlus,
+  Search,
+  Shield,
+  ShieldCheck,
+  X,
+  Copy,
+  Check,
+  ChevronDown,
+  Power,
+  Pencil,
+  KeyRound,
+  Trash2,
+  Phone,
+  Mail,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  Camera,
+} from 'lucide-react'
+import { formatDistanceToNow, format } from 'date-fns'
+import { it } from 'date-fns/locale'
 
 interface UserItem {
   id: string
@@ -12,54 +40,968 @@ interface UserItem {
   email: string
   role: string
   isActive: boolean
+  avatarUrl: string | null
+  phone: string | null
+  lastLoginAt: string | null
+  createdAt: string
 }
 
-const roleBadgeVariant = (role: string) => {
-  switch (role) {
-    case 'ADMIN': return 'destructive' as const
-    case 'MANAGER': return 'warning' as const
-    case 'SALES': return 'success' as const
-    default: return 'default' as const
-  }
+interface UserPermission {
+  module: string
+  permission: string
 }
+
+interface UserStats {
+  tasksCompleted: number
+  tasksTotal: number
+  hoursLogged: number
+}
+
+const ROLES = [
+  { value: 'ADMIN', label: 'Admin' },
+  { value: 'MANAGER', label: 'Manager' },
+  { value: 'SALES', label: 'Sales' },
+  { value: 'PM', label: 'Project Manager' },
+  { value: 'DEVELOPER', label: 'Developer' },
+  { value: 'CONTENT', label: 'Content' },
+  { value: 'SUPPORT', label: 'Support' },
+  { value: 'CLIENT', label: 'Cliente' },
+]
+
+const ROLE_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+  ADMIN: 'destructive',
+  MANAGER: 'warning',
+  SALES: 'success',
+  PM: 'default',
+  DEVELOPER: 'default',
+  CONTENT: 'outline',
+  SUPPORT: 'outline',
+  CLIENT: 'outline',
+}
+
+const ROLE_LABELS: Record<string, string> = Object.fromEntries(ROLES.map((r) => [r.value, r.label]))
+
+const MODULES = [
+  { key: 'crm', label: 'CRM' },
+  { key: 'erp', label: 'ERP' },
+  { key: 'pm', label: 'Project Management' },
+  { key: 'kb', label: 'Knowledge Base' },
+  { key: 'content', label: 'Contenuti' },
+  { key: 'support', label: 'Supporto' },
+  { key: 'admin', label: 'Admin' },
+]
+
+const PERMISSIONS = ['read', 'write', 'delete', 'approve', 'admin']
+const PERMISSION_LABELS: Record<string, string> = {
+  read: 'Lettura',
+  write: 'Scrittura',
+  delete: 'Elimina',
+  approve: 'Approva',
+  admin: 'Admin',
+}
+
+type ModalTab = 'profile' | 'permissions'
 
 export default function UsersAdminPage() {
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState('')
+  const [showInviteForm, setShowInviteForm] = useState(false)
+  const [inviteData, setInviteData] = useState({ email: '', firstName: '', lastName: '', userRole: 'DEVELOPER', phone: '' })
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteResult, setInviteResult] = useState<{ password: string; email: string } | null>(null)
+  const [inviteError, setInviteError] = useState('')
+  const [editingRole, setEditingRole] = useState<string | null>(null)
+  const [copiedPassword, setCopiedPassword] = useState(false)
+
+  // Edit modal state
+  const [editUser, setEditUser] = useState<UserItem | null>(null)
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', phone: '', role: '', avatarUrl: '' })
+  const [editTab, setEditTab] = useState<ModalTab>('profile')
+  const [editSaving, setEditSaving] = useState(false)
+  const [editError, setEditError] = useState('')
+
+  // Reset password state
+  const [resetResult, setResetResult] = useState<string | null>(null)
+  const [resetLoading, setResetLoading] = useState(false)
+  const [copiedResetPw, setCopiedResetPw] = useState(false)
+
+  // Permissions state
+  const [userPerms, setUserPerms] = useState<UserPermission[]>([])
+  const [permsLoading, setPermsLoading] = useState(false)
+  const [permsSaving, setPermsSaving] = useState(false)
+
+  // Delete state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+
+  // Stats state
+  const [userStats, setUserStats] = useState<UserStats | null>(null)
+
+  // Avatar upload state
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   useEffect(() => {
-    fetch('/api/users')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.users) setUsers(data.users)
-      })
-      .finally(() => setLoading(false))
+    loadUsers()
   }, [])
+
+  async function loadUsers() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/users')
+      const data = await res.json()
+      if (data?.users) setUsers(data.users)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault()
+    setInviteLoading(true)
+    setInviteError('')
+    try {
+      const res = await fetch('/api/users/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inviteData),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setInviteError(data.error || 'Errore durante l\'invito')
+        return
+      }
+      setInviteResult({ password: data.tempPassword, email: inviteData.email })
+      setInviteData({ email: '', firstName: '', lastName: '', userRole: 'DEVELOPER', phone: '' })
+      loadUsers()
+    } catch {
+      setInviteError('Errore di connessione')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
+  async function handleRoleChange(userId: string, newRole: string) {
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      })
+      if (res.ok) {
+        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)))
+      }
+    } catch {
+      // silent
+    }
+    setEditingRole(null)
+  }
+
+  async function handleToggleActive(userId: string, currentActive: boolean) {
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentActive }),
+      })
+      if (res.ok) {
+        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isActive: !currentActive } : u)))
+      }
+    } catch {
+      // silent
+    }
+  }
+
+  function copyPassword(password: string) {
+    navigator.clipboard.writeText(password)
+    setCopiedPassword(true)
+    setTimeout(() => setCopiedPassword(false), 2000)
+  }
+
+  function copyResetPassword(password: string) {
+    navigator.clipboard.writeText(password)
+    setCopiedResetPw(true)
+    setTimeout(() => setCopiedResetPw(false), 2000)
+  }
+
+  // Open edit modal
+  const openEditModal = useCallback(async (user: UserItem) => {
+    setEditUser(user)
+    setEditForm({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone || '',
+      role: user.role,
+      avatarUrl: user.avatarUrl || '',
+    })
+    setEditTab('profile')
+    setEditError('')
+    setResetResult(null)
+    setShowDeleteConfirm(false)
+    setDeleteConfirmText('')
+    setUserStats(null)
+
+    // Load stats
+    loadUserStats(user.id)
+  }, [])
+
+  async function loadUserStats(userId: string) {
+    try {
+      const [tasksRes, timeRes] = await Promise.all([
+        fetch(`/api/tasks?assigneeId=${userId}&limit=999`),
+        fetch(`/api/time-entries?userId=${userId}&limit=999`),
+      ])
+      const tasksData = await tasksRes.json()
+      const timeData = await timeRes.json()
+
+      const tasks = tasksData?.items || tasksData?.tasks || []
+      const totalTasks = Array.isArray(tasks) ? tasks.length : 0
+      const completedTasks = Array.isArray(tasks) ? tasks.filter((t: { status: string }) => t.status === 'DONE').length : 0
+      const entries = timeData?.items || timeData?.entries || []
+      const totalHours = Array.isArray(entries) ? entries.reduce((sum: number, e: { hours: number }) => sum + (e.hours || 0), 0) : 0
+
+      setUserStats({ tasksCompleted: completedTasks, tasksTotal: totalTasks, hoursLogged: totalHours })
+    } catch {
+      setUserStats({ tasksCompleted: 0, tasksTotal: 0, hoursLogged: 0 })
+    }
+  }
+
+  function closeEditModal() {
+    setEditUser(null)
+    setResetResult(null)
+    setShowDeleteConfirm(false)
+    setDeleteConfirmText('')
+  }
+
+  async function handleEditSave() {
+    if (!editUser) return
+    setEditSaving(true)
+    setEditError('')
+    try {
+      const res = await fetch(`/api/users/${editUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: editForm.firstName,
+          lastName: editForm.lastName,
+          email: editForm.email,
+          phone: editForm.phone || null,
+          role: editForm.role,
+          avatarUrl: editForm.avatarUrl || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setEditError(data.error || 'Errore durante il salvataggio')
+        return
+      }
+      // Update local state
+      setUsers((prev) => prev.map((u) => (u.id === editUser.id ? { ...u, ...data.user } : u)))
+      setEditUser(data.user)
+    } catch {
+      setEditError('Errore di connessione')
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  async function handleResetPassword() {
+    if (!editUser) return
+    setResetLoading(true)
+    try {
+      const res = await fetch(`/api/users/${editUser.id}/reset-password`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        setResetResult(data.tempPassword)
+      } else {
+        setEditError(data.error || 'Errore reset password')
+      }
+    } catch {
+      setEditError('Errore di connessione')
+    } finally {
+      setResetLoading(false)
+    }
+  }
+
+  // Permissions
+  async function loadPermissions(userId: string) {
+    setPermsLoading(true)
+    try {
+      const res = await fetch(`/api/users/${userId}/permissions`)
+      const data = await res.json()
+      if (data?.permissions) setUserPerms(data.permissions)
+    } catch {
+      setUserPerms([])
+    } finally {
+      setPermsLoading(false)
+    }
+  }
+
+  function togglePerm(module: string, permission: string) {
+    setUserPerms((prev) => {
+      const exists = prev.some((p) => p.module === module && p.permission === permission)
+      if (exists) {
+        return prev.filter((p) => !(p.module === module && p.permission === permission))
+      }
+      return [...prev, { module, permission }]
+    })
+  }
+
+  function hasUserPerm(module: string, permission: string): boolean {
+    return userPerms.some((p) => p.module === module && p.permission === permission)
+  }
+
+  async function savePermissions() {
+    if (!editUser) return
+    setPermsSaving(true)
+    try {
+      const res = await fetch(`/api/users/${editUser.id}/permissions`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permissions: userPerms }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setEditError(data.error || 'Errore salvataggio permessi')
+      }
+    } catch {
+      setEditError('Errore di connessione')
+    } finally {
+      setPermsSaving(false)
+    }
+  }
+
+  // Handle tab change
+  function handleTabChange(tab: ModalTab) {
+    setEditTab(tab)
+    if (tab === 'permissions' && editUser) {
+      loadPermissions(editUser.id)
+    }
+  }
+
+  // Delete user
+  async function handleDeleteUser() {
+    if (!editUser) return
+    setDeleteLoading(true)
+    try {
+      const res = await fetch(`/api/users/${editUser.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setUsers((prev) => prev.filter((u) => u.id !== editUser.id))
+        closeEditModal()
+      } else {
+        const data = await res.json()
+        setEditError(data.error || 'Errore eliminazione utente')
+      }
+    } catch {
+      setEditError('Errore di connessione')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  // Avatar upload
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !editUser) return
+
+    if (!file.type.startsWith('image/')) {
+      setEditError('Seleziona un file immagine')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setEditError('Immagine troppo grande (max 5 MB)')
+      return
+    }
+
+    setAvatarUploading(true)
+    setEditError('')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const uploadRes = await fetch('/api/chat/upload', { method: 'POST', body: formData })
+      if (!uploadRes.ok) {
+        setEditError('Errore upload immagine')
+        return
+      }
+      const uploadData = await uploadRes.json()
+      setEditForm((prev) => ({ ...prev, avatarUrl: uploadData.fileUrl }))
+    } catch {
+      setEditError('Errore di connessione durante upload')
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
+
+  const filtered = users.filter((u) => {
+    const matchesSearch =
+      !search ||
+      `${u.firstName} ${u.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase())
+    const matchesRole = !roleFilter || u.role === roleFilter
+    return matchesSearch && matchesRole
+  })
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Gestione Utenti</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">Gestione Utenti</h1>
+          <p className="text-sm text-muted mt-1">{users.length} utenti totali</p>
+        </div>
+        <Button size="sm" onClick={() => { setShowInviteForm(true); setInviteResult(null) }}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Invita Utente
+        </Button>
       </div>
 
+      {/* Invite Form Modal */}
+      {showInviteForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <Card className="w-full max-w-md mx-4 relative">
+            <button
+              onClick={() => { setShowInviteForm(false); setInviteResult(null); setInviteError('') }}
+              className="absolute top-4 right-4 p-1 rounded-md hover:bg-secondary transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <CardContent>
+              {inviteResult ? (
+                <div className="text-center">
+                  <div className="mx-auto h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+                    <Check className="h-6 w-6 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Utente Creato</h3>
+                  <p className="text-sm text-muted mb-4">
+                    Comunica queste credenziali all&apos;utente:
+                  </p>
+                  <div className="bg-secondary rounded-lg p-4 text-left space-y-2">
+                    <div>
+                      <span className="text-xs text-muted">Email</span>
+                      <p className="text-sm font-mono">{inviteResult.email}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted">Password temporanea</span>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-mono font-semibold">{inviteResult.password}</p>
+                        <button
+                          onClick={() => copyPassword(inviteResult.password)}
+                          className="p-1 rounded hover:bg-background transition-colors"
+                          title="Copia password"
+                        >
+                          {copiedPassword ? (
+                            <Check className="h-3.5 w-3.5 text-green-600" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5 text-muted" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="mt-4 w-full"
+                    onClick={() => { setShowInviteForm(false); setInviteResult(null) }}
+                  >
+                    Chiudi
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-lg font-semibold mb-4">Invita Nuovo Utente</h3>
+                  <form onSubmit={handleInvite} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        label="Nome"
+                        value={inviteData.firstName}
+                        onChange={(e) => setInviteData((d) => ({ ...d, firstName: e.target.value }))}
+                        required
+                      />
+                      <Input
+                        label="Cognome"
+                        value={inviteData.lastName}
+                        onChange={(e) => setInviteData((d) => ({ ...d, lastName: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <Input
+                      label="Email"
+                      type="email"
+                      value={inviteData.email}
+                      onChange={(e) => setInviteData((d) => ({ ...d, email: e.target.value }))}
+                      required
+                    />
+                    <Input
+                      label="Telefono (opzionale)"
+                      type="tel"
+                      value={inviteData.phone}
+                      onChange={(e) => setInviteData((d) => ({ ...d, phone: e.target.value }))}
+                      placeholder="+39 ..."
+                    />
+                    <Select
+                      label="Ruolo"
+                      options={ROLES}
+                      value={inviteData.userRole}
+                      onChange={(e) => setInviteData((d) => ({ ...d, userRole: e.target.value }))}
+                    />
+                    {inviteError && (
+                      <p className="text-sm text-destructive">{inviteError}</p>
+                    )}
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => { setShowInviteForm(false); setInviteError('') }}
+                      >
+                        Annulla
+                      </Button>
+                      <Button type="submit" className="flex-1" loading={inviteLoading}>
+                        Crea Utente
+                      </Button>
+                    </div>
+                  </form>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {editUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <Card className="w-full max-w-2xl mx-4 relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={closeEditModal}
+              className="absolute top-4 right-4 p-1 rounded-md hover:bg-secondary transition-colors z-10"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <CardContent>
+              {/* Header with avatar & info */}
+              <div className="flex items-center gap-4 mb-6 pb-4 border-b border-border">
+                <div className="relative group">
+                  <Avatar
+                    name={`${editForm.firstName} ${editForm.lastName}`}
+                    src={editForm.avatarUrl}
+                    size="lg"
+                  />
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    {avatarUploading ? (
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    ) : (
+                      <Camera className="h-5 w-5 text-white" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarUpload}
+                      disabled={avatarUploading}
+                    />
+                  </label>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold truncate">
+                    {editUser.firstName} {editUser.lastName}
+                  </h3>
+                  <div className="flex items-center gap-3 text-sm text-muted mt-0.5">
+                    <span className="flex items-center gap-1">
+                      <Mail className="h-3.5 w-3.5" />
+                      {editUser.email}
+                    </span>
+                    {editUser.phone && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3.5 w-3.5" />
+                        {editUser.phone}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <Badge variant={ROLE_BADGE[editUser.role] || 'default'}>
+                      {editUser.role === 'ADMIN' || editUser.role === 'MANAGER' ? (
+                        <ShieldCheck className="h-3 w-3 mr-1" />
+                      ) : (
+                        <Shield className="h-3 w-3 mr-1" />
+                      )}
+                      {ROLE_LABELS[editUser.role] || editUser.role}
+                    </Badge>
+                    <Badge variant={editUser.isActive ? 'success' : 'outline'}>
+                      {editUser.isActive ? 'Attivo' : 'Disattivato'}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="text-right text-xs text-muted space-y-1 hidden sm:block">
+                  <div className="flex items-center gap-1 justify-end">
+                    <Calendar className="h-3 w-3" />
+                    Creato: {format(new Date(editUser.createdAt), 'dd MMM yyyy', { locale: it })}
+                  </div>
+                  {editUser.lastLoginAt && (
+                    <div className="flex items-center gap-1 justify-end">
+                      <Clock className="h-3 w-3" />
+                      Ultimo accesso: {formatDistanceToNow(new Date(editUser.lastLoginAt), { locale: it, addSuffix: true })}
+                    </div>
+                  )}
+                  {userStats && (
+                    <div className="flex items-center gap-1 justify-end">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {userStats.tasksCompleted}/{userStats.tasksTotal} task
+                      {userStats.hoursLogged > 0 && ` | ${userStats.hoursLogged.toFixed(1)}h`}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex gap-1 mb-4 border-b border-border">
+                <button
+                  onClick={() => handleTabChange('profile')}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    editTab === 'profile'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted hover:text-foreground'
+                  }`}
+                >
+                  Profilo
+                </button>
+                <button
+                  onClick={() => handleTabChange('permissions')}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    editTab === 'permissions'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted hover:text-foreground'
+                  }`}
+                >
+                  Permessi
+                </button>
+              </div>
+
+              {editError && (
+                <div className="mb-4 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  {editError}
+                </div>
+              )}
+
+              {/* Profile Tab */}
+              {editTab === 'profile' && (
+                <div className="space-y-6">
+                  {/* Edit fields */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        label="Nome"
+                        value={editForm.firstName}
+                        onChange={(e) => setEditForm((f) => ({ ...f, firstName: e.target.value }))}
+                      />
+                      <Input
+                        label="Cognome"
+                        value={editForm.lastName}
+                        onChange={(e) => setEditForm((f) => ({ ...f, lastName: e.target.value }))}
+                      />
+                    </div>
+                    <Input
+                      label="Email"
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        label="Telefono"
+                        type="tel"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                        placeholder="+39 ..."
+                      />
+                      <Select
+                        label="Ruolo"
+                        options={ROLES}
+                        value={editForm.role}
+                        onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button onClick={handleEditSave} loading={editSaving} className="flex-1">
+                      Salva Modifiche
+                    </Button>
+                  </div>
+
+                  {/* Reset Password Section */}
+                  <div className="border-t border-border pt-4">
+                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <KeyRound className="h-4 w-4" />
+                      Reset Password
+                    </h4>
+                    {resetResult ? (
+                      <div className="bg-secondary rounded-lg p-4 space-y-2">
+                        <p className="text-sm text-muted">Nuova password temporanea:</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-mono font-semibold">{resetResult}</p>
+                          <button
+                            onClick={() => copyResetPassword(resetResult)}
+                            className="p-1 rounded hover:bg-background transition-colors"
+                            title="Copia password"
+                          >
+                            {copiedResetPw ? (
+                              <Check className="h-3.5 w-3.5 text-green-600" />
+                            ) : (
+                              <Copy className="h-3.5 w-3.5 text-muted" />
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-xs text-muted">Comunica questa password all&apos;utente.</p>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResetPassword}
+                        loading={resetLoading}
+                      >
+                        <KeyRound className="h-4 w-4 mr-2" />
+                        Genera Nuova Password
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Delete Section */}
+                  <div className="border-t border-border pt-4">
+                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2 text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                      Zona Pericolosa
+                    </h4>
+                    {showDeleteConfirm ? (
+                      <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4 space-y-3">
+                        <p className="text-sm">
+                          Sei sicuro di voler eliminare <strong>{editUser.firstName} {editUser.lastName}</strong>?
+                          Questa azione non puo&apos; essere annullata. Tutti i dati associati saranno rimossi.
+                        </p>
+                        <Input
+                          placeholder={`Scrivi "${editUser.email}" per confermare`}
+                          value={deleteConfirmText}
+                          onChange={(e) => setDeleteConfirmText(e.target.value)}
+                        />
+                        <div className="flex gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText('') }}
+                          >
+                            Annulla
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={handleDeleteUser}
+                            loading={deleteLoading}
+                            disabled={deleteConfirmText !== editUser.email}
+                          >
+                            Elimina Definitivamente
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setShowDeleteConfirm(true)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Elimina Utente
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Permissions Tab */}
+              {editTab === 'permissions' && (
+                <div className="space-y-4">
+                  {permsLoading ? (
+                    <div className="space-y-3">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="h-10 rounded shimmer" />
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 pr-4 font-medium text-muted">Modulo</th>
+                              {PERMISSIONS.map((p) => (
+                                <th key={p} className="text-center py-2 px-2 font-medium text-muted">
+                                  {PERMISSION_LABELS[p]}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {MODULES.map((mod) => (
+                              <tr key={mod.key} className="border-b border-border/50">
+                                <td className="py-2.5 pr-4 font-medium">{mod.label}</td>
+                                {PERMISSIONS.map((perm) => (
+                                  <td key={perm} className="text-center py-2.5 px-2">
+                                    <button
+                                      onClick={() => togglePerm(mod.key, perm)}
+                                      className={`h-6 w-6 rounded border-2 transition-all inline-flex items-center justify-center ${
+                                        hasUserPerm(mod.key, perm)
+                                          ? 'bg-primary border-primary text-primary-foreground'
+                                          : 'border-border hover:border-primary/50'
+                                      }`}
+                                    >
+                                      {hasUserPerm(mod.key, perm) && <Check className="h-3.5 w-3.5" />}
+                                    </button>
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <Button onClick={savePermissions} loading={permsSaving}>
+                        Salva Permessi
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+          <Input
+            placeholder="Cerca per nome o email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select
+          options={[{ value: '', label: 'Tutti i ruoli' }, ...ROLES]}
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+      </div>
+
+      {/* Users Table */}
       <Card>
-        <CardTitle>Team FODI</CardTitle>
         <CardContent>
           {loading ? (
-            <p className="text-sm text-muted">Caricamento...</p>
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 py-3">
+                  <div className="h-10 w-10 rounded-full shimmer" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-40 rounded shimmer" />
+                    <div className="h-3 w-56 rounded shimmer" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Nessun utente trovato"
+              description={search || roleFilter ? 'Prova a modificare i filtri.' : 'Nessun utente registrato.'}
+            />
           ) : (
             <div className="divide-y divide-border">
-              {users.map((u) => (
-                <div key={u.id} className="flex items-center gap-4 py-3 hover:bg-secondary/30 transition-colors px-2 -mx-2 rounded-md">
-                  <Avatar name={`${u.firstName} ${u.lastName}`} size="sm" />
+              {filtered.map((u) => (
+                <div
+                  key={u.id}
+                  className={`flex items-center gap-4 py-3 px-2 -mx-2 rounded-md transition-colors ${
+                    u.isActive ? 'hover:bg-secondary/30' : 'opacity-60'
+                  }`}
+                >
+                  <Avatar
+                    name={`${u.firstName} ${u.lastName}`}
+                    src={u.avatarUrl}
+                    size="md"
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{u.firstName} {u.lastName}</p>
+                    <p className="font-medium truncate">
+                      {u.firstName} {u.lastName}
+                    </p>
                     <p className="text-sm text-muted truncate">{u.email}</p>
+                    {u.lastLoginAt && (
+                      <p className="text-xs text-muted">
+                        Ultimo accesso: {formatDistanceToNow(new Date(u.lastLoginAt), { locale: it, addSuffix: true })}
+                      </p>
+                    )}
                   </div>
-                  <Badge variant={roleBadgeVariant(u.role)}>{u.role}</Badge>
-                  <Badge variant={u.isActive ? 'success' : 'outline'}>
-                    {u.isActive ? 'Attivo' : 'Inattivo'}
-                  </Badge>
+
+                  {/* Role selector */}
+                  <div className="relative">
+                    {editingRole === u.id ? (
+                      <select
+                        className="text-xs border border-border rounded-md bg-background px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        value={u.role}
+                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                        onBlur={() => setEditingRole(null)}
+                        autoFocus
+                      >
+                        {ROLES.map((r) => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <button
+                        onClick={() => setEditingRole(u.id)}
+                        className="flex items-center gap-1 group"
+                        title="Cambia ruolo"
+                      >
+                        <Badge variant={ROLE_BADGE[u.role] || 'default'}>
+                          {u.role === 'ADMIN' || u.role === 'MANAGER' ? (
+                            <ShieldCheck className="h-3 w-3 mr-1" />
+                          ) : (
+                            <Shield className="h-3 w-3 mr-1" />
+                          )}
+                          {ROLE_LABELS[u.role] || u.role}
+                        </Badge>
+                        <ChevronDown className="h-3 w-3 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Edit button */}
+                  <button
+                    onClick={() => openEditModal(u)}
+                    className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-secondary transition-colors"
+                    title="Modifica utente"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+
+                  {/* Active status toggle */}
+                  <button
+                    onClick={() => handleToggleActive(u.id, u.isActive)}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      u.isActive
+                        ? 'text-green-600 hover:bg-green-500/10'
+                        : 'text-muted hover:bg-secondary'
+                    }`}
+                    title={u.isActive ? 'Disattiva utente' : 'Riattiva utente'}
+                  >
+                    <Power className="h-4 w-4" />
+                  </button>
                 </div>
               ))}
             </div>

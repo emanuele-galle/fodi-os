@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
@@ -11,7 +10,7 @@ import {
   Users,
   FolderKanban,
   CalendarDays,
-  Receipt,
+  Euro,
   BookOpen,
   Film,
   LifeBuoy,
@@ -23,6 +22,7 @@ import {
 import { useState, useEffect } from 'react'
 import type { Role } from '@/generated/prisma/client'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { Logo } from '@/components/ui/Logo'
 import { useUserPreferences } from '@/hooks/useUserPreferences'
 
 interface NavItem {
@@ -78,7 +78,7 @@ const navigation: NavItem[] = [
   {
     label: 'Finanze',
     href: '/erp',
-    icon: Receipt,
+    icon: Euro,
     roles: ['ADMIN', 'MANAGER', 'SALES'],
     children: [
       { label: 'Preventivi', href: '/erp/quotes' },
@@ -160,7 +160,7 @@ export function Sidebar({ userRole }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'flex flex-col bg-sidebar text-sidebar-foreground border-r border-border/10 transition-all duration-300',
+        'flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-border/10 transition-all duration-300',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
@@ -168,13 +168,7 @@ export function Sidebar({ userRole }: SidebarProps) {
       <div className="flex items-center justify-between h-16 px-4">
         {!collapsed ? (
           <Link href="/dashboard" className="flex items-center">
-            <Image
-              src="/logo-fodi.png"
-              alt="FODI"
-              width={120}
-              height={42}
-              priority
-            />
+            <Logo variant="light" />
           </Link>
         ) : (
           <Link
@@ -193,7 +187,7 @@ export function Sidebar({ userRole }: SidebarProps) {
       </div>
 
       {/* Divider */}
-      <div className="border-b border-white/8 mx-2" />
+      <div className="border-b border-white/10 mx-3" />
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2">

@@ -35,6 +35,7 @@ interface ChannelListProps {
   onNewChannel: () => void
   teamMembers?: TeamMember[]
   currentUserId?: string
+  onStartDM?: (memberId: string) => void
 }
 
 const TYPE_ICON: Record<string, React.ElementType> = {
@@ -72,7 +73,7 @@ function isRecentlyActive(lastLoginAt: string | null): boolean {
   return diff < 30 * 60 * 1000
 }
 
-export function ChannelList({ channels, selectedId, onSelect, onNewChannel, teamMembers = [], currentUserId }: ChannelListProps) {
+export function ChannelList({ channels, selectedId, onSelect, onNewChannel, teamMembers = [], currentUserId, onStartDM }: ChannelListProps) {
   const [search, setSearch] = useState('')
   const [teamExpanded, setTeamExpanded] = useState(true)
 
@@ -136,7 +137,11 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
           {teamExpanded && (
             <div className="pb-2 space-y-0.5 max-h-48 overflow-y-auto">
               {onlineMembers.map((member) => (
-                <div key={member.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-all duration-150 cursor-pointer group">
+                <div
+                  key={member.id}
+                  onClick={() => onStartDM?.(member.id)}
+                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-all duration-150 cursor-pointer group"
+                >
                   <div className="relative flex-shrink-0">
                     <Avatar name={`${member.firstName} ${member.lastName}`} src={member.avatarUrl} size="sm" className="!h-7 !w-7 !text-[10px] ring-2 ring-emerald-500/20 group-hover:ring-emerald-500/40 transition-all" />
                     <span className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-[2px] border-card bg-emerald-500 shadow-sm" />
@@ -148,7 +153,11 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                 </div>
               ))}
               {offlineMembers.map((member) => (
-                <div key={member.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-all duration-150 cursor-pointer group opacity-50 hover:opacity-70">
+                <div
+                  key={member.id}
+                  onClick={() => onStartDM?.(member.id)}
+                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-all duration-150 cursor-pointer group opacity-50 hover:opacity-70"
+                >
                   <div className="relative flex-shrink-0">
                     <Avatar name={`${member.firstName} ${member.lastName}`} src={member.avatarUrl} size="sm" className="!h-7 !w-7 !text-[10px] grayscale-[30%]" />
                     <span className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-[2px] border-card bg-gray-400" />

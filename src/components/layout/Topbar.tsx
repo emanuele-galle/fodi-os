@@ -1,9 +1,10 @@
 'use client'
 
-import { Bell, Search, LogOut } from 'lucide-react'
+import { Bell, Search, LogOut, Video } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
 
@@ -11,7 +12,8 @@ interface Notification {
   id: string
   title: string
   message: string | null
-  readAt: string | null
+  link: string | null
+  isRead: boolean
   createdAt: string
 }
 
@@ -27,9 +29,12 @@ interface TopbarProps {
 }
 
 export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
+  const router = useRouter()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [creatingMeet, setCreatingMeet] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
 
@@ -46,27 +51,73 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  useEffect(() => {
-    fetch('/api/notifications?limit=10')
+  const fetchNotifications = useCallback(() => {
+    fetch('/api/notifications?limit=20')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.items) setNotifications(data.items)
-        else if (Array.isArray(data)) setNotifications(data)
+        if (data?.items) {
+          setNotifications(data.items)
+          setUnreadCount(data.unreadCount ?? data.items.filter((n: Notification) => !n.isRead).length)
+        }
       })
       .catch(() => {})
   }, [])
 
-  const unreadCount = notifications.filter((n) => n.readAt === null).length
+  useEffect(() => {
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 30000)
+    return () => clearInterval(interval)
+  }, [fetchNotifications])
 
   async function markAllAsRead() {
     try {
-      const res = await fetch('/api/notifications/read-all', { method: 'POST' })
+      const res = await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true }),
+      })
       if (res.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => ({ ...n, readAt: n.readAt || new Date().toISOString() }))
-        )
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+        setUnreadCount(0)
       }
     } catch {}
+  }
+
+  function handleNotificationClick(notif: Notification) {
+    if (!notif.isRead) {
+      fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [notif.id] }),
+      }).then(() => {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
+        )
+        setUnreadCount((c) => Math.max(0, c - 1))
+      })
+    }
+    if (notif.link) {
+      setShowNotifications(false)
+      router.push(notif.link)
+    }
+  }
+
+  const handleQuickMeet = async () => {
+    if (creatingMeet) return
+    setCreatingMeet(true)
+    try {
+      const res = await fetch('/api/meetings/quick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: 'Riunione veloce' }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        window.open(data.meetLink, '_blank', 'noopener,noreferrer')
+      }
+    } finally {
+      setCreatingMeet(false)
+    }
   }
 
   const handleLogout = async () => {
@@ -90,6 +141,16 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
       <div className="flex items-center gap-4">
         {/* Theme Switcher */}
         <ThemeSwitcher />
+
+        {/* Quick Meet */}
+        <button
+          onClick={handleQuickMeet}
+          disabled={creatingMeet}
+          className="p-2 rounded-md hover:bg-secondary transition-colors disabled:opacity-50"
+          title="Avvia riunione veloce"
+        >
+          <Video className="h-5 w-5 text-muted" />
+        </button>
 
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
@@ -121,15 +182,16 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                   </div>
                 ) : (
                   notifications.map((notif) => (
-                    <div
+                    <button
                       key={notif.id}
-                      className={`px-4 py-3 border-b border-border last:border-b-0 ${
-                        notif.readAt === null ? 'bg-primary/5' : ''
+                      onClick={() => handleNotificationClick(notif)}
+                      className={`w-full text-left px-4 py-3 border-b border-border last:border-b-0 hover:bg-secondary/50 transition-colors ${
+                        !notif.isRead ? 'bg-primary/5' : ''
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-medium">{notif.title}</p>
-                        {notif.readAt === null && (
+                        {!notif.isRead && (
                           <span className="mt-1 h-2 w-2 shrink-0 bg-primary rounded-full" />
                         )}
                       </div>
@@ -139,7 +201,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                       <p className="text-xs text-muted mt-1">
                         {formatDistanceToNow(new Date(notif.createdAt), { locale: it, addSuffix: true })}
                       </p>
-                    </div>
+                    </button>
                   ))
                 )}
               </div>

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
-import { Trash2, Send } from 'lucide-react'
+import { Trash2, Send, Paperclip, FileText, Image, Download, X } from 'lucide-react'
 
 interface TaskUser {
   id: string
@@ -21,6 +21,16 @@ interface Comment {
   content: string
   createdAt: string
   author: TaskUser
+}
+
+interface Attachment {
+  id: string
+  fileName: string
+  fileUrl: string
+  fileSize: number
+  mimeType: string
+  createdAt: string
+  uploadedBy: { id: string; firstName: string; lastName: string }
 }
 
 interface TaskDetail {
@@ -81,6 +91,9 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [commentText, setCommentText] = useState('')
   const [sendingComment, setSendingComment] = useState(false)
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -109,18 +122,31 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
     }
   }, [taskId])
 
+  const fetchAttachments = useCallback(async () => {
+    if (!taskId) return
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/attachments`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.items) setAttachments(data.items)
+      }
+    } catch {}
+  }, [taskId])
+
   useEffect(() => {
     if (open && taskId) {
       fetchTask()
+      fetchAttachments()
       setConfirmDelete(false)
     }
-  }, [open, taskId, fetchTask])
+  }, [open, taskId, fetchTask, fetchAttachments])
 
   useEffect(() => {
     fetch('/api/users?limit=200')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (d?.items) setTeamMembers(d.items)
+        if (d?.users) setTeamMembers(d.users)
+        else if (d?.items) setTeamMembers(d.items)
         else if (Array.isArray(d)) setTeamMembers(d)
       })
   }, [])
@@ -189,6 +215,58 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
     } finally {
       setSendingComment(false)
     }
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!taskId || !e.target.files?.length) return
+    setUploading(true)
+    try {
+      for (const file of Array.from(e.target.files)) {
+        // Upload to assets first to get a real URL
+        const assetRes = await fetch('/api/assets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileUrl: URL.createObjectURL(file),
+            fileSize: file.size,
+            mimeType: file.type || 'application/octet-stream',
+            category: file.type.startsWith('image/') ? 'image' : 'document',
+          }),
+        })
+        const assetData = assetRes.ok ? await assetRes.json() : null
+        const fileUrl = assetData?.fileUrl || URL.createObjectURL(file)
+
+        await fetch(`/api/tasks/${taskId}/attachments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileUrl,
+            fileSize: file.size,
+            mimeType: file.type || 'application/octet-stream',
+          }),
+        })
+      }
+      fetchAttachments()
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  async function handleDeleteAttachment(attachmentId: string) {
+    if (!taskId) return
+    await fetch(`/api/tasks/${taskId}/attachments?attachmentId=${attachmentId}`, {
+      method: 'DELETE',
+    })
+    setAttachments((prev) => prev.filter((a) => a.id !== attachmentId))
+  }
+
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
   const assigneeOptions = [
@@ -324,6 +402,83 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+          </div>
+
+          {/* Attachments section */}
+          <div className="border-t border-border pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium flex items-center gap-1.5">
+                <Paperclip className="h-4 w-4" />
+                Allegati
+                {attachments.length > 0 && (
+                  <span className="text-xs text-muted">({attachments.length})</span>
+                )}
+              </h4>
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  <Paperclip className="h-3.5 w-3.5 mr-1" />
+                  {uploading ? 'Caricamento...' : 'Allega file'}
+                </Button>
+              </div>
+            </div>
+
+            {attachments.length > 0 ? (
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {attachments.map((att) => {
+                  const isImage = att.mimeType.startsWith('image/')
+                  const IconComp = isImage ? Image : FileText
+                  return (
+                    <div
+                      key={att.id}
+                      className="flex items-center gap-3 p-2 rounded-md border border-border bg-secondary/30 group"
+                    >
+                      <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center shrink-0">
+                        <IconComp className="h-4 w-4 text-muted" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{att.fileName}</p>
+                        <p className="text-xs text-muted">
+                          {formatFileSize(att.fileSize)} &middot; {att.uploadedBy.firstName} {att.uploadedBy.lastName}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <a
+                          href={att.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1 rounded hover:bg-secondary transition-colors"
+                          title="Scarica"
+                        >
+                          <Download className="h-3.5 w-3.5 text-muted" />
+                        </a>
+                        <button
+                          onClick={() => handleDeleteAttachment(att.id)}
+                          className="p-1 rounded hover:bg-destructive/10 transition-colors"
+                          title="Rimuovi"
+                        >
+                          <X className="h-3.5 w-3.5 text-destructive" />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted">Nessun allegato.</p>
+            )}
           </div>
 
           {/* Actions */}

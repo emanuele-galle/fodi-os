@@ -5,22 +5,24 @@ import type { Role } from '@/generated/prisma/client'
 export async function GET(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
-
     const isAdmin = role === 'ADMIN' || role === 'MANAGER'
 
+    // Admins see all users (including inactive), others see only active
     const users = await prisma.user.findMany({
-      where: { isActive: true },
+      where: isAdmin ? {} : { isActive: true },
       select: {
         id: true,
         firstName: true,
         lastName: true,
-        email: isAdmin,
+        email: true,
         role: true,
         isActive: true,
         avatarUrl: true,
-        ...(isAdmin && { phone: true, lastLoginAt: true, createdAt: true }),
+        phone: true,
+        lastLoginAt: true,
+        createdAt: true,
       },
-      orderBy: { firstName: 'asc' },
+      orderBy: [{ isActive: 'desc' }, { firstName: 'asc' }],
     })
 
     return NextResponse.json({ users })

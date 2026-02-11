@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, Search, Mail, Phone, CheckCircle2, Clock } from 'lucide-react'
+import { Users, Search, Mail, Phone, CheckCircle2, Clock, Calendar, Video } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { formatDistanceToNow } from 'date-fns'
+import { it } from 'date-fns/locale'
 
 interface WorkspaceMembership {
   workspace: { id: string; name: string; color: string }
@@ -51,12 +53,35 @@ const ROLE_LABELS: Record<string, string> = {
   CLIENT: 'Cliente',
 }
 
+const ROLE_OPTIONS = [
+  { value: '', label: 'Tutti i ruoli' },
+  { value: 'ADMIN', label: 'Admin' },
+  { value: 'MANAGER', label: 'Manager' },
+  { value: 'SALES', label: 'Sales' },
+  { value: 'PM', label: 'Project Manager' },
+  { value: 'DEVELOPER', label: 'Developer' },
+  { value: 'CONTENT', label: 'Content' },
+  { value: 'SUPPORT', label: 'Support' },
+]
+
+function getActivityStatus(lastLoginAt: string | null): { label: string; color: string } {
+  if (!lastLoginAt) return { label: 'Mai connesso', color: '#94A3B8' }
+  const diff = Date.now() - new Date(lastLoginAt).getTime()
+  const hours = diff / (1000 * 60 * 60)
+  if (hours < 1) return { label: 'Online', color: '#22C55E' }
+  if (hours < 24) return { label: 'Oggi', color: '#3B82F6' }
+  if (hours < 72) return { label: 'Recente', color: '#F59E0B' }
+  return { label: 'Inattivo', color: '#94A3B8' }
+}
+
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([])
   const [workspaces, setWorkspaces] = useState<{ value: string; label: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [workspaceFilter, setWorkspaceFilter] = useState('')
+  const [roleFilter, setRoleFilter] = useState('')
+  const [meetingMemberId, setMeetingMemberId] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadTeam() {
@@ -70,7 +95,6 @@ export default function TeamPage() {
           const items: TeamMember[] = data.items || []
           setMembers(items)
 
-          // Extract unique workspaces for filter
           const wsMap = new Map<string, string>()
           items.forEach((m) =>
             m.workspaceMembers.forEach((wm) => wsMap.set(wm.workspace.id, wm.workspace.name))
@@ -87,19 +111,43 @@ export default function TeamPage() {
     loadTeam()
   }, [workspaceFilter])
 
-  const filtered = search
-    ? members.filter(
-        (m) =>
-          `${m.firstName} ${m.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
-          m.email.toLowerCase().includes(search.toLowerCase())
-      )
-    : members
+  const filtered = members.filter((m) => {
+    const matchesSearch =
+      !search ||
+      `${m.firstName} ${m.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
+      m.email.toLowerCase().includes(search.toLowerCase())
+    const matchesRole = !roleFilter || m.role === roleFilter
+    return matchesSearch && matchesRole
+  })
+
+  async function handleMeetWithMember(member: TeamMember) {
+    if (meetingMemberId) return
+    setMeetingMemberId(member.id)
+    try {
+      const res = await fetch('/api/meetings/quick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          summary: `Meet con ${member.firstName} ${member.lastName}`,
+          attendeeEmails: [member.email],
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        window.open(data.meetLink, '_blank', 'noopener,noreferrer')
+      }
+    } finally {
+      setMeetingMemberId(null)
+    }
+  }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Team</h1>
-        <span className="text-sm text-muted">{filtered.length} membri</span>
+        <div>
+          <h1 className="text-2xl font-semibold">Team</h1>
+          <p className="text-sm text-muted mt-1">{filtered.length} membri</p>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -112,6 +160,12 @@ export default function TeamPage() {
             className="pl-10"
           />
         </div>
+        <Select
+          options={ROLE_OPTIONS}
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
         {workspaces.length > 1 && (
           <Select
             options={workspaces}
@@ -132,72 +186,99 @@ export default function TeamPage() {
         <EmptyState
           icon={Users}
           title="Nessun membro trovato"
-          description={search || workspaceFilter ? 'Prova a modificare i filtri di ricerca.' : 'Nessun membro del team registrato.'}
+          description={search || workspaceFilter || roleFilter ? 'Prova a modificare i filtri di ricerca.' : 'Nessun membro del team registrato.'}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
-          {filtered.map((member) => (
-            <Card key={member.id} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
-              <CardContent>
-                <div className="flex items-start gap-4">
-                  <Avatar
-                    src={member.avatarUrl}
-                    name={`${member.firstName} ${member.lastName}`}
-                    size="lg"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold truncate">
-                      {member.firstName} {member.lastName}
-                    </h3>
-                    <Badge variant={ROLE_BADGE[member.role] || 'default'} className="mt-1">
-                      {ROLE_LABELS[member.role] || member.role}
-                    </Badge>
+          {filtered.map((member) => {
+            const activity = getActivityStatus(member.lastLoginAt)
+            return (
+              <Card key={member.id} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
+                <CardContent>
+                  <div className="flex items-start gap-4">
+                    <div className="relative">
+                      <Avatar
+                        src={member.avatarUrl}
+                        name={`${member.firstName} ${member.lastName}`}
+                        size="lg"
+                      />
+                      <span
+                        className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-card"
+                        style={{ backgroundColor: activity.color }}
+                        title={activity.label}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold truncate">
+                        {member.firstName} {member.lastName}
+                      </h3>
+                      <Badge variant={ROLE_BADGE[member.role] || 'default'} className="mt-1">
+                        {ROLE_LABELS[member.role] || member.role}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
 
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted">
-                    <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="truncate">{member.email}</span>
-                  </div>
-                  {member.phone && (
+                  <div className="mt-4 space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted">
-                      <Phone className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>{member.phone}</span>
+                      <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate">{member.email}</span>
+                    </div>
+                    {member.phone && (
+                      <div className="flex items-center gap-2 text-sm text-muted">
+                        <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span>{member.phone}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-muted">
+                      <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>
+                        {member.lastLoginAt
+                          ? `Ultimo accesso ${formatDistanceToNow(new Date(member.lastLoginAt), { locale: it, addSuffix: true })}`
+                          : 'Mai connesso'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-border/50 flex items-center gap-4 text-xs text-muted">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>{member.totalTasks} task</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>{member.totalTimeEntries} registrazioni</span>
+                    </div>
+                    <button
+                      onClick={() => handleMeetWithMember(member)}
+                      disabled={meetingMemberId === member.id}
+                      className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors disabled:opacity-50"
+                      title={`Avvia Meet con ${member.firstName}`}
+                    >
+                      <Video className="h-3 w-3" />
+                      Meet
+                    </button>
+                  </div>
+
+                  {member.workspaceMembers.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {member.workspaceMembers.map((wm) => (
+                        <span
+                          key={wm.workspace.id}
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-secondary text-foreground"
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: wm.workspace.color }}
+                          />
+                          {wm.workspace.name}
+                        </span>
+                      ))}
                     </div>
                   )}
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-border/50 flex items-center gap-4 text-xs text-muted">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>{member.totalTasks} task</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>{member.totalTimeEntries} registrazioni</span>
-                  </div>
-                </div>
-
-                {member.workspaceMembers.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {member.workspaceMembers.map((wm) => (
-                      <span
-                        key={wm.workspace.id}
-                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-secondary text-foreground"
-                      >
-                        <span
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ backgroundColor: wm.workspace.color }}
-                        />
-                        {wm.workspace.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>

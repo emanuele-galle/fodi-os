@@ -307,6 +307,32 @@
   transform: translateY(-50%) translateX(0);
 }
 
+/* ===== Logo Theme Variants ===== */
+
+/* Inverted logo filter: makes white text dark while preserving gold */
+.logo-inverted {
+  filter: brightness(0.2) saturate(120%);
+}
+
+/* Auto-switching logo: light variant (original, white text) - visible only in dark/midnight */
+.logo-light-only {
+  display: none;
+}
+[data-theme="dark"] .logo-light-only,
+[data-theme="midnight"] .logo-light-only {
+  display: block;
+}
+
+/* Auto-switching logo: dark variant (inverted) - visible only in light */
+.logo-dark-only {
+  display: block;
+  filter: brightness(0.2) saturate(120%);
+}
+[data-theme="dark"] .logo-dark-only,
+[data-theme="midnight"] .logo-dark-only {
+  display: none;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-background);

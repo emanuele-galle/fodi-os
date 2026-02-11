@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
+import { Logo } from '@/components/ui/Logo'
 import { Mail, Lock } from 'lucide-react'
 
 export default function LoginPage() {
@@ -50,13 +50,7 @@ export default function LoginPage() {
           backgroundSize: '40px 40px',
         }} />
         <div className="relative z-10 flex flex-col items-center text-center">
-          <Image
-            src="/logo-fodi.png"
-            alt="FODI"
-            width={220}
-            height={77}
-            priority
-          />
+          <Logo variant="light" width={220} height={77} />
           <div className="mt-8 w-16 h-0.5 bg-gradient-to-r from-[#A68A3E] to-[#D4B566] rounded-full" />
           <p className="mt-6 text-lg text-white/80 max-w-sm leading-relaxed">
             Tecnologia italiana per far crescere il tuo business
@@ -70,13 +64,7 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <div className="bg-[#1E293B] rounded-xl p-4">
-              <Image
-                src="/logo-fodi.png"
-                alt="FODI"
-                width={140}
-                height={49}
-                priority
-              />
+              <Logo variant="light" width={140} height={49} />
             </div>
           </div>
 

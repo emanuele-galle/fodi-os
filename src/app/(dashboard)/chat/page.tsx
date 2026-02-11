@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MessageCircle, Video, Hash } from 'lucide-react'
+import { MessageCircle, Video, Hash, Users, Search, Info, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ChannelList } from '@/components/chat/ChannelList'
 import { MessageThread } from '@/components/chat/MessageThread'
 import { MessageInput } from '@/components/chat/MessageInput'
 import { NewChannelModal } from '@/components/chat/NewChannelModal'
+import { ChannelInfoPanel } from '@/components/chat/ChannelInfoPanel'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useSSE } from '@/hooks/useSSE'
+import { cn } from '@/lib/utils'
 
 interface ChannelItem {
   id: string
@@ -28,6 +30,8 @@ interface Message {
   content: string
   createdAt: string
   type: string
+  editedAt?: string | null
+  metadata?: Record<string, unknown> | null
   author: {
     id: string
     firstName: string
@@ -45,6 +49,12 @@ interface TeamMember {
   lastLoginAt: string | null
 }
 
+interface ReplyTo {
+  id: string
+  content: string
+  authorName: string
+}
+
 export default function ChatPage() {
   const [channels, setChannels] = useState<ChannelItem[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -53,6 +63,13 @@ export default function ChatPage() {
   const [currentUserId, setCurrentUserId] = useState('')
   const [newMessages, setNewMessages] = useState<Message[]>([])
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [replyTo, setReplyTo] = useState<ReplyTo | null>(null)
+  const [typingUsers, setTypingUsers] = useState<Map<string, { name: string; timeout: ReturnType<typeof setTimeout> }>>(new Map())
+  const [showInfoPanel, setShowInfoPanel] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Message[]>([])
+  const [searching, setSearching] = useState(false)
   const selectedIdRef = useRef(selectedId)
   selectedIdRef.current = selectedId
 
@@ -126,12 +143,63 @@ export default function ChatPage() {
         setNewMessages((prev) => [...prev, msg])
       }
     }
+
+    // Handle message edited
+    if (event.type === 'message_edited' && event.data) {
+      const edited = event.data as Message & { editedAt?: string }
+      setNewMessages((prev) =>
+        prev.map((m) => m.id === edited.id ? { ...m, content: edited.content, editedAt: edited.editedAt } : m)
+      )
+    }
+
+    // Handle message deleted
+    if (event.type === 'message_deleted' && event.data) {
+      const deleted = event.data as { id: string }
+      setNewMessages((prev) => prev.filter((m) => m.id !== deleted.id))
+    }
+
+    // Handle reactions
+    if (event.type === 'message_reaction' && event.data) {
+      const reacted = event.data as { id: string; metadata: Record<string, unknown> }
+      setNewMessages((prev) =>
+        prev.map((m) => m.id === reacted.id ? { ...m, metadata: reacted.metadata } : m)
+      )
+    }
+
+    // Handle typing indicator
+    if (event.type === 'typing' && event.data) {
+      const { userId, userName } = event.data as { userId: string; userName: string }
+      const channelId = (event as { channelId?: string }).channelId
+      if (channelId === selectedIdRef.current) {
+        setTypingUsers((prev) => {
+          const newMap = new Map(prev)
+          // Clear existing timeout for this user
+          const existing = newMap.get(userId)
+          if (existing) clearTimeout(existing.timeout)
+          // Set new timeout to clear typing after 3s
+          const timeout = setTimeout(() => {
+            setTypingUsers((p) => {
+              const updated = new Map(p)
+              updated.delete(userId)
+              return updated
+            })
+          }, 3000)
+          newMap.set(userId, { name: userName, timeout })
+          return newMap
+        })
+      }
+    }
   }, []))
 
   // Select channel
   function handleSelectChannel(id: string) {
     setSelectedId(id)
     setNewMessages([])
+    setReplyTo(null)
+    setTypingUsers(new Map())
+    setSearchOpen(false)
+    setSearchQuery('')
+    setSearchResults([])
 
     // Mark as read
     fetch(`/api/chat/channels/${id}/read`, { method: 'POST' })
@@ -142,15 +210,23 @@ export default function ChatPage() {
     )
   }
 
-  // Send message
+  // Send message (with reply metadata support)
   async function handleSend(content: string) {
     if (!selectedId || sending) return
     setSending(true)
     try {
+      const body: Record<string, unknown> = { content }
+      if (replyTo) {
+        body.metadata = {
+          replyToId: replyTo.id,
+          replyToContent: replyTo.content.slice(0, 200),
+          replyToAuthor: replyTo.authorName,
+        }
+      }
       const res = await fetch(`/api/chat/channels/${selectedId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(body),
       })
       if (!res.ok) {
         console.error('Failed to send message')
@@ -173,14 +249,32 @@ export default function ChatPage() {
     setCreatingMeet(true)
     try {
       const channelName = channels.find((c) => c.id === selectedId)?.name || 'Chat'
+
+      let attendeeEmails: string[] = []
+      try {
+        const membersRes = await fetch(`/api/chat/channels/${selectedId}`)
+        if (membersRes.ok) {
+          const channelData = await membersRes.json()
+          const memberEmails = channelData.members
+            ?.map((m: { user?: { email?: string } }) => m.user?.email)
+            .filter(Boolean) || []
+          attendeeEmails = memberEmails
+        }
+      } catch {
+        // Continue without attendees
+      }
+
       const res = await fetch('/api/meetings/quick', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ summary: `Meet - ${channelName}` }),
+        body: JSON.stringify({
+          summary: `Meet - ${channelName}`,
+          attendeeEmails,
+          channelId: selectedId,
+        }),
       })
       if (res.ok) {
         const data = await res.json()
-        // Send the meet link as a message in the channel
         await fetch(`/api/chat/channels/${selectedId}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -196,9 +290,106 @@ export default function ChatPage() {
   function handleBack() {
     setSelectedId(null)
     setNewMessages([])
+    setShowInfoPanel(false)
+  }
+
+  // Start or open a DM with a team member
+  async function handleStartDM(memberId: string) {
+    try {
+      const res = await fetch('/api/chat/dm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: memberId }),
+      })
+      if (res.ok) {
+        const channel = await res.json()
+        await fetchChannels()
+        handleSelectChannel(channel.id)
+      }
+    } catch {
+      console.error('Failed to start DM')
+    }
+  }
+
+  // Edit message
+  async function handleEditMessage(messageId: string, newContent: string) {
+    if (!selectedId) return
+    await fetch(`/api/chat/channels/${selectedId}/messages/${messageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: newContent }),
+    })
+  }
+
+  // Delete message
+  async function handleDeleteMessage(messageId: string) {
+    if (!selectedId) return
+    await fetch(`/api/chat/channels/${selectedId}/messages/${messageId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // React to message
+  async function handleReact(messageId: string, emoji: string) {
+    if (!selectedId) return
+    await fetch(`/api/chat/channels/${selectedId}/messages/${messageId}/reactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emoji }),
+    })
+  }
+
+  // Typing indicator
+  const typingDebounce = useRef<ReturnType<typeof setTimeout>>(null)
+  function handleTyping() {
+    if (!selectedId) return
+    if (typingDebounce.current) return // Already sent recently
+    fetch(`/api/chat/channels/${selectedId}/typing`, { method: 'POST' })
+    typingDebounce.current = setTimeout(() => { typingDebounce.current = null }, 2000)
+  }
+
+  // Send file in chat
+  async function handleSendFile(file: File) {
+    if (!selectedId) return
+    setSending(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch(`/api/chat/channels/${selectedId}/upload`, { method: 'POST', body: formData })
+      if (!res.ok) {
+        console.error('Failed to upload file')
+      }
+    } finally {
+      setSending(false)
+    }
+  }
+
+  // Search messages
+  async function handleSearch(query: string) {
+    setSearchQuery(query)
+    if (!selectedId || query.trim().length < 2) {
+      setSearchResults([])
+      return
+    }
+    setSearching(true)
+    try {
+      const res = await fetch(`/api/chat/channels/${selectedId}/messages/search?q=${encodeURIComponent(query)}`)
+      if (res.ok) {
+        const data = await res.json()
+        setSearchResults(data.items || [])
+      }
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  // Reply handler
+  function handleReply(msg: { id: string; content: string; authorName: string }) {
+    setReplyTo(msg)
   }
 
   const selectedChannel = channels.find((c) => c.id === selectedId)
+  const typingNames = Array.from(typingUsers.values()).map((u) => u.name.split(' ')[0])
 
   return (
     <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-4rem)] -mx-4 -mt-4 -mb-20 md:-mx-6 md:-mt-6 md:-mb-6 relative overflow-hidden">
@@ -211,6 +402,7 @@ export default function ChatPage() {
           onNewChannel={() => setModalOpen(true)}
           teamMembers={teamMembers}
           currentUserId={currentUserId}
+          onStartDM={handleStartDM}
         />
       </div>
 
@@ -228,20 +420,58 @@ export default function ChatPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Hash className="h-4 w-4 text-primary" />
+                  {selectedChannel?.type === 'DIRECT' ? (
+                    <Users className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Hash className="h-4 w-4 text-primary" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <h2 className="font-semibold text-[15px] truncate leading-tight">
                     {selectedChannel?.name || 'Chat'}
                   </h2>
                   <span className="text-[11px] text-muted-foreground/60 font-medium">
-                    {selectedChannel?.memberCount || 0} membri
+                    {typingNames.length > 0
+                      ? (
+                        <span className="text-primary/70 animate-pulse">
+                          {typingNames.length === 1
+                            ? `${typingNames[0]} sta scrivendo...`
+                            : `${typingNames.join(', ')} stanno scrivendo...`}
+                        </span>
+                      )
+                      : selectedChannel?.type === 'DIRECT'
+                        ? 'Messaggio diretto'
+                        : `${selectedChannel?.memberCount || 0} membri`
+                    }
                   </span>
                 </div>
               </div>
-              <div className="ml-auto flex-shrink-0">
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Search button */}
+                <button
+                  onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) { setSearchQuery(''); setSearchResults([]) } }}
+                  className={cn(
+                    'h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-150',
+                    searchOpen ? 'bg-primary/10 text-primary' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
+                  )}
+                  title="Cerca messaggi"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                </button>
+                {/* Info button */}
+                <button
+                  onClick={() => setShowInfoPanel(!showInfoPanel)}
+                  className={cn(
+                    'h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-150',
+                    showInfoPanel ? 'bg-primary/10 text-primary' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
+                  )}
+                  title="Info canale"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+                {/* Meet button */}
                 <button
                   onClick={handleQuickMeet}
                   disabled={creatingMeet}
@@ -253,12 +483,71 @@ export default function ChatPage() {
               </div>
             </div>
 
+            {/* Search bar */}
+            {searchOpen && (
+              <div className="border-b border-border/30 px-4 md:px-6 py-2 bg-secondary/20">
+                <div className="flex items-center gap-2 max-w-2xl">
+                  <Search className="h-4 w-4 text-muted-foreground/50 flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    placeholder="Cerca nei messaggi..."
+                    className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/40"
+                    autoFocus
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => { setSearchQuery(''); setSearchResults([]) }}
+                      className="text-muted-foreground/40 hover:text-muted-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                {searchResults.length > 0 && (
+                  <div className="mt-2 max-h-60 overflow-y-auto space-y-1">
+                    {searchResults.map((msg) => (
+                      <div key={msg.id} className="px-3 py-2 rounded-lg bg-card/60 hover:bg-card transition-colors text-sm">
+                        <div className="flex items-baseline gap-2 mb-0.5">
+                          <span className="font-semibold text-[12px]">
+                            {msg.author.firstName} {msg.author.lastName}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground/40">
+                            {new Date(msg.createdAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                          </span>
+                        </div>
+                        <p className="text-muted-foreground/80 text-[13px] line-clamp-2">{msg.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {searching && (
+                  <p className="mt-2 text-xs text-muted-foreground/50 animate-pulse">Ricerca in corso...</p>
+                )}
+                {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
+                  <p className="mt-2 text-xs text-muted-foreground/50">Nessun risultato trovato</p>
+                )}
+              </div>
+            )}
+
             <MessageThread
               channelId={selectedId}
               currentUserId={currentUserId}
               newMessages={newMessages}
+              onEditMessage={handleEditMessage}
+              onDeleteMessage={handleDeleteMessage}
+              onReply={handleReply}
+              onReact={handleReact}
             />
-            <MessageInput onSend={handleSend} disabled={sending} />
+            <MessageInput
+              onSend={handleSend}
+              onSendFile={handleSendFile}
+              onTyping={handleTyping}
+              replyTo={replyTo}
+              onCancelReply={() => setReplyTo(null)}
+              disabled={sending}
+            />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-background to-secondary/20">
@@ -274,6 +563,16 @@ export default function ChatPage() {
           </div>
         )}
       </div>
+
+      {/* Info panel */}
+      {showInfoPanel && selectedId && (
+        <ChannelInfoPanel
+          channelId={selectedId}
+          currentUserId={currentUserId}
+          teamMembers={teamMembers}
+          onClose={() => setShowInfoPanel(false)}
+        />
+      )}
 
       <NewChannelModal
         open={modalOpen}

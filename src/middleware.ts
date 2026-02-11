@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
+import { jwtVerify, SignJWT } from 'jose'
 
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
+const REFRESH_SECRET = new TextEncoder().encode(process.env.REFRESH_SECRET!)
 
 const PUBLIC_PATHS = ['/login', '/forgot-password', '/api/auth/', '/api/health']
 const PORTAL_PATHS = ['/portal']
@@ -21,10 +22,60 @@ function isApi(pathname: string): boolean {
 async function verifyToken(token: string) {
   try {
     const { payload } = await jwtVerify(token, ACCESS_SECRET)
-    return payload as { sub: string; role: string; email: string }
+    return payload as { sub: string; role: string; email: string; name?: string }
   } catch {
     return null
   }
+}
+
+async function verifyRefresh(token: string) {
+  try {
+    const { payload } = await jwtVerify(token, REFRESH_SECRET)
+    return payload as { sub: string; role: string; email: string; name?: string }
+  } catch {
+    return null
+  }
+}
+
+async function createNewAccessToken(payload: { sub: string; email: string; name?: string; role: string }): Promise<string> {
+  return new SignJWT({ ...payload, type: 'access' as const })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .sign(ACCESS_SECRET)
+}
+
+/**
+ * Try to refresh the access token using the refresh token cookie.
+ * Returns the new access token + user payload, or null if refresh fails.
+ * Note: This only verifies the JWT signature in the middleware (edge runtime).
+ * The DB check for revoked tokens happens on the actual API call.
+ */
+async function tryRefreshAccess(request: NextRequest): Promise<{ token: string; payload: { sub: string; role: string; email: string; name?: string } } | null> {
+  const refreshToken = request.cookies.get('fodi_refresh')?.value
+  if (!refreshToken) return null
+
+  const refreshPayload = await verifyRefresh(refreshToken)
+  if (!refreshPayload) return null
+
+  const newAccessToken = await createNewAccessToken({
+    sub: refreshPayload.sub,
+    email: refreshPayload.email,
+    name: refreshPayload.name,
+    role: refreshPayload.role,
+  })
+
+  return { token: newAccessToken, payload: refreshPayload }
+}
+
+function setAccessCookie(response: NextResponse, token: string): void {
+  response.cookies.set('fodi_access', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 15 * 60,
+  })
 }
 
 export async function middleware(request: NextRequest) {
@@ -53,10 +104,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // API paths - verify Bearer token or cookie
+  // API paths - verify Bearer token or cookie, with auto-refresh
   if (isApi(pathname)) {
     // Allow POST /api/leads without auth (external webhooks)
     if (pathname === '/api/leads' && request.method === 'POST') {
+      return NextResponse.next()
+    }
+    // Allow N8N webhooks without auth
+    if (pathname.startsWith('/api/webhooks/')) {
       return NextResponse.next()
     }
 
@@ -65,33 +120,51 @@ export async function middleware(request: NextRequest) {
     const cookieToken = request.cookies.get('fodi_access')?.value
     const token = bearerToken || cookieToken
 
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Try to verify existing access token
+    if (token) {
+      const payload = await verifyToken(token)
+      if (payload) {
+        const response = NextResponse.next()
+        response.headers.set('x-user-id', payload.sub)
+        response.headers.set('x-user-role', payload.role)
+        return response
+      }
     }
 
-    const payload = await verifyToken(token)
-    if (!payload) {
-      return NextResponse.json({ error: 'Token expired or invalid' }, { status: 401 })
+    // Access token expired/missing - try refresh
+    const refreshResult = await tryRefreshAccess(request)
+    if (refreshResult) {
+      const response = NextResponse.next()
+      response.headers.set('x-user-id', refreshResult.payload.sub)
+      response.headers.set('x-user-role', refreshResult.payload.role)
+      setAccessCookie(response, refreshResult.token)
+      return response
     }
 
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Dashboard paths (everything else) - verify access cookie with auto-refresh
+  const accessToken = request.cookies.get('fodi_access')?.value
+
+  // Try existing access token
+  if (accessToken) {
+    const payload = await verifyToken(accessToken)
+    if (payload) {
+      return NextResponse.next()
+    }
+  }
+
+  // Access token expired/missing - try refresh
+  const refreshResult = await tryRefreshAccess(request)
+  if (refreshResult) {
     const response = NextResponse.next()
-    response.headers.set('x-user-id', payload.sub)
-    response.headers.set('x-user-role', payload.role)
+    setAccessCookie(response, refreshResult.token)
     return response
   }
 
-  // Dashboard paths (everything else) - verify access cookie
-  const accessToken = request.cookies.get('fodi_access')?.value
-  if (!accessToken) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  const payload = await verifyToken(accessToken)
-  if (!payload) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  return NextResponse.next()
+  // Both tokens invalid - redirect to login
+  return NextResponse.redirect(new URL('/login', request.url))
 }
 
 export const config = {

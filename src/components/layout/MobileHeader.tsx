@@ -1,9 +1,9 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { Bell, Search } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
+import { Logo } from '@/components/ui/Logo'
 
 interface MobileHeaderProps {
   user: {
@@ -20,13 +20,7 @@ export function MobileHeader({ user, unreadCount, onOpenSearch, onOpenNotificati
   return (
     <header className="flex items-center justify-between h-14 px-4 bg-card border-b border-border/50 md:hidden">
       <Link href="/dashboard" className="flex items-center">
-        <Image
-          src="/logo-fodi.png"
-          alt="FODI"
-          width={90}
-          height={32}
-          priority
-        />
+        <Logo variant="auto" width={90} height={32} />
       </Link>
 
       <div className="flex items-center gap-2">

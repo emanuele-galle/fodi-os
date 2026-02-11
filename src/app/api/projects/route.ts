@@ -74,6 +74,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'A project with this name already exists' }, { status: 409 })
     }
 
+    const userId = request.headers.get('x-user-id')!
+
     const project = await prisma.project.create({
       data: {
         workspaceId,
@@ -94,6 +96,25 @@ export async function POST(request: NextRequest) {
         _count: { select: { tasks: true } },
       },
     })
+
+    // Auto-create a PROJECT chat channel
+    try {
+      await prisma.chatChannel.create({
+        data: {
+          name: `${name}`,
+          slug: `project-${slug}`,
+          description: `Chat del progetto ${name}`,
+          type: 'PROJECT',
+          projectId: project.id,
+          createdById: userId,
+          members: {
+            create: [{ userId, role: 'OWNER' }],
+          },
+        },
+      })
+    } catch {
+      // Non-blocking: if chat channel creation fails, project is still created
+    }
 
     return NextResponse.json(project, { status: 201 })
   } catch (e) {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
-  ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer,
+  ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer, Video,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
@@ -16,6 +16,7 @@ import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { KanbanBoard } from '@/components/projects/KanbanBoard'
 import { GanttChart } from '@/components/projects/GanttChart'
+import { ProjectChat } from '@/components/chat/ProjectChat'
 
 interface Task {
   id: string
@@ -111,6 +112,7 @@ export default function ProjectDetailPage() {
   const [taskModalOpen, setTaskModalOpen] = useState(false)
   const [taskModalColumn, setTaskModalColumn] = useState('todo')
   const [submitting, setSubmitting] = useState(false)
+  const [creatingMeet, setCreatingMeet] = useState(false)
 
   const fetchProject = useCallback(async () => {
     try {
@@ -130,6 +132,26 @@ export default function ProjectDetailPage() {
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.items) setTimeEntries(d.items) })
   }, [fetchProject, projectId])
+
+  async function handleProjectMeet() {
+    if (creatingMeet || !project) return
+    setCreatingMeet(true)
+    try {
+      const res = await fetch('/api/meetings/quick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          summary: `Meet - ${project.name}`,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        window.open(data.meetLink, '_blank', 'noopener,noreferrer')
+      }
+    } finally {
+      setCreatingMeet(false)
+    }
+  }
 
   function openAddTask(column: string) {
     setTaskModalColumn(column)
@@ -345,6 +367,10 @@ export default function ProjectDetailPage() {
         <div className="flex items-center gap-2">
           <Badge variant={STATUS_BADGE[project.status] || 'default'}>{STATUS_LABEL[project.status] || project.status}</Badge>
           <Badge variant={PRIORITY_BADGE[project.priority] || 'default'}>{PRIORITY_LABEL[project.priority] || project.priority}</Badge>
+          <Button variant="outline" size="sm" onClick={handleProjectMeet} disabled={creatingMeet}>
+            <Video className="h-4 w-4 mr-2" />
+            {creatingMeet ? 'Avvio...' : 'Meet'}
+          </Button>
           <Button variant="outline" size="sm">
             <Edit className="h-4 w-4 mr-2" />
             Modifica
@@ -405,6 +431,7 @@ export default function ProjectDetailPage() {
           { id: 'list', label: 'Lista', content: listTab },
           { id: 'milestones', label: 'Timeline', content: milestonesTab },
           { id: 'time', label: 'Tempi', content: timeTab },
+          { id: 'chat', label: 'Chat', content: <ProjectChat projectId={projectId} /> },
         ]}
       />
 

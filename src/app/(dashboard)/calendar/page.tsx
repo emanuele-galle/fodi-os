@@ -10,7 +10,9 @@ import {
   ExternalLink,
   Link2Off,
   Video,
+  Users,
 } from 'lucide-react'
+import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
@@ -78,6 +80,14 @@ const EVENT_COLORS = [
   '#0B8043', '#D50000',
 ]
 
+interface TeamMember {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  avatarUrl: string | null
+}
+
 export default function CalendarPage() {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
@@ -88,6 +98,9 @@ export default function CalendarPage() {
   const [connected, setConnected] = useState<boolean | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showNewEvent, setShowNewEvent] = useState(false)
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [selectedAttendees, setSelectedAttendees] = useState<string[]>([])
+  const [attendeeSearch, setAttendeeSearch] = useState('')
   const [newEvent, setNewEvent] = useState({
     summary: '',
     description: '',
@@ -134,6 +147,13 @@ export default function CalendarPage() {
   useEffect(() => {
     fetchEvents()
     fetchCalendars()
+    // Fetch team members for attendee selection
+    fetch('/api/team')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.items) setTeamMembers(data.items)
+      })
+      .catch(() => {})
   }, [fetchEvents, fetchCalendars])
 
   const handleCreateEvent = async (e: React.FormEvent) => {
@@ -146,6 +166,10 @@ export default function CalendarPage() {
       ? `${newEvent.endDate}T${newEvent.endTime}:00`
       : `${newEvent.startDate}T${newEvent.endTime || newEvent.startTime}:00`
 
+    const attendeeEmails = selectedAttendees
+      .map((id) => teamMembers.find((m) => m.id === id)?.email)
+      .filter(Boolean) as string[]
+
     try {
       const res = await fetch('/api/calendar/events', {
         method: 'POST',
@@ -156,13 +180,16 @@ export default function CalendarPage() {
           location: newEvent.location,
           start,
           end,
-          withMeet: newEvent.withMeet,
+          withMeet: newEvent.withMeet || attendeeEmails.length > 0,
+          attendees: attendeeEmails,
         }),
       })
 
       if (res.ok) {
         setShowNewEvent(false)
         setNewEvent({ summary: '', description: '', location: '', startDate: '', startTime: '', endDate: '', endTime: '', withMeet: false })
+        setSelectedAttendees([])
+        setAttendeeSearch('')
         fetchEvents()
       }
     } finally {
@@ -463,15 +490,84 @@ export default function CalendarPage() {
             />
           </div>
 
+          {/* Team members selection */}
+          <div>
+            <label className="flex items-center gap-1.5 text-sm font-medium mb-2">
+              <Users className="h-4 w-4 text-muted" />
+              Partecipanti
+            </label>
+            <input
+              type="text"
+              placeholder="Cerca membro del team..."
+              value={attendeeSearch}
+              onChange={(e) => setAttendeeSearch(e.target.value)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm mb-2 placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+            {selectedAttendees.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {selectedAttendees.map((id) => {
+                  const member = teamMembers.find((m) => m.id === id)
+                  if (!member) return null
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setSelectedAttendees((prev) => prev.filter((a) => a !== id))}
+                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      <Avatar src={member.avatarUrl} name={`${member.firstName} ${member.lastName}`} size="xs" />
+                      {member.firstName} {member.lastName}
+                      <span className="text-primary/60 ml-0.5">x</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            <div className="max-h-32 overflow-y-auto border border-border/50 rounded-md">
+              {teamMembers
+                .filter((m) => {
+                  if (selectedAttendees.includes(m.id)) return false
+                  if (!attendeeSearch) return true
+                  const query = attendeeSearch.toLowerCase()
+                  return (
+                    `${m.firstName} ${m.lastName}`.toLowerCase().includes(query) ||
+                    m.email.toLowerCase().includes(query)
+                  )
+                })
+                .slice(0, 8)
+                .map((member) => (
+                  <button
+                    key={member.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAttendees((prev) => [...prev, member.id])
+                      setAttendeeSearch('')
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-secondary/50 transition-colors text-sm"
+                  >
+                    <Avatar src={member.avatarUrl} name={`${member.firstName} ${member.lastName}`} size="xs" />
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{member.firstName} {member.lastName}</p>
+                      <p className="text-xs text-muted truncate">{member.email}</p>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </div>
+
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
-              checked={newEvent.withMeet}
+              checked={newEvent.withMeet || selectedAttendees.length > 0}
               onChange={(e) => setNewEvent({ ...newEvent, withMeet: e.target.checked })}
+              disabled={selectedAttendees.length > 0}
               className="rounded border-border"
             />
             <Video className="h-4 w-4 text-blue-500" />
             Aggiungi Google Meet
+            {selectedAttendees.length > 0 && (
+              <span className="text-xs text-muted">(automatico con partecipanti)</span>
+            )}
           </label>
 
           <div className="flex justify-end gap-2">

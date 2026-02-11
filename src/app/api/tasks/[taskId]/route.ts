@@ -38,6 +38,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         dependedOnBy: {
           include: { task: { select: { id: true, title: true, status: true } } },
         },
+        attachments: {
+          orderBy: { createdAt: 'desc' },
+          include: { uploadedBy: { select: { id: true, firstName: true, lastName: true } } },
+        },
       },
     })
 

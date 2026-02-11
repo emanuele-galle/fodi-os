@@ -9,6 +9,8 @@ interface Message {
   content: string
   createdAt: string
   type: string
+  editedAt?: string | null
+  metadata?: Record<string, unknown> | null
   author: {
     id: string
     firstName: string
@@ -21,9 +23,13 @@ interface MessageThreadProps {
   channelId: string
   currentUserId: string
   newMessages: Message[]
+  onEditMessage?: (messageId: string, newContent: string) => void
+  onDeleteMessage?: (messageId: string) => void
+  onReply?: (message: { id: string; content: string; authorName: string }) => void
+  onReact?: (messageId: string, emoji: string) => void
 }
 
-export function MessageThread({ channelId, currentUserId, newMessages }: MessageThreadProps) {
+export function MessageThread({ channelId, currentUserId, newMessages, onEditMessage, onDeleteMessage, onReply, onReact }: MessageThreadProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -57,14 +63,22 @@ export function MessageThread({ channelId, currentUserId, newMessages }: Message
     })
   }, [channelId, fetchMessages])
 
-  // Handle new SSE messages
+  // Handle new SSE messages (new, edited, deleted, reactions)
   useEffect(() => {
     if (newMessages.length === 0) return
     setMessages((prev) => {
-      const existingIds = new Set(prev.map((m) => m.id))
-      const toAdd = newMessages.filter((m) => !existingIds.has(m.id))
-      if (toAdd.length === 0) return prev
-      return [...prev, ...toAdd]
+      let updated = [...prev]
+      for (const msg of newMessages) {
+        const existingIndex = updated.findIndex((m) => m.id === msg.id)
+        if (existingIndex >= 0) {
+          // Update existing message (edit, reaction)
+          updated[existingIndex] = { ...updated[existingIndex], ...msg }
+        } else {
+          // New message
+          updated.push(msg)
+        }
+      }
+      return updated
     })
     shouldAutoScroll.current = true
   }, [newMessages])
@@ -173,6 +187,11 @@ export function MessageThread({ channelId, currentUserId, newMessages }: Message
               key={msg.id}
               message={msg}
               isOwn={msg.author.id === currentUserId}
+              currentUserId={currentUserId}
+              onEdit={onEditMessage}
+              onDelete={onDeleteMessage}
+              onReply={onReply}
+              onReact={onReact}
             />
           ))}
         </div>

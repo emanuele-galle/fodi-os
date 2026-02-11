@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/layout/BottomNav'
 import { MobileHeader } from '@/components/layout/MobileHeader'
 import { CommandPalette } from '@/components/layout/CommandPalette'
 import { useState, useEffect } from 'react'
+import { useAuthRefresh } from '@/hooks/useAuthRefresh'
 import type { Role } from '@/generated/prisma/client'
 
 interface UserSession {
@@ -27,38 +28,56 @@ export default function DashboardLayout({
   const [unreadNotifications, setUnreadNotifications] = useState(0)
   const [unreadChat, setUnreadChat] = useState(0)
 
+  // Proactive token refresh: prevents auto-logout
+  useAuthRefresh()
+
   useEffect(() => {
-    fetch('/api/auth/session')
-      .then((res) => {
-        if (res.ok) return res.json()
-        window.location.href = '/login'
-        return null
-      })
-      .then((data) => {
-        if (data?.user) setUser(data.user)
-      })
-      .catch(() => {
-        window.location.href = '/login'
-      })
+    async function loadSession() {
+      let res = await fetch('/api/auth/session')
+
+      // If 401, try refresh then retry
+      if (res.status === 401) {
+        const refreshRes = await fetch('/api/auth/refresh', { method: 'POST' })
+        if (refreshRes.ok) {
+          res = await fetch('/api/auth/session')
+        }
+      }
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.user) {
+          setUser(data.user)
+          return
+        }
+      }
+
+      window.location.href = '/login'
+    }
+    loadSession()
   }, [])
 
   // Fetch unread counts for mobile badges
   useEffect(() => {
-    fetch('/api/notifications?limit=50')
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        const items = data?.items || (Array.isArray(data) ? data : [])
-        setUnreadNotifications(items.filter((n: { readAt: string | null }) => n.readAt === null).length)
-      })
-      .catch(() => {})
+    function fetchCounts() {
+      fetch('/api/notifications?limit=1')
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (data?.unreadCount !== undefined) setUnreadNotifications(data.unreadCount)
+        })
+        .catch(() => {})
 
-    fetch('/api/chat/channels')
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        const channels = data?.items || []
-        setUnreadChat(channels.filter((c: { hasUnread: boolean }) => c.hasUnread).length)
-      })
-      .catch(() => {})
+      fetch('/api/chat/channels')
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          const channels = data?.items || []
+          setUnreadChat(channels.filter((c: { hasUnread: boolean }) => c.hasUnread).length)
+        })
+        .catch(() => {})
+    }
+
+    fetchCounts()
+    const interval = setInterval(fetchCounts, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   // Global Cmd+K shortcut
@@ -83,13 +102,13 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="h-screen flex bg-background overflow-hidden">
       {/* Sidebar: hidden on mobile, visible on md+ */}
-      <div className="hidden md:block">
+      <div className="hidden md:flex">
         <Sidebar userRole={user.role} />
       </div>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* MobileHeader: visible only on mobile */}
         <MobileHeader
           user={user}

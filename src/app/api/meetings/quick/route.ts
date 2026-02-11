@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
+import { prisma } from '@/lib/prisma'
+import { sseManager } from '@/lib/sse'
 
-// POST /api/meetings/quick - Create a quick 30-min meeting with Google Meet
+// POST /api/meetings/quick - Create a quick meeting with Google Meet
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
@@ -15,19 +17,26 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => ({}))
   const summary = body.summary || 'Riunione veloce'
+  const durationMinutes = body.duration || 30
+  const attendeeEmails: string[] = body.attendeeEmails || []
+  const channelId: string | undefined = body.channelId
 
   const now = new Date()
-  const end = new Date(now.getTime() + 30 * 60 * 1000)
+  const end = new Date(now.getTime() + durationMinutes * 60 * 1000)
 
   try {
     const calendar = getCalendarService(auth)
     const res = await calendar.events.insert({
       calendarId: 'primary',
       conferenceDataVersion: 1,
+      sendUpdates: attendeeEmails.length > 0 ? 'all' : 'none',
       requestBody: {
         summary,
         start: { dateTime: now.toISOString(), timeZone: 'Europe/Rome' },
         end: { dateTime: end.toISOString(), timeZone: 'Europe/Rome' },
+        ...(attendeeEmails.length > 0 && {
+          attendees: attendeeEmails.map((email) => ({ email })),
+        }),
         conferenceData: {
           createRequest: {
             requestId: crypto.randomUUID(),
@@ -45,10 +54,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Meet link non generato' }, { status: 500 })
     }
 
+    // Get creator info for notifications
+    const creator = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true, lastName: true },
+    })
+    const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Qualcuno'
+
+    // Create notifications for channel members if channelId provided
+    if (channelId) {
+      const channelMembers = await prisma.chatMember.findMany({
+        where: { channelId, userId: { not: userId } },
+        select: { userId: true },
+      })
+
+      if (channelMembers.length > 0) {
+        const channel = await prisma.chatChannel.findUnique({
+          where: { id: channelId },
+          select: { name: true },
+        })
+
+        await prisma.notification.createMany({
+          data: channelMembers.map((m) => ({
+            userId: m.userId,
+            type: 'MEETING',
+            title: 'Nuovo meeting avviato',
+            message: `${creatorName} ha avviato un meeting in "${channel?.name || 'Chat'}"`,
+            link: meetLink,
+          })),
+        })
+
+        // SSE notification to channel members
+        const memberIds = channelMembers.map((m) => m.userId)
+        for (const memberId of memberIds) {
+          sseManager.sendToUser(memberId, {
+            type: 'meeting_started',
+            data: {
+              meetLink,
+              summary,
+              creatorName,
+              channelId,
+              channelName: channel?.name,
+            },
+          })
+        }
+      }
+    }
+
     return NextResponse.json({
       meetLink,
       eventId: res.data.id,
       summary: res.data.summary,
+      duration: durationMinutes,
     }, { status: 201 })
   } catch (e) {
     console.error('Quick meet error:', e)

@@ -48,6 +48,7 @@ model User {
   chatChannels     ChatChannel[]   @relation("ChannelCreator")
   chatMemberships  ChatMember[]
   chatMessages     ChatMessage[]
+  taskAttachments  TaskAttachment[]
 
   @@index([email])
   @@index([role])
@@ -374,6 +375,7 @@ model Task {
   comments       Comment[]
   dependsOn      TaskDependency[] @relation("DependentTask")
   dependedOnBy   TaskDependency[] @relation("DependencyTask")
+  attachments    TaskAttachment[]
 
   @@index([projectId])
   @@index([assigneeId])
@@ -384,6 +386,23 @@ model Task {
   @@index([parentId])
   @@index([boardColumn])
   @@map("tasks")
+}
+
+model TaskAttachment {
+  id           String   @id @default(uuid())
+  taskId       String
+  uploadedById String
+  fileName     String
+  fileUrl      String
+  fileSize     Int
+  mimeType     String
+  createdAt    DateTime @default(now())
+
+  task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+
+  @@index([taskId])
+  @@map("task_attachments")
 }
 
 model TaskDependency {
