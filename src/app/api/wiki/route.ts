@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { parentId, title, content, contentText, category, icon } = parsed.data
+    const { parentId, title, content, contentText, category, icon, workspaceId, coverUrl } = parsed.data
 
     const slug = slugify(title)
 
@@ -70,12 +70,14 @@ export async function POST(request: NextRequest) {
     const page = await prisma.wikiPage.create({
       data: {
         parentId: parentId || null,
+        workspaceId: workspaceId || null,
         title,
         slug,
         content: content || null,
         contentText: contentText || null,
         category: category || 'general',
         icon: icon || null,
+        coverUrl: coverUrl || null,
       },
     })
 

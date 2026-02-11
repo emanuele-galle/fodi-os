@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
+  CheckSquare,
+  MessageCircle,
   Users,
   FolderKanban,
   CalendarDays,
@@ -34,6 +36,16 @@ const navigation: NavItem[] = [
     label: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    label: 'I Miei Task',
+    href: '/tasks',
+    icon: CheckSquare,
+  },
+  {
+    label: 'Chat',
+    href: '/chat',
+    icon: MessageCircle,
   },
   {
     label: 'CRM',
@@ -78,6 +90,10 @@ const navigation: NavItem[] = [
     href: '/kb',
     icon: BookOpen,
     roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
+    children: [
+      { label: 'Tutte le Pagine', href: '/kb' },
+      { label: 'Attivita Recenti', href: '/kb/activity' },
+    ],
   },
   {
     label: 'Contenuti',

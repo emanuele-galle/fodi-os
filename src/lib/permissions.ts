@@ -1,6 +1,6 @@
 import type { Role } from '@/generated/prisma/client'
 
-export type Module = 'crm' | 'erp' | 'pm' | 'kb' | 'content' | 'support' | 'admin' | 'portal'
+export type Module = 'crm' | 'erp' | 'pm' | 'kb' | 'content' | 'support' | 'admin' | 'portal' | 'chat'
 export type Permission = 'read' | 'write' | 'delete' | 'approve' | 'admin'
 
 type PermissionMap = Partial<Record<Module, Permission[]>>
@@ -15,6 +15,7 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     support: ['read', 'write', 'delete', 'approve', 'admin'],
     admin: ['read', 'write', 'delete', 'approve', 'admin'],
     portal: ['read', 'write', 'delete', 'approve', 'admin'],
+    chat: ['read', 'write', 'admin'],
   },
   MANAGER: {
     crm: ['read', 'write', 'delete', 'approve'],
@@ -24,27 +25,33 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     content: ['read', 'write', 'approve'],
     support: ['read', 'write', 'approve'],
     admin: ['read'],
+    chat: ['read', 'write', 'admin'],
   },
   SALES: {
     crm: ['read', 'write'],
     erp: ['read', 'write'],
     pm: ['read'],
+    chat: ['read', 'write'],
   },
   PM: {
     pm: ['read', 'write', 'approve'],
     kb: ['read', 'write'],
+    chat: ['read', 'write'],
   },
   DEVELOPER: {
     pm: ['read', 'write'],
     kb: ['read', 'write'],
+    chat: ['read', 'write'],
   },
   CONTENT: {
     content: ['read', 'write'],
     kb: ['read', 'write'],
+    chat: ['read', 'write'],
   },
   SUPPORT: {
     support: ['read', 'write'],
     crm: ['read'],
+    chat: ['read', 'write'],
   },
   CLIENT: {
     portal: ['read', 'write'],

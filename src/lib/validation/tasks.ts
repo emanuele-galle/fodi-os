@@ -3,6 +3,7 @@ import { z } from 'zod'
 export const createTaskSchema = z.object({
   title: z.string().min(1, 'Titolo obbligatorio').max(300),
   description: z.string().optional(),
+  projectId: z.string().uuid('Project ID non valido').optional(),
   milestoneId: z.string().uuid('Milestone ID non valido').optional(),
   assigneeId: z.string().uuid('Assignee ID non valido').optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'),
@@ -10,6 +11,7 @@ export const createTaskSchema = z.object({
   dueDate: z.string().datetime().optional(),
   estimatedHours: z.number().min(0).optional(),
   tags: z.array(z.string()).default([]),
+  isPersonal: z.boolean().optional(),
 })
 
 export const updateTaskSchema = z.object({
@@ -24,6 +26,7 @@ export const updateTaskSchema = z.object({
   estimatedHours: z.number().min(0).optional().nullable(),
   sortOrder: z.number().int().min(0).optional(),
   tags: z.array(z.string()).optional(),
+  isPersonal: z.boolean().optional(),
 })
 
 export const createTimeEntrySchema = z.object({

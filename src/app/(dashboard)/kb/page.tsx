@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { BookOpen, Plus, Search, ChevronRight, FolderOpen, FileText, Edit } from 'lucide-react'
+import { WikiPageComments } from '@/components/kb/WikiPageComments'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -357,6 +358,8 @@ export default function KnowledgeBasePage() {
                   </div>
                 </>
               )}
+
+              <WikiPageComments pageId={selectedPage.id} />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center">

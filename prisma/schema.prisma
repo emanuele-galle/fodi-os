@@ -45,6 +45,9 @@ model User {
   clientPortal     Client?         @relation("ClientPortalUser")
   assignedLeads    Lead[]          @relation("LeadAssignee")
   googleToken      GoogleToken?
+  chatChannels     ChatChannel[]   @relation("ChannelCreator")
+  chatMemberships  ChatMember[]
+  chatMessages     ChatMessage[]
 
   @@index([email])
   @@index([role])
@@ -288,15 +291,16 @@ model Project {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  workspace  Workspace   @relation(fields: [workspaceId], references: [id])
-  client     Client?     @relation(fields: [clientId], references: [id])
-  tasks      Task[]
-  milestones Milestone[]
-  documents  Document[]
-  quotes     Quote[]
-  invoices   Invoice[]
-  tickets    Ticket[]
-  assets     Asset[]
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
+  client       Client?       @relation(fields: [clientId], references: [id])
+  tasks        Task[]
+  milestones   Milestone[]
+  documents    Document[]
+  quotes       Quote[]
+  invoices     Invoice[]
+  tickets      Ticket[]
+  assets       Asset[]
+  chatChannels ChatChannel[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -340,7 +344,7 @@ model Milestone {
 
 model Task {
   id             String     @id @default(uuid())
-  projectId      String
+  projectId      String?
   milestoneId    String?
   parentId       String?
   assigneeId     String?
@@ -351,6 +355,7 @@ model Task {
   priority       Priority   @default(MEDIUM)
   boardColumn    String     @default("todo")
   sortOrder      Int        @default(0)
+  isPersonal     Boolean    @default(false)
   startDate      DateTime?
   dueDate        DateTime?
   completedAt    DateTime?
@@ -359,7 +364,7 @@ model Task {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project    Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   milestone  Milestone? @relation(fields: [milestoneId], references: [id])
   parent     Task?      @relation("TaskSubtasks", fields: [parentId], references: [id])
   subtasks   Task[]     @relation("TaskSubtasks")
@@ -372,7 +377,9 @@ model Task {
 
   @@index([projectId])
   @@index([assigneeId])
+  @@index([creatorId])
   @@index([status])
+  @@index([isPersonal])
   @@index([milestoneId])
   @@index([parentId])
   @@index([boardColumn])
@@ -572,25 +579,29 @@ model Expense {
 // ============================================================
 
 model WikiPage {
-  id          String   @id @default(uuid())
-  parentId    String?
-  title       String
-  slug        String
-  content     Json?
-  contentText String?  @db.Text
-  category    String   @default("general")
-  icon        String?
-  sortOrder   Int      @default(0)
-  isPublished Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  parentId     String?
+  workspaceId  String?
+  title        String
+  slug         String
+  content      Json?
+  contentText  String?  @db.Text
+  category     String   @default("general")
+  icon         String?
+  coverUrl     String?
+  sortOrder    Int      @default(0)
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   parent   WikiPage?         @relation("WikiHierarchy", fields: [parentId], references: [id])
   children WikiPage[]        @relation("WikiHierarchy")
   versions WikiPageVersion[]
+  comments Comment[]         @relation("WikiPageComments")
 
   @@unique([parentId, slug])
   @@index([parentId])
+  @@index([workspaceId])
   @@index([category])
   @@index([slug])
   @@map("wiki_pages")
@@ -742,20 +753,23 @@ enum TicketStatus {
 // ============================================================
 
 model Comment {
-  id        String   @id @default(uuid())
-  authorId  String
-  taskId    String?
-  ticketId  String?
-  content   String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  authorId   String
+  taskId     String?
+  ticketId   String?
+  wikiPageId String?
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  author User    @relation(fields: [authorId], references: [id])
-  task   Task?   @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author   User      @relation(fields: [authorId], references: [id])
+  task     Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  ticket   Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  wikiPage WikiPage? @relation("WikiPageComments", fields: [wikiPageId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([ticketId])
+  @@index([wikiPageId])
   @@index([authorId])
   @@map("comments")
 }
@@ -815,4 +829,87 @@ model ActivityLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("activity_logs")
+}
+
+// ============================================================
+// TEAM CHAT
+// ============================================================
+
+model ChatChannel {
+  id          String      @id @default(uuid())
+  name        String
+  slug        String      @unique
+  description String?
+  type        ChannelType @default(PUBLIC)
+  projectId   String?
+  createdById String
+  isArchived  Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  createdBy User          @relation("ChannelCreator", fields: [createdById], references: [id])
+  project   Project?      @relation(fields: [projectId], references: [id])
+  members   ChatMember[]
+  messages  ChatMessage[]
+
+  @@index([slug])
+  @@index([type])
+  @@index([createdById])
+  @@index([projectId])
+  @@map("chat_channels")
+}
+
+model ChatMember {
+  id         String         @id @default(uuid())
+  channelId  String
+  userId     String
+  role       ChatMemberRole @default(MEMBER)
+  lastReadAt DateTime?
+  joinedAt   DateTime       @default(now())
+
+  channel ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([channelId])
+  @@index([userId])
+  @@map("chat_members")
+}
+
+model ChatMessage {
+  id        String          @id @default(uuid())
+  channelId String
+  authorId  String
+  content   String          @db.Text
+  type      ChatMessageType @default(TEXT)
+  metadata  Json?
+  editedAt  DateTime?
+  deletedAt DateTime?
+  createdAt DateTime        @default(now())
+
+  channel ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  author  User        @relation(fields: [authorId], references: [id])
+
+  @@index([channelId, createdAt])
+  @@index([authorId])
+  @@map("chat_messages")
+}
+
+enum ChannelType {
+  PUBLIC
+  PRIVATE
+  DIRECT
+  PROJECT
+}
+
+enum ChatMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ChatMessageType {
+  TEXT
+  SYSTEM
+  FILE_LINK
 }
