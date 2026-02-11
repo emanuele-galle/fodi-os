@@ -5,7 +5,10 @@ import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
 const assignSchema = z.object({
-  assigneeId: z.string().uuid('Assignee ID non valido'),
+  assigneeId: z.string().uuid('Assignee ID non valido').optional(),
+  add: z.array(z.string().uuid()).default([]),
+  remove: z.array(z.string().uuid()).default([]),
+  role: z.enum(['assignee', 'reviewer', 'observer']).default('assignee'),
 })
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
@@ -13,6 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const role = request.headers.get('x-user-role') as Role
     requirePermission(role, 'pm', 'write')
 
+    const currentUserId = request.headers.get('x-user-id')
     const { taskId } = await params
     const body = await request.json()
     const parsed = assignSchema.safeParse(body)
@@ -23,25 +27,72 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    const { assigneeId } = parsed.data
+    const { assigneeId, add, remove, role: assignmentRole } = parsed.data
 
-    const task = await prisma.task.update({
+    // Backward compat: single assigneeId treated as add
+    const toAdd = [...add]
+    if (assigneeId && !toAdd.includes(assigneeId)) {
+      toAdd.push(assigneeId)
+    }
+
+    // Remove assignments
+    if (remove.length > 0) {
+      await prisma.taskAssignment.deleteMany({
+        where: { taskId, userId: { in: remove } },
+      })
+    }
+
+    // Add new assignments
+    if (toAdd.length > 0) {
+      await prisma.taskAssignment.createMany({
+        data: toAdd.map((uid) => ({
+          taskId,
+          userId: uid,
+          role: assignmentRole,
+          assignedBy: currentUserId,
+        })),
+        skipDuplicates: true,
+      })
+    }
+
+    // Update legacy assigneeId field: first assigned user or null
+    const firstAssignment = await prisma.taskAssignment.findFirst({
+      where: { taskId },
+      orderBy: { assignedAt: 'asc' },
+    })
+    await prisma.task.update({
       where: { id: taskId },
-      data: { assigneeId },
+      data: { assigneeId: firstAssignment?.userId || null },
+    })
+
+    // Send notifications for newly added users
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
       include: {
         assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        assignments: {
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+          },
+          orderBy: { assignedAt: 'asc' },
+        },
       },
     })
 
-    await prisma.notification.create({
-      data: {
-        userId: assigneeId,
-        type: 'task_assigned',
-        title: 'Task assegnato',
-        message: `Ti e stato assegnato il task "${task.title}"`,
-        link: '/tasks',
-      },
-    })
+    if (task && toAdd.length > 0) {
+      const notifData = toAdd
+        .filter((id) => id !== currentUserId)
+        .map((uid) => ({
+          userId: uid,
+          type: 'task_assigned',
+          title: 'Task assegnato',
+          message: `Ti è stato assegnato il task "${task.title}"`,
+          link: '/tasks',
+        }))
+      if (notifData.length > 0) {
+        await prisma.notification.createMany({ data: notifData })
+      }
+    }
 
     return NextResponse.json(task)
   } catch (e) {

@@ -21,13 +21,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         projectId,
         parentId: null, // Only top-level tasks
         ...(status && { status: status as never }),
-        ...(assigneeId && { assigneeId }),
+        ...(assigneeId && {
+          OR: [
+            { assigneeId },
+            { assignments: { some: { userId: assigneeId } } },
+          ],
+        }),
         ...(milestoneId && { milestoneId }),
         ...(boardColumn && { boardColumn }),
       },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       include: {
         assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        assignments: {
+          include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } },
+          orderBy: { assignedAt: 'asc' },
+        },
         _count: { select: { subtasks: true, comments: true } },
       },
     })
@@ -55,7 +64,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         { status: 400 }
       )
     }
-    const { title, description, milestoneId, assigneeId, priority, boardColumn, dueDate, estimatedHours, tags } = parsed.data
+    const { title, description, milestoneId, assigneeId, assigneeIds, priority, boardColumn, dueDate, estimatedHours, tags } = parsed.data
+
+    const effectiveAssigneeIds = assigneeIds?.length ? assigneeIds : assigneeId ? [assigneeId] : []
 
     const task = await prisma.task.create({
       data: {
@@ -64,15 +75,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         title,
         description,
         milestoneId,
-        assigneeId,
+        assigneeId: effectiveAssigneeIds[0] || null,
         priority,
         boardColumn,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         estimatedHours,
         tags: tags || [],
+        ...(effectiveAssigneeIds.length > 0 && {
+          assignments: {
+            createMany: {
+              data: effectiveAssigneeIds.map((uid: string) => ({
+                userId: uid,
+                role: 'assignee',
+                assignedBy: userId,
+              })),
+            },
+          },
+        }),
       },
       include: {
         assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        assignments: {
+          include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } },
+        },
       },
     })
 

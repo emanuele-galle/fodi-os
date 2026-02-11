@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { FolderKanban, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FolderKanban, Plus, Search, ChevronLeft, ChevronRight, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -90,7 +90,7 @@ export default function ProjectsPage() {
   const fetchProjects = useCallback(async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+      const params = new URLSearchParams({ page: String(page), limit: String(limit), isInternal: 'false' })
       if (search) params.set('search', search)
       if (statusFilter) params.set('status', statusFilter)
       const res = await fetch(`/api/projects?${params}`)
@@ -166,6 +166,15 @@ export default function ProjectsPage() {
           Nuovo Progetto
         </Button>
       </div>
+
+      <button
+        onClick={() => router.push('/internal')}
+        className="flex items-center gap-2 w-full mb-4 px-4 py-2.5 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors text-sm text-primary touch-manipulation"
+      >
+        <Building2 className="h-4 w-4" />
+        <span>Vedi progetti interni FODI</span>
+        <ChevronRight className="h-4 w-4 ml-auto" />
+      </button>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">

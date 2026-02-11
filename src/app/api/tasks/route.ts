@@ -31,11 +31,22 @@ export async function GET(request: NextRequest) {
     if (priority) {
       where.priority = { in: priority.split(',').map((s) => s.trim()) }
     }
-    if (assigneeId) where.assigneeId = assigneeId
+    if (assigneeId) {
+      where.OR = [
+        ...(Array.isArray(where.OR) ? where.OR : []),
+        { assigneeId },
+        { assignments: { some: { userId: assigneeId } } },
+      ]
+    }
     if (projectId) where.projectId = projectId
 
     if (mine === 'true' && userId) {
-      where.OR = [{ creatorId: userId }, { assigneeId: userId }]
+      where.OR = [
+        ...(Array.isArray(where.OR) ? where.OR : []),
+        { creatorId: userId },
+        { assigneeId: userId },
+        { assignments: { some: { userId: userId! } } },
+      ]
     }
 
     if (personal === 'true') {
@@ -52,6 +63,12 @@ export async function GET(request: NextRequest) {
         include: {
           assignee: {
             select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          },
+          assignments: {
+            include: {
+              user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+            },
+            orderBy: { assignedAt: 'asc' },
           },
           project: {
             select: { id: true, name: true },
@@ -88,7 +105,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { title, description, projectId, milestoneId, assigneeId, priority, boardColumn, dueDate, estimatedHours, tags, isPersonal } = parsed.data
+    const { title, description, projectId, milestoneId, assigneeId, assigneeIds, priority, boardColumn, dueDate, estimatedHours, tags, isPersonal } = parsed.data
 
     const task = await prisma.task.create({
       data: {
@@ -105,9 +122,49 @@ export async function POST(request: NextRequest) {
         tags,
         isPersonal: isPersonal ?? !projectId,
       },
+    })
+
+    // Collect all user IDs for assignments
+    const allAssigneeIds = new Set(assigneeIds)
+    if (assigneeId) allAssigneeIds.add(assigneeId)
+
+    if (allAssigneeIds.size > 0) {
+      await prisma.taskAssignment.createMany({
+        data: Array.from(allAssigneeIds).map((uid: string) => ({
+          taskId: task.id,
+          userId: uid,
+          role: 'assignee',
+          assignedBy: userId,
+        })),
+        skipDuplicates: true,
+      })
+
+      const notifData = Array.from(allAssigneeIds)
+        .filter((id: string) => id !== userId)
+        .map((uid: string) => ({
+          userId: uid,
+          type: 'task_assigned',
+          title: 'Task assegnato',
+          message: `Ti è stato assegnato il task "${title}"`,
+          link: '/tasks',
+        }))
+      if (notifData.length > 0) {
+        await prisma.notification.createMany({ data: notifData })
+      }
+    }
+
+    // Re-fetch with full includes
+    const fullTask = await prisma.task.findUnique({
+      where: { id: task.id },
       include: {
         assignee: {
           select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+        },
+        assignments: {
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+          },
+          orderBy: { assignedAt: 'asc' },
         },
         project: {
           select: { id: true, name: true },
@@ -115,7 +172,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(task, { status: 201 })
+    return NextResponse.json(fullTask, { status: 201 })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })

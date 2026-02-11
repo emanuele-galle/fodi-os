@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl
     const workspaceId = searchParams.get('workspaceId')
     const status = searchParams.get('status')
+    const isInternal = searchParams.get('isInternal')
     const search = searchParams.get('search') || ''
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
       isArchived: false,
       ...(workspaceId && { workspaceId }),
       ...(status && { status: status as never }),
+      ...(isInternal !== null && { isInternal: isInternal === 'true' }),
       ...(search && {
         OR: [
           { name: { contains: search, mode: 'insensitive' as const } },
@@ -65,7 +67,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { workspaceId, clientId, name, description, priority, startDate, endDate, deadline, budgetAmount, budgetHours, color } = parsed.data
+    const { workspaceId, clientId, name, description, priority, startDate, endDate, deadline, budgetAmount, budgetHours, color, isInternal } = parsed.data
 
     const slug = slugify(name)
 
@@ -90,6 +92,7 @@ export async function POST(request: NextRequest) {
         budgetAmount,
         budgetHours,
         color,
+        isInternal,
       },
       include: {
         client: { select: { id: true, companyName: true } },

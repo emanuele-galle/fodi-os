@@ -30,6 +30,7 @@ model User {
   workspaceMembers WorkspaceMember[]
   assignedTasks    Task[]          @relation("TaskAssignee")
   createdTasks     Task[]          @relation("TaskCreator")
+  taskAssignments  TaskAssignment[] @relation("TaskAssignments")
   timeEntries      TimeEntry[]
   comments         Comment[]
   notifications    Notification[]
@@ -289,6 +290,7 @@ model Project {
   budgetHours  Int?
   color        String        @default("#6366F1")
   isArchived   Boolean       @default(false)
+  isInternal   Boolean       @default(false)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -307,6 +309,7 @@ model Project {
   @@index([clientId])
   @@index([status])
   @@index([slug])
+  @@index([isInternal])
   @@map("projects")
 }
 
@@ -373,6 +376,7 @@ model Task {
   creator    User       @relation("TaskCreator", fields: [creatorId], references: [id])
   timeEntries    TimeEntry[]
   comments       Comment[]
+  assignments    TaskAssignment[]
   dependsOn      TaskDependency[] @relation("DependentTask")
   dependedOnBy   TaskDependency[] @relation("DependencyTask")
   attachments    TaskAttachment[]
@@ -386,6 +390,22 @@ model Task {
   @@index([parentId])
   @@index([boardColumn])
   @@map("tasks")
+}
+
+model TaskAssignment {
+  id         String   @id @default(uuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation("TaskAssignments", fields: [userId], references: [id])
+  role       String   @default("assignee")
+  assignedAt DateTime @default(now())
+  assignedBy String?
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+  @@map("task_assignments")
 }
 
 model TaskAttachment {

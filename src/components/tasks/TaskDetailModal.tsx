@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
+import { MultiUserSelect } from '@/components/ui/MultiUserSelect'
 import { Trash2, Send, Paperclip, FileText, Image, Download, X } from 'lucide-react'
 
 interface TaskUser {
@@ -33,6 +34,12 @@ interface Attachment {
   uploadedBy: { id: string; firstName: string; lastName: string }
 }
 
+interface TaskAssignment {
+  id: string
+  role: string
+  user: TaskUser
+}
+
 interface TaskDetail {
   id: string
   title: string
@@ -42,6 +49,7 @@ interface TaskDetail {
   boardColumn: string
   assigneeId: string | null
   assignee: TaskUser | null
+  assignments?: TaskAssignment[]
   dueDate: string | null
   isPersonal: boolean
   project: { id: string; name: string } | null
@@ -99,7 +107,7 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState('TODO')
   const [priority, setPriority] = useState('MEDIUM')
-  const [assigneeId, setAssigneeId] = useState('')
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([])
   const [dueDate, setDueDate] = useState('')
 
   const fetchTask = useCallback(async () => {
@@ -114,7 +122,11 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
         setDescription(data.description || '')
         setStatus(data.status)
         setPriority(data.priority)
-        setAssigneeId(data.assigneeId || '')
+        setAssigneeIds(
+          data.assignments?.length
+            ? data.assignments.map((a) => a.user.id)
+            : data.assigneeId ? [data.assigneeId] : []
+        )
         setDueDate(data.dueDate ? data.dueDate.slice(0, 10) : '')
       }
     } finally {
@@ -168,7 +180,7 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
         status,
         priority,
         boardColumn: STATUS_TO_COLUMN[status] || status.toLowerCase(),
-        assigneeId: assigneeId || null,
+        assigneeIds: assigneeIds.length > 0 ? assigneeIds : [],
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
       }
       const res = await fetch(`/api/tasks/${taskId}`, {
@@ -269,14 +281,6 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  const assigneeOptions = [
-    { value: '', label: 'Non assegnato' },
-    ...teamMembers.map((m) => ({
-      value: m.id,
-      label: `${m.firstName} ${m.lastName}`,
-    })),
-  ]
-
   return (
     <Modal open={open} onClose={onClose} title="Dettaglio Task" size="xl">
       {loading || !task ? (
@@ -317,20 +321,20 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              label="Assegnato a"
-              options={assigneeOptions}
-              value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
-            />
-            <Input
-              label="Scadenza"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
-          </div>
+          <MultiUserSelect
+            users={teamMembers}
+            selected={assigneeIds}
+            onChange={setAssigneeIds}
+            label="Assegnati a"
+            placeholder="Seleziona assegnatari..."
+          />
+
+          <Input
+            label="Scadenza"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
 
           {task.project && (
             <div className="flex items-center gap-2 text-sm text-muted">

@@ -10,6 +10,7 @@ import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Tabs } from '@/components/ui/Tabs'
 import { Avatar } from '@/components/ui/Avatar'
+import { AvatarStack } from '@/components/ui/AvatarStack'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -17,6 +18,13 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { KanbanBoard } from '@/components/projects/KanbanBoard'
 import { GanttChart } from '@/components/projects/GanttChart'
 import { ProjectChat } from '@/components/chat/ProjectChat'
+
+interface TaskUser {
+  id: string
+  firstName: string
+  lastName: string
+  avatarUrl: string | null
+}
 
 interface Task {
   id: string
@@ -26,7 +34,8 @@ interface Task {
   boardColumn: string
   dueDate: string | null
   estimatedHours: number | null
-  assignee?: { id: string; firstName: string; lastName: string; avatarUrl: string | null } | null
+  assignee?: TaskUser | null
+  assignments?: { id: string; role: string; user: TaskUser }[]
 }
 
 interface Milestone {
@@ -275,7 +284,11 @@ export default function ProjectDetailPage() {
               <tr key={task.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors duration-200 even:bg-secondary/20">
                 <td className="py-3 px-4 font-medium">{task.title}</td>
                 <td className="py-3 px-4 text-muted hidden md:table-cell">
-                  {task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : '—'}
+                  {(task.assignments?.length ?? 0) > 0 ? (
+                    <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
+                  ) : task.assignee ? (
+                    `${task.assignee.firstName} ${task.assignee.lastName}`
+                  ) : '—'}
                 </td>
                 <td className="py-3 px-4">
                   <Badge variant={TASK_STATUS_BADGE[task.status] || 'default'}>{TASK_STATUS_LABEL[task.status] || task.status}</Badge>

@@ -17,6 +17,7 @@ import {
   Film,
   LifeBuoy,
   UsersRound,
+  Building2,
   Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -48,6 +49,7 @@ const MENU_ITEMS: MenuItem[] = [
   { label: 'Contenuti', href: '/content', icon: Film, roles: ['ADMIN', 'MANAGER', 'CONTENT'] as Role[], category: 'purple' },
   { label: 'Supporto', href: '/support', icon: LifeBuoy, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'] as Role[], category: 'rose' },
   { label: 'Team', href: '/team', icon: UsersRound, category: 'blue' },
+  { label: 'Azienda', href: '/internal', icon: Building2, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT', 'SUPPORT'] as Role[], category: 'amber' },
   { label: 'Impostazioni', href: '/settings', icon: Settings, category: 'slate' },
 ]
 

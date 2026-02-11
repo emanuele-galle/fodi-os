@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   CheckSquare,
   MessageCircle,
+  Building2,
   Users,
   FolderKanban,
   CalendarDays,
@@ -48,6 +49,12 @@ const navigation: NavItem[] = [
     label: 'Chat',
     href: '/chat',
     icon: MessageCircle,
+  },
+  {
+    label: 'Azienda',
+    href: '/internal',
+    icon: Building2,
+    roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT', 'SUPPORT'],
   },
   {
     label: 'CRM',

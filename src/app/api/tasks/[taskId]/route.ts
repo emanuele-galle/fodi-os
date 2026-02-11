@@ -15,6 +15,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       where: { id: taskId },
       include: {
         assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        assignments: {
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+          },
+          orderBy: { assignedAt: 'asc' },
+        },
         creator: { select: { id: true, firstName: true, lastName: true } },
         project: { select: { id: true, name: true } },
         milestone: { select: { id: true, name: true } },
@@ -22,6 +28,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           orderBy: { sortOrder: 'asc' },
           include: {
             assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+            assignments: {
+              include: {
+                user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+              },
+              orderBy: { assignedAt: 'asc' },
+            },
           },
         },
         comments: {
@@ -71,7 +83,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         { status: 400 }
       )
     }
-    const { title, description, status, priority, boardColumn, assigneeId, milestoneId, dueDate, estimatedHours, sortOrder, tags } = parsed.data
+    const currentUserId = request.headers.get('x-user-id')
+    const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, milestoneId, dueDate, estimatedHours, sortOrder, tags } = parsed.data
 
     const data: Record<string, unknown> = {}
     if (title !== undefined) data.title = title
@@ -93,12 +106,39 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const task = await prisma.task.update({
       where: { id: taskId },
       data,
+    })
+
+    // Handle multi-assignee updates
+    if (assigneeIds !== undefined) {
+      // Remove assignments not in the new list
+      await prisma.taskAssignment.deleteMany({
+        where: { taskId, userId: { notIn: assigneeIds } },
+      })
+      // Upsert new assignments
+      for (const uid of assigneeIds) {
+        await prisma.taskAssignment.upsert({
+          where: { taskId_userId: { taskId, userId: uid } },
+          update: {},
+          create: { taskId, userId: uid, role: 'assignee', assignedBy: currentUserId },
+        })
+      }
+    }
+
+    // Re-fetch with full includes
+    const fullTask = await prisma.task.findUnique({
+      where: { id: taskId },
       include: {
         assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        assignments: {
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+          },
+          orderBy: { assignedAt: 'asc' },
+        },
       },
     })
 
-    return NextResponse.json(task)
+    return NextResponse.json(fullTask)
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })

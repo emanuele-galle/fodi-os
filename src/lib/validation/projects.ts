@@ -12,6 +12,7 @@ export const createProjectSchema = z.object({
   budgetAmount: z.number().min(0).optional(),
   budgetHours: z.number().int().min(0).optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Colore non valido').default('#6366F1'),
+  isInternal: z.boolean().default(false),
 })
 
 export const updateProjectSchema = z.object({

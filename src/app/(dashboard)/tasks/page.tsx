@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Avatar } from '@/components/ui/Avatar'
+import { AvatarStack } from '@/components/ui/AvatarStack'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { QuickTaskInput } from '@/components/tasks/QuickTaskInput'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
@@ -30,6 +31,12 @@ interface TaskUser {
   avatarUrl?: string | null
 }
 
+interface TaskAssignment {
+  id: string
+  role: string
+  user: TaskUser
+}
+
 interface Task {
   id: string
   title: string
@@ -39,6 +46,7 @@ interface Task {
   dueDate: string | null
   isPersonal: boolean
   assignee: TaskUser | null
+  assignments?: TaskAssignment[]
   project: { id: string; name: string } | null
   createdAt: string
 }
@@ -277,7 +285,9 @@ export default function TasksPage() {
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted">
                     <div className="flex items-center gap-2">
-                      {task.assignee && (
+                      {(task.assignments?.length ?? 0) > 0 ? (
+                        <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
+                      ) : task.assignee ? (
                         <div className="flex items-center gap-1.5">
                           <Avatar
                             name={`${task.assignee.firstName} ${task.assignee.lastName}`}
@@ -286,7 +296,7 @@ export default function TasksPage() {
                           />
                           <span>{task.assignee.firstName}</span>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                     {task.dueDate && (
                       <span className={isOverdue ? 'text-destructive font-medium' : ''}>
@@ -355,7 +365,9 @@ function ListView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: str
                 </Badge>
               </td>
               <td className="px-4 py-3 hidden lg:table-cell">
-                {task.assignee ? (
+                {(task.assignments?.length ?? 0) > 0 ? (
+                  <AvatarStack users={task.assignments!.map(a => a.user)} size="sm" max={4} />
+                ) : task.assignee ? (
                   <div className="flex items-center gap-2">
                     <Avatar
                       name={`${task.assignee.firstName} ${task.assignee.lastName}`}
@@ -431,7 +443,9 @@ function KanbanView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: s
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    {task.assignee ? (
+                    {(task.assignments?.length ?? 0) > 0 ? (
+                      <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
+                    ) : task.assignee ? (
                       <Avatar
                         name={`${task.assignee.firstName} ${task.assignee.lastName}`}
                         src={task.assignee.avatarUrl}
