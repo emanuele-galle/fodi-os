@@ -1,0 +1,43 @@
+services:
+  app:
+    container_name: fodi-os_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DATABASE_URL=${DATABASE_URL}
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    networks:
+      - traefik-public
+      - panel-internal
+    labels:
+      - traefik.enable=true
+      # Production router - os.fodisrl.it (Cloudflare Origin Cert)
+      - traefik.http.routers.fodi-os.rule=Host(`os.fodisrl.it`)
+      - traefik.http.routers.fodi-os.entrypoints=websecure
+      - traefik.http.routers.fodi-os.tls=true
+      - traefik.http.routers.fodi-os.middlewares=security-headers@file
+      - traefik.http.routers.fodi-os.service=fodi-os
+      # Preview router - fodi-os.fodivps2.cloud (Let's Encrypt)
+      - traefik.http.routers.fodi-os-preview.rule=Host(`fodi-os.fodivps2.cloud`)
+      - traefik.http.routers.fodi-os-preview.entrypoints=websecure
+      - traefik.http.routers.fodi-os-preview.tls.certresolver=letsencrypt
+      - traefik.http.routers.fodi-os-preview.middlewares=security-headers@file
+      - traefik.http.routers.fodi-os-preview.service=fodi-os
+      # Service
+      - traefik.http.services.fodi-os.loadbalancer.server.port=3000
+      - traefik.docker.network=traefik-public
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+networks:
+  traefik-public:
+    external: true
+  panel-internal:
+    external: true
