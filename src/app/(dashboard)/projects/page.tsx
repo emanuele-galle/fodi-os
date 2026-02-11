@@ -283,7 +283,7 @@ export default function ProjectsPage() {
               className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             />
           </div>
-          <Select name="priority" label="Priorita" options={PRIORITY_OPTIONS} />
+          <Select name="priority" label="Priorità" options={PRIORITY_OPTIONS} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input name="startDate" label="Data Inizio" type="date" />
             <Input name="endDate" label="Data Fine" type="date" />

@@ -33,7 +33,7 @@ const STATUS_OPTIONS = [
 ]
 
 const PRIORITY_OPTIONS = [
-  { value: '', label: 'Tutte le priorita' },
+  { value: '', label: 'Tutte le priorità' },
   { value: 'LOW', label: 'Bassa' },
   { value: 'MEDIUM', label: 'Media' },
   { value: 'HIGH', label: 'Alta' },
@@ -229,7 +229,7 @@ export default function SupportPage() {
                   <th className="pb-3 pr-4 font-medium">Oggetto</th>
                   <th className="pb-3 pr-4 font-medium hidden md:table-cell">Cliente</th>
                   <th className="pb-3 pr-4 font-medium">Stato</th>
-                  <th className="pb-3 pr-4 font-medium">Priorita</th>
+                  <th className="pb-3 pr-4 font-medium">Priorità</th>
                   <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Assegnato a</th>
                   <th className="pb-3 font-medium hidden lg:table-cell">Data</th>
                 </tr>
@@ -302,7 +302,7 @@ export default function SupportPage() {
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select name="priority" label="Priorita" options={PRIORITY_CREATE_OPTIONS} />
+            <Select name="priority" label="Priorità" options={PRIORITY_CREATE_OPTIONS} />
             <Select name="category" label="Categoria" options={CATEGORY_CREATE_OPTIONS} />
           </div>
           <div className="flex justify-end gap-3 pt-2">

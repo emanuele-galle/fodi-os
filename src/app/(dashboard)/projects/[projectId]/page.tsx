@@ -244,7 +244,7 @@ export default function ProjectDetailPage() {
               <th className="pb-3 pr-4 font-medium">Titolo</th>
               <th className="pb-3 pr-4 font-medium">Assegnato</th>
               <th className="pb-3 pr-4 font-medium">Stato</th>
-              <th className="pb-3 pr-4 font-medium">Priorita</th>
+              <th className="pb-3 pr-4 font-medium">Priorità</th>
               <th className="pb-3 font-medium">Scadenza</th>
             </tr>
           </thead>
@@ -411,7 +411,7 @@ export default function ProjectDetailPage() {
               className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             />
           </div>
-          <Select name="priority" label="Priorita" options={PRIORITY_OPTIONS} />
+          <Select name="priority" label="Priorità" options={PRIORITY_OPTIONS} />
           <div className="grid grid-cols-2 gap-4">
             <Input name="dueDate" label="Scadenza" type="date" />
             <Input name="estimatedHours" label="Ore Stimate" type="number" step="0.5" />

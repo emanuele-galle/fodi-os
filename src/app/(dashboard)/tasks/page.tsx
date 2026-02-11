@@ -258,7 +258,7 @@ function ListView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: str
           <tr className="border-b border-border bg-card/50">
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase">Titolo</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden md:table-cell">Stato</th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden md:table-cell">Priorita</th>
+            <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden md:table-cell">Priorità</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden lg:table-cell">Assegnato</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden lg:table-cell">Scadenza</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden sm:table-cell">Progetto</th>

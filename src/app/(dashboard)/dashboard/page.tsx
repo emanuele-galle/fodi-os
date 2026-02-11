@@ -118,9 +118,9 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    fetch('/api/auth/me')
+    fetch('/api/auth/session')
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d?.firstName) setUserName(d.firstName) })
+      .then((d) => { if (d?.user?.firstName) setUserName(d.user.firstName) })
       .catch(() => {})
   }, [])
 
@@ -412,11 +412,11 @@ export default function DashboardPage() {
         <Card>
           <CardContent>
             <div className="flex items-center justify-between mb-4">
-              <CardTitle>Attivita Recenti</CardTitle>
+              <CardTitle>Attività Recenti</CardTitle>
               <Activity className="h-4 w-4 text-muted" />
             </div>
             {activities.length === 0 ? (
-              <p className="text-sm text-muted py-4">Nessuna attivita recente.</p>
+              <p className="text-sm text-muted py-4">Nessuna attività recente.</p>
             ) : (
               <div className="space-y-3">
                 {activities.map((activity) => {
