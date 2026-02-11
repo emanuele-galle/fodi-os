@@ -24,12 +24,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!client) {
-      return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Cliente non trovato' }, { status: 404 })
     }
 
     return NextResponse.json(client)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -70,7 +70,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json(client)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -87,7 +87,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }

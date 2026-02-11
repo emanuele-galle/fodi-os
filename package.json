@@ -12,7 +12,10 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.987.0",
@@ -50,6 +53,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.18",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "3.0.0",
     "@types/node": "22.15.0",
     "@types/pg": "8.16.0",
@@ -57,10 +63,12 @@
     "@types/react-dom": "19.2.3",
     "eslint": "10.0.0",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^28.0.0",
     "prisma": "7.3.0",
     "tailwindcss": "4.1.18",
     "tsx": "4.21.0",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.0.18"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

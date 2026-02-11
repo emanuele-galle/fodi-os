@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items, total, page, limit })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         include: { lineItems: { orderBy: { sortOrder: 'asc' } } },
       })
       if (!quote) {
-        return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
+        return NextResponse.json({ error: 'Preventivo non trovato' }, { status: 404 })
       }
       itemsToCreate = quote.lineItems.map((item, i) => ({
         description: item.description,
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(invoice, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }

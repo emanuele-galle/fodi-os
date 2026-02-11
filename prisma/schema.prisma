@@ -519,12 +519,13 @@ model Invoice {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  client    Client            @relation(fields: [clientId], references: [id])
-  project   Project?          @relation(fields: [projectId], references: [id])
-  creator   User              @relation("InvoiceCreator", fields: [creatorId], references: [id])
-  quote     Quote?            @relation(fields: [quoteId], references: [id])
-  lineItems InvoiceLineItem[]
-  expenses  Expense[]
+  client              Client              @relation(fields: [clientId], references: [id])
+  project             Project?            @relation(fields: [projectId], references: [id])
+  creator             User                @relation("InvoiceCreator", fields: [creatorId], references: [id])
+  quote               Quote?              @relation(fields: [quoteId], references: [id])
+  lineItems           InvoiceLineItem[]
+  expenses            Expense[]
+  electronicInvoices  ElectronicInvoice[]
 
   @@index([clientId])
   @@index([status])
@@ -912,4 +913,47 @@ enum ChatMessageType {
   TEXT
   SYSTEM
   FILE_LINK
+}
+
+// ============================================================
+// ELECTRONIC INVOICING (SDI)
+// ============================================================
+
+model ElectronicInvoice {
+  id                  String    @id @default(cuid())
+  invoiceId           String
+  invoice             Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  formatoTrasmissione String    @default("FPR12")
+  codiceDestinatario  String?
+  pecDestinatario     String?
+  xmlContent          String?   @db.Text
+  status              String    @default("draft") // draft, generated, sent, delivered, rejected
+  sentAt              DateTime?
+  deliveredAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([invoiceId])
+  @@map("electronic_invoices")
+}
+
+model CompanyProfile {
+  id             String  @id @default(cuid())
+  ragioneSociale String
+  partitaIva     String
+  codiceFiscale  String?
+  indirizzo      String
+  cap            String
+  citta          String
+  provincia      String  @db.VarChar(2)
+  nazione        String  @default("IT")
+  regimeFiscale  String  @default("RF01")
+  iban           String?
+  pec            String?
+  telefono       String?
+  email          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("company_profiles")
 }

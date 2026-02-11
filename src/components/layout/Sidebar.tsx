@@ -20,8 +20,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Role } from '@/generated/prisma/client'
+import { Tooltip } from '@/components/ui/Tooltip'
+import { useUserPreferences } from '@/hooks/useUserPreferences'
 
 interface NavItem {
   label: string
@@ -65,7 +67,7 @@ const navigation: NavItem[] = [
     roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'],
     children: [
       { label: 'Lista', href: '/projects' },
-      { label: 'Time Tracking', href: '/time' },
+      { label: 'Tracciamento Ore', href: '/time' },
     ],
   },
   {
@@ -101,8 +103,8 @@ const navigation: NavItem[] = [
     icon: Film,
     roles: ['ADMIN', 'MANAGER', 'CONTENT'],
     children: [
-      { label: 'Asset Library', href: '/content/assets' },
-      { label: 'Review', href: '/content/reviews' },
+      { label: 'Libreria Asset', href: '/content/assets' },
+      { label: 'Revisioni', href: '/content/reviews' },
       { label: 'Social', href: '/content/social' },
     ],
   },
@@ -123,6 +125,7 @@ const navigation: NavItem[] = [
     icon: Settings,
     children: [
       { label: 'Profilo', href: '/settings' },
+      { label: 'Fatturazione', href: '/settings/billing' },
       { label: 'Utenti', href: '/settings/users' },
       { label: 'Sistema', href: '/settings/system' },
     ],
@@ -135,8 +138,20 @@ interface SidebarProps {
 
 export function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname()
+  const { preferences, updatePreference, loaded } = useUserPreferences()
   const [collapsed, setCollapsed] = useState(false)
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
+
+  // Sync collapsed state from preferences
+  useEffect(() => {
+    if (loaded) setCollapsed(preferences.sidebarCollapsed)
+  }, [loaded, preferences.sidebarCollapsed])
+
+  function toggleCollapsed() {
+    const next = !collapsed
+    setCollapsed(next)
+    updatePreference('sidebarCollapsed', next)
+  }
 
   const filteredNav = navigation.filter(
     (item) => !item.roles || item.roles.includes(userRole)
@@ -170,7 +185,7 @@ export function Sidebar({ userRole }: SidebarProps) {
           </Link>
         )}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapsed}
           className="p-1.5 rounded-md hover:bg-white/10 transition-colors duration-200"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -187,8 +202,7 @@ export function Sidebar({ userRole }: SidebarProps) {
           const isExpanded = expandedItem === item.label
           const Icon = item.icon
 
-          return (
-            <div key={item.label} className="mb-1">
+          const navLink = (
               <Link
                 href={item.children ? '#' : item.href}
                 onClick={(e) => {
@@ -219,6 +233,15 @@ export function Sidebar({ userRole }: SidebarProps) {
                   </>
                 )}
               </Link>
+          )
+
+          return (
+            <div key={item.label} className="mb-1">
+              {collapsed ? (
+                <Tooltip content={item.label} position="right">
+                  {navLink}
+                </Tooltip>
+              ) : navLink}
 
               {/* Sub-items */}
               {!collapsed && item.children && isExpanded && (

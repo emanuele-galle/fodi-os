@@ -23,8 +23,300 @@
   --radius-lg: 0.75rem;
 }
 
+/* ===== Theme System ===== */
+
+/* Light theme (default) */
+:root, [data-theme="light"] {
+  --color-background: #FAFAF8;
+  --color-foreground: #0F172A;
+  --color-card: #ffffff;
+  --color-secondary: #F1F5F9;
+  --color-secondary-foreground: #0F172A;
+  --color-border: #E2E8F0;
+  --color-muted: #94A3B8;
+  --color-sidebar: #1E293B;
+  --color-sidebar-foreground: #E2E8F0;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --color-background: #0F172A;
+  --color-foreground: #E2E8F0;
+  --color-card: #1E293B;
+  --color-secondary: #334155;
+  --color-secondary-foreground: #E2E8F0;
+  --color-border: #334155;
+  --color-muted: #64748B;
+  --color-sidebar: #0B1120;
+  --color-sidebar-foreground: #CBD5E1;
+}
+
+/* Midnight theme */
+[data-theme="midnight"] {
+  --color-background: #0A0E1A;
+  --color-foreground: #C8D6E5;
+  --color-card: #111827;
+  --color-secondary: #1F2937;
+  --color-secondary-foreground: #C8D6E5;
+  --color-border: #1F2937;
+  --color-muted: #6B7280;
+  --color-sidebar: #060A14;
+  --color-sidebar-foreground: #9CA3AF;
+  --color-primary: #7C8CF8;
+  --color-primary-hover: #6366F1;
+  --color-primary-foreground: #0A0E1A;
+  --color-sidebar-active: #7C8CF8;
+  --color-accent: #A78BFA;
+}
+
+/* ===== Keyframes ===== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Animation Utility Classes ===== */
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out both;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out both;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-count-up {
+  animation: countUp 0.5s ease-out both;
+}
+
+/* Staggered animation delays for lists */
+.animate-stagger > * {
+  animation: slideUp 0.4s ease-out both;
+}
+.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.animate-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.animate-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.animate-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.animate-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.animate-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.animate-stagger > *:nth-child(n+7) { animation-delay: 300ms; }
+
+/* ===== Enhanced Shimmer for Skeleton ===== */
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-secondary) 25%,
+    color-mix(in srgb, var(--color-secondary) 60%, var(--color-card)) 50%,
+    var(--color-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ===== Gold Glow Effect for Cards ===== */
+
+.glow-gold {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+.glow-gold:hover {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 15%, transparent),
+              0 4px 16px rgba(0, 0, 0, 0.08);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+/* ===== Button Ripple Effect ===== */
+
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+.btn-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 10%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  border-radius: inherit;
+}
+.btn-ripple:active::after {
+  animation: ripple 0.5s ease-out;
+}
+
+/* ===== Tooltip Base ===== */
+
+.tooltip-wrapper {
+  position: relative;
+}
+.tooltip-wrapper .tooltip-content {
+  position: absolute;
+  z-index: 50;
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  border-radius: 6px;
+  background: var(--color-foreground);
+  color: var(--color-background);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.tooltip-wrapper:hover .tooltip-content {
+  opacity: 1;
+  transform: translateY(0);
+}
+.tooltip-content.tooltip-top {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+}
+.tooltip-wrapper:hover .tooltip-content.tooltip-top {
+  transform: translateX(-50%) translateY(0);
+}
+.tooltip-content.tooltip-right {
+  left: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%) translateX(2px);
+}
+.tooltip-wrapper:hover .tooltip-content.tooltip-right {
+  transform: translateY(-50%) translateX(0);
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-background);
   color: var(--color-foreground);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* PWA standalone: safe area padding */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ===== Mobile / Touch Optimizations ===== */
+
+/* Touch devices: remove hover scale/shadow effects, use active states */
+@media (hover: none) and (pointer: coarse) {
+  .hover\:scale-\[1\.02\]:hover {
+    transform: none !important;
+  }
+  .hover\:shadow-md:hover {
+    box-shadow: none !important;
+  }
+}
+
+/* Touch manipulation for interactive elements */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Mobile menu slide-up from bottom */
+@keyframes menuSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-menu-slide-up {
+  animation: menuSlideUp 0.25s ease-out;
+}
+
+/* Mobile: kanban horizontal scroll with snap */
+@media (max-width: 767px) {
+  .kanban-mobile-scroll {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+  }
+  .kanban-mobile-scroll > * {
+    scroll-snap-align: start;
+    min-width: 280px;
+    flex-shrink: 0;
+  }
+}
+
+/* Mobile chat: full-screen panels */
+@media (max-width: 767px) {
+  .chat-mobile-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+  }
+}
+
+/* Smooth color transitions for themed elements */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 0s;
+}
+[data-theme] *, [data-theme] *::before, [data-theme] *::after {
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
 }

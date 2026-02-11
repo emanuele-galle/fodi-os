@@ -75,13 +75,13 @@ export default function ContentPage() {
       </div>
 
       {/* Section Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 animate-stagger">
         {sections.map((section) => {
           const Icon = section.icon
           return (
             <Card
               key={section.href}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className="cursor-pointer hover:scale-[1.01] transition-all duration-200"
               onClick={() => router.push(section.href)}
             >
               <CardHeader>
@@ -130,7 +130,7 @@ export default function ContentPage() {
             {recentAssets.map((asset) => (
               <div
                 key={asset.id}
-                className="rounded-lg border border-border overflow-hidden bg-card hover:shadow-sm transition-shadow cursor-pointer"
+                className="rounded-lg border border-border overflow-hidden bg-card glow-gold cursor-pointer"
                 onClick={() => router.push('/content/assets')}
               >
                 <div className="h-20 bg-secondary flex items-center justify-center overflow-hidden">

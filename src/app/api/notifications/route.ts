@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items: notifications, unreadCount })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
@@ -56,7 +56,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

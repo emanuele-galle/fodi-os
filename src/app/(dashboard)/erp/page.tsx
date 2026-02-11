@@ -83,13 +83,13 @@ export default function ErpPage() {
         <p className="text-sm text-muted mt-1">Gestione preventivi, fatture, spese e report</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-stagger">
         {sections.map((section) => {
           const Icon = section.icon
           return (
             <Card
               key={section.href}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className="cursor-pointer hover:scale-[1.01] transition-all duration-200"
               onClick={() => router.push(section.href)}
             >
               <CardHeader>

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, Video } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import { ChannelList } from '@/components/chat/ChannelList'
 import { MessageThread } from '@/components/chat/MessageThread'
 import { MessageInput } from '@/components/chat/MessageInput'
@@ -146,10 +147,42 @@ export default function ChatPage() {
     setSelectedId(channel.id)
   }
 
+  const [creatingMeet, setCreatingMeet] = useState(false)
+
+  async function handleQuickMeet() {
+    if (!selectedId || creatingMeet) return
+    setCreatingMeet(true)
+    try {
+      const channelName = channels.find((c) => c.id === selectedId)?.name || 'Chat'
+      const res = await fetch('/api/meetings/quick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: `Meet - ${channelName}` }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        // Send the meet link as a message in the channel
+        await fetch(`/api/chat/channels/${selectedId}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: `Partecipa al meeting: ${data.meetLink}` }),
+        })
+        window.open(data.meetLink, '_blank', 'noopener,noreferrer')
+      }
+    } finally {
+      setCreatingMeet(false)
+    }
+  }
+
+  function handleBack() {
+    setSelectedId(null)
+    setNewMessages([])
+  }
+
   return (
-    <div className="flex h-[calc(100vh-7rem)] -m-6">
+    <div className="flex h-[calc(100vh-7rem)] md:h-[calc(100vh-7rem)] h-[calc(100vh-8rem)] -m-4 md:-m-6 relative">
       {/* Left panel - Channel list */}
-      <div className="w-80 border-r border-border/10 bg-sidebar/50 flex-shrink-0">
+      <div className={`w-full md:w-80 border-r border-border/10 bg-sidebar/50 md:flex-shrink-0 ${selectedId ? 'hidden md:block' : 'block'}`}>
         <ChannelList
           channels={channels}
           selectedId={selectedId}
@@ -159,17 +192,37 @@ export default function ChatPage() {
       </div>
 
       {/* Right panel - Messages */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`flex-1 flex flex-col min-w-0 ${!selectedId ? 'hidden md:flex' : 'flex'}`}>
         {selectedId ? (
           <>
             {/* Channel header */}
-            <div className="border-b border-border/10 px-6 py-3 flex items-center gap-3">
+            <div className="border-b border-border/10 px-4 md:px-6 py-3 flex items-center gap-3">
+              <button
+                onClick={handleBack}
+                className="md:hidden p-1 rounded-md hover:bg-secondary mr-1 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
               <h2 className="font-semibold">
                 {channels.find((c) => c.id === selectedId)?.name || 'Chat'}
               </h2>
               <span className="text-xs text-muted">
                 {channels.find((c) => c.id === selectedId)?.memberCount || 0} membri
               </span>
+              <div className="ml-auto">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleQuickMeet}
+                  disabled={creatingMeet}
+                  title="Avvia Google Meet"
+                >
+                  <Video className="h-4 w-4 mr-1.5" />
+                  <span className="hidden sm:inline">{creatingMeet ? 'Creazione...' : 'Avvia Meet'}</span>
+                </Button>
+              </div>
             </div>
 
             <MessageThread

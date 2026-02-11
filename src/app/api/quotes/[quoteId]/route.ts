@@ -22,12 +22,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!quote) {
-      return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Preventivo non trovato' }, { status: 404 })
     }
 
     return NextResponse.json(quote)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -110,7 +110,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json(quote)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -125,17 +125,17 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const quote = await prisma.quote.findUnique({ where: { id: quoteId }, select: { status: true } })
     if (!quote) {
-      return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Preventivo non trovato' }, { status: 404 })
     }
     if (quote.status !== 'DRAFT') {
-      return NextResponse.json({ error: 'Only DRAFT quotes can be deleted' }, { status: 400 })
+      return NextResponse.json({ error: 'Solo i preventivi in bozza possono essere eliminati' }, { status: 400 })
     }
 
     await prisma.quote.delete({ where: { id: quoteId } })
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }

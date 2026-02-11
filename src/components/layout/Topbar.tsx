@@ -2,6 +2,7 @@
 
 import { Bell, Search, LogOut } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useState, useRef, useEffect } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
@@ -87,6 +88,9 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
 
       {/* Right side */}
       <div className="flex items-center gap-4">
+        {/* Theme Switcher */}
+        <ThemeSwitcher />
+
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
@@ -96,12 +100,12 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
           >
             <Bell className="h-5 w-5 text-muted" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full" />
+              <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full animate-pulse" />
             )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-card rounded-lg border border-border shadow-lg z-50">
+            <div className="absolute right-0 mt-2 w-80 bg-card rounded-lg border border-border shadow-lg z-50 animate-scale-in">
               <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                 <p className="text-sm font-medium">Notifiche</p>
                 {unreadCount > 0 && (
@@ -169,7 +173,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-card rounded-lg border border-border shadow-lg py-1 z-50">
+            <div className="absolute right-0 mt-2 w-56 bg-card rounded-lg border border-border shadow-lg py-1 z-50 animate-scale-in">
               <div className="px-4 py-2 border-b border-border">
                 <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
                 <p className="text-xs text-muted">{user.email}</p>

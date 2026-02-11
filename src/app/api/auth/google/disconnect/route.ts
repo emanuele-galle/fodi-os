@@ -23,7 +23,7 @@ async function getUserId(request: NextRequest): Promise<string | null> {
 export async function POST(request: NextRequest) {
   const userId = await getUserId(request)
   if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
 
   const tokenRecord = await prisma.googleToken.findUnique({ where: { userId } })

@@ -112,13 +112,40 @@ export default function InvoicesPage() {
         />
       ) : (
         <>
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {invoices.map((inv) => (
+              <div
+                key={inv.id}
+                onClick={() => router.push(`/erp/invoices/${inv.id}`)}
+                className="rounded-lg border border-border bg-card p-4 cursor-pointer active:bg-secondary/30 transition-colors touch-manipulation"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-bold">{inv.number}</span>
+                  <Badge variant={STATUS_BADGE[inv.status] || 'default'}>
+                    {STATUS_LABELS[inv.status] || inv.status}
+                  </Badge>
+                </div>
+                <p className="text-sm truncate mb-1">{inv.title}</p>
+                <p className="text-xs text-muted mb-2">{inv.client.companyName}</p>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted">
+                    {inv.dueDate ? `Scad. ${new Date(inv.dueDate).toLocaleDateString('it-IT')}` : 'Nessuna scadenza'}
+                  </span>
+                  <span className="font-bold text-sm">{formatCurrency(inv.total)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted">
                   <th className="pb-3 pr-4 font-medium">Numero</th>
                   <th className="pb-3 pr-4 font-medium">Titolo</th>
-                  <th className="pb-3 pr-4 font-medium hidden md:table-cell">Cliente</th>
+                  <th className="pb-3 pr-4 font-medium">Cliente</th>
                   <th className="pb-3 pr-4 font-medium">Stato</th>
                   <th className="pb-3 pr-4 font-medium text-right">Totale</th>
                   <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Scadenza</th>
@@ -134,7 +161,7 @@ export default function InvoicesPage() {
                   >
                     <td className="py-3 pr-4 font-medium">{inv.number}</td>
                     <td className="py-3 pr-4">{inv.title}</td>
-                    <td className="py-3 pr-4 text-muted hidden md:table-cell">{inv.client.companyName}</td>
+                    <td className="py-3 pr-4 text-muted">{inv.client.companyName}</td>
                     <td className="py-3 pr-4">
                       <Badge variant={STATUS_BADGE[inv.status] || 'default'}>
                         {STATUS_LABELS[inv.status] || inv.status}

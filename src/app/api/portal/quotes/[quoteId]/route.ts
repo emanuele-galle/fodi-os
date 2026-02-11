@@ -29,12 +29,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!quote) {
-      return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Preventivo non trovato' }, { status: 404 })
     }
 
     return NextResponse.json(quote)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }

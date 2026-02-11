@@ -6,6 +6,13 @@ export const metadata: Metadata = {
   description: 'Piattaforma di gestione aziendale FODI Srl',
   icons: {
     icon: '/favicon.svg',
+    apple: '/icons/icon-192.png',
+  },
+  manifest: '/manifest.json',
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'mobile-web-app-capable': 'yes',
   },
 }
 
@@ -16,7 +23,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="it">
-      <body className="antialiased">{children}</body>
+      <head>
+        <meta name="theme-color" content="#1E293B" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      </head>
+      <body className="antialiased">
+        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
+          }}
+        />
+      </body>
     </html>
   )
 }

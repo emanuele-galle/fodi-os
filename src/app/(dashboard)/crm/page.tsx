@@ -184,13 +184,40 @@ export default function CrmPage() {
         />
       ) : (
         <>
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {clients.map((client) => (
+              <Card
+                key={client.id}
+                className="!p-4 cursor-pointer active:bg-secondary/30 transition-colors touch-manipulation"
+                onClick={() => router.push(`/crm/${client.id}`)}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <Avatar name={client.companyName} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{client.companyName}</p>
+                    <p className="text-xs text-muted">{client.industry || 'N/D'}</p>
+                  </div>
+                  <Badge variant={STATUS_BADGE[client.status] || 'default'}>
+                    {STATUS_LABELS[client.status] || client.status}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <span>{client._count?.contacts ?? 0} contatti / {client._count?.projects ?? 0} progetti</span>
+                  <span className="font-medium text-foreground">{formatCurrency(client.totalRevenue)}</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted">
                   <th className="pb-3 pr-4 font-medium">Cliente</th>
                   <th className="pb-3 pr-4 font-medium">Stato</th>
-                  <th className="pb-3 pr-4 font-medium hidden md:table-cell">Settore</th>
+                  <th className="pb-3 pr-4 font-medium">Settore</th>
                   <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Contatti</th>
                   <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Progetti</th>
                   <th className="pb-3 font-medium text-right">Revenue</th>
@@ -201,7 +228,7 @@ export default function CrmPage() {
                   <tr
                     key={client.id}
                     onClick={() => router.push(`/crm/${client.id}`)}
-                    className="border-b border-border hover:bg-secondary/50 cursor-pointer transition-colors"
+                    className="border-b border-border hover:bg-secondary/50 cursor-pointer transition-all duration-200 hover:shadow-sm"
                   >
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-3">
@@ -214,7 +241,7 @@ export default function CrmPage() {
                         {STATUS_LABELS[client.status] || client.status}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-4 hidden md:table-cell text-muted">
+                    <td className="py-3 pr-4 text-muted">
                       {client.industry || '—'}
                     </td>
                     <td className="py-3 pr-4 hidden lg:table-cell text-muted">

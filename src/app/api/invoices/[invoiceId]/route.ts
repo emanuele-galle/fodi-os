@@ -23,12 +23,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!invoice) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
     }
 
     return NextResponse.json(invoice)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -102,7 +102,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json(invoice)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -117,17 +117,17 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId }, select: { status: true } })
     if (!invoice) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
     }
     if (invoice.status !== 'DRAFT') {
-      return NextResponse.json({ error: 'Only DRAFT invoices can be deleted' }, { status: 400 })
+      return NextResponse.json({ error: 'Solo le fatture in bozza possono essere eliminate' }, { status: 400 })
     }
 
     await prisma.invoice.delete({ where: { id: invoiceId } })
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }

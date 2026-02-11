@@ -224,11 +224,11 @@ export default function DashboardPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-8">
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-8 animate-stagger">
           {stats.map((stat) => (
             <Card
               key={stat.label}
@@ -241,7 +241,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-muted">{stat.label}</p>
-                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-2xl font-bold animate-count-up">{stat.value}</p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted" />
               </CardContent>
@@ -251,7 +251,7 @@ export default function DashboardPage() {
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8 animate-stagger">
         {[
           { label: 'Nuovo Cliente', icon: UserPlus, href: '/crm', color: 'text-blue-500' },
           { label: 'Nuovo Progetto', icon: FolderKanban, href: '/projects', color: 'text-green-500' },
@@ -262,7 +262,7 @@ export default function DashboardPage() {
           <button
             key={action.label}
             onClick={() => router.push(action.href)}
-            className="flex flex-col items-center gap-2 rounded-lg border border-border/80 bg-card p-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200"
+            className="flex flex-col items-center gap-2 rounded-lg border border-border/80 bg-card p-4 shadow-sm glow-gold hover:scale-[1.02] transition-all duration-200"
           >
             <div className={`p-2 rounded-lg bg-secondary ${action.color}`}>
               <action.icon className="h-5 w-5" />

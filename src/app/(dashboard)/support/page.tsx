@@ -239,7 +239,7 @@ export default function SupportPage() {
                   <tr
                     key={ticket.id}
                     onClick={() => router.push(`/support/${ticket.id}`)}
-                    className="border-b border-border hover:bg-secondary/50 cursor-pointer transition-colors"
+                    className="border-b border-border hover:bg-secondary/50 cursor-pointer transition-all duration-200 hover:shadow-sm"
                   >
                     <td className="py-3 pr-4 font-medium text-muted">{ticket.number}</td>
                     <td className="py-3 pr-4 font-medium">{ticket.subject}</td>

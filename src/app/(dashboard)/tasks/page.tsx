@@ -18,8 +18,10 @@ import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Avatar } from '@/components/ui/Avatar'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { QuickTaskInput } from '@/components/tasks/QuickTaskInput'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
+import { useUserPreferences } from '@/hooks/useUserPreferences'
 
 interface TaskUser {
   id: string
@@ -95,6 +97,7 @@ const KANBAN_COLUMNS = [
 type ViewMode = 'list' | 'kanban'
 
 export default function TasksPage() {
+  const { preferences, updatePreference, loaded: prefsLoaded } = useUserPreferences()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
@@ -102,6 +105,11 @@ export default function TasksPage() {
   const [view, setView] = useState<ViewMode>('list')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+
+  // Sync view preference
+  useEffect(() => {
+    if (prefsLoaded) setView(preferences.defaultView)
+  }, [prefsLoaded, preferences.defaultView])
 
   const fetchTasks = useCallback(async () => {
     setLoading(true)
@@ -150,30 +158,34 @@ export default function TasksPage() {
         <h1 className="text-2xl font-bold">I Miei Task</h1>
         <div className="flex items-center gap-2">
           <div className="flex rounded-md border border-border overflow-hidden">
-            <button
-              onClick={() => setView('list')}
-              className={`p-2 transition-colors ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground'}`}
-            >
-              <ListTodo className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setView('kanban')}
-              className={`p-2 transition-colors ${view === 'kanban' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground'}`}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
+            <Tooltip content="Vista lista">
+              <button
+                onClick={() => { setView('list'); updatePreference('defaultView', 'list') }}
+                className={`p-2 transition-colors ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground'}`}
+              >
+                <ListTodo className="h-4 w-4" />
+              </button>
+            </Tooltip>
+            <Tooltip content="Vista kanban">
+              <button
+                onClick={() => { setView('kanban'); updatePreference('defaultView', 'kanban') }}
+                className={`p-2 transition-colors ${view === 'kanban' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground'}`}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 animate-stagger">
         {stats.map((s) => (
           <Card key={s.label} className="!p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted">{s.label}</p>
-                <p className="text-2xl font-bold mt-1">{s.value}</p>
+                <p className="text-2xl font-bold mt-1 animate-count-up">{s.value}</p>
               </div>
               <s.icon className={`h-8 w-8 ${s.color} opacity-70`} />
             </div>
@@ -268,7 +280,7 @@ function ListView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: str
                 </Badge>
               </td>
               <td className="px-4 py-3 hidden md:table-cell">
-                <Badge variant={PRIORITY_BADGE[task.priority] || 'default'}>
+                <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} pulse={task.priority === 'URGENT'}>
                   {PRIORITY_LABELS[task.priority] || task.priority}
                 </Badge>
               </td>
@@ -318,27 +330,27 @@ function ListView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: str
 
 function KanbanView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: string) => void }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="kanban-mobile-scroll md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
       {KANBAN_COLUMNS.map((col) => {
         const columnTasks = tasks.filter((t) => t.status === col.key)
         return (
-          <div key={col.key} className="flex flex-col">
+          <div key={col.key} className="flex flex-col min-w-[280px] md:min-w-0">
             <div className={`flex items-center gap-2 mb-3 pb-2 border-b-2 ${col.color}`}>
               <h3 className="text-sm font-semibold">{col.label}</h3>
               <span className="text-xs text-muted bg-card rounded-full px-2 py-0.5">
                 {columnTasks.length}
               </span>
             </div>
-            <div className="space-y-2 flex-1">
+            <div className="space-y-2 flex-1 animate-stagger">
               {columnTasks.map((task) => (
                 <Card
                   key={task.id}
-                  className="!p-3 cursor-pointer hover:border-primary/30 transition-colors"
+                  className="!p-3 cursor-pointer hover:border-primary/30 hover:scale-[1.01] transition-all duration-200"
                   onClick={() => onTaskClick(task.id)}
                 >
                   <p className="text-sm font-medium mb-2 line-clamp-2">{task.title}</p>
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <Badge variant={PRIORITY_BADGE[task.priority] || 'default'}>
+                    <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} pulse={task.priority === 'URGENT'}>
                       {PRIORITY_LABELS[task.priority]}
                     </Badge>
                     {task.project && (

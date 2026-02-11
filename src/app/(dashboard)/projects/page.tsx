@@ -190,14 +190,14 @@ export default function ProjectsPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
             {projects.map((p) => {
               const totalTasks = p._count?.tasks ?? 0
               const doneTasks = p.completedTasks ?? 0
               return (
                 <Card
                   key={p.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className="cursor-pointer hover:scale-[1.01] transition-all duration-200"
                   onClick={() => router.push(`/projects/${p.id}`)}
                 >
                   <CardContent>

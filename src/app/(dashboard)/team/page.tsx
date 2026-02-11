@@ -135,7 +135,7 @@ export default function TeamPage() {
           description={search || workspaceFilter ? 'Prova a modificare i filtri di ricerca.' : 'Nessun membro del team registrato.'}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
           {filtered.map((member) => (
             <Card key={member.id} className="hover:scale-[1.02] transition-all duration-200">
               <CardContent>

@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items, total: items.length })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       where: { parentId: parentId || null, slug },
     })
     if (existing) {
-      return NextResponse.json({ error: 'A page with this title already exists at this level' }, { status: 409 })
+      return NextResponse.json({ error: 'Una pagina con questo titolo esiste gia a questo livello' }, { status: 409 })
     }
 
     const page = await prisma.wikiPage.create({
@@ -88,13 +88,13 @@ export async function POST(request: NextRequest) {
         editorId: userId,
         content: content || null,
         version: 1,
-        changeNote: 'Initial version',
+        changeNote: 'Versione iniziale',
       },
     })
 
     return NextResponse.json(page, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }

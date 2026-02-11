@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items, total, page, limit })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     const existing = await prisma.client.findUnique({ where: { slug } })
     if (existing) {
-      return NextResponse.json({ error: 'A client with this name already exists' }, { status: 409 })
+      return NextResponse.json({ error: 'Un cliente con questo nome esiste gia' }, { status: 409 })
     }
 
     const client = await prisma.client.create({
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(client, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }

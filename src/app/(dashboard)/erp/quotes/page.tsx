@@ -111,13 +111,40 @@ export default function QuotesPage() {
         />
       ) : (
         <>
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {quotes.map((q) => (
+              <div
+                key={q.id}
+                onClick={() => router.push(`/erp/quotes/${q.id}`)}
+                className="rounded-lg border border-border bg-card p-4 cursor-pointer active:bg-secondary/30 transition-colors touch-manipulation"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-bold">{q.number}</span>
+                  <Badge variant={STATUS_BADGE[q.status] || 'default'}>
+                    {STATUS_LABELS[q.status] || q.status}
+                  </Badge>
+                </div>
+                <p className="text-sm truncate mb-1">{q.title}</p>
+                <p className="text-xs text-muted mb-2">{q.client.companyName}</p>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted">
+                    {q.validUntil ? `Val. ${new Date(q.validUntil).toLocaleDateString('it-IT')}` : 'Nessuna scadenza'}
+                  </span>
+                  <span className="font-bold text-sm">{formatCurrency(q.total)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted">
                   <th className="pb-3 pr-4 font-medium">Numero</th>
                   <th className="pb-3 pr-4 font-medium">Titolo</th>
-                  <th className="pb-3 pr-4 font-medium hidden md:table-cell">Cliente</th>
+                  <th className="pb-3 pr-4 font-medium">Cliente</th>
                   <th className="pb-3 pr-4 font-medium">Stato</th>
                   <th className="pb-3 pr-4 font-medium text-right">Totale</th>
                   <th className="pb-3 pr-4 font-medium hidden lg:table-cell">Valido fino a</th>
@@ -133,7 +160,7 @@ export default function QuotesPage() {
                   >
                     <td className="py-3 pr-4 font-medium">{q.number}</td>
                     <td className="py-3 pr-4">{q.title}</td>
-                    <td className="py-3 pr-4 text-muted hidden md:table-cell">{q.client.companyName}</td>
+                    <td className="py-3 pr-4 text-muted">{q.client.companyName}</td>
                     <td className="py-3 pr-4">
                       <Badge variant={STATUS_BADGE[q.status] || 'default'}>
                         {STATUS_LABELS[q.status] || q.status}

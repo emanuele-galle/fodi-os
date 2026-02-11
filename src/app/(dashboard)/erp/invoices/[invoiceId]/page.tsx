@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft, CheckCircle2, Edit } from 'lucide-react'
+import { ChevronLeft, CheckCircle2, Edit, FileText, Download, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -53,6 +53,10 @@ export default function InvoiceDetailPage() {
 
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [eInvoice, setEInvoice] = useState<{ id: string; status: string; xmlContent: string | null; createdAt: string } | null>(null)
+  const [generatingXml, setGeneratingXml] = useState(false)
+  const [xmlError, setXmlError] = useState('')
+  const [showXmlPreview, setShowXmlPreview] = useState(false)
 
   const fetchInvoice = useCallback(async () => {
     try {
@@ -63,7 +67,49 @@ export default function InvoiceDetailPage() {
     }
   }, [invoiceId])
 
-  useEffect(() => { fetchInvoice() }, [fetchInvoice])
+  const fetchEInvoice = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/erp/invoices/${invoiceId}/fatturapa`)
+      if (res.ok) {
+        const data = await res.json()
+        setEInvoice(data)
+      }
+    } catch {
+      // ignore
+    }
+  }, [invoiceId])
+
+  useEffect(() => { fetchInvoice(); fetchEInvoice() }, [fetchInvoice, fetchEInvoice])
+
+  async function handleGenerateXml() {
+    setGeneratingXml(true)
+    setXmlError('')
+    try {
+      const res = await fetch(`/api/erp/invoices/${invoiceId}/fatturapa`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        setEInvoice(data)
+        setShowXmlPreview(true)
+      } else {
+        setXmlError(data.error || 'Errore nella generazione')
+      }
+    } catch {
+      setXmlError('Errore di connessione')
+    } finally {
+      setGeneratingXml(false)
+    }
+  }
+
+  function handleDownloadXml() {
+    if (!eInvoice?.xmlContent || !invoice) return
+    const blob = new Blob([eInvoice.xmlContent], { type: 'application/xml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${invoice.number.replace(/\//g, '-')}.xml`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   async function handleMarkAsPaid() {
     const res = await fetch(`/api/invoices/${invoiceId}`, {
@@ -232,13 +278,72 @@ export default function InvoiceDetailPage() {
       )}
 
       {invoice.notes && (
-        <Card>
+        <Card className="mb-6">
           <CardContent>
             <CardTitle className="mb-2">Note</CardTitle>
             <p className="text-sm text-muted whitespace-pre-wrap">{invoice.notes}</p>
           </CardContent>
         </Card>
       )}
+
+      {/* Fatturazione Elettronica */}
+      <Card>
+        <CardContent>
+          <CardTitle className="mb-3 flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            Fatturazione Elettronica
+          </CardTitle>
+
+          {xmlError && (
+            <div className="mb-3 p-3 rounded-md text-sm bg-red-50 text-red-700 border border-red-200">
+              {xmlError}
+            </div>
+          )}
+
+          {eInvoice ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Badge variant={eInvoice.status === 'generated' ? 'default' : 'outline'}>
+                  {eInvoice.status === 'draft' ? 'Bozza' : eInvoice.status === 'generated' ? 'XML Generato' : eInvoice.status}
+                </Badge>
+                <span className="text-xs text-muted">
+                  Generato il {new Date(eInvoice.createdAt).toLocaleString('it-IT')}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={handleGenerateXml} disabled={generatingXml}>
+                  {generatingXml ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <FileText className="h-4 w-4 mr-1.5" />}
+                  Rigenera XML
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleDownloadXml}>
+                  <Download className="h-4 w-4 mr-1.5" />
+                  Scarica XML
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setShowXmlPreview(!showXmlPreview)}>
+                  {showXmlPreview ? 'Nascondi Preview' : 'Mostra Preview'}
+                </Button>
+              </div>
+
+              {showXmlPreview && eInvoice.xmlContent && (
+                <div className="mt-3 p-4 bg-secondary/50 rounded-md overflow-x-auto">
+                  <pre className="text-xs whitespace-pre-wrap font-mono">{eInvoice.xmlContent}</pre>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted">
+                Genera il file XML FatturaPA per questa fattura.
+              </p>
+              <Button size="sm" onClick={handleGenerateXml} disabled={generatingXml}>
+                {generatingXml ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <FileText className="h-4 w-4 mr-1.5" />}
+                {generatingXml ? 'Generazione...' : 'Genera XML FatturaPA'}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

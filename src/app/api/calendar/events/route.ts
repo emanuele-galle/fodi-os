@@ -5,7 +5,7 @@ import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 export async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
 
   const auth = await getAuthenticatedClient(userId)
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
 
   const auth = await getAuthenticatedClient(userId)
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { summary, description, start, end, location, attendees, calendarId } = body
+  const { summary, description, start, end, location, attendees, calendarId, withMeet } = body
 
   if (!summary || !start || !end) {
     return NextResponse.json(
@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
     const calendar = getCalendarService(auth)
     const res = await calendar.events.insert({
       calendarId: calendarId || 'primary',
+      ...(withMeet && { conferenceDataVersion: 1 }),
       requestBody: {
         summary,
         description,
@@ -76,10 +77,22 @@ export async function POST(request: NextRequest) {
         ...(attendees && {
           attendees: attendees.map((email: string) => ({ email })),
         }),
+        ...(withMeet && {
+          conferenceData: {
+            createRequest: {
+              requestId: crypto.randomUUID(),
+              conferenceSolutionKey: { type: 'hangoutsMeet' },
+            },
+          },
+        }),
       },
     })
 
-    return NextResponse.json(res.data, { status: 201 })
+    const meetLink = res.data.conferenceData?.entryPoints?.find(
+      (ep) => ep.entryPointType === 'video'
+    )?.uri || null
+
+    return NextResponse.json({ ...res.data, meetLink }, { status: 201 })
   } catch (e) {
     console.error('Calendar create error:', e)
     return NextResponse.json({ error: 'Errore nella creazione evento' }, { status: 500 })

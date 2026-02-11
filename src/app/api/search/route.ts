@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(results)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

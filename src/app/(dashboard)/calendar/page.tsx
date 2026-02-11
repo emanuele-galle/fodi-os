@@ -9,6 +9,7 @@ import {
   MapPin,
   ExternalLink,
   Link2Off,
+  Video,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -27,6 +28,9 @@ interface CalendarEvent {
   htmlLink?: string
   attendees?: { email: string; responseStatus?: string }[]
   colorId?: string
+  conferenceData?: {
+    entryPoints?: { entryPointType: string; uri: string }[]
+  }
 }
 
 interface CalendarInfo {
@@ -92,6 +96,7 @@ export default function CalendarPage() {
     startTime: '',
     endDate: '',
     endTime: '',
+    withMeet: false,
   })
   const [creating, setCreating] = useState(false)
 
@@ -151,12 +156,13 @@ export default function CalendarPage() {
           location: newEvent.location,
           start,
           end,
+          withMeet: newEvent.withMeet,
         }),
       })
 
       if (res.ok) {
         setShowNewEvent(false)
-        setNewEvent({ summary: '', description: '', location: '', startDate: '', startTime: '', endDate: '', endTime: '' })
+        setNewEvent({ summary: '', description: '', location: '', startDate: '', startTime: '', endDate: '', endTime: '', withMeet: false })
         fetchEvents()
       }
     } finally {
@@ -209,21 +215,21 @@ export default function CalendarPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
         <h1 className="text-2xl font-bold">Calendario</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" onClick={prevMonth}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[160px] text-center capitalize">
+            <span className="text-sm font-medium min-w-[130px] sm:min-w-[160px] text-center capitalize">
               {formatMonthYear(year, month)}
             </span>
             <Button variant="outline" size="sm" onClick={nextMonth}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <Button size="sm" onClick={() => {
+          <Button size="sm" className="ml-auto sm:ml-0" onClick={() => {
             const d = new Date()
             const dateStr = d.toISOString().split('T')[0]
             const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
@@ -274,7 +280,7 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={i}
-                    className={`min-h-[100px] border-b border-r border-border p-1.5 ${
+                    className={`min-h-[60px] md:min-h-[100px] border-b border-r border-border p-1 md:p-1.5 ${
                       !isCurrentMonth ? 'bg-secondary/30' : ''
                     } ${isToday ? 'bg-primary/5' : ''}`}
                   >
@@ -366,6 +372,18 @@ export default function CalendarPage() {
               </div>
             )}
 
+            {selectedEvent.conferenceData?.entryPoints?.find(ep => ep.entryPointType === 'video') && (
+              <a
+                href={selectedEvent.conferenceData.entryPoints.find(ep => ep.entryPointType === 'video')!.uri}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-blue-500/10 text-blue-600 text-sm font-medium hover:bg-blue-500/20 transition-colors"
+              >
+                <Video className="h-4 w-4" />
+                Partecipa a Google Meet
+              </a>
+            )}
+
             {selectedEvent.htmlLink && (
               <a
                 href={selectedEvent.htmlLink}
@@ -444,6 +462,17 @@ export default function CalendarPage() {
               onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
             />
           </div>
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={newEvent.withMeet}
+              onChange={(e) => setNewEvent({ ...newEvent, withMeet: e.target.checked })}
+              className="rounded border-border"
+            />
+            <Video className="h-4 w-4 text-blue-500" />
+            Aggiungi Google Meet
+          </label>
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setShowNewEvent(false)}>

@@ -29,12 +29,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!asset) {
-      return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Asset non trovato' }, { status: 404 })
     }
 
     return NextResponse.json(asset)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -67,7 +67,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json(asset)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
@@ -82,7 +82,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const asset = await prisma.asset.findUnique({ where: { id: assetId } })
     if (!asset) {
-      return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Asset non trovato' }, { status: 404 })
     }
 
     // Try to delete from S3 if the URL contains a key
@@ -98,7 +98,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
     return NextResponse.json({ error: msg }, { status: 500 })
   }

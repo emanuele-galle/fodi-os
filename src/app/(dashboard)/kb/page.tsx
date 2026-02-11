@@ -226,19 +226,30 @@ export default function KnowledgeBasePage() {
     }
   }
 
+  const [showTree, setShowTree] = useState(false)
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Knowledge Base</h1>
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuova Pagina
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowTree(!showTree)}
+            className="lg:hidden px-3 py-2 rounded-md border border-border text-xs font-medium hover:bg-secondary transition-colors touch-manipulation min-h-[44px]"
+          >
+            {showTree ? 'Nascondi Albero' : 'Mostra Albero'}
+          </button>
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Nuova Pagina</span>
+            <span className="sm:hidden">Nuova</span>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
-        {/* Sidebar - Tree Navigation */}
-        <div className="w-full lg:w-72 shrink-0">
+        {/* Sidebar - Tree Navigation: hidden on mobile by default */}
+        <div className={`w-full lg:w-72 shrink-0 ${showTree ? 'block' : 'hidden lg:block'}`}>
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
             <Input
@@ -265,7 +276,7 @@ export default function KnowledgeBasePage() {
             ))}
           </div>
 
-          <div className="border border-border rounded-lg p-2 max-h-[60vh] overflow-auto">
+          <div className="border border-border rounded-lg p-2 max-h-[60vh] overflow-auto animate-fade-in">
             {loading ? (
               <div className="space-y-2 p-2">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -291,7 +302,7 @@ export default function KnowledgeBasePage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 border border-border rounded-lg p-6 min-h-[400px]">
+        <div className="flex-1 border border-border rounded-lg p-6 min-h-[400px] animate-fade-in">
           {loadingPage ? (
             <div className="space-y-4">
               <Skeleton className="h-8 w-64" />

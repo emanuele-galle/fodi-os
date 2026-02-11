@@ -31,9 +31,11 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     crm: ['read', 'write'],
     erp: ['read', 'write'],
     pm: ['read'],
+    kb: ['read'],
     chat: ['read', 'write'],
   },
   PM: {
+    crm: ['read'],
     pm: ['read', 'write', 'approve'],
     kb: ['read', 'write'],
     chat: ['read', 'write'],
@@ -51,6 +53,7 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
   SUPPORT: {
     support: ['read', 'write'],
     crm: ['read'],
+    kb: ['read'],
     chat: ['read', 'write'],
   },
   CLIENT: {
