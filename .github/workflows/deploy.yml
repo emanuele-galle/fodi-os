@@ -26,13 +26,15 @@ jobs:
           script: |
             cd $PROJECT_PATH
             git pull origin main
-            docker compose build --no-cache
+            docker compose build
             docker compose up -d
-            sleep 15
-            if curl -sf https://fodi-os.fodivps2.cloud/api/health > /dev/null 2>&1; then
+            sleep 10
+            if curl -sf http://localhost:$(docker compose port app 3000 | cut -d: -f2)/api/health > /dev/null 2>&1; then
               echo "Health check passed"
+            elif docker compose ps app | grep -q healthy; then
+              echo "Container healthy (health endpoint not available)"
             else
-              echo "Warning: Health check endpoint not responding"
+              echo "Warning: Container may not be healthy"
             fi
 
       - name: Notify deployment
