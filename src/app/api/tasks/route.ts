@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const assigneeId = searchParams.get('assigneeId')
     const projectId = searchParams.get('projectId')
     const mine = searchParams.get('mine')
+    const scope = searchParams.get('scope') // 'assigned' | 'created' | 'all' (default: all my tasks)
     const personal = searchParams.get('personal')
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
@@ -41,12 +42,23 @@ export async function GET(request: NextRequest) {
     if (projectId) where.projectId = projectId
 
     if (mine === 'true' && userId) {
-      where.OR = [
-        ...(Array.isArray(where.OR) ? where.OR : []),
-        { creatorId: userId },
-        { assigneeId: userId },
-        { assignments: { some: { userId: userId! } } },
-      ]
+      if (scope === 'assigned') {
+        where.OR = [
+          ...(Array.isArray(where.OR) ? where.OR : []),
+          { assigneeId: userId },
+          { assignments: { some: { userId: userId! } } },
+        ]
+      } else if (scope === 'created') {
+        where.creatorId = userId
+      } else {
+        // Default: all my tasks (created + assigned + in assignments)
+        where.OR = [
+          ...(Array.isArray(where.OR) ? where.OR : []),
+          { creatorId: userId },
+          { assigneeId: userId },
+          { assignments: { some: { userId: userId! } } },
+        ]
+      }
     }
 
     if (personal === 'true') {

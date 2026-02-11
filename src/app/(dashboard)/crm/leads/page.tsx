@@ -150,16 +150,59 @@ export default function LeadsPage() {
         />
       ) : (
         <>
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {leads.map((lead) => (
+              <div
+                key={lead.id}
+                className="rounded-lg border border-border bg-card p-4 space-y-2 touch-manipulation"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{lead.name}</p>
+                    <p className="text-xs text-muted truncate">{lead.email}</p>
+                  </div>
+                  <Badge variant={STATUS_BADGE[lead.status] || 'default'}>
+                    {STATUS_LABELS[lead.status] || lead.status}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted">
+                  {lead.company && <span className="truncate">{lead.company}</span>}
+                  {lead.company && lead.service && <span>-</span>}
+                  {lead.service && <span className="truncate">{lead.service}</span>}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted">
+                    {new Date(lead.createdAt).toLocaleDateString('it-IT')}
+                  </span>
+                  {lead.status !== 'CONVERTED' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={converting === lead.id}
+                      onClick={() => handleConvert(lead)}
+                      className="touch-manipulation"
+                    >
+                      <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />
+                      {converting === lead.id ? '...' : 'Converti'}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">
                   <th className="py-3 px-4 font-medium">Nome</th>
                   <th className="py-3 px-4 font-medium">Email</th>
-                  <th className="py-3 px-4 font-medium hidden md:table-cell">Azienda</th>
+                  <th className="py-3 px-4 font-medium">Azienda</th>
                   <th className="py-3 px-4 font-medium hidden lg:table-cell">Servizio</th>
                   <th className="py-3 px-4 font-medium">Stato</th>
-                  <th className="py-3 px-4 font-medium hidden md:table-cell">Data</th>
+                  <th className="py-3 px-4 font-medium">Data</th>
                   <th className="py-3 px-4 font-medium text-right">Azioni</th>
                 </tr>
               </thead>
@@ -171,7 +214,7 @@ export default function LeadsPage() {
                   >
                     <td className="py-3 px-4 font-medium">{lead.name}</td>
                     <td className="py-3 px-4 text-muted">{lead.email}</td>
-                    <td className="py-3 px-4 hidden md:table-cell text-muted">
+                    <td className="py-3 px-4 text-muted">
                       {lead.company || '—'}
                     </td>
                     <td className="py-3 px-4 hidden lg:table-cell text-muted">
@@ -182,7 +225,7 @@ export default function LeadsPage() {
                         {STATUS_LABELS[lead.status] || lead.status}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 hidden md:table-cell text-muted">
+                    <td className="py-3 px-4 text-muted">
                       {new Date(lead.createdAt).toLocaleDateString('it-IT')}
                     </td>
                     <td className="py-3 px-4 text-right">

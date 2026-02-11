@@ -571,6 +571,12 @@ export default function ChatPage() {
           currentUserId={currentUserId}
           teamMembers={teamMembers}
           onClose={() => setShowInfoPanel(false)}
+          onDeleteChannel={(id) => {
+            setSelectedId(null)
+            setShowInfoPanel(false)
+            setNewMessages([])
+            setChannels((prev) => prev.filter((ch) => ch.id !== id))
+          }}
         />
       )}
 

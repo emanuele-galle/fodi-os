@@ -90,7 +90,7 @@ export function MessageInput({ onSend, onSendFile, onTyping, replyTo, onCancelRe
   const hasContent = value.trim().length > 0
 
   return (
-    <div className="p-3 md:p-4 bg-card/80 backdrop-blur-sm border-t border-border/50">
+    <div className="p-3 md:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-4 bg-card/80 backdrop-blur-sm border-t border-border/50">
       {/* Reply preview */}
       {replyTo && (
         <div className="flex items-center gap-2 mb-2 max-w-4xl mx-auto">

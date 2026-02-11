@@ -13,7 +13,7 @@ const SECTION_NAMES: Record<string, string> = {
   '/crm': 'CRM',
   '/projects': 'Progetti',
   '/calendar': 'Calendario',
-  '/erp': 'Finanze',
+  '/erp': 'Contabilità',
   '/kb': 'Knowledge Base',
   '/content': 'Contenuti',
   '/support': 'Supporto',

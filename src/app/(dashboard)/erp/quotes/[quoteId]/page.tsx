@@ -107,27 +107,27 @@ export default function QuoteDetailPage() {
         Torna ai preventivi
       </button>
 
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold">{quote.number}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-semibold">{quote.number}</h1>
             <Badge variant={STATUS_BADGE[quote.status] || 'default'}>
               {STATUS_LABELS[quote.status] || quote.status}
             </Badge>
           </div>
-          <p className="text-muted mt-1">{quote.title}</p>
+          <p className="text-muted mt-1 truncate">{quote.title}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {quote.status === 'DRAFT' && (
-            <Button variant="outline" size="sm">
-              <Send className="h-4 w-4 mr-2" />
-              Invia
+            <Button variant="outline" size="sm" className="touch-manipulation">
+              <Send className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Invia</span>
             </Button>
           )}
           {(quote.status === 'APPROVED' || quote.status === 'SENT') && (
-            <Button size="sm" onClick={handleConvertToInvoice}>
+            <Button size="sm" onClick={handleConvertToInvoice} className="touch-manipulation">
               <ArrowRight className="h-4 w-4 mr-2" />
-              Converti in Fattura
+              <span className="hidden sm:inline">Converti in </span>Fattura
             </Button>
           )}
         </div>

@@ -154,21 +154,21 @@ export default function InvoiceDetailPage() {
         Torna alle fatture
       </button>
 
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold">{invoice.number}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-semibold">{invoice.number}</h1>
             <Badge variant={STATUS_BADGE[invoice.status] || 'default'}>
               {STATUS_LABELS[invoice.status] || invoice.status}
             </Badge>
           </div>
-          <p className="text-muted mt-1">{invoice.title}</p>
+          <p className="text-muted mt-1 truncate">{invoice.title}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {invoice.status !== 'PAID' && invoice.status !== 'CANCELLED' && (
-            <Button size="sm" onClick={handleMarkAsPaid}>
+            <Button size="sm" onClick={handleMarkAsPaid} className="touch-manipulation">
               <CheckCircle2 className="h-4 w-4 mr-2" />
-              Segna come Pagata
+              <span className="hidden sm:inline">Segna come </span>Pagata
             </Button>
           )}
         </div>

@@ -83,7 +83,7 @@ const navigation: NavItem[] = [
     icon: CalendarDays,
   },
   {
-    label: 'Finanze',
+    label: 'Contabilità',
     href: '/erp',
     icon: Euro,
     roles: ['ADMIN', 'MANAGER', 'SALES'],

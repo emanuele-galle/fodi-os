@@ -238,7 +238,7 @@ export default function DashboardPage() {
           {stats.map((stat) => (
             <Card
               key={stat.label}
-              className="cursor-pointer shadow-lift glow-gold accent-line-top group"
+              className="cursor-pointer shadow-lift glow-gold accent-line-top group touch-manipulation"
               onClick={() => router.push(stat.href)}
             >
               <CardContent className="flex items-center gap-4">
@@ -246,8 +246,8 @@ export default function DashboardPage() {
                   <stat.icon className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-muted uppercase tracking-wider font-medium">{stat.label}</p>
-                  <p className="text-3xl font-bold animate-count-up mt-1 tracking-tight">{stat.value}</p>
+                  <p className="text-[11px] text-muted uppercase tracking-wider font-medium truncate">{stat.label}</p>
+                  <p className="text-2xl sm:text-3xl font-bold animate-count-up mt-1 tracking-tight truncate">{stat.value}</p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-muted/40 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
               </CardContent>

@@ -14,10 +14,21 @@ import { AvatarStack } from '@/components/ui/AvatarStack'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { MultiUserSelect } from '@/components/ui/MultiUserSelect'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { KanbanBoard } from '@/components/projects/KanbanBoard'
 import { GanttChart } from '@/components/projects/GanttChart'
 import { ProjectChat } from '@/components/chat/ProjectChat'
+
+interface ClientOption {
+  id: string
+  companyName: string
+}
+
+interface WorkspaceOption {
+  id: string
+  name: string
+}
 
 interface TaskUser {
   id: string
@@ -68,8 +79,8 @@ interface ProjectDetail {
   budgetAmount: string | null
   budgetHours: number | null
   color: string
-  client?: { companyName: string } | null
-  workspace: { name: string }
+  client?: { id: string; companyName: string } | null
+  workspace: { id: string; name: string }
   tasks: Task[]
   milestones: Milestone[]
   _count?: { tasks: number }
@@ -110,6 +121,15 @@ const PRIORITY_OPTIONS = [
   { value: 'URGENT', label: 'Urgente' },
 ]
 
+const STATUS_OPTIONS = [
+  { value: 'PLANNING', label: 'Pianificazione' },
+  { value: 'IN_PROGRESS', label: 'In Corso' },
+  { value: 'ON_HOLD', label: 'In Pausa' },
+  { value: 'REVIEW', label: 'In Revisione' },
+  { value: 'COMPLETED', label: 'Completato' },
+  { value: 'CANCELLED', label: 'Cancellato' },
+]
+
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -122,6 +142,25 @@ export default function ProjectDetailPage() {
   const [taskModalColumn, setTaskModalColumn] = useState('todo')
   const [submitting, setSubmitting] = useState(false)
   const [creatingMeet, setCreatingMeet] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [clients, setClients] = useState<ClientOption[]>([])
+  const [workspaces, setWorkspaces] = useState<WorkspaceOption[]>([])
+  const [teamMembers, setTeamMembers] = useState<{ id: string; firstName: string; lastName: string; avatarUrl?: string | null }[]>([])
+  const [taskAssigneeIds, setTaskAssigneeIds] = useState<string[]>([])
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    status: '',
+    priority: '',
+    clientId: '',
+    workspaceId: '',
+    startDate: '',
+    endDate: '',
+    budgetAmount: '',
+    budgetHours: '',
+    color: '',
+  })
 
   const fetchProject = useCallback(async () => {
     try {
@@ -140,6 +179,18 @@ export default function ProjectDetailPage() {
     fetch(`/api/time?projectId=${projectId}&limit=50`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.items) setTimeEntries(d.items) })
+    fetch('/api/clients?limit=200').then((r) => r.ok ? r.json() : null).then((d) => {
+      if (d?.items) setClients(d.items)
+    })
+    fetch('/api/workspaces').then((r) => r.ok ? r.json() : null).then((d) => {
+      if (Array.isArray(d)) setWorkspaces(d)
+      else if (d?.items) setWorkspaces(d.items)
+    })
+    fetch('/api/users?limit=200').then((r) => r.ok ? r.json() : null).then((d) => {
+      if (d?.users) setTeamMembers(d.users)
+      else if (d?.items) setTeamMembers(d.items)
+      else if (Array.isArray(d)) setTeamMembers(d)
+    })
   }, [fetchProject, projectId])
 
   async function handleProjectMeet() {
@@ -162,8 +213,57 @@ export default function ProjectDetailPage() {
     }
   }
 
+  function openEditModal() {
+    if (!project) return
+    setEditForm({
+      name: project.name || '',
+      description: project.description || '',
+      status: project.status || '',
+      priority: project.priority || '',
+      clientId: project.client?.id || '',
+      workspaceId: project.workspace?.id || '',
+      startDate: project.startDate ? project.startDate.slice(0, 10) : '',
+      endDate: project.endDate ? project.endDate.slice(0, 10) : '',
+      budgetAmount: project.budgetAmount || '',
+      budgetHours: project.budgetHours != null ? String(project.budgetHours) : '',
+      color: project.color || '',
+    })
+    setEditModalOpen(true)
+  }
+
+  async function handleEditProject(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setEditSubmitting(true)
+    const body: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(editForm)) {
+      if (typeof v === 'string' && v.trim()) body[k] = v.trim()
+    }
+    if (body.budgetAmount) body.budgetAmount = parseFloat(body.budgetAmount as string)
+    if (body.budgetHours) body.budgetHours = parseInt(body.budgetHours as string, 10)
+    // Allow clearing optional fields
+    if (!editForm.clientId) body.clientId = null
+    if (!editForm.startDate) body.startDate = null
+    if (!editForm.endDate) body.endDate = null
+    if (!editForm.budgetAmount) body.budgetAmount = null
+    if (!editForm.budgetHours) body.budgetHours = null
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) {
+        setEditModalOpen(false)
+        fetchProject()
+      }
+    } finally {
+      setEditSubmitting(false)
+    }
+  }
+
   function openAddTask(column: string) {
     setTaskModalColumn(column)
+    setTaskAssigneeIds([])
     setTaskModalOpen(true)
   }
 
@@ -204,6 +304,7 @@ export default function ProjectDetailPage() {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
     })
     if (body.estimatedHours) body.estimatedHours = parseFloat(body.estimatedHours as string)
+    if (taskAssigneeIds.length > 0) body.assigneeIds = taskAssigneeIds
     try {
       const res = await fetch(`/api/projects/${projectId}/tasks`, {
         method: 'POST',
@@ -223,7 +324,7 @@ export default function ProjectDetailPage() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-48" />
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20" />)}
         </div>
         <Skeleton className="h-96" />
@@ -370,69 +471,71 @@ export default function ProjectDetailPage() {
         Torna alla lista progetti
       </button>
 
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{project.name}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-semibold truncate">{project.name}</h1>
+            <Badge variant={STATUS_BADGE[project.status] || 'default'}>{STATUS_LABEL[project.status] || project.status}</Badge>
+            <Badge variant={PRIORITY_BADGE[project.priority] || 'default'}>{PRIORITY_LABEL[project.priority] || project.priority}</Badge>
+          </div>
           {project.client && (
-            <p className="text-sm text-muted mt-1">{project.client.companyName} - {project.workspace.name}</p>
+            <p className="text-sm text-muted mt-1 truncate">{project.client.companyName} - {project.workspace.name}</p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={STATUS_BADGE[project.status] || 'default'}>{STATUS_LABEL[project.status] || project.status}</Badge>
-          <Badge variant={PRIORITY_BADGE[project.priority] || 'default'}>{PRIORITY_LABEL[project.priority] || project.priority}</Badge>
-          <Button variant="outline" size="sm" onClick={handleProjectMeet} disabled={creatingMeet}>
-            <Video className="h-4 w-4 mr-2" />
-            {creatingMeet ? 'Avvio...' : 'Meet'}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button variant="outline" size="sm" onClick={handleProjectMeet} disabled={creatingMeet} className="touch-manipulation">
+            <Video className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{creatingMeet ? 'Avvio...' : 'Meet'}</span>
           </Button>
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4 mr-2" />
-            Modifica
+          <Button variant="outline" size="sm" onClick={openEditModal} className="touch-manipulation">
+            <Edit className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Modifica</span>
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 animate-stagger">
         <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="p-3 rounded-full text-primary" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+          <CardContent className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2 sm:p-3 rounded-full text-primary" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
               <Target className="h-5 w-5" />
             </div>
             <div>
               <p className="text-xs text-muted uppercase tracking-wider font-medium">Task Totali</p>
-              <p className="text-2xl font-bold animate-count-up">{allTasks.length}</p>
+              <p className="text-xl sm:text-2xl font-bold animate-count-up">{allTasks.length}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="p-3 rounded-full text-accent" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+          <CardContent className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2 sm:p-3 rounded-full text-accent" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
               <p className="text-xs text-muted uppercase tracking-wider font-medium">Completati</p>
-              <p className="text-2xl font-bold animate-count-up">{doneTasks}</p>
+              <p className="text-xl sm:text-2xl font-bold animate-count-up">{doneTasks}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="p-3 rounded-full text-[var(--color-warning)]" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+          <CardContent className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2 sm:p-3 rounded-full text-[var(--color-warning)]" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
               <Timer className="h-5 w-5" />
             </div>
             <div>
               <p className="text-xs text-muted uppercase tracking-wider font-medium">Ore Stimate</p>
-              <p className="text-2xl font-bold animate-count-up">{totalEstimated}h</p>
+              <p className="text-xl sm:text-2xl font-bold animate-count-up">{totalEstimated}h</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="p-3 rounded-full text-muted" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+          <CardContent className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2 sm:p-3 rounded-full text-muted" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
               <Clock className="h-5 w-5" />
             </div>
             <div>
               <p className="text-xs text-muted uppercase tracking-wider font-medium">Ore Registrate</p>
-              <p className="text-2xl font-bold animate-count-up">{totalLogged}h</p>
+              <p className="text-xl sm:text-2xl font-bold animate-count-up">{totalLogged}h</p>
             </div>
           </CardContent>
         </Card>
@@ -460,6 +563,13 @@ export default function ProjectDetailPage() {
             />
           </div>
           <Select name="priority" label="Priorità" options={PRIORITY_OPTIONS} />
+          <MultiUserSelect
+            users={teamMembers}
+            selected={taskAssigneeIds}
+            onChange={setTaskAssigneeIds}
+            label="Assegnatari"
+            placeholder="Seleziona assegnatari..."
+          />
           <div className="grid grid-cols-2 gap-4">
             <Input name="dueDate" label="Scadenza" type="date" />
             <Input name="estimatedHours" label="Ore Stimate" type="number" step="0.5" />
@@ -467,6 +577,102 @@ export default function ProjectDetailPage() {
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setTaskModalOpen(false)}>Annulla</Button>
             <Button type="submit" disabled={submitting}>{submitting ? 'Salvataggio...' : 'Crea Task'}</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Modifica Progetto" size="lg">
+        <form onSubmit={handleEditProject} className="space-y-4">
+          <Input
+            label="Nome Progetto *"
+            required
+            value={editForm.name}
+            onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select
+              label="Workspace"
+              value={editForm.workspaceId}
+              onChange={(e) => setEditForm((f) => ({ ...f, workspaceId: e.target.value }))}
+              options={[
+                { value: '', label: 'Seleziona workspace' },
+                ...workspaces.map((w) => ({ value: w.id, label: w.name })),
+              ]}
+            />
+            <Select
+              label="Cliente"
+              value={editForm.clientId}
+              onChange={(e) => setEditForm((f) => ({ ...f, clientId: e.target.value }))}
+              options={[
+                { value: '', label: 'Nessun cliente' },
+                ...clients.map((c) => ({ value: c.id, label: c.companyName })),
+              ]}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-foreground">Descrizione</label>
+            <textarea
+              rows={3}
+              value={editForm.description}
+              onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select
+              label="Stato"
+              value={editForm.status}
+              onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+              options={STATUS_OPTIONS}
+            />
+            <Select
+              label="Priorità"
+              value={editForm.priority}
+              onChange={(e) => setEditForm((f) => ({ ...f, priority: e.target.value }))}
+              options={PRIORITY_OPTIONS}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Data Inizio"
+              type="date"
+              value={editForm.startDate}
+              onChange={(e) => setEditForm((f) => ({ ...f, startDate: e.target.value }))}
+            />
+            <Input
+              label="Data Fine"
+              type="date"
+              value={editForm.endDate}
+              onChange={(e) => setEditForm((f) => ({ ...f, endDate: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Budget (EUR)"
+              type="number"
+              step="0.01"
+              value={editForm.budgetAmount}
+              onChange={(e) => setEditForm((f) => ({ ...f, budgetAmount: e.target.value }))}
+            />
+            <Input
+              label="Ore Previste"
+              type="number"
+              value={editForm.budgetHours}
+              onChange={(e) => setEditForm((f) => ({ ...f, budgetHours: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Colore</label>
+            <input
+              type="color"
+              value={editForm.color || '#3b82f6'}
+              onChange={(e) => setEditForm((f) => ({ ...f, color: e.target.value }))}
+              className="h-10 w-20 rounded-md border border-border cursor-pointer"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => setEditModalOpen(false)}>Annulla</Button>
+            <Button type="submit" disabled={editSubmitting}>{editSubmitting ? 'Salvataggio...' : 'Salva Modifiche'}</Button>
           </div>
         </form>
       </Modal>

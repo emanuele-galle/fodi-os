@@ -117,6 +117,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
+  const [scopeFilter, setScopeFilter] = useState('')
   const [view, setView] = useState<ViewMode>('list')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -132,6 +133,7 @@ export default function TasksPage() {
       const params = new URLSearchParams({ mine: 'true', limit: '100' })
       if (statusFilter) params.set('status', statusFilter)
       if (priorityFilter) params.set('priority', priorityFilter)
+      if (scopeFilter) params.set('scope', scopeFilter)
       const res = await fetch(`/api/tasks?${params}`)
       if (res.ok) {
         const data = await res.json()
@@ -140,7 +142,7 @@ export default function TasksPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, priorityFilter])
+  }, [statusFilter, priorityFilter, scopeFilter])
 
   useEffect(() => {
     fetchTasks()
@@ -225,6 +227,16 @@ export default function TasksPage() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <Select
+          options={[
+            { value: '', label: 'Tutti i miei task' },
+            { value: 'assigned', label: 'Assegnati a me' },
+            { value: 'created', label: 'Creati da me' },
+          ]}
+          value={scopeFilter}
+          onChange={(e) => setScopeFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
         <Select
           options={STATUS_OPTIONS}
           value={statusFilter}

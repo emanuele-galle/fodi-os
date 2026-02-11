@@ -99,3 +99,34 @@ export async function PATCH(
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const userId = request.headers.get('x-user-id')!
+    const role = request.headers.get('x-user-role') as Role
+    requirePermission(role, 'chat', 'write')
+
+    // Only admin or channel OWNER can delete
+    if (!hasPermission(role, 'chat', 'admin')) {
+      const membership = await prisma.chatMember.findFirst({
+        where: { channelId: id, userId, role: 'OWNER' },
+      })
+      if (!membership) {
+        return NextResponse.json({ error: 'Solo admin o owner del canale possono eliminarlo' }, { status: 403 })
+      }
+    }
+
+    // Cascade delete handles members and messages
+    await prisma.chatChannel.delete({ where: { id } })
+
+    return NextResponse.json({ success: true })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
+    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Hash, Lock, Users, FolderKanban, UserPlus, LogOut, Settings, Pencil, Archive } from 'lucide-react'
+import { X, Hash, Lock, Users, FolderKanban, UserPlus, LogOut, Settings, Pencil, Archive, Trash2 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/utils'
 
@@ -43,6 +43,7 @@ interface ChannelInfoPanelProps {
   currentUserId: string
   teamMembers: TeamMember[]
   onClose: () => void
+  onDeleteChannel?: (id: string) => void
 }
 
 const TYPE_ICONS: Record<string, React.ElementType> = {
@@ -58,7 +59,7 @@ const ROLE_LABELS: Record<string, string> = {
   MEMBER: 'Membro',
 }
 
-export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClose }: ChannelInfoPanelProps) {
+export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClose, onDeleteChannel }: ChannelInfoPanelProps) {
   const [channel, setChannel] = useState<ChannelInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [editingName, setEditingName] = useState(false)
@@ -66,6 +67,8 @@ export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClos
   const [nameValue, setNameValue] = useState('')
   const [descValue, setDescValue] = useState('')
   const [showAddMember, setShowAddMember] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchChannel()
@@ -276,7 +279,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClos
 
         {/* Actions */}
         {isOwnerOrAdmin && channel.type !== 'DIRECT' && (
-          <div className="border-t border-border/30 p-4">
+          <div className="border-t border-border/30 p-4 space-y-1">
             <button
               onClick={() => handleUpdateChannel({ isArchived: !channel.isArchived })}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/60 transition-colors text-sm text-muted-foreground"
@@ -284,6 +287,46 @@ export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClos
               <Archive className="h-4 w-4" />
               {channel.isArchived ? 'Riattiva canale' : 'Archivia canale'}
             </button>
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-destructive/10 transition-colors text-sm text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                Elimina canale
+              </button>
+            ) : (
+              <div className="px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-xs text-destructive font-medium mb-2">
+                  Tutti i messaggi verranno eliminati. Continuare?
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      setDeleting(true)
+                      try {
+                        const res = await fetch(`/api/chat/channels/${channelId}`, { method: 'DELETE' })
+                        if (res.ok) {
+                          onDeleteChannel?.(channelId)
+                        }
+                      } finally {
+                        setDeleting(false)
+                      }
+                    }}
+                    disabled={deleting}
+                    className="flex-1 text-xs font-medium px-3 py-1.5 rounded-md bg-destructive text-white hover:bg-destructive/90 transition-colors disabled:opacity-50"
+                  >
+                    {deleting ? 'Eliminazione...' : 'Conferma'}
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 text-xs font-medium px-3 py-1.5 rounded-md bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    Annulla
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

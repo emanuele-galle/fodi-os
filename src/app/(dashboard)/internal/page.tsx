@@ -4,12 +4,16 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Building2, FolderKanban, Users, CheckSquare, BookOpen, Settings,
-  ArrowRight, Clock, ListChecks,
+  ArrowRight, Clock, ListChecks, Plus,
 } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Avatar } from '@/components/ui/Avatar'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { Modal } from '@/components/ui/Modal'
 
 interface Project {
   id: string
@@ -72,29 +76,62 @@ export default function InternalPage() {
   const [tasks, setTasks] = useState<TaskItem[]>([])
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([])
+
+  const fetchData = async () => {
+    try {
+      const [projRes, taskRes, userRes] = await Promise.all([
+        fetch('/api/projects?isInternal=true&limit=50').then((r) => r.ok ? r.json() : null),
+        fetch('/api/tasks?mine=false&limit=20&sort=createdAt&order=desc').then((r) => r.ok ? r.json() : null),
+        fetch('/api/users').then((r) => r.ok ? r.json() : null),
+      ])
+      if (projRes?.items) setProjects(projRes.items)
+      else if (Array.isArray(projRes)) setProjects(projRes)
+
+      if (taskRes?.items) setTasks(taskRes.items)
+      else if (Array.isArray(taskRes)) setTasks(taskRes)
+
+      if (userRes?.items) setUsers(userRes.items)
+      else if (Array.isArray(userRes)) setUsers(userRes)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [projRes, taskRes, userRes] = await Promise.all([
-          fetch('/api/projects?isInternal=true&limit=50').then((r) => r.ok ? r.json() : null),
-          fetch('/api/tasks?mine=false&limit=20&sort=createdAt&order=desc').then((r) => r.ok ? r.json() : null),
-          fetch('/api/users').then((r) => r.ok ? r.json() : null),
-        ])
-        if (projRes?.items) setProjects(projRes.items)
-        else if (Array.isArray(projRes)) setProjects(projRes)
-
-        if (taskRes?.items) setTasks(taskRes.items)
-        else if (Array.isArray(taskRes)) setTasks(taskRes)
-
-        if (userRes?.items) setUsers(userRes.items)
-        else if (Array.isArray(userRes)) setUsers(userRes)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
+    fetchData()
+    fetch('/api/workspaces').then((r) => r.ok ? r.json() : null).then((d) => {
+      if (Array.isArray(d)) setWorkspaces(d)
+      else if (d?.items) setWorkspaces(d.items)
+    })
   }, [])
+
+  async function handleCreateProject(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSubmitting(true)
+    const form = new FormData(e.currentTarget)
+    const body: Record<string, unknown> = { isInternal: true }
+    form.forEach((v, k) => {
+      if (typeof v === 'string' && v.trim()) body[k] = v.trim()
+    })
+    if (body.budgetHours) body.budgetHours = parseInt(body.budgetHours as string, 10)
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) {
+        setModalOpen(false)
+        setLoading(true)
+        fetchData()
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const activeProjects = projects.filter((p) => p.status === 'IN_PROGRESS' || p.status === 'PLANNING' || p.status === 'REVIEW')
   const openTasks = tasks.filter((t) => t.status === 'TODO' || t.status === 'IN_PROGRESS')
@@ -111,14 +148,20 @@ export default function InternalPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-1">
-        <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-          <Building2 className="h-5 w-5 text-white" />
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+            <Building2 className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Azienda</h1>
+            <p className="text-sm text-muted">Gestione interna e operazioni FODI</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Azienda</h1>
-          <p className="text-sm text-muted">Gestione interna e operazioni FODI</p>
-        </div>
+        <Button onClick={() => setModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nuovo Progetto Interno
+        </Button>
       </div>
 
       {/* Quick Stats */}
@@ -314,6 +357,47 @@ export default function InternalPage() {
           ))}
         </div>
       </div>
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuovo Progetto Interno" size="lg">
+        <form onSubmit={handleCreateProject} className="space-y-4">
+          <Input name="name" label="Nome Progetto *" required />
+          <Select
+            name="workspaceId"
+            label="Workspace *"
+            options={[
+              { value: '', label: 'Seleziona workspace' },
+              ...workspaces.map((w) => ({ value: w.id, label: w.name })),
+            ]}
+          />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-foreground">Descrizione</label>
+            <textarea
+              name="description"
+              rows={3}
+              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            />
+          </div>
+          <Select
+            name="priority"
+            label="Priorità"
+            options={[
+              { value: 'LOW', label: 'Bassa' },
+              { value: 'MEDIUM', label: 'Media' },
+              { value: 'HIGH', label: 'Alta' },
+              { value: 'URGENT', label: 'Urgente' },
+            ]}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input name="startDate" label="Data Inizio" type="date" />
+            <Input name="endDate" label="Data Fine" type="date" />
+          </div>
+          <Input name="budgetHours" label="Ore Previste" type="number" />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
+            <Button type="submit" disabled={submitting}>{submitting ? 'Salvataggio...' : 'Crea Progetto'}</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }
