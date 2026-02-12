@@ -1,134 +1,203 @@
-"use client"
+// @ts-nocheck
+'use client';
 
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts"
-import { cn } from "@/lib/utils"
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/Card';
+import { CircleDollarSign, TrendingUp, UserPlus } from 'lucide-react';
+import { Area, AreaChart, ResponsiveContainer, Tooltip } from 'recharts';
 
-interface DataPoint {
-  name: string
-  value: number
-  [key: string]: string | number
-}
+// Business Case 1: SaaS Revenue Tracking
+const revenueData = [
+  { value: 1000 },
+  { value: 4500 },
+  { value: 2000 },
+  { value: 5200 },
+  { value: 1500 },
+  { value: 6100 },
+  { value: 3000 },
+  { value: 6800 },
+  { value: 2000 },
+  { value: 1000 },
+  { value: 4000 },
+  { value: 2000 },
+  { value: 3000 },
+  { value: 2000 },
+  { value: 6238 },
+];
 
-interface AreaChartProps {
-  data?: DataPoint[]
-  className?: string
-  height?: number
-  showGrid?: boolean
-  color?: string
-  gradientId?: string
-}
+// Business Case 2: New Customer Acquisition
+const customersData = [
+  { value: 2000 },
+  { value: 4500 },
+  { value: 2000 },
+  { value: 5200 },
+  { value: 1500 },
+  { value: 5100 },
+  { value: 2500 },
+  { value: 6800 },
+  { value: 1800 },
+  { value: 1000 },
+  { value: 3000 },
+  { value: 2000 },
+  { value: 2700 },
+  { value: 2000 },
+  { value: 4238 },
+];
 
-const defaultData: DataPoint[] = [
-  { name: "Gen", value: 4000 },
-  { name: "Feb", value: 3000 },
-  { name: "Mar", value: 5000 },
-  { name: "Apr", value: 4500 },
-  { name: "Mag", value: 6000 },
-  { name: "Giu", value: 5500 },
-  { name: "Lug", value: 7000 },
-  { name: "Ago", value: 6500 },
-  { name: "Set", value: 8000 },
-  { name: "Ott", value: 7500 },
-  { name: "Nov", value: 9000 },
-  { name: "Dic", value: 8500 },
-]
+// Business Case 3: Monthly Active Users
+const activeUsersData = [
+  { value: 2000 },
+  { value: 3500 },
+  { value: 2000 },
+  { value: 5200 },
+  { value: 1200 },
+  { value: 4100 },
+  { value: 3500 },
+  { value: 5800 },
+  { value: 2000 },
+  { value: 800 },
+  { value: 3000 },
+  { value: 1000 },
+  { value: 4000 },
+  { value: 2000 },
+  { value: 4238 },
+];
 
-function ChartTooltip({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean
-  payload?: { value: number }[]
-  label?: string
-}) {
-  if (!active || !payload?.length) return null
+// Business cards configuration
+// Use custom or Tailwind standard colors: https://tailwindcss.com/docs/colors
+const businessCards = [
+  {
+    title: 'Revenue',
+    period: 'Last 28 days',
+    value: '$6,238',
+    timestamp: '',
+    data: revenueData,
+    color: 'var(--color-emerald-500)',
+    icon: CircleDollarSign,
+    gradientId: 'revenueGradient',
+  },
+  {
+    title: 'New Customers',
+    period: 'Last 28 days',
+    value: '6,202',
+    timestamp: '3h ago',
+    data: customersData,
+    color: 'var(--color-blue-500)',
+    icon: UserPlus,
+    gradientId: 'customersGradient',
+  },
+  {
+    title: 'Active Users',
+    period: 'Last 28 days',
+    value: '18,945',
+    timestamp: '1h ago',
+    data: activeUsersData,
+    color: 'var(--color-violet-500)',
+    icon: TrendingUp,
+    gradientId: 'usersGradient',
+  },
+];
+
+export default function AreaChart1() {
   return (
-    <div className="rounded-lg border border-border/50 bg-card/95 backdrop-blur-sm px-3 py-2 shadow-lg">
-      <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
-      <p className="text-sm font-semibold tabular-nums">
-        {payload[0].value.toLocaleString()}
-      </p>
+    <div className="@container w-full">
+      {/* Grid of 3 cards */}
+      <div className="grid grid-cols-1 @3xl:grid-cols-3 gap-6">
+        {businessCards.map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <Card key={i}>
+              <CardContent className="space-y-5">
+                {/* Header with icon and title */}
+                <div className="flex items-center gap-2">
+                  <Icon className="size-5" style={{ color: card.color }} />
+                  <span className="text-base font-semibold">{card.title}</span>
+                </div>
+
+                <div className="flex items-end gap-2.5 justify-between">
+                  {/* Details */}
+                  <div className="flex flex-col gap-1">
+                    {/* Period */}
+                    <div className="text-sm text-muted-foreground whitespace-nowrap">{card.period}</div>
+
+                    {/* Value */}
+                    <div className="text-3xl font-bold text-foreground tracking-tight">{card.value}</div>
+                  </div>
+
+                  {/* Chart */}
+                  <div className="max-w-40 h-16 w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={card.data}
+                        margin={{
+                          top: 5,
+                          right: 5,
+                          left: 5,
+                          bottom: 5,
+                        }}
+                      >
+                        <defs>
+                          <linearGradient id={card.gradientId} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={card.color} stopOpacity={0.3} />
+                            <stop offset="100%" stopColor={card.color} stopOpacity={0.05} />
+                          </linearGradient>
+                          <filter id={`dotShadow${i}`} x="-50%" y="-50%" width="200%" height="200%">
+                            <feDropShadow dx="2" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.5)" />
+                          </filter>
+                        </defs>
+
+                        <Tooltip
+                          cursor={{ stroke: card.color, strokeWidth: 1, strokeDasharray: '2 2' }}
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const value = payload[0].value as number;
+                              const formatValue = (val: number) => {
+                                if (card.title === 'Revenue') {
+                                  return `$${(val / 1000).toFixed(1)}k`;
+                                } else if (card.title === 'New Customers') {
+                                  return `${(val / 1000).toFixed(1)}k`;
+                                } else {
+                                  return `${(val / 1000).toFixed(1)}k`;
+                                }
+                              };
+
+                              return (
+                                <div className="bg-background/95 backdrop-blur-sm border border-border shadow-lg rounded-lg p-2 pointer-events-none">
+                                  <p className="text-sm font-semibold text-foreground">{formatValue(value)}</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+
+                        {/* Area with gradient and enhanced shadow */}
+                        <Area
+                          type="monotone"
+                          dataKey="value"
+                          stroke={card.color}
+                          fill={`url(#${card.gradientId})`}
+                          strokeWidth={2}
+                          dot={false}
+                          activeDot={{
+                            r: 6,
+                            fill: card.color,
+                            stroke: 'white',
+                            strokeWidth: 2,
+                            filter: `url(#dotShadow${i})`,
+                          }}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
-  )
+  );
 }
 
-export function AreaCharts1({
-  data = defaultData,
-  className,
-  height = 280,
-  showGrid = true,
-  color = "var(--color-primary)",
-  gradientId = "areaGradient1",
-}: AreaChartProps) {
-  return (
-    <div className={cn("w-full", className)}>
-      <ResponsiveContainer width="100%" height={height}>
-        <AreaChart
-          data={data}
-          margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
-        >
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
-              <stop offset="100%" stopColor={color} stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
-          {showGrid && (
-            <CartesianGrid
-              strokeDasharray="4 8"
-              vertical={false}
-              stroke="var(--color-border)"
-              strokeOpacity={0.5}
-            />
-          )}
-          <XAxis
-            dataKey="name"
-            tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-            stroke="transparent"
-          />
-          <YAxis
-            tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-            stroke="transparent"
-            tickFormatter={(v) =>
-              v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
-            }
-          />
-          <Tooltip
-            content={<ChartTooltip />}
-            cursor={{
-              stroke: color,
-              strokeDasharray: "4 4",
-              strokeOpacity: 0.5,
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke={color}
-            fillOpacity={1}
-            fill={`url(#${gradientId})`}
-            strokeWidth={2}
-            dot={false}
-            activeDot={{
-              r: 5,
-              fill: color,
-              stroke: "white",
-              strokeWidth: 2,
-            }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  )
-}
-
-export { AreaCharts1 as Component }
+export { AreaChart1 as AreaCharts1 };
