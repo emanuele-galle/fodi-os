@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
   ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer, Video,
 } from 'lucide-react'
@@ -133,7 +133,9 @@ const STATUS_OPTIONS = [
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const projectId = params.projectId as string
+  const fromInternal = searchParams.get('from') === 'internal'
 
   const [project, setProject] = useState<ProjectDetail | null>(null)
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
@@ -336,9 +338,9 @@ export default function ProjectDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-muted">Progetto non trovato.</p>
-        <Button variant="outline" className="mt-4" onClick={() => router.push('/projects')}>
+        <Button variant="outline" className="mt-4" onClick={() => router.push(fromInternal ? '/internal' : '/projects')}>
           <ChevronLeft className="h-4 w-4 mr-2" />
-          Torna alla lista
+          {fromInternal ? 'Torna ai progetti interni' : 'Torna alla lista'}
         </Button>
       </div>
     )
@@ -464,11 +466,11 @@ export default function ProjectDetailPage() {
   return (
     <div>
       <button
-        onClick={() => router.push('/projects')}
+        onClick={() => router.push(fromInternal ? '/internal' : '/projects')}
         className="flex items-center gap-1 text-sm text-muted hover:text-foreground mb-4 transition-colors"
       >
         <ChevronLeft className="h-4 w-4" />
-        Torna alla lista progetti
+        {fromInternal ? 'Torna ai progetti interni' : 'Torna alla lista progetti'}
       </button>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">

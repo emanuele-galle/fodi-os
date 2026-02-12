@@ -9,7 +9,7 @@ export function ChatUnreadBadge({ count, className }: ChatUnreadBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-full bg-[#C4A052] text-[#1E293B] font-bold flex-shrink-0',
+        'inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground font-bold flex-shrink-0',
         count
           ? 'min-w-[20px] h-5 px-1.5 text-xs'
           : 'w-2.5 h-2.5',

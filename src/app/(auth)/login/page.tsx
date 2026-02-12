@@ -44,14 +44,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left panel - Brand */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#1E293B] relative flex-col items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-sidebar relative flex-col items-center justify-center p-12">
         <div className="absolute inset-0 opacity-5" style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, #C4A052 1px, transparent 0)',
+          backgroundImage: 'radial-gradient(circle at 1px 1px, var(--color-primary) 1px, transparent 0)',
           backgroundSize: '40px 40px',
         }} />
         <div className="relative z-10 flex flex-col items-center text-center">
           <Logo variant="light" width={220} height={77} />
-          <div className="mt-8 w-16 h-0.5 bg-gradient-to-r from-[#A68A3E] to-[#D4B566] rounded-full" />
+          <div className="mt-8 w-16 h-0.5 rounded-full" style={{ background: 'var(--gradient-brand)' }} />
           <p className="mt-6 text-lg text-white/80 max-w-sm leading-relaxed">
             Tecnologia italiana per far crescere il tuo business
           </p>
@@ -63,7 +63,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
-            <div className="bg-[#1E293B] rounded-xl p-4">
+            <div className="bg-sidebar rounded-xl p-4">
               <Logo variant="light" width={140} height={49} />
             </div>
           </div>

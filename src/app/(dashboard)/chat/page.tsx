@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MessageCircle, Video, Hash, Users, Search, Info, X } from 'lucide-react'
+import { MessageCircle, Video, Hash, Users, Search, Info, X, CheckSquare } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ChannelList } from '@/components/chat/ChannelList'
 import { MessageThread } from '@/components/chat/MessageThread'
@@ -61,6 +61,7 @@ export default function ChatPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [sending, setSending] = useState(false)
   const [currentUserId, setCurrentUserId] = useState('')
+  const [currentUserRole, setCurrentUserRole] = useState('')
   const [newMessages, setNewMessages] = useState<Message[]>([])
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [replyTo, setReplyTo] = useState<ReplyTo | null>(null)
@@ -70,6 +71,8 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Message[]>([])
   const [searching, setSearching] = useState(false)
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set())
   const selectedIdRef = useRef(selectedId)
   selectedIdRef.current = selectedId
 
@@ -78,7 +81,10 @@ export default function ChatPage() {
     fetch('/api/auth/session')
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
-        if (data?.user) setCurrentUserId(data.user.id)
+        if (data?.user) {
+          setCurrentUserId(data.user.id)
+          setCurrentUserRole(data.user.role || '')
+        }
       })
   }, [])
 
@@ -200,6 +206,8 @@ export default function ChatPage() {
     setSearchOpen(false)
     setSearchQuery('')
     setSearchResults([])
+    setSelectionMode(false)
+    setSelectedMessages(new Set())
 
     // Mark as read
     fetch(`/api/chat/channels/${id}/read`, { method: 'POST' })
@@ -329,6 +337,33 @@ export default function ChatPage() {
     })
   }
 
+  // Toggle message selection for bulk delete
+  function toggleMessageSelection(messageId: string) {
+    setSelectedMessages(prev => {
+      const next = new Set(prev)
+      if (next.has(messageId)) next.delete(messageId)
+      else next.add(messageId)
+      return next
+    })
+  }
+
+  // Bulk delete selected messages
+  async function handleBulkDelete() {
+    if (!selectedId || selectedMessages.size === 0) return
+    const ids = Array.from(selectedMessages)
+    await Promise.all(ids.map(id =>
+      fetch(`/api/chat/channels/${selectedId}/messages/${id}`, { method: 'DELETE' })
+    ))
+    setSelectedMessages(new Set())
+    setSelectionMode(false)
+  }
+
+  // Exit selection mode
+  function exitSelectionMode() {
+    setSelectionMode(false)
+    setSelectedMessages(new Set())
+  }
+
   // React to message
   async function handleReact(messageId: string, emoji: string) {
     if (!selectedId) return
@@ -448,36 +483,47 @@ export default function ChatPage() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
+                {/* Selection mode toggle */}
+                <button
+                  onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
+                  className={cn(
+                    'h-10 w-10 md:h-8 md:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
+                    selectionMode ? 'bg-destructive/10 text-destructive' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
+                  )}
+                  title={selectionMode ? 'Esci dalla selezione' : 'Seleziona messaggi'}
+                >
+                  <CheckSquare className="h-4 w-4 md:h-3.5 md:w-3.5" />
+                </button>
                 {/* Search button */}
                 <button
                   onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) { setSearchQuery(''); setSearchResults([]) } }}
                   className={cn(
-                    'h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-150',
+                    'h-10 w-10 md:h-8 md:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
                     searchOpen ? 'bg-primary/10 text-primary' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
                   )}
                   title="Cerca messaggi"
                 >
-                  <Search className="h-3.5 w-3.5" />
+                  <Search className="h-4 w-4 md:h-3.5 md:w-3.5" />
                 </button>
                 {/* Info button */}
                 <button
                   onClick={() => setShowInfoPanel(!showInfoPanel)}
                   className={cn(
-                    'h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-150',
+                    'h-10 w-10 md:h-8 md:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
                     showInfoPanel ? 'bg-primary/10 text-primary' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
                   )}
                   title="Info canale"
                 >
-                  <Info className="h-3.5 w-3.5" />
+                  <Info className="h-4 w-4 md:h-3.5 md:w-3.5" />
                 </button>
                 {/* Meet button */}
                 <button
                   onClick={handleQuickMeet}
                   disabled={creatingMeet}
-                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-secondary/80 hover:bg-secondary text-foreground/80 hover:text-foreground transition-all duration-150 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 h-10 md:h-8 px-3 rounded-lg text-xs font-medium bg-secondary/80 hover:bg-secondary text-foreground/80 hover:text-foreground transition-all duration-150 disabled:opacity-50 touch-manipulation"
                 >
-                  <Video className="h-3.5 w-3.5" />
+                  <Video className="h-4 w-4 md:h-3.5 md:w-3.5" />
                   <span className="hidden sm:inline">{creatingMeet ? 'Avvio...' : 'Meet'}</span>
                 </button>
               </div>
@@ -493,7 +539,7 @@ export default function ChatPage() {
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
                     placeholder="Cerca nei messaggi..."
-                    className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/40"
+                    className="flex-1 bg-transparent text-base md:text-sm outline-none placeholder:text-muted-foreground/40"
                     autoFocus
                   />
                   {searchQuery && (
@@ -539,7 +585,33 @@ export default function ChatPage() {
               onDeleteMessage={handleDeleteMessage}
               onReply={handleReply}
               onReact={handleReact}
+              userRole={currentUserRole}
+              selectionMode={selectionMode}
+              selectedMessages={selectedMessages}
+              onToggleSelection={toggleMessageSelection}
             />
+            {/* Floating selection bar */}
+            {selectionMode && selectedMessages.size > 0 && (
+              <div className="px-4 py-2.5 md:py-2 bg-card border-t border-border flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  {selectedMessages.size} messaggi selezionati
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={exitSelectionMode}
+                    className="px-4 py-2 md:px-3 md:py-1.5 text-sm rounded-lg bg-secondary hover:bg-secondary/80 transition-colors min-h-[44px] md:min-h-0 touch-manipulation"
+                  >
+                    Annulla
+                  </button>
+                  <button
+                    onClick={handleBulkDelete}
+                    className="px-4 py-2 md:px-3 md:py-1.5 text-sm rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors min-h-[44px] md:min-h-0 touch-manipulation"
+                  >
+                    Elimina ({selectedMessages.size})
+                  </button>
+                </div>
+              </div>
+            )}
             <MessageInput
               onSend={handleSend}
               onSendFile={handleSendFile}
@@ -564,20 +636,25 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Info panel */}
+      {/* Info panel - overlay on mobile, sidebar on desktop */}
       {showInfoPanel && selectedId && (
-        <ChannelInfoPanel
-          channelId={selectedId}
-          currentUserId={currentUserId}
-          teamMembers={teamMembers}
-          onClose={() => setShowInfoPanel(false)}
-          onDeleteChannel={(id) => {
-            setSelectedId(null)
-            setShowInfoPanel(false)
-            setNewMessages([])
-            setChannels((prev) => prev.filter((ch) => ch.id !== id))
-          }}
-        />
+        <>
+          <div className="md:hidden fixed inset-0 z-40 bg-foreground/50" onClick={() => setShowInfoPanel(false)} />
+          <div className="fixed md:relative inset-y-0 right-0 z-50 md:z-auto">
+            <ChannelInfoPanel
+              channelId={selectedId}
+              currentUserId={currentUserId}
+              teamMembers={teamMembers}
+              onClose={() => setShowInfoPanel(false)}
+              onDeleteChannel={(id) => {
+                setSelectedId(null)
+                setShowInfoPanel(false)
+                setNewMessages([])
+                setChannels((prev) => prev.filter((ch) => ch.id !== id))
+              }}
+            />
+          </div>
+        </>
       )}
 
       <NewChannelModal

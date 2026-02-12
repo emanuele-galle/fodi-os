@@ -1,78 +1,84 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #C4A052;
-  --color-primary-hover: #B08D3E;
-  --color-primary-foreground: #1E293B;
-  --color-secondary: #F1F5F9;
-  --color-secondary-foreground: #0F172A;
-  --color-accent: #F59E0B;
-  --color-destructive: #EF4444;
-  --color-muted: #94A3B8;
-  --color-border: #E2E8F0;
-  --color-background: #FAFAF8;
-  --color-foreground: #0F172A;
+  /* Apple-style palette */
+  --color-primary: #007AFF;
+  --color-primary-hover: #0066D6;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #F2F2F7;
+  --color-secondary-foreground: #1C1C1E;
+  --color-accent: #34C759;
+  --color-destructive: #FF3B30;
+  --color-muted: #86868B;
+  --color-border: #D2D2D7;
+  --color-background: #F5F5F7;
+  --color-foreground: #1C1C1E;
   --color-card: #ffffff;
-  --color-sidebar: #1E293B;
-  --color-sidebar-foreground: #E2E8F0;
-  --color-sidebar-active: #C4A052;
-  --gradient-brand: linear-gradient(135deg, #A68A3E 0%, #D4B566 100%);
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-sidebar: #1C1C1E;
+  --color-sidebar-foreground: #F5F5F7;
+  --color-sidebar-active: #007AFF;
+  --gradient-brand: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
 
-  /* Shadow system - 4 levels */
+  /* Shadow system - 4 levels (Apple-refined) */
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
   --shadow-xl: 0 16px 48px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.06);
 
-  /* Glass effect */
-  --glass-bg: rgba(255,255,255,0.55);
-  --glass-border: rgba(255,255,255,0.5);
-  --glass-blur: 12px;
+  /* Glass effect - Apple Liquid Glass */
+  --glass-bg: rgba(255,255,255,0.65);
+  --glass-border: rgba(255,255,255,0.6);
+  --glass-blur: 20px;
 
-  /* Gold gradient & glow */
-  --gold-gradient: linear-gradient(135deg, #C4A052, #E8C97A);
-  --gold-glow: 0 0 20px rgba(196,160,82,0.25);
+  /* Brand gradient & glow (replaces gold) */
+  --gold-gradient: linear-gradient(135deg, #007AFF, #5AC8FA);
+  --gold-glow: 0 0 20px rgba(0,122,255,0.2);
 }
 
 /* ===== Theme System ===== */
 
 /* Light theme (default) */
 :root, [data-theme="light"] {
-  --color-background: #FAFAF8;
-  --color-foreground: #0F172A;
+  --color-background: #F5F5F7;
+  --color-foreground: #1C1C1E;
   --color-card: #ffffff;
-  --color-secondary: #F1F5F9;
-  --color-secondary-foreground: #0F172A;
-  --color-border: #E2E8F0;
-  --color-muted: #94A3B8;
-  --color-sidebar: #1E293B;
-  --color-sidebar-foreground: #E2E8F0;
+  --color-secondary: #F2F2F7;
+  --color-secondary-foreground: #1C1C1E;
+  --color-border: #D2D2D7;
+  --color-muted: #86868B;
+  --color-sidebar: #1C1C1E;
+  --color-sidebar-foreground: #F5F5F7;
 }
 
-/* Dark theme */
+/* Dark theme - Apple pure black */
 [data-theme="dark"] {
-  --color-background: #0F172A;
-  --color-foreground: #E2E8F0;
-  --color-card: #1E293B;
-  --color-secondary: #334155;
-  --color-secondary-foreground: #E2E8F0;
-  --color-border: #334155;
-  --color-muted: #64748B;
-  --color-sidebar: #0B1120;
-  --color-sidebar-foreground: #CBD5E1;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.25);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
-  --shadow-xl: 0 16px 48px rgba(0,0,0,0.5);
-  --glass-bg: rgba(255,255,255,0.04);
-  --glass-border: rgba(255,255,255,0.08);
+  --color-background: #000000;
+  --color-foreground: #F5F5F7;
+  --color-card: #1C1C1E;
+  --color-secondary: #2C2C2E;
+  --color-secondary-foreground: #F5F5F7;
+  --color-border: #38383A;
+  --color-muted: #636366;
+  --color-primary: #0A84FF;
+  --color-primary-hover: #409CFF;
+  --color-sidebar: #000000;
+  --color-sidebar-foreground: #F5F5F7;
+  --color-sidebar-active: #0A84FF;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.45);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.55);
+  --glass-bg: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.1);
+  --gold-gradient: linear-gradient(135deg, #0A84FF, #64D2FF);
+  --gold-glow: 0 0 20px rgba(10,132,255,0.25);
 }
 
-/* Midnight theme */
+/* Midnight theme - Apple indigo */
 [data-theme="midnight"] {
   --color-background: #0A0E1A;
   --color-foreground: #C8D6E5;
@@ -83,17 +89,19 @@
   --color-muted: #6B7280;
   --color-sidebar: #060A14;
   --color-sidebar-foreground: #9CA3AF;
-  --color-primary: #7C8CF8;
-  --color-primary-hover: #6366F1;
-  --color-primary-foreground: #0A0E1A;
-  --color-sidebar-active: #7C8CF8;
-  --color-accent: #A78BFA;
+  --color-primary: #5E5CE6;
+  --color-primary-hover: #7876EA;
+  --color-primary-foreground: #F5F5F7;
+  --color-sidebar-active: #5E5CE6;
+  --color-accent: #BF5AF2;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.35);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
   --shadow-xl: 0 16px 48px rgba(0,0,0,0.6);
-  --glass-bg: rgba(255,255,255,0.03);
-  --glass-border: rgba(255,255,255,0.06);
+  --glass-bg: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --gold-gradient: linear-gradient(135deg, #5E5CE6, #BF5AF2);
+  --gold-glow: 0 0 20px rgba(94,92,230,0.25);
 }
 
 /* ===== Keyframes ===== */
@@ -193,7 +201,7 @@
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
-/* ===== Gold Glow Effect for Cards ===== */
+/* ===== Primary Glow Effect for Cards ===== */
 
 .glow-gold {
   transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
@@ -204,13 +212,14 @@
   border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
-/* ===== Glass & Shadow Utility Classes ===== */
+/* ===== Glass & Shadow Utility Classes (Apple Liquid Glass) ===== */
 
 .glass-card {
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), var(--shadow-sm);
 }
 
 .shadow-lift {
@@ -433,6 +442,11 @@ body {
     inset: 0;
     z-index: 10;
   }
+}
+
+/* Hide bottom nav when a modal is open (prevents bleed-through on mobile) */
+body.modal-open [data-bottom-nav] {
+  display: none !important;
 }
 
 /* Smooth color transitions for themed elements */

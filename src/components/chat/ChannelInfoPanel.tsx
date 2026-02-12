@@ -111,7 +111,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClos
 
   if (loading || !channel) {
     return (
-      <div className="w-[320px] border-l border-border/50 bg-card/95 flex-shrink-0 flex items-center justify-center">
+      <div className="w-[85vw] md:w-[320px] border-l border-border/50 bg-card/95 flex-shrink-0 flex items-center justify-center h-full">
         <div className="text-sm text-muted-foreground/50 animate-pulse">Caricamento...</div>
       </div>
     )
@@ -124,15 +124,15 @@ export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClos
   const availableMembers = teamMembers.filter((m) => !existingMemberIds.has(m.id))
 
   return (
-    <div className="w-[320px] border-l border-border/50 bg-card/95 flex-shrink-0 flex flex-col h-full overflow-hidden">
+    <div className="w-[85vw] md:w-[320px] border-l border-border/50 bg-card/95 flex-shrink-0 flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border/30">
         <h3 className="font-semibold text-sm">Info Canale</h3>
         <button
           onClick={onClose}
-          className="h-7 w-7 rounded-md hover:bg-secondary/80 flex items-center justify-center transition-colors"
+          className="h-10 w-10 md:h-7 md:w-7 rounded-md hover:bg-secondary/80 flex items-center justify-center transition-colors touch-manipulation"
         >
-          <X className="h-4 w-4 text-muted-foreground" />
+          <X className="h-5 w-5 md:h-4 md:w-4 text-muted-foreground" />
         </button>
       </div>
 
@@ -278,27 +278,31 @@ export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClos
         </div>
 
         {/* Actions */}
-        {isOwnerOrAdmin && channel.type !== 'DIRECT' && (
+        {isOwnerOrAdmin && (
           <div className="border-t border-border/30 p-4 space-y-1">
-            <button
-              onClick={() => handleUpdateChannel({ isArchived: !channel.isArchived })}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/60 transition-colors text-sm text-muted-foreground"
-            >
-              <Archive className="h-4 w-4" />
-              {channel.isArchived ? 'Riattiva canale' : 'Archivia canale'}
-            </button>
+            {channel.type !== 'DIRECT' && (
+              <button
+                onClick={() => handleUpdateChannel({ isArchived: !channel.isArchived })}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/60 transition-colors text-sm text-muted-foreground"
+              >
+                <Archive className="h-4 w-4" />
+                {channel.isArchived ? 'Riattiva canale' : 'Archivia canale'}
+              </button>
+            )}
             {!confirmDelete ? (
               <button
                 onClick={() => setConfirmDelete(true)}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-destructive/10 transition-colors text-sm text-destructive"
               >
                 <Trash2 className="h-4 w-4" />
-                Elimina canale
+                {channel.type === 'DIRECT' ? 'Elimina conversazione' : 'Elimina canale'}
               </button>
             ) : (
               <div className="px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20">
                 <p className="text-xs text-destructive font-medium mb-2">
-                  Tutti i messaggi verranno eliminati. Continuare?
+                  {channel.type === 'DIRECT'
+                    ? 'La conversazione e tutti i messaggi verranno eliminati. Continuare?'
+                    : 'Tutti i messaggi verranno eliminati. Continuare?'}
                 </p>
                 <div className="flex items-center gap-2">
                   <button

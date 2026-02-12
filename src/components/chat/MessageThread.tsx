@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { Check } from 'lucide-react'
 import { MessageBubble } from './MessageBubble'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { cn } from '@/lib/utils'
 
 interface Message {
   id: string
@@ -25,11 +27,16 @@ interface MessageThreadProps {
   newMessages: Message[]
   onEditMessage?: (messageId: string, newContent: string) => void
   onDeleteMessage?: (messageId: string) => void
+  onDeleteMessages?: (messageIds: string[]) => void
   onReply?: (message: { id: string; content: string; authorName: string }) => void
   onReact?: (messageId: string, emoji: string) => void
+  userRole?: string
+  selectionMode?: boolean
+  selectedMessages?: Set<string>
+  onToggleSelection?: (messageId: string) => void
 }
 
-export function MessageThread({ channelId, currentUserId, newMessages, onEditMessage, onDeleteMessage, onReply, onReact }: MessageThreadProps) {
+export function MessageThread({ channelId, currentUserId, newMessages, onEditMessage, onDeleteMessage, onDeleteMessages, onReply, onReact, userRole, selectionMode, selectedMessages, onToggleSelection }: MessageThreadProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -183,16 +190,32 @@ export function MessageThread({ channelId, currentUserId, newMessages, onEditMes
             <div className="flex-1 border-t border-border/10" />
           </div>
           {group.messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              isOwn={msg.author.id === currentUserId}
-              currentUserId={currentUserId}
-              onEdit={onEditMessage}
-              onDelete={onDeleteMessage}
-              onReply={onReply}
-              onReact={onReact}
-            />
+            <div key={msg.id} className={cn('flex items-start', selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN' || userRole === 'MANAGER') && 'pl-2')}>
+              {selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN' || userRole === 'MANAGER') && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleSelection?.(msg.id) }}
+                  className={cn(
+                    'flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center transition-colors mr-1 mt-3',
+                    selectedMessages?.has(msg.id)
+                      ? 'bg-primary border-primary text-white'
+                      : 'border-border hover:border-primary/50'
+                  )}
+                >
+                  {selectedMessages?.has(msg.id) && <Check className="h-3 w-3" />}
+                </button>
+              )}
+              <div className="flex-1 min-w-0">
+                <MessageBubble
+                  message={msg}
+                  isOwn={msg.author.id === currentUserId}
+                  currentUserId={currentUserId}
+                  onEdit={onEditMessage}
+                  onDelete={onDeleteMessage}
+                  onReply={onReply}
+                  onReact={onReact}
+                />
+              </div>
+            </div>
           ))}
         </div>
       ))}
