@@ -47,31 +47,33 @@ export function MobileHeader({ user, unreadCount, onOpenSearch, onOpenNotificati
 
   return (
     <header className="flex items-center justify-between h-14 px-4 bg-card/80 backdrop-blur-md border-b border-border/30 md:hidden">
-      <div className="flex items-center gap-2.5">
-        <Link href="/dashboard" className="flex items-center">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <Link href="/dashboard" className="flex items-center flex-shrink-0">
           <Logo variant="auto" width={90} height={32} />
         </Link>
         {sectionName && (
           <>
-            <span className="text-border/60 text-sm">/</span>
-            <span className="text-sm font-medium text-foreground/80 truncate max-w-[120px]">
+            <span className="text-border/60 text-sm flex-shrink-0">/</span>
+            <span className="text-sm font-medium text-foreground/80 truncate max-w-[100px]">
               {sectionName}
             </span>
           </>
         )}
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5 flex-shrink-0">
         <button
           onClick={onOpenSearch}
-          className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-secondary/60 transition-colors touch-manipulation"
+          aria-label="Cerca"
+          className="h-11 w-11 rounded-full flex items-center justify-center hover:bg-secondary/60 active:bg-secondary/80 transition-colors touch-manipulation"
         >
           <Search className="h-[18px] w-[18px] text-muted" />
         </button>
 
         <button
           onClick={onOpenNotifications}
-          className="relative h-10 w-10 rounded-full flex items-center justify-center hover:bg-secondary/60 transition-colors touch-manipulation"
+          aria-label="Notifiche"
+          className="relative h-11 w-11 rounded-full flex items-center justify-center hover:bg-secondary/60 active:bg-secondary/80 transition-colors touch-manipulation"
         >
           <Bell className="h-[18px] w-[18px] text-muted" />
           {unreadCount > 0 && (
@@ -83,7 +85,8 @@ export function MobileHeader({ user, unreadCount, onOpenSearch, onOpenNotificati
 
         <Link
           href="/settings"
-          className="h-10 w-10 rounded-full flex items-center justify-center touch-manipulation"
+          aria-label="Profilo"
+          className="h-11 w-11 rounded-full flex items-center justify-center touch-manipulation"
         >
           <Avatar
             name={`${user.firstName} ${user.lastName}`}

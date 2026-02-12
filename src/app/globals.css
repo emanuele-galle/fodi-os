@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   /* Apple-style palette */
@@ -52,6 +55,8 @@
   --color-muted: #86868B;
   --color-sidebar: #1C1C1E;
   --color-sidebar-foreground: #F5F5F7;
+  --glass-bg: rgba(255,255,255,0.72);
+  --glass-border: rgba(255,255,255,0.65);
 }
 
 /* Dark theme - Apple pure black */
@@ -207,19 +212,20 @@
   transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
 }
 .glow-gold:hover {
-  box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 15%, transparent),
-              0 4px 16px rgba(0, 0, 0, 0.08);
-  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--color-primary) 20%, transparent),
+              0 4px 20px rgba(0, 0, 0, 0.1);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  transform: translateY(-1px);
 }
 
 /* ===== Glass & Shadow Utility Classes (Apple Liquid Glass) ===== */
 
 .glass-card {
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), var(--shadow-sm);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.05), var(--shadow-sm);
 }
 
 .shadow-lift {
@@ -246,7 +252,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 2px;
   background: var(--gold-gradient);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
@@ -334,6 +340,35 @@
 [data-theme="dark"] .logo-dark-only,
 [data-theme="midnight"] .logo-dark-only {
   display: none;
+}
+
+/* Glass header for sidebar/topbar */
+.glass-header {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  background: color-mix(in srgb, var(--color-card) 70%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+/* Stat card hover glow */
+.stat-card-glow {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.stat-card-glow:hover {
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--color-primary) 12%, transparent),
+              0 2px 8px rgba(0,0,0,0.06);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  transform: translateY(-2px);
+}
+
+/* Glass input focus ring */
+.glass-focus {
+  transition: all 0.2s ease;
+}
+.glass-focus:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
 
 body {
@@ -457,4 +492,60 @@ body.modal-open [data-bottom-nav] {
 [data-theme] *, [data-theme] *::before, [data-theme] *::after {
   transition-duration: 0.2s;
   transition-timing-function: ease;
+}
+
+@theme inline {
+  @keyframes scaleToggle {
+  0% {
+    scale: 1 1;
+    }
+  50% {
+    scale: 1.1 1;
+    }
+  100% {
+    scale: 1 1;
+    }
+  }
+  @keyframes scaleToggle2 {
+  0% {
+    scale: 1 1;
+    }
+  50% {
+    scale: 1.2 1;
+    }
+  100% {
+    scale: 1 1;
+    }
+  }
+  @keyframes scaleToggle3 {
+  0% {
+    scale: 1 1;
+    }
+  50% {
+    scale: 1.1 1;
+    }
+  100% {
+    scale: 1 1;
+    }
+  }
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-color-destructive-foreground: var(----color-destructive-foreground);
+  --color-color-color-destructive-foreground: var(----color-color-destructive-foreground)
+}
+
+:root {
+  --destructive-foreground: oklch(1 0 0);
+}
+
+.dark {
+  --destructive-foreground: oklch(1 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

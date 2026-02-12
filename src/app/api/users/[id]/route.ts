@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { Role } from '@/generated/prisma/client'
+import { isValidSectionAccess } from '@/lib/section-access'
 
 const ADMIN_ROLES: Role[] = ['ADMIN', 'MANAGER']
 const VALID_ROLES: Role[] = ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT']
@@ -16,6 +17,7 @@ const USER_SELECT = {
   phone: true,
   lastLoginAt: true,
   createdAt: true,
+  sectionAccess: true,
 }
 
 export async function PATCH(
@@ -78,6 +80,16 @@ export async function PATCH(
 
     if (body.avatarUrl !== undefined) {
       updateData.avatarUrl = body.avatarUrl || null
+    }
+
+    if (body.sectionAccess !== undefined) {
+      if (body.sectionAccess === null) {
+        updateData.sectionAccess = null
+      } else if (isValidSectionAccess(body.sectionAccess)) {
+        updateData.sectionAccess = body.sectionAccess
+      } else {
+        return NextResponse.json({ error: 'Formato sectionAccess non valido' }, { status: 400 })
+      }
     }
 
     if (Object.keys(updateData).length === 0) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Upload, X, FileText, Image, FileVideo, FileAudio, File, CheckCircle2 } from 'lucide-react'
+import { Upload, X, FileText, Image, FileVideo, FileAudio, File, CheckCircle2, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 
@@ -16,7 +16,7 @@ interface FileUploadProps {
   onUpload: (files: UploadedFile[]) => void
   accept?: string
   maxFiles?: number
-  maxSize?: number // in bytes
+  maxSize?: number
   className?: string
 }
 
@@ -49,7 +49,7 @@ export function FileUpload({
   onUpload,
   accept,
   maxFiles = 10,
-  maxSize = 500 * 1024 * 1024, // 500MB default
+  maxSize = 500 * 1024 * 1024,
   className,
 }: FileUploadProps) {
   const [entries, setEntries] = useState<FileEntry[]>([])
@@ -83,7 +83,6 @@ export function FileUpload({
 
     setEntries((prev) => [...prev, ...newEntries])
 
-    // Start uploading valid entries
     for (const entry of newEntries) {
       if (entry.status !== 'error') {
         uploadFile(entry)
@@ -100,7 +99,6 @@ export function FileUpload({
       const formData = new FormData()
       formData.append('file', entry.file)
 
-      // Simulate progress updates
       const progressInterval = setInterval(() => {
         setEntries((prev) =>
           prev.map((e) =>
@@ -116,7 +114,7 @@ export function FileUpload({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fileName: entry.file.name,
-          fileUrl: URL.createObjectURL(entry.file), // Placeholder - real app uses presigned URL
+          fileUrl: URL.createObjectURL(entry.file),
           fileSize: entry.file.size,
           mimeType: entry.file.type || 'application/octet-stream',
           category: getCategoryFromMime(entry.file.type),
@@ -140,7 +138,6 @@ export function FileUpload({
           )
         )
 
-        // Notify parent with all completed files
         setEntries((prev) => {
           const completed = prev
             .filter((e) => e.status === 'done' && e.result)
@@ -205,25 +202,32 @@ export function FileUpload({
 
   return (
     <div className={cn('space-y-4', className)}>
-      {/* Drop zone */}
+      {/* Drop zone - glass style */}
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          'flex flex-col items-center justify-center gap-3 p-8 rounded-lg border-2 border-dashed cursor-pointer transition-colors',
+          'relative flex flex-col items-center justify-center gap-3 p-8 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[160px] touch-manipulation group',
           dragging
-            ? 'border-primary bg-primary/5'
-            : 'border-border hover:border-primary/50 hover:bg-secondary/30'
+            ? 'border-primary bg-primary/5 scale-[1.01]'
+            : 'border-border/50 hover:border-primary/40 bg-card/30 backdrop-blur-sm hover:bg-card/50'
         )}
       >
-        <Upload className={cn('h-8 w-8', dragging ? 'text-primary' : 'text-muted')} />
+        <div className={cn(
+          'flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300',
+          dragging
+            ? 'bg-primary/15 text-primary scale-110'
+            : 'bg-secondary/60 text-muted group-hover:bg-primary/10 group-hover:text-primary'
+        )}>
+          <Upload className="h-6 w-6" />
+        </div>
         <div className="text-center">
           <p className="text-sm font-medium">
-            {dragging ? 'Rilascia i file qui' : 'Trascina i file qui o clicca per selezionare'}
+            {dragging ? 'Rilascia i file qui' : 'Trascina i file o clicca per selezionare'}
           </p>
-          <p className="text-xs text-muted mt-1">
+          <p className="text-xs text-muted/60 mt-1">
             Max {maxFiles} file, {formatFileSize(maxSize)} ciascuno
           </p>
         </div>
@@ -240,7 +244,7 @@ export function FileUpload({
         />
       </div>
 
-      {/* File list */}
+      {/* File list - glass cards */}
       {entries.length > 0 && (
         <div className="space-y-2">
           {entries.map((entry) => {
@@ -248,24 +252,27 @@ export function FileUpload({
             return (
               <div
                 key={entry.id}
-                className="flex items-center gap-3 p-3 rounded-md border border-border bg-card"
+                className="flex items-center gap-3 p-3 rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm"
               >
                 {/* Thumbnail or icon */}
-                <div className="h-10 w-10 rounded-md bg-secondary flex items-center justify-center overflow-hidden shrink-0">
+                <div className="h-10 w-10 rounded-xl bg-secondary/50 flex items-center justify-center overflow-hidden shrink-0">
                   {entry.previewUrl ? (
                     <img src={entry.previewUrl} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <Icon className="h-5 w-5 text-muted" />
+                    <Icon className="h-5 w-5 text-muted/60" />
                   )}
                 </div>
 
                 {/* File info */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{entry.file.name}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted">
+                  <div className="flex items-center gap-2 text-xs text-muted/60">
                     <span>{formatFileSize(entry.file.size)}</span>
                     {entry.status === 'error' && (
-                      <span className="text-destructive">{entry.error}</span>
+                      <span className="text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {entry.error}
+                      </span>
                     )}
                     {entry.status === 'done' && (
                       <span className="text-green-600 flex items-center gap-1">
@@ -277,7 +284,7 @@ export function FileUpload({
 
                   {/* Progress bar */}
                   {entry.status === 'uploading' && (
-                    <div className="mt-1.5 h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                    <div className="mt-1.5 h-1 w-full bg-secondary/40 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-primary rounded-full transition-all duration-300"
                         style={{ width: `${entry.progress}%` }}
@@ -290,13 +297,13 @@ export function FileUpload({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="shrink-0 h-8 w-8"
+                  className="shrink-0 h-8 w-8 rounded-lg"
                   onClick={(e) => {
                     e.stopPropagation()
                     removeEntry(entry.id)
                   }}
                 >
-                  <X className="h-4 w-4 text-muted" />
+                  <X className="h-4 w-4 text-muted/60" />
                 </Button>
               </div>
             )

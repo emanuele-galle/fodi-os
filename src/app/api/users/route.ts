@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
         phone: true,
         lastLoginAt: true,
         createdAt: true,
+        sectionAccess: true,
       },
       orderBy: [{ isActive: 'desc' }, { firstName: 'asc' }],
     })

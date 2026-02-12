@@ -81,6 +81,9 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
     ch.name.toLowerCase().includes(search.toLowerCase())
   )
 
+  const directChannels = filtered.filter(ch => ch.type === 'DIRECT')
+  const regularChannels = filtered.filter(ch => ch.type !== 'DIRECT')
+
   const onlineMembers = teamMembers.filter((m) => isRecentlyActive(m.lastLoginAt) && m.id !== currentUserId)
   const offlineMembers = teamMembers.filter((m) => !isRecentlyActive(m.lastLoginAt) && m.id !== currentUserId)
   const onlineCount = onlineMembers.length
@@ -97,9 +100,9 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
           <button
             onClick={onNewChannel}
             title="Nuovo Canale"
-            className="h-8 w-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-all duration-200 hover:scale-105"
+            className="h-10 w-10 md:h-8 md:w-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-all duration-200 hover:scale-105 touch-manipulation"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-5 w-5 md:h-4 md:w-4" />
           </button>
         </div>
         <div className="relative">
@@ -108,7 +111,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
             placeholder="Cerca..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-secondary/60 border-0 placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:bg-secondary transition-all duration-200"
+            className="w-full pl-9 pr-3 py-2.5 md:py-2 text-base md:text-sm rounded-lg bg-secondary/60 border-0 placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:bg-secondary transition-all duration-200"
           />
         </div>
       </div>
@@ -173,16 +176,82 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
         </div>
       )}
 
+      {/* Direct Messages */}
+      {directChannels.length > 0 && (
+        <>
+          <div className="px-2 pt-1">
+            <div className="flex items-center gap-2 px-2 py-1.5">
+              <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Messaggi Diretti</span>
+              <span className="text-[10px] text-muted-foreground/50 font-medium">{directChannels.length}</span>
+            </div>
+          </div>
+          <div className="px-2 pb-1 space-y-0.5">
+            {directChannels.map((channel) => {
+              const isSelected = channel.id === selectedId
+              return (
+                <button
+                  key={channel.id}
+                  onClick={() => onSelect(channel.id)}
+                  className={cn(
+                    'w-full flex items-start gap-2.5 px-3 py-2.5 text-left rounded-lg transition-all duration-150 relative group',
+                    isSelected
+                      ? 'bg-primary/10 shadow-sm'
+                      : 'hover:bg-secondary/60'
+                  )}
+                >
+                  <div className={cn(
+                    'flex-shrink-0 mt-0.5 h-8 w-8 rounded-lg flex items-center justify-center transition-colors',
+                    isSelected ? 'bg-primary/20 text-primary' : 'bg-secondary/80 text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'
+                  )}>
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={cn(
+                        'text-[13px] truncate leading-tight',
+                        isSelected ? 'text-primary font-semibold' : 'text-foreground font-medium',
+                        channel.hasUnread && !isSelected && 'font-bold text-foreground'
+                      )}>
+                        {channel.name}
+                      </span>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {channel.lastMessage && (
+                          <span className="text-[10px] text-muted-foreground/60">
+                            {formatTime(channel.lastMessage.createdAt)}
+                          </span>
+                        )}
+                        {channel.hasUnread && !isSelected && (
+                          <ChatUnreadBadge />
+                        )}
+                      </div>
+                    </div>
+                    {channel.lastMessage && (
+                      <p className={cn(
+                        'text-[12px] truncate mt-0.5 leading-tight',
+                        channel.hasUnread && !isSelected ? 'text-muted-foreground/80' : 'text-muted-foreground/50'
+                      )}>
+                        <span className="font-medium">{channel.lastMessage.authorName.split(' ')[0]}:</span>{' '}
+                        {channel.lastMessage.content}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
+
       {/* Channels */}
       <div className="px-2 pt-1">
         <div className="flex items-center gap-2 px-2 py-1.5">
           <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Canali</span>
-          <span className="text-[10px] text-muted-foreground/50 font-medium">{filtered.length}</span>
+          <span className="text-[10px] text-muted-foreground/50 font-medium">{regularChannels.length}</span>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
-        {filtered.length === 0 ? (
+        {regularChannels.length === 0 && directChannels.length === 0 ? (
           <div className="text-center py-10 px-4">
             <div className="h-10 w-10 rounded-xl bg-secondary/80 mx-auto mb-3 flex items-center justify-center">
               <MessageCircle className="h-5 w-5 text-muted-foreground/50" />
@@ -191,7 +260,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
             <p className="text-xs text-muted-foreground/40 mt-1">Crea il primo canale per iniziare</p>
           </div>
         ) : (
-          filtered.map((channel) => {
+          regularChannels.map((channel) => {
             const Icon = TYPE_ICON[channel.type] || Hash
             const isSelected = channel.id === selectedId
 

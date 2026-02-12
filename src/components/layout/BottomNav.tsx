@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
+import { getEffectiveSectionAccess, HREF_TO_SECTION, type SectionAccessMap } from '@/lib/section-access'
 
 const TAB_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -42,7 +43,7 @@ interface MenuItem {
 
 const MENU_ITEMS: MenuItem[] = [
   { label: 'CRM', href: '/crm', icon: Users, roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'SUPPORT'] as Role[], category: 'blue' },
-  { label: 'Progetti', href: '/projects', icon: FolderKanban, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'] as Role[], category: 'green' },
+  { label: 'Progetti Clienti', href: '/projects', icon: FolderKanban, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'] as Role[], category: 'green' },
   { label: 'Calendario', href: '/calendar', icon: CalendarDays, category: 'purple' },
   { label: 'Contabilità', href: '/erp', icon: Euro, roles: ['ADMIN', 'MANAGER', 'SALES'] as Role[], category: 'amber' },
   { label: 'Knowledge Base', href: '/kb', icon: BookOpen, roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'] as Role[], category: 'rose' },
@@ -64,10 +65,11 @@ const CATEGORY_STYLES: Record<CategoryColor, string> = {
 
 interface BottomNavProps {
   userRole: Role
+  sectionAccess?: SectionAccessMap | null
   unreadChat?: number
 }
 
-export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
+export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNavProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -100,9 +102,12 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
     }, 250)
   }, [])
 
-  const filteredMenu = MENU_ITEMS.filter(
-    (item) => !item.roles || item.roles.includes(userRole)
-  )
+  const effective = getEffectiveSectionAccess(userRole, sectionAccess)
+  const filteredMenu = MENU_ITEMS.filter((item) => {
+    const section = HREF_TO_SECTION[item.href]
+    if (section) return effective[section]?.view
+    return !item.roles || item.roles.includes(userRole)
+  })
 
   function isTabActive(href: string): boolean {
     if (href === '#menu') return menuOpen
@@ -139,10 +144,15 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
 
   const handleTouchEnd = useCallback(() => {
     if (sheetRef.current) {
-      if (currentTranslateY.current > 100) {
+      if (currentTranslateY.current > 80) {
         closeMenu()
       } else {
+        sheetRef.current.style.transition = 'transform 0.2s ease-out'
         sheetRef.current.style.transform = ''
+        // Reset transition after snap-back completes
+        setTimeout(() => {
+          if (sheetRef.current) sheetRef.current.style.transition = ''
+        }, 200)
       }
       currentTranslateY.current = 0
     }
@@ -170,16 +180,17 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
               closing ? 'animate-menu-slide-down' : 'animate-menu-slide-up'
             )}
           >
-            {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-muted/50" />
+            {/* Drag handle - larger touch area for easier grabbing */}
+            <div className="flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing">
+              <div className="w-10 h-1.5 rounded-full bg-muted/40" />
             </div>
 
             <div className="flex items-center justify-between px-4 py-2 border-b border-border/30">
               <span className="text-sm font-semibold text-foreground">Menu</span>
               <button
                 onClick={closeMenu}
-                className="p-1.5 rounded-full hover:bg-secondary/60 transition-colors touch-manipulation"
+                aria-label="Chiudi menu"
+                className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-secondary/60 active:bg-secondary/80 transition-colors touch-manipulation"
               >
                 <X className="h-4 w-4 text-muted" />
               </button>
@@ -223,7 +234,7 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
       )}
 
       {/* Bottom Nav Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/90 backdrop-blur-xl border-t border-border/50 shadow-[var(--shadow-lg)] pb-[env(safe-area-inset-bottom,0px)]">
+      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/90 backdrop-blur-xl border-t border-border/50 shadow-[var(--shadow-lg)] pb-[env(safe-area-inset-bottom,0px)]">
         <div className="flex items-center justify-around h-16">
           {TAB_ITEMS.map((tab) => {
             const active = isTabActive(tab.href)
@@ -232,6 +243,7 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
               <button
                 key={tab.href}
                 onClick={() => handleTabClick(tab.href)}
+                aria-label={tab.label}
                 className={cn(
                   'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[44px] transition-all duration-200 touch-manipulation active:scale-95',
                   active ? 'text-primary' : 'text-muted'
@@ -239,7 +251,7 @@ export function BottomNav({ userRole, unreadChat = 0 }: BottomNavProps) {
               >
                 {/* Active indicator line */}
                 {active && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary" />
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full bg-primary" />
                 )}
 
                 <div className="relative p-1">

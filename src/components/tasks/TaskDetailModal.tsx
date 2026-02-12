@@ -301,7 +301,7 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-base md:text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               placeholder="Aggiungi una descrizione..."
             />
           </div>
@@ -396,7 +396,7 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
                   }
                 }}
                 placeholder="Scrivi un commento..."
-                className="flex-1 h-9 rounded-md border border-border bg-transparent px-3 text-sm placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
+                className="flex-1 h-11 md:h-9 rounded-md border border-border bg-transparent px-3 text-base md:text-sm placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
               />
               <Button
                 size="sm"
@@ -440,7 +440,7 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
             </div>
 
             {attachments.length > 0 ? (
-              <div className="space-y-2 max-h-40 overflow-y-auto">
+              <div className="space-y-2 max-h-52 md:max-h-40 overflow-y-auto">
                 {attachments.map((att) => {
                   const isImage = att.mimeType.startsWith('image/')
                   const IconComp = isImage ? Image : FileText
@@ -458,7 +458,7 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
                           {formatFileSize(att.fileSize)} &middot; {att.uploadedBy.firstName} {att.uploadedBy.lastName}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <a
                           href={att.fileUrl}
                           target="_blank"
@@ -486,8 +486,16 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-2 border-t border-border">
-            <div>
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between pt-2 border-t border-border gap-3 md:gap-0">
+            <div className="flex items-center gap-3 order-2 md:order-none">
+              <Button variant="outline" onClick={onClose} className="flex-1 md:flex-none">
+                Annulla
+              </Button>
+              <Button onClick={handleSave} disabled={saving || !title.trim()} className="flex-1 md:flex-none">
+                {saving ? 'Salvataggio...' : 'Salva'}
+              </Button>
+            </div>
+            <div className="order-1 md:order-none">
               {confirmDelete ? (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-destructive">Confermi?</span>
@@ -504,14 +512,6 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
                   Elimina
                 </Button>
               )}
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={onClose}>
-                Annulla
-              </Button>
-              <Button onClick={handleSave} disabled={saving || !title.trim()}>
-                {saving ? 'Salvataggio...' : 'Salva'}
-              </Button>
             </div>
           </div>
         </div>

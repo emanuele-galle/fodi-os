@@ -18,6 +18,7 @@ export async function GET() {
         lastName: true,
         role: true,
         avatarUrl: true,
+        sectionAccess: true,
       },
     })
 

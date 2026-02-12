@@ -20,6 +20,10 @@ export function formatCurrency(amount: number | string): string {
   }).format(num)
 }
 
+export function sanitizeHtml(input: string): string {
+  return input.replace(/<[^>]*>/g, '')
+}
+
 export function timeAgo(date: string): string {
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
   if (seconds < 60) return 'ora'

@@ -4,10 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Users, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { MorphButton } from '@/components/ui/MorphButton'
+import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -136,17 +139,24 @@ export default function CrmPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3 mb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
+        <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
             <Users className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Clienti</h1>
-            <p className="text-sm text-muted">Gestione clienti e relazioni commerciali</p>
+            <h1 className="text-xl md:text-2xl font-bold">Clienti</h1>
+            <p className="text-xs md:text-sm text-muted">Gestione clienti e relazioni commerciali</p>
           </div>
         </div>
-        <Button onClick={() => setModalOpen(true)}>
+        <div className="hidden sm:block">
+          <MicroExpander
+            text="Nuovo Cliente"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={() => setModalOpen(true)}
+          />
+        </div>
+        <Button onClick={() => setModalOpen(true)} className="sm:hidden w-full">
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Cliente
         </Button>
@@ -206,12 +216,14 @@ export default function CrmPage() {
                     <p className="font-medium text-sm truncate">{client.companyName}</p>
                     <p className="text-xs text-muted">{client.industry || 'N/D'}</p>
                   </div>
-                  <Badge variant={STATUS_BADGE[client.status] || 'default'}>
-                    {STATUS_LABELS[client.status] || client.status}
-                  </Badge>
+                  <StatusBadge
+                    leftLabel={STATUS_LABELS[client.status] || client.status}
+                    rightLabel={`${client._count?.projects ?? 0} prog.`}
+                    variant={client.status === 'ACTIVE' ? 'success' : client.status === 'CHURNED' ? 'error' : client.status === 'PROSPECT' ? 'warning' : client.status === 'LEAD' ? 'info' : 'default'}
+                  />
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted">
-                  <span>{client._count?.contacts ?? 0} contatti / {client._count?.projects ?? 0} progetti</span>
+                  <span>{client._count?.contacts ?? 0} contatti</span>
                   <span className="font-medium text-foreground">{formatCurrency(client.totalRevenue)}</span>
                 </div>
               </Card>
@@ -328,9 +340,7 @@ export default function CrmPage() {
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
               Annulla
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Salvataggio...' : 'Crea Cliente'}
-            </Button>
+            <MorphButton type="submit" text="Crea Cliente" isLoading={submitting} />
           </div>
         </form>
       </Modal>

@@ -20,6 +20,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { FullScreenCalendar } from '@/components/ui/fullscreen-calendar'
 
 interface CalendarEvent {
   id: string
@@ -99,6 +100,8 @@ export default function CalendarPage() {
   const [connected, setConnected] = useState<boolean | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showNewEvent, setShowNewEvent] = useState(false)
+  const [mobileView, setMobileView] = useState<'calendar' | 'agenda'>('agenda')
+  const [desktopView, setDesktopView] = useState<'grid' | 'fullscreen'>('grid')
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [selectedAttendees, setSelectedAttendees] = useState<string[]>([])
   const [attendeeSearch, setAttendeeSearch] = useState('')
@@ -211,6 +214,17 @@ export default function CalendarPage() {
 
   const todayKey = today.toISOString().split('T')[0]
 
+  // Data formatted for FullScreenCalendar component
+  const fullCalendarData = Array.from(eventsByDate.entries()).map(([dateKey, dayEvents]) => ({
+    day: new Date(dateKey + 'T00:00:00'),
+    events: dayEvents.map((ev, i) => ({
+      id: i + 1,
+      name: ev.summary,
+      time: ev.start.date ? 'Tutto il giorno' : formatTime(ev.start.dateTime),
+      datetime: ev.start.dateTime || ev.start.date || '',
+    })),
+  }))
+
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(year - 1) }
     else setMonth(month - 1)
@@ -226,8 +240,8 @@ export default function CalendarPage() {
     return (
       <div className="animate-fade-in">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-            <Calendar className="h-5 w-5 text-white" />
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <Calendar className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Calendario</h1>
@@ -253,8 +267,8 @@ export default function CalendarPage() {
     <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-            <Calendar className="h-5 w-5 text-white" />
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <Calendar className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Calendario</h1>
@@ -272,6 +286,24 @@ export default function CalendarPage() {
             <Button variant="outline" size="sm" onClick={nextMonth}>
               <ChevronRight className="h-4 w-4" />
             </Button>
+          </div>
+          <div className="hidden md:flex rounded-lg border border-border bg-secondary/30 p-1">
+            <button
+              onClick={() => setDesktopView('grid')}
+              className={`text-xs font-medium px-3 py-1 rounded-md transition-colors ${
+                desktopView === 'grid' ? 'bg-card shadow-sm text-foreground' : 'text-muted'
+              }`}
+            >
+              Compatto
+            </button>
+            <button
+              onClick={() => setDesktopView('fullscreen')}
+              className={`text-xs font-medium px-3 py-1 rounded-md transition-colors ${
+                desktopView === 'fullscreen' ? 'bg-card shadow-sm text-foreground' : 'text-muted'
+              }`}
+            >
+              Espanso
+            </button>
           </div>
           <Button size="sm" className="ml-auto sm:ml-0" onClick={() => {
             const d = new Date()
@@ -298,86 +330,197 @@ export default function CalendarPage() {
         </div>
       )}
 
+      {/* Mobile view toggle */}
+      <div className="md:hidden flex rounded-lg border border-border bg-secondary/30 p-1 mb-4">
+        <button
+          onClick={() => setMobileView('agenda')}
+          className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${
+            mobileView === 'agenda' ? 'bg-card shadow-sm text-foreground' : 'text-muted'
+          }`}
+        >
+          Agenda
+        </button>
+        <button
+          onClick={() => setMobileView('calendar')}
+          className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${
+            mobileView === 'calendar' ? 'bg-card shadow-sm text-foreground' : 'text-muted'
+          }`}
+        >
+          Mese
+        </button>
+      </div>
+
       {loading ? (
-        <Skeleton className="h-[600px] w-full" />
+        <Skeleton className="h-[400px] md:h-[600px] w-full" />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="grid grid-cols-7 border-b border-border">
-              {DAYS.map((day) => (
-                <div key={day} className="py-2 text-center text-xs font-medium text-muted">
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7">
-              {Array.from({ length: totalCells }).map((_, i) => {
-                const dayNum = i - firstDay + 1
-                const isCurrentMonth = dayNum >= 1 && dayNum <= daysInMonth
-                const cellDate = isCurrentMonth
-                  ? `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`
-                  : null
-                const isToday = cellDate === todayKey
-                const dayEvents = cellDate ? eventsByDate.get(cellDate) || [] : []
-
-                return (
-                  <div
-                    key={i}
-                    className={`min-h-[60px] md:min-h-[100px] border-b border-r border-border p-1 md:p-1.5 ${
-                      !isCurrentMonth ? 'bg-secondary/30' : ''
-                    } ${isToday ? 'bg-primary/5' : ''}`}
-                  >
-                    {isCurrentMonth && (
-                      <>
-                        <div
-                          className={`text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${
-                            isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'
-                          }`}
-                        >
-                          {dayNum}
-                        </div>
-                        <div className="space-y-0.5 md:space-y-0.5">
-                          {dayEvents.slice(0, 3).map((ev) => {
-                            const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
-                            const color = EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
-                            const isAllDay = !!ev.start.date
-
-                            return (
-                              <button
-                                key={ev.id}
-                                onClick={() => setSelectedEvent(ev)}
-                                className="w-full text-left rounded px-1.5 py-1 md:py-0.5 text-[10px] md:text-[10px] truncate text-white transition-opacity hover:opacity-80 touch-manipulation min-h-[24px] md:min-h-0"
-                                style={{ backgroundColor: color }}
-                                title={`${isAllDay ? '' : formatTime(ev.start.dateTime) + ' '}${ev.summary}`}
-                              >
-                                {!isAllDay && (
-                                  <span className="font-medium mr-0.5">{formatTime(ev.start.dateTime)}</span>
-                                )}
-                                {ev.summary}
-                              </button>
-                            )
-                          })}
-                          {dayEvents.length > 3 && (
+        <>
+          {/* Mobile Agenda View */}
+          {mobileView === 'agenda' && (
+            <div className="md:hidden space-y-2">
+              {(() => {
+                const sortedDates = Array.from(eventsByDate.keys()).sort()
+                if (sortedDates.length === 0) {
+                  return (
+                    <EmptyState
+                      icon={Calendar}
+                      title="Nessun evento"
+                      description="Non ci sono eventi questo mese."
+                    />
+                  )
+                }
+                return sortedDates.map((dateKey) => {
+                  const dayEvents = eventsByDate.get(dateKey) || []
+                  const d = new Date(dateKey + 'T00:00:00')
+                  const isToday = dateKey === todayKey
+                  return (
+                    <div key={dateKey}>
+                      <div className={`sticky top-0 z-10 px-3 py-1.5 text-xs font-semibold rounded-md mb-1 ${
+                        isToday ? 'bg-primary/10 text-primary' : 'bg-secondary/50 text-muted'
+                      }`}>
+                        {isToday && 'Oggi - '}
+                        {d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      </div>
+                      <div className="space-y-1.5 mb-3">
+                        {dayEvents.map((ev) => {
+                          const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
+                          const color = EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
+                          const isAllDay = !!ev.start.date
+                          return (
                             <button
-                              onClick={() => {
-                                // Show the first event of overflow as a way to open details
-                                if (dayEvents[3]) setSelectedEvent(dayEvents[3])
-                              }}
-                              className="text-[10px] text-muted pl-1 touch-manipulation min-h-[20px]"
+                              key={ev.id}
+                              onClick={() => setSelectedEvent(ev)}
+                              className="w-full text-left rounded-lg border border-border bg-card p-3 flex items-center gap-3 active:bg-secondary/30 transition-colors touch-manipulation"
                             >
-                              +{dayEvents.length - 3} altri
+                              <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{ev.summary}</p>
+                                <p className="text-xs text-muted">
+                                  {isAllDay ? 'Tutto il giorno' : formatDateRange(ev.start, ev.end)}
+                                </p>
+                                {ev.location && (
+                                  <p className="text-xs text-muted truncate mt-0.5">
+                                    <MapPin className="inline h-3 w-3 mr-0.5" />{ev.location}
+                                  </p>
+                                )}
+                              </div>
+                              {ev.conferenceData?.entryPoints?.find(ep => ep.entryPointType === 'video') && (
+                                <Video className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                              )}
                             </button>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )
-              })}
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })
+              })()}
             </div>
-          </CardContent>
-        </Card>
+          )}
+
+          {/* FullScreen Calendar view (desktop only) */}
+          {desktopView === 'fullscreen' && (
+            <div className="hidden md:block">
+              <Card>
+                <CardContent className="p-0">
+                  <FullScreenCalendar data={fullCalendarData} />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Calendar Grid - always on desktop (compact view), conditional on mobile */}
+          <Card className={`${mobileView === 'calendar' ? '' : 'hidden md:block'} ${desktopView === 'fullscreen' ? 'md:hidden' : ''}`}>
+            <CardContent className="p-0">
+              <div className="grid grid-cols-7 border-b border-border">
+                {DAYS.map((day) => (
+                  <div key={day} className="py-2 text-center text-xs font-medium text-muted">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7">
+                {Array.from({ length: totalCells }).map((_, i) => {
+                  const dayNum = i - firstDay + 1
+                  const isCurrentMonth = dayNum >= 1 && dayNum <= daysInMonth
+                  const cellDate = isCurrentMonth
+                    ? `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`
+                    : null
+                  const isToday = cellDate === todayKey
+                  const dayEvents = cellDate ? eventsByDate.get(cellDate) || [] : []
+
+                  return (
+                    <div
+                      key={i}
+                      className={`min-h-[60px] md:min-h-[100px] border-b border-r border-border p-1 md:p-1.5 ${
+                        !isCurrentMonth ? 'bg-secondary/30' : ''
+                      } ${isToday ? 'bg-primary/5' : ''}`}
+                    >
+                      {isCurrentMonth && (
+                        <>
+                          <div
+                            className={`text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${
+                              isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                            }`}
+                          >
+                            {dayNum}
+                          </div>
+                          {/* Mobile: show dots only */}
+                          <div className="md:hidden flex gap-0.5 flex-wrap">
+                            {dayEvents.slice(0, 4).map((ev) => {
+                              const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
+                              const color = EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
+                              return (
+                                <div
+                                  key={ev.id}
+                                  className="w-1.5 h-1.5 rounded-full"
+                                  style={{ backgroundColor: color }}
+                                />
+                              )
+                            })}
+                          </div>
+                          {/* Desktop: show event pills */}
+                          <div className="hidden md:block space-y-0.5">
+                            {dayEvents.slice(0, 3).map((ev) => {
+                              const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
+                              const color = EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
+                              const isAllDay = !!ev.start.date
+
+                              return (
+                                <button
+                                  key={ev.id}
+                                  onClick={() => setSelectedEvent(ev)}
+                                  className="w-full text-left rounded px-1.5 py-0.5 text-[10px] truncate text-white transition-opacity hover:opacity-80"
+                                  style={{ backgroundColor: color }}
+                                  title={`${isAllDay ? '' : formatTime(ev.start.dateTime) + ' '}${ev.summary}`}
+                                >
+                                  {!isAllDay && (
+                                    <span className="font-medium mr-0.5">{formatTime(ev.start.dateTime)}</span>
+                                  )}
+                                  {ev.summary}
+                                </button>
+                              )
+                            })}
+                            {dayEvents.length > 3 && (
+                              <button
+                                onClick={() => {
+                                  if (dayEvents[3]) setSelectedEvent(dayEvents[3])
+                                }}
+                                className="text-[10px] text-muted pl-1"
+                              >
+                                +{dayEvents.length - 3} altri
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {/* Event detail modal */}

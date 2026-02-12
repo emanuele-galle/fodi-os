@@ -3,8 +3,10 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'motion/react'
 import {
   Search,
+  SendHorizontal,
   Users,
   FolderKanban,
   Receipt,
@@ -12,6 +14,11 @@ import {
   LifeBuoy,
   Plus,
   ArrowRight,
+  LayoutDashboard,
+  CalendarDays,
+  MessageCircle,
+  Settings,
+  Building2,
 } from 'lucide-react'
 
 interface CommandPaletteProps {
@@ -26,29 +33,34 @@ interface CommandItem {
   icon: React.ElementType
   href?: string
   action?: () => void
-  group: 'navigate' | 'action' | 'search'
+  group: 'navigate' | 'action'
+  shortcut?: string
 }
 
 const commands: CommandItem[] = [
-  // Navigation
-  { id: 'dashboard', label: 'Dashboard', icon: FolderKanban, href: '/dashboard', group: 'navigate' },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', group: 'navigate' },
+  { id: 'tasks', label: 'I Miei Task', icon: FolderKanban, href: '/tasks', group: 'navigate', shortcut: 'T' },
+  { id: 'chat', label: 'Chat', icon: MessageCircle, href: '/chat', group: 'navigate', shortcut: 'C' },
+  { id: 'internal', label: 'Azienda', icon: Building2, href: '/internal', group: 'navigate' },
   { id: 'crm', label: 'CRM - Clienti', icon: Users, href: '/crm', group: 'navigate' },
-  { id: 'projects', label: 'Progetti', icon: FolderKanban, href: '/projects', group: 'navigate' },
+  { id: 'projects', label: 'Progetti Clienti', icon: FolderKanban, href: '/projects', group: 'navigate' },
+  { id: 'calendar', label: 'Calendario', icon: CalendarDays, href: '/calendar', group: 'navigate' },
   { id: 'quotes', label: 'Preventivi', icon: Receipt, href: '/erp/quotes', group: 'navigate' },
   { id: 'invoices', label: 'Fatture', icon: Receipt, href: '/erp/invoices', group: 'navigate' },
   { id: 'kb', label: 'Knowledge Base', icon: BookOpen, href: '/kb', group: 'navigate' },
   { id: 'support', label: 'Supporto', icon: LifeBuoy, href: '/support', group: 'navigate' },
-  // Actions
+  { id: 'settings', label: 'Impostazioni', icon: Settings, href: '/settings', group: 'navigate' },
   { id: 'new-client', label: 'Nuovo Cliente', description: 'Crea un nuovo cliente', icon: Plus, href: '/crm?action=new', group: 'action' },
   { id: 'new-project', label: 'Nuovo Progetto', description: 'Crea un nuovo progetto', icon: Plus, href: '/projects?action=new', group: 'action' },
   { id: 'new-quote', label: 'Nuovo Preventivo', description: 'Crea un preventivo', icon: Plus, href: '/erp/quotes/new', group: 'action' },
-  { id: 'new-ticket', label: 'Nuovo Ticket', description: 'Apri un ticket di supporto', icon: Plus, href: '/support?action=new', group: 'action' },
+  { id: 'new-ticket', label: 'Nuovo Ticket', description: 'Apri un ticket supporto', icon: Plus, href: '/support?action=new', group: 'action' },
 ]
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
   const filtered = query
@@ -63,7 +75,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     if (open) {
       setQuery('')
       setSelectedIndex(0)
-      setTimeout(() => inputRef.current?.focus(), 100)
+      setTimeout(() => inputRef.current?.focus(), 50)
     }
   }, [open])
 
@@ -90,6 +102,14 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [open, filtered, selectedIndex, router, onClose])
 
+  // Scroll selected item into view
+  useEffect(() => {
+    if (listRef.current) {
+      const item = listRef.current.querySelector(`[data-index="${selectedIndex}"]`)
+      item?.scrollIntoView({ block: 'nearest' })
+    }
+  }, [selectedIndex])
+
   if (!open) return null
 
   const groups = {
@@ -97,96 +117,169 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     action: filtered.filter((c) => c.group === 'action'),
   }
 
+  const hasQuery = query.length > 0
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 animate-fade-in" onClick={onClose}>
-      <div
-        className="max-w-lg mx-auto mt-[20vh] bg-card rounded-xl border border-border shadow-[var(--shadow-xl)] overflow-hidden animate-scale-in"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Search input */}
-        <div className="flex items-center gap-3 px-4 border-b border-border">
-          <Search className="h-5 w-5 text-muted flex-shrink-0" />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              setSelectedIndex(0)
-            }}
-            placeholder="Cerca pagine, azioni, clienti..."
-            className="flex-1 h-14 bg-transparent text-foreground placeholder:text-muted focus:outline-none"
-          />
-          <kbd className="text-xs text-muted bg-secondary px-1.5 py-0.5 rounded">ESC</kbd>
-        </div>
+    <div className="fixed inset-0 z-50" onClick={onClose}>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      />
 
-        {/* Results */}
-        <div className="max-h-80 overflow-y-auto py-2">
-          {groups.navigate.length > 0 && (
-            <div>
-              <p className="px-4 py-1 text-xs font-medium text-muted uppercase">Navigazione</p>
-              {groups.navigate.map((cmd, i) => {
-                const globalIndex = filtered.indexOf(cmd)
-                return (
-                  <button
-                    key={cmd.id}
-                    onClick={() => {
-                      if (cmd.href) router.push(cmd.href)
-                      onClose()
-                    }}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors',
-                      globalIndex === selectedIndex
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-foreground hover:bg-secondary'
-                    )}
-                  >
-                    <cmd.icon className="h-4 w-4 flex-shrink-0" />
-                    <span>{cmd.label}</span>
-                    <ArrowRight className="h-3 w-3 ml-auto text-muted" />
-                  </button>
-                )
-              })}
-            </div>
-          )}
+      {/* Dialog */}
+      <div className="relative flex justify-center pt-[15vh]">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="w-full max-w-lg mx-4 bg-card/95 backdrop-blur-xl rounded-2xl border border-border/40 shadow-[var(--shadow-xl)] overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Search input */}
+          <div className="flex items-center gap-3 px-4 border-b border-border/40">
+            <AnimatePresence mode="wait">
+              {hasQuery ? (
+                <motion.div
+                  key="send"
+                  initial={{ opacity: 0, rotate: -45 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: 45 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <SendHorizontal className="h-5 w-5 text-primary flex-shrink-0" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="search"
+                  initial={{ opacity: 0, rotate: 45 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: -45 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <Search className="h-5 w-5 text-muted flex-shrink-0" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setSelectedIndex(0)
+              }}
+              placeholder="Cerca pagine, azioni..."
+              className="flex-1 h-14 bg-transparent text-foreground placeholder:text-muted/60 focus:outline-none text-[15px]"
+            />
+            <kbd className="text-[11px] text-muted/70 bg-secondary/60 px-1.5 py-0.5 rounded-md font-mono">ESC</kbd>
+          </div>
 
-          {groups.action.length > 0 && (
-            <div className="mt-2">
-              <p className="px-4 py-1 text-xs font-medium text-muted uppercase">Azioni Rapide</p>
-              {groups.action.map((cmd) => {
-                const globalIndex = filtered.indexOf(cmd)
-                return (
-                  <button
-                    key={cmd.id}
-                    onClick={() => {
-                      if (cmd.href) router.push(cmd.href)
-                      onClose()
-                    }}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors',
-                      globalIndex === selectedIndex
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-foreground hover:bg-secondary'
-                    )}
-                  >
-                    <cmd.icon className="h-4 w-4 flex-shrink-0" />
-                    <div className="text-left">
-                      <span>{cmd.label}</span>
-                      {cmd.description && (
-                        <span className="text-xs text-muted ml-2">{cmd.description}</span>
+          {/* Results */}
+          <div ref={listRef} className="max-h-[360px] overflow-y-auto py-1.5 scrollbar-none">
+            {groups.navigate.length > 0 && (
+              <div className="px-2">
+                <p className="px-2 py-1.5 text-[11px] font-medium text-muted/70 uppercase tracking-wider">
+                  Navigazione
+                </p>
+                {groups.navigate.map((cmd) => {
+                  const globalIndex = filtered.indexOf(cmd)
+                  return (
+                    <motion.button
+                      key={cmd.id}
+                      data-index={globalIndex}
+                      initial={{ opacity: 0, x: -4 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: globalIndex * 0.02, duration: 0.15 }}
+                      onClick={() => {
+                        if (cmd.href) router.push(cmd.href)
+                        onClose()
+                      }}
+                      onMouseEnter={() => setSelectedIndex(globalIndex)}
+                      className={cn(
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors',
+                        globalIndex === selectedIndex
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-foreground/80 hover:bg-secondary/50'
                       )}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          )}
+                    >
+                      <cmd.icon className="h-4 w-4 flex-shrink-0 opacity-70" />
+                      <span className="flex-1 text-left">{cmd.label}</span>
+                      {cmd.shortcut && (
+                        <kbd className="text-[10px] text-muted/60 bg-secondary/50 px-1.5 py-0.5 rounded font-mono">
+                          {cmd.shortcut}
+                        </kbd>
+                      )}
+                      <ArrowRight className={cn(
+                        'h-3 w-3 transition-opacity',
+                        globalIndex === selectedIndex ? 'opacity-70' : 'opacity-0'
+                      )} />
+                    </motion.button>
+                  )
+                })}
+              </div>
+            )}
 
-          {filtered.length === 0 && (
-            <p className="px-4 py-8 text-center text-sm text-muted">
-              Nessun risultato per &ldquo;{query}&rdquo;
-            </p>
-          )}
-        </div>
+            {groups.action.length > 0 && (
+              <div className="px-2 mt-1">
+                <p className="px-2 py-1.5 text-[11px] font-medium text-muted/70 uppercase tracking-wider">
+                  Azioni Rapide
+                </p>
+                {groups.action.map((cmd) => {
+                  const globalIndex = filtered.indexOf(cmd)
+                  return (
+                    <motion.button
+                      key={cmd.id}
+                      data-index={globalIndex}
+                      initial={{ opacity: 0, x: -4 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: globalIndex * 0.02, duration: 0.15 }}
+                      onClick={() => {
+                        if (cmd.href) router.push(cmd.href)
+                        onClose()
+                      }}
+                      onMouseEnter={() => setSelectedIndex(globalIndex)}
+                      className={cn(
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors',
+                        globalIndex === selectedIndex
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-foreground/80 hover:bg-secondary/50'
+                      )}
+                    >
+                      <cmd.icon className="h-4 w-4 flex-shrink-0 opacity-70" />
+                      <div className="flex-1 text-left">
+                        <span>{cmd.label}</span>
+                        {cmd.description && (
+                          <span className="text-xs text-muted/60 ml-2">{cmd.description}</span>
+                        )}
+                      </div>
+                    </motion.button>
+                  )
+                })}
+              </div>
+            )}
+
+            {filtered.length === 0 && (
+              <div className="px-4 py-10 text-center">
+                <p className="text-sm text-muted/60">
+                  Nessun risultato per &ldquo;{query}&rdquo;
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between px-4 py-2 border-t border-border/30 text-[11px] text-muted/50">
+            <span>
+              <kbd className="bg-secondary/50 px-1 py-0.5 rounded font-mono mr-0.5">↑↓</kbd> naviga
+              <kbd className="bg-secondary/50 px-1 py-0.5 rounded font-mono ml-2 mr-0.5">↵</kbd> apri
+            </span>
+            <span>
+              <kbd className="bg-secondary/50 px-1 py-0.5 rounded font-mono mr-0.5">⌘K</kbd> toggle
+            </span>
+          </div>
+        </motion.div>
       </div>
     </div>
   )

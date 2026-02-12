@@ -71,12 +71,12 @@ export default function ContentPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
             <LayoutGrid className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Contenuti</h1>
-            <p className="text-sm text-muted">Gestisci asset, review e social media</p>
+            <h1 className="text-xl md:text-2xl font-bold">Contenuti</h1>
+            <p className="text-xs md:text-sm text-muted">Gestisci asset, review e social media</p>
           </div>
         </div>
       </div>

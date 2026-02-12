@@ -4,10 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { FolderKanban, Plus, Search, ChevronLeft, ChevronRight, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { MorphButton } from '@/components/ui/MorphButton'
+import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -27,11 +30,6 @@ interface Project {
 interface ClientOption {
   id: string
   companyName: string
-}
-
-interface WorkspaceOption {
-  id: string
-  name: string
 }
 
 const STATUS_OPTIONS = [
@@ -84,7 +82,6 @@ export default function ProjectsPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [clients, setClients] = useState<ClientOption[]>([])
-  const [workspaces, setWorkspaces] = useState<WorkspaceOption[]>([])
   const limit = 20
 
   const fetchProjects = useCallback(async () => {
@@ -115,10 +112,6 @@ export default function ProjectsPage() {
   useEffect(() => {
     fetch('/api/clients?limit=200').then((r) => r.ok ? r.json() : null).then((d) => {
       if (d?.items) setClients(d.items)
-    })
-    fetch('/api/workspaces').then((r) => r.ok ? r.json() : null).then((d) => {
-      if (Array.isArray(d)) setWorkspaces(d)
-      else if (d?.items) setWorkspaces(d.items)
     })
   }, [])
 
@@ -151,17 +144,24 @@ export default function ProjectsPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3 mb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
+        <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
             <FolderKanban className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Progetti</h1>
-            <p className="text-sm text-muted">Gestione e monitoraggio progetti attivi</p>
+            <h1 className="text-xl md:text-2xl font-bold">Progetti Clienti</h1>
+            <p className="text-xs md:text-sm text-muted">Gestione e monitoraggio progetti attivi</p>
           </div>
         </div>
-        <Button onClick={() => setModalOpen(true)}>
+        <div className="hidden sm:block">
+          <MicroExpander
+            text="Nuovo Progetto"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={() => setModalOpen(true)}
+          />
+        </div>
+        <Button onClick={() => setModalOpen(true)} className="sm:hidden w-full">
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Progetto
         </Button>
@@ -235,9 +235,11 @@ export default function ProjectsPage() {
                       <p className="text-xs text-muted mb-3">{p.client.companyName}</p>
                     )}
                     <div className="flex items-center gap-2 mb-3 flex-wrap">
-                      <Badge variant={STATUS_BADGE[p.status] || 'default'}>
-                        {STATUS_LABELS[p.status] || p.status}
-                      </Badge>
+                      <StatusBadge
+                        leftLabel="Stato"
+                        rightLabel={STATUS_LABELS[p.status] || p.status}
+                        variant={p.status === 'IN_PROGRESS' ? 'success' : p.status === 'ON_HOLD' ? 'warning' : p.status === 'CANCELLED' ? 'error' : p.status === 'COMPLETED' ? 'default' : 'info'}
+                      />
                       <Badge variant={PRIORITY_BADGE[p.priority] || 'default'}>
                         {PRIORITY_LABELS[p.priority] || p.priority}
                       </Badge>
@@ -292,24 +294,14 @@ export default function ProjectsPage() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuovo Progetto" size="lg">
         <form onSubmit={handleCreateProject} className="space-y-4">
           <Input name="name" label="Nome Progetto *" required />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              name="workspaceId"
-              label="Workspace *"
-              options={[
-                { value: '', label: 'Seleziona workspace' },
-                ...workspaces.map((w) => ({ value: w.id, label: w.name })),
-              ]}
-            />
-            <Select
-              name="clientId"
-              label="Cliente"
-              options={[
-                { value: '', label: 'Seleziona cliente' },
-                ...clients.map((c) => ({ value: c.id, label: c.companyName })),
-              ]}
-            />
-          </div>
+          <Select
+            name="clientId"
+            label="Cliente"
+            options={[
+              { value: '', label: 'Seleziona cliente' },
+              ...clients.map((c) => ({ value: c.id, label: c.companyName })),
+            ]}
+          />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-foreground">Descrizione</label>
             <textarea
@@ -329,7 +321,7 @@ export default function ProjectsPage() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
-            <Button type="submit" disabled={submitting}>{submitting ? 'Salvataggio...' : 'Crea Progetto'}</Button>
+            <MorphButton type="submit" text="Crea Progetto" isLoading={submitting} />
           </div>
         </form>
       </Modal>

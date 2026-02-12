@@ -9,11 +9,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
     }
 
+    // CLIENT role gets limited team view (no email, phone, login details)
+    const isClient = role === 'CLIENT'
+
     const workspaceId = request.nextUrl.searchParams.get('workspace') || undefined
 
     const users = await prisma.user.findMany({
       where: {
         isActive: true,
+        ...(isClient && { role: { not: 'CLIENT' } }),
         ...(workspaceId && {
           workspaceMembers: { some: { workspaceId } },
         }),
@@ -22,17 +26,19 @@ export async function GET(request: NextRequest) {
         id: true,
         firstName: true,
         lastName: true,
-        email: true,
+        email: !isClient,
         role: true,
         avatarUrl: true,
-        phone: true,
-        lastLoginAt: true,
-        workspaceMembers: {
-          select: {
-            workspace: { select: { id: true, name: true, color: true } },
-            role: true,
+        phone: !isClient,
+        lastLoginAt: !isClient,
+        ...(!isClient && {
+          workspaceMembers: {
+            select: {
+              workspace: { select: { id: true, name: true, color: true } },
+              role: true,
+            },
           },
-        },
+        }),
         _count: {
           select: {
             assignedTasks: { where: { status: { in: ['TODO', 'IN_PROGRESS'] } } },

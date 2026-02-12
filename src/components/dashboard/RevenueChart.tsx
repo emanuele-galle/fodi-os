@@ -24,6 +24,26 @@ interface MonthData {
 
 const MONTH_LABELS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic']
 
+const LABELS: Record<string, string> = { paid: 'Pagato', sent: 'Inviato', overdue: 'Scaduto' }
+
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; dataKey: string; fill: string }[]; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-xl border border-border/50 bg-card/95 backdrop-blur-sm px-4 py-3 shadow-lg">
+      <p className="text-xs font-medium text-muted mb-2">{label}</p>
+      {payload.filter(p => p.value > 0).map((p) => (
+        <div key={p.dataKey} className="flex items-center justify-between gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full" style={{ background: p.fill }} />
+            <span className="text-muted">{LABELS[p.dataKey] || p.dataKey}</span>
+          </div>
+          <span className="font-semibold tabular-nums">{formatCurrency(p.value)}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function RevenueChart() {
   const [data, setData] = useState<MonthData[]>([])
   const [loading, setLoading] = useState(true)
@@ -77,21 +97,32 @@ export function RevenueChart() {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-        <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="var(--color-muted)" />
+        <defs>
+          <linearGradient id="gradPaid" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.9} />
+            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0.6} />
+          </linearGradient>
+          <linearGradient id="gradSent" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-warning)" stopOpacity={0.9} />
+            <stop offset="100%" stopColor="var(--color-warning)" stopOpacity={0.6} />
+          </linearGradient>
+          <linearGradient id="gradOverdue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-destructive)" stopOpacity={0.9} />
+            <stop offset="100%" stopColor="var(--color-destructive)" stopOpacity={0.6} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
+        <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" />
         <YAxis
-          tick={{ fontSize: 12 }}
-          stroke="var(--color-muted)"
+          tick={{ fontSize: 12, fill: 'var(--color-muted)' }}
+          stroke="transparent"
           tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
         />
-        <Tooltip
-          formatter={(value?: number, name?: string) => [formatCurrency(value ?? 0), name === 'paid' ? 'Pagato' : name === 'sent' ? 'Inviato' : 'Scaduto']}
-          contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8 }}
-        />
-        <Legend formatter={(v) => v === 'paid' ? 'Pagato' : v === 'sent' ? 'Inviato' : 'Scaduto'} />
-        <Bar dataKey="paid" stackId="a" fill="#22C55E" radius={[0, 0, 0, 0]} />
-        <Bar dataKey="sent" stackId="a" fill="#F59E0B" radius={[0, 0, 0, 0]} />
-        <Bar dataKey="overdue" stackId="a" fill="#EF4444" radius={[4, 4, 0, 0]} />
+        <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
+        <Legend formatter={(v) => LABELS[v] || v} />
+        <Bar dataKey="paid" stackId="a" fill="url(#gradPaid)" />
+        <Bar dataKey="sent" stackId="a" fill="url(#gradSent)" />
+        <Bar dataKey="overdue" stackId="a" fill="url(#gradOverdue)" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )

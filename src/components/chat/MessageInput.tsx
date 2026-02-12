@@ -143,11 +143,11 @@ export function MessageInput({ onSend, onSendFile, onTyping, replyTo, onCancelRe
             disabled={disabled}
             rows={1}
             className={cn(
-              'w-full resize-none rounded-xl bg-secondary/60 px-4 py-2.5 pr-10 text-sm',
+              'w-full resize-none rounded-xl bg-secondary/60 px-4 py-2.5 pr-10 text-base md:text-sm',
               'border border-border/30 hover:border-border/60',
               'placeholder:text-muted-foreground/40',
               'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 focus:bg-background',
-              'min-h-[42px] max-h-[160px] transition-all duration-200'
+              'min-h-[44px] md:min-h-[42px] max-h-[160px] transition-all duration-200'
             )}
           />
           <div className="absolute right-3 bottom-2.5" ref={emojiRef}>
@@ -159,14 +159,14 @@ export function MessageInput({ onSend, onSendFile, onTyping, replyTo, onCancelRe
               <Smile className="h-4.5 w-4.5" />
             </button>
             {emojiOpen && (
-              <div className="absolute bottom-8 right-0 z-50 bg-card border border-border/60 rounded-xl shadow-lg p-2 w-[280px]">
-                <div className="grid grid-cols-8 gap-0.5">
+              <div className="absolute bottom-8 right-0 md:right-0 z-50 bg-card border border-border/60 rounded-xl shadow-lg p-2 w-[calc(100vw-2rem)] md:w-[280px] max-w-[320px]">
+                <div className="grid grid-cols-8 gap-1 md:gap-0.5">
                   {EMOJI_LIST.map((emoji) => (
                     <button
                       key={emoji}
                       type="button"
                       onClick={() => insertEmoji(emoji)}
-                      className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-secondary/80 transition-colors text-lg"
+                      className="h-10 w-10 md:h-8 md:w-8 flex items-center justify-center rounded-lg hover:bg-secondary/80 transition-colors text-xl md:text-lg touch-manipulation"
                     >
                       {emoji}
                     </button>

@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Receipt, FileText, CreditCard, BarChart3, ArrowRight, Landmark } from 'lucide-react'
+import { Receipt, FileText, CreditCard, BarChart3, ArrowRight, Landmark, Send, PiggyBank, Wallet, TrendingUp } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 import { MarginChart } from '@/components/erp/MarginChart'
+import { FinancialDashboard } from '@/components/ui/financial-dashboard'
 
 export default function ErpPage() {
   const router = useRouter()
@@ -18,14 +19,16 @@ export default function ErpPage() {
     unpaidInvoices: 0,
     monthExpenses: 0,
   })
+  const [recentInvoices, setRecentInvoices] = useState<{ number: string; client: string; total: number; status: string; createdAt: string }[]>([])
 
   useEffect(() => {
     Promise.all([
       fetch('/api/quotes?status=DRAFT&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
       fetch('/api/invoices?status=SENT&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
       fetch('/api/expenses?limit=100').then((r) => (r.ok ? r.json() : { items: [] })),
+      fetch('/api/invoices?limit=5&sort=createdAt&order=desc').then((r) => (r.ok ? r.json() : { items: [] })),
     ])
-      .then(([quotesData, invoicesData, expensesData]) => {
+      .then(([quotesData, invoicesData, expensesData, recentInvData]) => {
         const now = new Date()
         const thisMonth = expensesData.items?.filter((e: { date: string }) => {
           const d = new Date(e.date)
@@ -41,6 +44,15 @@ export default function ErpPage() {
           unpaidInvoices: invoicesData.total || 0,
           monthExpenses: monthTotal,
         })
+        setRecentInvoices(
+          (recentInvData.items || []).map((inv: any) => ({
+            number: inv.number || `#${inv.id?.slice(0, 6)}`,
+            client: inv.client?.name || inv.clientName || 'Cliente',
+            total: parseFloat(inv.total),
+            status: inv.status,
+            createdAt: inv.createdAt,
+          }))
+        )
       })
       .finally(() => setLoading(false))
   }, [])
@@ -78,15 +90,13 @@ export default function ErpPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-            <Landmark className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">ERP</h1>
-            <p className="text-sm text-muted">Gestione preventivi, fatture, spese e report</p>
-          </div>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+          <Landmark className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold">ERP</h1>
+          <p className="text-xs md:text-sm text-muted">Gestione preventivi, fatture, spese e report</p>
         </div>
       </div>
 
@@ -122,6 +132,32 @@ export default function ErpPage() {
           )
         })}
       </div>
+
+      {!loading && (
+        <div className="mt-6 flex justify-center">
+          <FinancialDashboard
+            quickActions={[
+              { icon: FileText, title: 'Preventivo', description: 'Crea nuovo' },
+              { icon: Receipt, title: 'Fattura', description: 'Emetti' },
+              { icon: CreditCard, title: 'Spesa', description: 'Registra' },
+              { icon: BarChart3, title: 'Report', description: 'Visualizza' },
+            ]}
+            recentActivity={recentInvoices.map((inv) => ({
+              icon: inv.status === 'PAID' ? <div className="p-2 rounded-full bg-green-500/10 text-green-500"><Receipt className="w-5 h-5" /></div>
+                : inv.status === 'OVERDUE' ? <div className="p-2 rounded-full bg-red-500/10 text-red-500"><Receipt className="w-5 h-5" /></div>
+                : <div className="p-2 rounded-full bg-blue-500/10 text-blue-500"><Receipt className="w-5 h-5" /></div>,
+              title: `${inv.number} - ${inv.client}`,
+              time: inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('it-IT') : '',
+              amount: inv.status === 'PAID' ? inv.total : -inv.total,
+            }))}
+            financialServices={[
+              { icon: TrendingUp, title: 'Report Finanziari', description: 'Analisi completa ricavi e spese', hasAction: true },
+              { icon: PiggyBank, title: 'Gestione Spese', description: 'Tracciamento e categorizzazione', hasAction: true },
+              { icon: Send, title: 'Invio Fatture', description: 'Invio automatico ai clienti', isPremium: true, hasAction: true },
+            ]}
+          />
+        </div>
+      )}
 
       <Card className="mt-6 accent-line-top">
         <CardHeader>

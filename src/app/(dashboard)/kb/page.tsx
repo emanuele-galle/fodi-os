@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { BookOpen, Plus, Search, ChevronRight, FolderOpen, FileText, Edit } from 'lucide-react'
+import { MicroExpander } from '@/components/ui/MicroExpander'
 import { WikiPageComments } from '@/components/kb/WikiPageComments'
 import { Button } from '@/components/ui/Button'
+import { MorphButton } from '@/components/ui/MorphButton'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
@@ -230,13 +232,13 @@ export default function KnowledgeBasePage() {
 
   return (
     <div className="flex flex-col h-full animate-fade-in">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
             <BookOpen className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Knowledge Base</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Knowledge Base</h1>
             <p className="text-sm text-muted">Documenti, guide e procedure del team</p>
           </div>
         </div>
@@ -247,10 +249,16 @@ export default function KnowledgeBasePage() {
           >
             {showTree ? 'Nascondi Albero' : 'Mostra Albero'}
           </button>
-          <Button onClick={() => setModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Nuova Pagina</span>
-            <span className="sm:hidden">Nuova</span>
+          <div className="hidden sm:block">
+            <MicroExpander
+              text="Nuova Pagina"
+              icon={<Plus className="h-4 w-4" />}
+              onClick={() => setModalOpen(true)}
+            />
+          </div>
+          <Button onClick={() => setModalOpen(true)} className="sm:hidden">
+            <Plus className="h-4 w-4 mr-1" />
+            Nuova
           </Button>
         </div>
       </div>
@@ -310,7 +318,7 @@ export default function KnowledgeBasePage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 border border-border rounded-lg p-6 min-h-[400px] animate-fade-in glass-card">
+        <div className="flex-1 border border-border rounded-lg p-4 md:p-6 min-h-[400px] animate-fade-in glass-card">
           {loadingPage ? (
             <div className="space-y-4">
               <Skeleton className="h-8 w-64" />
@@ -409,9 +417,7 @@ export default function KnowledgeBasePage() {
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
               Annulla
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Salvataggio...' : 'Crea Pagina'}
-            </Button>
+            <MorphButton type="submit" text="Crea Pagina" isLoading={submitting} />
           </div>
         </form>
       </Modal>

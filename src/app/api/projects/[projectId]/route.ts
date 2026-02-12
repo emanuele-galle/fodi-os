@@ -61,23 +61,25 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         { status: 400 }
       )
     }
-    const { name, description, status, priority, startDate, endDate, deadline, budgetAmount, budgetHours, color, clientId } = parsed.data
+    const { name, description, status, priority, startDate, endDate, deadline, budgetAmount, budgetHours, color, clientId, workspaceId } = parsed.data
+
+    const data: Record<string, unknown> = {}
+    if (name !== undefined) data.name = name
+    if (description !== undefined) data.description = description
+    if (status !== undefined) data.status = status
+    if (priority !== undefined) data.priority = priority
+    if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null
+    if (endDate !== undefined) data.endDate = endDate ? new Date(endDate) : null
+    if (deadline !== undefined) data.deadline = deadline ? new Date(deadline) : null
+    if (budgetAmount !== undefined) data.budgetAmount = budgetAmount
+    if (budgetHours !== undefined) data.budgetHours = budgetHours
+    if (color !== undefined) data.color = color
+    if (clientId !== undefined) data.clientId = clientId
+    if (workspaceId !== undefined) data.workspaceId = workspaceId
 
     const project = await prisma.project.update({
       where: { id: projectId },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(description !== undefined && { description }),
-        ...(status !== undefined && { status }),
-        ...(priority !== undefined && { priority }),
-        ...(startDate !== undefined && { startDate: startDate ? new Date(startDate) : null }),
-        ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
-        ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
-        ...(budgetAmount !== undefined && { budgetAmount }),
-        ...(budgetHours !== undefined && { budgetHours }),
-        ...(color !== undefined && { color }),
-        ...(clientId !== undefined && { clientId }),
-      },
+      data: data as any,
     })
 
     return NextResponse.json(project)

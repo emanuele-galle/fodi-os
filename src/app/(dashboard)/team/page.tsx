@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Users, Search, Mail, Phone, CheckCircle2, Clock, Calendar, Video } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -9,6 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { MarketingDashboard } from '@/components/ui/dashboard-1'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
 
@@ -75,6 +77,7 @@ function getActivityStatus(lastLoginAt: string | null): { label: string; color: 
 }
 
 export default function TeamPage() {
+  const router = useRouter()
   const [members, setMembers] = useState<TeamMember[]>([])
   const [workspaces, setWorkspaces] = useState<{ value: string; label: string }[]>([])
   const [loading, setLoading] = useState(true)
@@ -82,6 +85,18 @@ export default function TeamPage() {
   const [workspaceFilter, setWorkspaceFilter] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [meetingMemberId, setMeetingMemberId] = useState<string | null>(null)
+
+  const teamSummary = useMemo(() => {
+    const totalTasks = members.reduce((s, m) => s + m.totalTasks, 0)
+    const totalTime = members.reduce((s, m) => s + m.totalTimeEntries, 0)
+    const activeCount = members.filter((m) => {
+      if (!m.lastLoginAt) return false
+      return Date.now() - new Date(m.lastLoginAt).getTime() < 72 * 60 * 60 * 1000
+    }).length
+    const activePercent = members.length ? Math.round((activeCount / members.length) * 100) : 0
+    const taskPercent = Math.min(100, members.length ? Math.round((totalTasks / Math.max(totalTasks + totalTime, 1)) * 100) : 0)
+    return { totalTime, totalTasks, activePercent, taskPercent, activeCount }
+  }, [members])
 
   useEffect(() => {
     async function loadTeam() {
@@ -149,6 +164,36 @@ export default function TeamPage() {
           <p className="text-sm text-muted mt-1">{filtered.length} membri</p>
         </div>
       </div>
+
+      {!loading && members.length > 0 && (
+        <div className="mb-8 flex justify-center">
+          <MarketingDashboard
+            title="Team Overview"
+            className="w-full max-w-full"
+            teamActivities={{
+              totalHours: teamSummary.totalTime,
+              stats: [
+                { label: 'Attivi', value: teamSummary.activePercent, color: 'bg-green-400' },
+                { label: 'Task', value: teamSummary.taskPercent, color: 'bg-blue-400' },
+                { label: 'Altro', value: Math.max(0, 100 - teamSummary.activePercent - teamSummary.taskPercent), color: 'bg-muted' },
+              ],
+            }}
+            team={{
+              memberCount: members.length,
+              members: members.slice(0, 5).map((m) => ({
+                id: m.id,
+                name: `${m.firstName} ${m.lastName}`,
+                avatarUrl: m.avatarUrl || '',
+              })),
+            }}
+            cta={{
+              text: `${teamSummary.totalTasks} task assegnati al team`,
+              buttonText: 'Vedi Task',
+              onButtonClick: () => router.push('/tasks'),
+            }}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
@@ -251,10 +296,10 @@ export default function TeamPage() {
                     <button
                       onClick={() => handleMeetWithMember(member)}
                       disabled={meetingMemberId === member.id}
-                      className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors disabled:opacity-50"
+                      className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 md:px-2 md:py-1 rounded-md text-xs font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors disabled:opacity-50 touch-manipulation min-h-[44px] md:min-h-0"
                       title={`Avvia Meet con ${member.firstName}`}
                     >
-                      <Video className="h-3 w-3" />
+                      <Video className="h-3.5 w-3.5 md:h-3 md:w-3" />
                       Meet
                     </button>
                   </div>

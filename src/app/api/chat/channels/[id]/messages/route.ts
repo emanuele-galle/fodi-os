@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createMessageSchema } from '@/lib/validation'
 import { sseManager } from '@/lib/sse'
+import { sanitizeHtml } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(
@@ -88,11 +89,13 @@ export async function POST(
       )
     }
 
+    const sanitizedContent = sanitizeHtml(parsed.data.content)
+
     const message = await prisma.chatMessage.create({
       data: {
         channelId,
         authorId: userId,
-        content: parsed.data.content,
+        content: sanitizedContent,
         type: parsed.data.type,
         metadata: parsed.data.metadata ?? undefined,
       },
@@ -124,7 +127,7 @@ export async function POST(
 
     // Check for @mentions and create notifications
     const mentionRegex = /@(\w+)/g
-    const mentions = [...parsed.data.content.matchAll(mentionRegex)]
+    const mentions = [...sanitizedContent.matchAll(mentionRegex)]
     if (mentions.length > 0) {
       const mentionedNames = mentions.map((m) => m[1].toLowerCase())
       const mentionedUsers = await prisma.user.findMany({

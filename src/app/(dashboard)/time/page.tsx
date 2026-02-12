@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Clock, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { MorphButton } from '@/components/ui/MorphButton'
+import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -131,9 +133,16 @@ export default function TimeTrackingPage() {
             <p className="text-sm text-muted">Registrazione e analisi ore lavorate</p>
           </div>
         </div>
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Registra Ore
+        <div className="hidden sm:block flex-shrink-0">
+          <MicroExpander
+            text="Registra Ore"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={() => setModalOpen(true)}
+          />
+        </div>
+        <Button onClick={() => setModalOpen(true)} className="sm:hidden flex-shrink-0">
+          <Plus className="h-4 w-4 mr-1" />
+          Registra
         </Button>
       </div>
 
@@ -295,7 +304,7 @@ export default function TimeTrackingPage() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
-            <Button type="submit" disabled={submitting}>{submitting ? 'Salvataggio...' : 'Registra'}</Button>
+            <MorphButton type="submit" text="Registra" isLoading={submitting} />
           </div>
         </form>
       </Modal>

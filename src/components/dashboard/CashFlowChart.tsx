@@ -15,6 +15,24 @@ interface MonthCashFlow {
 
 const MONTH_LABELS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic']
 
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; dataKey: string; stroke: string }[]; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-xl border border-border/50 bg-card/95 backdrop-blur-sm px-4 py-3 shadow-lg">
+      <p className="text-xs font-medium text-muted mb-2">{label}</p>
+      {payload.map((p) => (
+        <div key={p.dataKey} className="flex items-center justify-between gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full" style={{ background: p.stroke }} />
+            <span className="text-muted">{p.dataKey === 'entrate' ? 'Entrate' : 'Uscite'}</span>
+          </div>
+          <span className="font-semibold tabular-nums">{formatCurrency(p.value)}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function CashFlowChart() {
   const [data, setData] = useState<MonthCashFlow[]>([])
   const [loading, setLoading] = useState(true)
@@ -74,29 +92,44 @@ export function CashFlowChart() {
     <ResponsiveContainer width="100%" height={280}>
       <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
         <defs>
-          <linearGradient id="colorEntrate" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+          <linearGradient id="gradEntrate" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.25} />
+            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0.02} />
           </linearGradient>
-          <linearGradient id="colorUscite" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+          <linearGradient id="gradUscite" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-destructive)" stopOpacity={0.2} />
+            <stop offset="100%" stopColor="var(--color-destructive)" stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-        <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="var(--color-muted)" />
+        <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
+        <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" />
         <YAxis
-          tick={{ fontSize: 12 }}
-          stroke="var(--color-muted)"
+          tick={{ fontSize: 12, fill: 'var(--color-muted)' }}
+          stroke="transparent"
           tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
         />
-        <Tooltip
-          formatter={(value) => formatCurrency(Number(value))}
-          contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8 }}
-        />
+        <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--color-primary)', strokeDasharray: '4 4', strokeOpacity: 0.5 }} />
         <Legend formatter={(v) => v === 'entrate' ? 'Entrate' : 'Uscite'} />
-        <Area type="monotone" dataKey="entrate" stroke="#22C55E" fillOpacity={1} fill="url(#colorEntrate)" strokeWidth={2} />
-        <Area type="monotone" dataKey="uscite" stroke="#EF4444" fillOpacity={1} fill="url(#colorUscite)" strokeWidth={2} />
+        <Area
+          type="monotone"
+          dataKey="entrate"
+          stroke="var(--color-accent)"
+          fillOpacity={1}
+          fill="url(#gradEntrate)"
+          strokeWidth={2}
+          dot={false}
+          activeDot={{ r: 5, fill: 'var(--color-accent)', stroke: 'white', strokeWidth: 2 }}
+        />
+        <Area
+          type="monotone"
+          dataKey="uscite"
+          stroke="var(--color-destructive)"
+          fillOpacity={1}
+          fill="url(#gradUscite)"
+          strokeWidth={2}
+          dot={false}
+          activeDot={{ r: 5, fill: 'var(--color-destructive)', stroke: 'white', strokeWidth: 2 }}
+        />
       </AreaChart>
     </ResponsiveContainer>
   )

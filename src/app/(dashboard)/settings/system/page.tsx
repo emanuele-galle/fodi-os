@@ -37,6 +37,53 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.3.0',
+    date: '2026-02-11',
+    sections: [
+      {
+        title: 'Workspace & Progetti',
+        icon: Sparkles,
+        items: [
+          'Workspace aziendali: Amministrativo, Commerciale, Tecnico, Clienti',
+          'Filtro workspace nella pagina Azienda con tab dedicate',
+          'Raggruppamento progetti per workspace nella vista Tutti',
+          'Rimosso selettore workspace dai Progetti Clienti (assegnazione automatica)',
+          'Menu rinominato: Progetti → Progetti Clienti',
+          'Link rapido a Progetti Interni dalla pagina Clienti',
+        ],
+      },
+      {
+        title: 'Chat',
+        icon: Sparkles,
+        items: [
+          'Selezione multipla messaggi con checkbox per eliminazione bulk',
+          'Barra flottante con conteggio e azione Elimina selezionati',
+          'Separazione Messaggi Diretti e Canali nella sidebar chat',
+          'Sezioni dedicate con icone distinte (DM vs Canali)',
+        ],
+      },
+      {
+        title: 'Sicurezza',
+        icon: Sparkles,
+        items: [
+          'Rate limiting login: max 5 tentativi/minuto per IP',
+          'Security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection',
+          'Referrer-Policy e Permissions-Policy nel middleware',
+          'Sanitizzazione HTML messaggi chat (anti-XSS)',
+        ],
+      },
+      {
+        title: 'Bug Fix',
+        icon: Bug,
+        items: [
+          'Fix API /time-entries 404 (route mancante, ora con GET e POST)',
+          'Fix API /projects 400 (workspaceId ora opzionale con fallback automatico)',
+          'Fix favicon non visibile (aggiornato a PNG con gradiente gold)',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.2.0',
     date: '2026-02-11',
     sections: [
@@ -196,7 +243,7 @@ export default function SystemStatsPage() {
   const [stats, setStats] = useState<SystemStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({ '0.2.0': true })
+  const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({ '0.3.0': true })
   const [activeTab, setActiveTab] = useState<'overview' | 'changelog'>('overview')
 
   useEffect(() => {

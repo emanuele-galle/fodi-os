@@ -78,41 +78,50 @@ function setAccessCookie(response: NextResponse, token: string): void {
   })
 }
 
+function setSecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  response.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://apis.google.com https://accounts.google.com; frame-src 'self' https://meet.google.com https://accounts.google.com;")
+  return response
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Skip static files and Next.js internals
   if (pathname.startsWith('/_next') || pathname.includes('.')) {
-    return NextResponse.next()
+    return setSecurityHeaders(NextResponse.next())
   }
 
   // Public paths - always allow
   if (isPublic(pathname)) {
-    return NextResponse.next()
+    return setSecurityHeaders(NextResponse.next())
   }
 
   // Portal paths - check portal cookie
   if (isPortal(pathname)) {
     const portalToken = request.cookies.get('fodi_portal')?.value
     if (!portalToken) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)))
     }
     const payload = await verifyToken(portalToken)
     if (!payload) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)))
     }
-    return NextResponse.next()
+    return setSecurityHeaders(NextResponse.next())
   }
 
   // API paths - verify Bearer token or cookie, with auto-refresh
   if (isApi(pathname)) {
     // Allow POST /api/leads without auth (external webhooks)
     if (pathname === '/api/leads' && request.method === 'POST') {
-      return NextResponse.next()
+      return setSecurityHeaders(NextResponse.next())
     }
-    // Allow N8N webhooks without auth
-    if (pathname.startsWith('/api/webhooks/')) {
-      return NextResponse.next()
+    // Allow N8N webhooks without auth (specific path only)
+    if (pathname === '/api/webhooks/n8n') {
+      return setSecurityHeaders(NextResponse.next())
     }
 
     const authHeader = request.headers.get('authorization')
@@ -127,7 +136,7 @@ export async function middleware(request: NextRequest) {
         const response = NextResponse.next()
         response.headers.set('x-user-id', payload.sub)
         response.headers.set('x-user-role', payload.role)
-        return response
+        return setSecurityHeaders(response)
       }
     }
 
@@ -138,10 +147,10 @@ export async function middleware(request: NextRequest) {
       response.headers.set('x-user-id', refreshResult.payload.sub)
       response.headers.set('x-user-role', refreshResult.payload.role)
       setAccessCookie(response, refreshResult.token)
-      return response
+      return setSecurityHeaders(response)
     }
 
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return setSecurityHeaders(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
   }
 
   // Dashboard paths (everything else) - verify access cookie with auto-refresh
@@ -151,7 +160,7 @@ export async function middleware(request: NextRequest) {
   if (accessToken) {
     const payload = await verifyToken(accessToken)
     if (payload) {
-      return NextResponse.next()
+      return setSecurityHeaders(NextResponse.next())
     }
   }
 
@@ -160,11 +169,11 @@ export async function middleware(request: NextRequest) {
   if (refreshResult) {
     const response = NextResponse.next()
     setAccessCookie(response, refreshResult.token)
-    return response
+    return setSecurityHeaders(response)
   }
 
   // Both tokens invalid - redirect to login
-  return NextResponse.redirect(new URL('/login', request.url))
+  return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)))
 }
 
 export const config = {

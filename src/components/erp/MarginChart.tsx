@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
@@ -12,6 +12,21 @@ interface MarginData {
   ricavo: number
   costo: number
   margine: number
+}
+
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; dataKey: string }[]; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-xl border border-border/50 bg-card/95 backdrop-blur-sm px-4 py-3 shadow-lg">
+      <p className="text-xs font-medium text-muted mb-2">{label}</p>
+      {payload.map((p) => (
+        <div key={p.dataKey} className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-muted">{p.dataKey === 'ricavo' ? 'Ricavo' : 'Costo'}</span>
+          <span className="font-semibold tabular-nums">{formatCurrency(p.value)}</span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export function MarginChart() {
@@ -33,7 +48,7 @@ export function MarginChart() {
         const timeEntries: { projectId: string | null; hours: number; billable: boolean }[] = timeRes.items || []
         const expenses: { projectId: string | null; amount: string }[] = expensesRes.items || []
 
-        const HOURLY_COST = 50 // costo orario medio
+        const HOURLY_COST = 50
 
         const marginData: MarginData[] = projects.slice(0, 8).map((project) => {
           const ricavo = invoices
@@ -76,23 +91,39 @@ export function MarginChart() {
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-        <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="var(--color-muted)" angle={-20} textAnchor="end" height={60} />
+        <defs>
+          <linearGradient id="gradRicavo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.9} />
+            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0.6} />
+          </linearGradient>
+          <linearGradient id="gradCosto" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-destructive)" stopOpacity={0.9} />
+            <stop offset="100%" stopColor="var(--color-destructive)" stopOpacity={0.6} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
+        <XAxis
+          dataKey="name"
+          tick={{ fontSize: 10, fill: 'var(--color-muted)' }}
+          stroke="transparent"
+          angle={-30}
+          textAnchor="end"
+          height={60}
+          interval={0}
+        />
         <YAxis
-          tick={{ fontSize: 12 }}
-          stroke="var(--color-muted)"
+          tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+          stroke="transparent"
           tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+          width={40}
         />
-        <Tooltip
-          formatter={(value?: number, name?: string) => [
-            name === 'margine' ? `${value ?? 0}%` : formatCurrency(value ?? 0),
-            name === 'ricavo' ? 'Ricavo' : name === 'costo' ? 'Costo' : 'Margine',
-          ]}
-          contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8 }}
+        <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
+        <Legend
+          formatter={(v) => v === 'ricavo' ? 'Ricavo' : 'Costo'}
+          wrapperStyle={{ fontSize: 12 }}
         />
-        <Legend formatter={(v) => v === 'ricavo' ? 'Ricavo' : v === 'costo' ? 'Costo' : 'Margine'} />
-        <Bar dataKey="ricavo" fill="#22C55E" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="costo" fill="#EF4444" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="ricavo" fill="url(#gradRicavo)" radius={[6, 6, 0, 0]} />
+        <Bar dataKey="costo" fill="url(#gradCosto)" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )

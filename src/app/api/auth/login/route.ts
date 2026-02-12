@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword, createAccessToken, createRefreshToken, setAuthCookies } from '@/lib/auth'
 import { loginSchema } from '@/lib/validation'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    if (!rateLimit(`login:${ip}`, 5, 60000)) {
+      return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
+    }
+
     const body = await request.json()
     const parsed = loginSchema.safeParse(body)
     if (!parsed.success) {

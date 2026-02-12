@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { LifeBuoy, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { MorphButton } from '@/components/ui/MorphButton'
+import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
@@ -167,19 +169,26 @@ export default function SupportPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
             <LifeBuoy className="h-5 w-5 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Supporto</h1>
-            <p className="text-sm text-muted">Gestione ticket e assistenza clienti</p>
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold">Supporto</h1>
+            <p className="text-xs md:text-sm text-muted">Gestione ticket e assistenza</p>
           </div>
         </div>
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuovo Ticket
+        <div className="hidden sm:block flex-shrink-0">
+          <MicroExpander
+            text="Nuovo Ticket"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={() => setModalOpen(true)}
+          />
+        </div>
+        <Button onClick={() => setModalOpen(true)} className="sm:hidden flex-shrink-0">
+          <Plus className="h-4 w-4 mr-1" />
+          Nuovo
         </Button>
       </div>
 
@@ -338,7 +347,7 @@ export default function SupportPage() {
               name="description"
               rows={4}
               required
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-base md:text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               placeholder="Descrivi il problema..."
             />
           </div>
@@ -350,9 +359,7 @@ export default function SupportPage() {
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
               Annulla
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Creazione...' : 'Crea Ticket'}
-            </Button>
+            <MorphButton type="submit" text="Crea Ticket" isLoading={submitting} />
           </div>
         </form>
       </Modal>

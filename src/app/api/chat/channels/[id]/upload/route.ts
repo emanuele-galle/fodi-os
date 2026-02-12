@@ -35,9 +35,15 @@ export async function POST(
       return NextResponse.json({ error: 'File troppo grande (max 25MB)' }, { status: 400 })
     }
 
+    // Block dangerous file types
+    const blockedExts = ['exe', 'bat', 'cmd', 'sh', 'php', 'jsp', 'cgi', 'html', 'htm', 'svg', 'msi', 'dll', 'scr', 'ps1']
+    const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
+    if (blockedExts.includes(ext)) {
+      return NextResponse.json({ error: 'Tipo di file non consentito' }, { status: 400 })
+    }
+
     // Upload to S3
     const buffer = Buffer.from(await file.arrayBuffer())
-    const ext = file.name.split('.').pop() || 'bin'
     const key = `chat/${channelId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`
 
     const fileUrl = await uploadFile(key, buffer, file.type)

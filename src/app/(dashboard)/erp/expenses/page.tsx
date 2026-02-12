@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Receipt, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { MorphButton } from '@/components/ui/MorphButton'
+import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -96,11 +98,26 @@ export default function ExpensesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Spese</h1>
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuova Spesa
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
+            <Receipt className="h-5 w-5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold">Spese</h1>
+            <p className="text-xs md:text-sm text-muted">Registrazione e analisi costi</p>
+          </div>
+        </div>
+        <div className="hidden sm:block flex-shrink-0">
+          <MicroExpander
+            text="Nuova Spesa"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={() => setModalOpen(true)}
+          />
+        </div>
+        <Button onClick={() => setModalOpen(true)} className="sm:hidden flex-shrink-0">
+          <Plus className="h-4 w-4 mr-1" />
+          Nuova
         </Button>
       </div>
 
@@ -157,32 +174,56 @@ export default function ExpensesPage() {
           }
         />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                <th className="py-3 pr-4 pl-3 font-medium">Data</th>
-                <th className="py-3 pr-4 font-medium">Categoria</th>
-                <th className="py-3 pr-4 font-medium">Descrizione</th>
-                <th className="py-3 font-medium text-right">Importo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {expenses.map((exp) => (
-                <tr key={exp.id} className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 transition-colors">
-                  <td className="py-3 pr-4">{new Date(exp.date).toLocaleDateString('it-IT')}</td>
-                  <td className="py-3 pr-4">
-                    <Badge variant={CATEGORY_BADGE[exp.category] || 'default'}>
-                      {CATEGORY_LABEL[exp.category] || exp.category}
-                    </Badge>
-                  </td>
-                  <td className="py-3 pr-4">{exp.description}</td>
-                  <td className="py-3 font-medium text-right">{formatCurrency(exp.amount)}</td>
+        <>
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-2">
+            {expenses.map((exp) => (
+              <div
+                key={exp.id}
+                className="rounded-lg border border-border bg-card p-3"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <Badge variant={CATEGORY_BADGE[exp.category] || 'default'}>
+                    {CATEGORY_LABEL[exp.category] || exp.category}
+                  </Badge>
+                  <span className="font-bold text-sm">{formatCurrency(exp.amount)}</span>
+                </div>
+                <p className="text-sm truncate">{exp.description}</p>
+                <p className="text-xs text-muted mt-1">
+                  {new Date(exp.date).toLocaleDateString('it-IT')}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-muted bg-secondary/30">
+                  <th className="py-3 pr-4 pl-3 font-medium">Data</th>
+                  <th className="py-3 pr-4 font-medium">Categoria</th>
+                  <th className="py-3 pr-4 font-medium">Descrizione</th>
+                  <th className="py-3 font-medium text-right">Importo</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {expenses.map((exp) => (
+                  <tr key={exp.id} className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 transition-colors">
+                    <td className="py-3 pr-4">{new Date(exp.date).toLocaleDateString('it-IT')}</td>
+                    <td className="py-3 pr-4">
+                      <Badge variant={CATEGORY_BADGE[exp.category] || 'default'}>
+                        {CATEGORY_LABEL[exp.category] || exp.category}
+                      </Badge>
+                    </td>
+                    <td className="py-3 pr-4">{exp.description}</td>
+                    <td className="py-3 font-medium text-right">{formatCurrency(exp.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuova Spesa" size="md">
@@ -196,7 +237,7 @@ export default function ExpensesPage() {
           <Input name="receipt" label="URL Ricevuta" placeholder="https://..." />
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
-            <Button type="submit" disabled={submitting}>{submitting ? 'Salvataggio...' : 'Aggiungi Spesa'}</Button>
+            <MorphButton type="submit" text="Aggiungi Spesa" isLoading={submitting} />
           </div>
         </form>
       </Modal>

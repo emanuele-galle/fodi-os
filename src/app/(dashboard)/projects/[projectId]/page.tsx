@@ -244,6 +244,9 @@ export default function ProjectDetailPage() {
     }
     if (body.budgetAmount) body.budgetAmount = parseFloat(body.budgetAmount as string)
     if (body.budgetHours) body.budgetHours = parseInt(body.budgetHours as string, 10)
+    // Convert dates from YYYY-MM-DD to ISO 8601 datetime
+    if (body.startDate) body.startDate = new Date(body.startDate as string).toISOString()
+    if (body.endDate) body.endDate = new Date(body.endDate as string).toISOString()
     // Allow clearing optional fields
     if (!editForm.clientId) body.clientId = null
     if (!editForm.startDate) body.startDate = null
@@ -259,6 +262,9 @@ export default function ProjectDetailPage() {
       if (res.ok) {
         setEditModalOpen(false)
         fetchProject()
+      } else {
+        const err = await res.json().catch(() => null)
+        alert(err?.error || 'Errore durante il salvataggio')
       }
     } finally {
       setEditSubmitting(false)

@@ -29,7 +29,19 @@ import {
   CheckCircle2,
   AlertTriangle,
   Camera,
+  Eye,
+  EyeOff,
+  RotateCcw,
 } from 'lucide-react'
+import {
+  SECTIONS,
+  SECTION_LABELS,
+  SECTION_ICONS,
+  getDefaultSectionAccess,
+  getEffectiveSectionAccess,
+  type Section,
+  type SectionAccessMap,
+} from '@/lib/section-access'
 import { formatDistanceToNow, format } from 'date-fns'
 import { it } from 'date-fns/locale'
 
@@ -44,6 +56,7 @@ interface UserItem {
   phone: string | null
   lastLoginAt: string | null
   createdAt: string
+  sectionAccess: SectionAccessMap | null
 }
 
 interface UserPermission {
@@ -100,7 +113,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   admin: 'Admin',
 }
 
-type ModalTab = 'profile' | 'permissions'
+type ModalTab = 'profile' | 'permissions' | 'sections'
 
 export default function UsersAdminPage() {
   const [users, setUsers] = useState<UserItem[]>([])
@@ -142,6 +155,11 @@ export default function UsersAdminPage() {
 
   // Avatar upload state
   const [avatarUploading, setAvatarUploading] = useState(false)
+
+  // Section access state
+  const [sectionOverrideActive, setSectionOverrideActive] = useState(false)
+  const [sectionAccessDraft, setSectionAccessDraft] = useState<SectionAccessMap | null>(null)
+  const [sectionsSaving, setSectionsSaving] = useState(false)
 
   useEffect(() => {
     loadUsers()
@@ -380,6 +398,15 @@ export default function UsersAdminPage() {
     if (tab === 'permissions' && editUser) {
       loadPermissions(editUser.id)
     }
+    if (tab === 'sections' && editUser) {
+      const hasOverride = !!editUser.sectionAccess
+      setSectionOverrideActive(hasOverride)
+      if (hasOverride) {
+        setSectionAccessDraft(editUser.sectionAccess)
+      } else {
+        setSectionAccessDraft(getDefaultSectionAccess(editUser.role as import('@/generated/prisma/client').Role))
+      }
+    }
   }
 
   // Delete user
@@ -399,6 +426,32 @@ export default function UsersAdminPage() {
       setEditError('Errore di connessione')
     } finally {
       setDeleteLoading(false)
+    }
+  }
+
+  // Section access save
+  async function saveSectionAccess() {
+    if (!editUser) return
+    setSectionsSaving(true)
+    setEditError('')
+    try {
+      const payload = sectionOverrideActive ? sectionAccessDraft : null
+      const res = await fetch(`/api/users/${editUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionAccess: payload }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setEditError(data.error || 'Errore salvataggio sezioni')
+        return
+      }
+      setUsers((prev) => prev.map((u) => (u.id === editUser.id ? { ...u, sectionAccess: payload } : u)))
+      setEditUser((prev) => prev ? { ...prev, sectionAccess: payload } : prev)
+    } catch {
+      setEditError('Errore di connessione')
+    } finally {
+      setSectionsSaving(false)
     }
   }
 
@@ -681,6 +734,16 @@ export default function UsersAdminPage() {
                 >
                   Permessi
                 </button>
+                <button
+                  onClick={() => handleTabChange('sections')}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    editTab === 'sections'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted hover:text-foreground'
+                  }`}
+                >
+                  Sezioni
+                </button>
               </div>
 
               {editError && (
@@ -875,6 +938,127 @@ export default function UsersAdminPage() {
                       </Button>
                     </>
                   )}
+                </div>
+              )}
+
+              {/* Sections Tab */}
+              {editTab === 'sections' && sectionAccessDraft && (
+                <div className="space-y-4">
+                  {/* Override toggle */}
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 border border-border/50">
+                    <div>
+                      <p className="text-sm font-medium">Personalizzazione attiva</p>
+                      <p className="text-xs text-muted">Se disattivo, l&apos;utente usa i permessi default del ruolo</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const next = !sectionOverrideActive
+                        setSectionOverrideActive(next)
+                        if (!next && editUser) {
+                          setSectionAccessDraft(getDefaultSectionAccess(editUser.role as import('@/generated/prisma/client').Role))
+                        }
+                      }}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${
+                        sectionOverrideActive ? 'bg-primary' : 'bg-border'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                          sectionOverrideActive ? 'translate-x-5' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Section cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {SECTIONS.map((section) => {
+                      const Icon = SECTION_ICONS[section]
+                      const perm = sectionAccessDraft[section]
+                      const defaults = editUser ? getDefaultSectionAccess(editUser.role as import('@/generated/prisma/client').Role) : null
+                      const isDefault = defaults ? perm.view === defaults[section].view && perm.edit === defaults[section].edit : false
+
+                      return (
+                        <div
+                          key={section}
+                          className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                            perm.view ? 'border-border bg-card' : 'border-border/50 bg-secondary/30 opacity-60'
+                          }`}
+                        >
+                          <div className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            perm.view ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted'
+                          }`}>
+                            <Icon className="h-4.5 w-4.5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-medium truncate">{SECTION_LABELS[section]}</p>
+                              {sectionOverrideActive && !isDefault && (
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" title="Modificato dal default" />
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button
+                              onClick={() => {
+                                setSectionAccessDraft((prev) => prev ? {
+                                  ...prev,
+                                  [section]: { ...prev[section], view: !prev[section].view, edit: !prev[section].view ? prev[section].edit : false },
+                                } : prev)
+                              }}
+                              disabled={!sectionOverrideActive}
+                              className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                                perm.view
+                                  ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25'
+                                  : 'bg-secondary text-muted hover:bg-secondary/80'
+                              } ${!sectionOverrideActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              title={perm.view ? 'Visibile' : 'Nascosto'}
+                            >
+                              {perm.view ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSectionAccessDraft((prev) => prev ? {
+                                  ...prev,
+                                  [section]: { ...prev[section], edit: !prev[section].edit },
+                                } : prev)
+                              }}
+                              disabled={!sectionOverrideActive || !perm.view}
+                              className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                                perm.edit
+                                  ? 'bg-blue-500/15 text-blue-600 hover:bg-blue-500/25'
+                                  : 'bg-secondary text-muted hover:bg-secondary/80'
+                              } ${(!sectionOverrideActive || !perm.view) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              title={perm.edit ? 'Modifica attiva' : 'Solo lettura'}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <Button onClick={saveSectionAccess} loading={sectionsSaving} className="flex-1">
+                      Salva Sezioni
+                    </Button>
+                    {sectionOverrideActive && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (editUser) {
+                            setSectionAccessDraft(getDefaultSectionAccess(editUser.role as import('@/generated/prisma/client').Role))
+                          }
+                        }}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                        Ripristina Default
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>

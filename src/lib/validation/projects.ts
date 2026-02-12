@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const createProjectSchema = z.object({
-  workspaceId: z.string().uuid('Workspace ID non valido'),
+  workspaceId: z.string().uuid('Workspace ID non valido').optional(),
   clientId: z.string().uuid('Client ID non valido').optional(),
   name: z.string().min(1, 'Nome progetto obbligatorio').max(200),
   description: z.string().optional(),
@@ -27,6 +27,7 @@ export const updateProjectSchema = z.object({
   budgetHours: z.number().int().min(0).optional().nullable(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Colore non valido').optional(),
   clientId: z.string().uuid('Client ID non valido').optional().nullable(),
+  workspaceId: z.string().uuid('Workspace ID non valido').optional().nullable(),
 })
 
 export const createMilestoneSchema = z.object({

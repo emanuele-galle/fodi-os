@@ -171,22 +171,22 @@ export default function TasksPage() {
   return (
     <div className="animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
             <CheckSquare className="h-5 w-5 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">I Miei Task</h1>
-            <p className="text-sm text-muted">Gestione attivita e scadenze</p>
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold truncate">I Miei Task</h1>
+            <p className="text-xs md:text-sm text-muted">Gestione attivita e scadenze</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <div className="flex rounded-md border border-border overflow-hidden">
             <Tooltip content="Vista lista">
               <button
                 onClick={() => { setView('list'); updatePreference('defaultView', 'list') }}
-                className={`p-2 transition-colors ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground'}`}
+                className={`p-2.5 md:p-2 transition-colors touch-manipulation ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground'}`}
               >
                 <ListTodo className="h-4 w-4" />
               </button>
@@ -194,7 +194,7 @@ export default function TasksPage() {
             <Tooltip content="Vista kanban">
               <button
                 onClick={() => { setView('kanban'); updatePreference('defaultView', 'kanban') }}
-                className={`p-2 transition-colors ${view === 'kanban' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground'}`}
+                className={`p-2.5 md:p-2 transition-colors touch-manipulation ${view === 'kanban' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground'}`}
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>

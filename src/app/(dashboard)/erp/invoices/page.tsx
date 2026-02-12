@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Receipt, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
@@ -74,11 +75,26 @@ export default function InvoicesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Fatture</h1>
-        <Button onClick={() => router.push('/erp/invoices/new')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuova Fattura
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
+            <Receipt className="h-5 w-5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold">Fatture</h1>
+            <p className="text-xs md:text-sm text-muted">Emissione e tracking pagamenti</p>
+          </div>
+        </div>
+        <div className="hidden sm:block flex-shrink-0">
+          <MicroExpander
+            text="Nuova Fattura"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={() => router.push('/erp/invoices/new')}
+          />
+        </div>
+        <Button onClick={() => router.push('/erp/invoices/new')} className="sm:hidden flex-shrink-0">
+          <Plus className="h-4 w-4 mr-1" />
+          Nuova
         </Button>
       </div>
 

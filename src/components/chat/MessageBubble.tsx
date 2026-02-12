@@ -191,7 +191,7 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
         ) : (
           <div className="w-8 flex-shrink-0" />
         )}
-        <div className={cn('max-w-[75%] min-w-0', isOwn && 'flex flex-col items-end')}>
+        <div className={cn('max-w-[85%] md:max-w-[75%] min-w-0', isOwn && 'flex flex-col items-end')}>
           <div className={cn('flex items-baseline gap-2 mb-0.5', isOwn && 'flex-row-reverse')}>
             {!isOwn && <span className="text-[12px] font-semibold text-foreground/80">{authorName}</span>}
             <span className="text-[10px] text-muted-foreground/40 font-medium">{time}</span>
@@ -287,7 +287,7 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
       ) : (
         <div className="w-8 flex-shrink-0" />
       )}
-      <div className={cn('max-w-[75%] min-w-0', isOwn && 'flex flex-col items-end')}>
+      <div className={cn('max-w-[85%] md:max-w-[75%] min-w-0', isOwn && 'flex flex-col items-end')}>
         <div className={cn('flex items-baseline gap-2 mb-0.5', isOwn && 'flex-row-reverse')}>
           {!isOwn && (
             <span className="text-[12px] font-semibold text-foreground/80">
@@ -363,10 +363,10 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
                 <div className="relative" ref={reactionRef}>
                   <button
                     onClick={() => setShowReactions(!showReactions)}
-                    className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-secondary/80 transition-colors text-muted-foreground/60 hover:text-muted-foreground"
+                    className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded-md hover:bg-secondary/80 transition-colors text-muted-foreground/60 hover:text-muted-foreground touch-manipulation"
                     title="Reagisci"
                   >
-                    <SmilePlus className="h-3.5 w-3.5" />
+                    <SmilePlus className="h-4 w-4 md:h-3.5 md:w-3.5" />
                   </button>
                   {showReactions && (
                     <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-card border border-border/60 rounded-lg shadow-lg p-1.5 flex gap-0.5 z-20">
@@ -374,7 +374,7 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
                         <button
                           key={emoji}
                           onClick={() => { onReact(message.id, emoji); setShowReactions(false) }}
-                          className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-secondary/80 transition-colors text-base"
+                          className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded-md hover:bg-secondary/80 transition-colors text-lg touch-manipulation"
                         >
                           {emoji}
                         </button>
@@ -387,10 +387,10 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
               {onReply && (
                 <button
                   onClick={() => onReply({ id: message.id, content: message.content, authorName })}
-                  className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-secondary/80 transition-colors text-muted-foreground/60 hover:text-muted-foreground"
+                  className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded-md hover:bg-secondary/80 transition-colors text-muted-foreground/60 hover:text-muted-foreground touch-manipulation"
                   title="Rispondi"
                 >
-                  <Reply className="h-3.5 w-3.5" />
+                  <Reply className="h-4 w-4 md:h-3.5 md:w-3.5" />
                 </button>
               )}
               {/* Own message menu (edit/delete) */}
@@ -398,27 +398,27 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
-                    className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-secondary/80 transition-colors text-muted-foreground/60 hover:text-muted-foreground"
+                    className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded-md hover:bg-secondary/80 transition-colors text-muted-foreground/60 hover:text-muted-foreground touch-manipulation"
                     title="Altro"
                   >
-                    <MoreHorizontal className="h-3.5 w-3.5" />
+                    <MoreHorizontal className="h-4 w-4 md:h-3.5 md:w-3.5" />
                   </button>
                   {menuOpen && (
-                    <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[120px]">
+                    <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[140px]">
                       {onEdit && (
                         <button
                           onClick={() => { setEditing(true); setEditText(message.content); setMenuOpen(false) }}
-                          className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-secondary/60 transition-colors text-left"
+                          className="w-full flex items-center gap-2 px-3 py-2.5 md:py-1.5 text-sm hover:bg-secondary/60 transition-colors text-left touch-manipulation"
                         >
-                          <Edit2 className="h-3.5 w-3.5" /> Modifica
+                          <Edit2 className="h-4 w-4 md:h-3.5 md:w-3.5" /> Modifica
                         </button>
                       )}
                       {onDelete && (
                         <button
                           onClick={() => { onDelete(message.id); setMenuOpen(false) }}
-                          className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-destructive/10 text-destructive transition-colors text-left"
+                          className="w-full flex items-center gap-2 px-3 py-2.5 md:py-1.5 text-sm hover:bg-destructive/10 text-destructive transition-colors text-left touch-manipulation"
                         >
-                          <Trash2 className="h-3.5 w-3.5" /> Elimina
+                          <Trash2 className="h-4 w-4 md:h-3.5 md:w-3.5" /> Elimina
                         </button>
                       )}
                     </div>

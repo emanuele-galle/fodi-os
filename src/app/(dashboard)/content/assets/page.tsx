@@ -7,6 +7,7 @@ import {
   HardDrive,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card } from '@/components/ui/Card'
@@ -134,8 +135,15 @@ function MinioAssetsTab() {
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="w-full sm:w-48"
         />
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+        <div className="hidden sm:block flex-shrink-0">
+          <MicroExpander
+            text="Carica Asset"
+            icon={<Upload className="h-4 w-4" />}
+            onClick={() => setModalOpen(true)}
+          />
+        </div>
+        <Button onClick={() => setModalOpen(true)} className="sm:hidden flex-shrink-0">
+          <Plus className="h-4 w-4 mr-1" />
           Carica
         </Button>
       </div>

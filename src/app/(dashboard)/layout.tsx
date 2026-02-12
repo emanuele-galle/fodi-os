@@ -8,6 +8,7 @@ import { CommandPalette } from '@/components/layout/CommandPalette'
 import { useState, useEffect } from 'react'
 import { useAuthRefresh } from '@/hooks/useAuthRefresh'
 import type { Role } from '@/generated/prisma/client'
+import type { SectionAccessMap } from '@/lib/section-access'
 
 interface UserSession {
   id: string
@@ -16,6 +17,7 @@ interface UserSession {
   email: string
   role: Role
   avatarUrl?: string | null
+  sectionAccess?: SectionAccessMap | null
 }
 
 export default function DashboardLayout({
@@ -104,11 +106,11 @@ export default function DashboardLayout({
   return (
     <div className="h-screen flex bg-background overflow-hidden">
       {/* Sidebar: hidden on mobile, visible on md+ */}
-      <div className="hidden md:flex">
-        <Sidebar userRole={user.role} />
+      <div className="hidden md:block flex-shrink-0">
+        <Sidebar userRole={user.role} sectionAccess={user.sectionAccess} />
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-x-hidden">
         {/* MobileHeader: visible only on mobile */}
         <MobileHeader
           user={user}
@@ -129,7 +131,7 @@ export default function DashboardLayout({
       </div>
 
       {/* BottomNav: visible only on mobile */}
-      <BottomNav userRole={user.role} unreadChat={unreadChat} />
+      <BottomNav userRole={user.role} sectionAccess={user.sectionAccess} unreadChat={unreadChat} />
 
       <CommandPalette
         open={commandPaletteOpen}

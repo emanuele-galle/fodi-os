@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { sseManager } from '@/lib/sse'
+import { sanitizeHtml } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
 
 // Edit a message (only author can edit)
@@ -38,7 +39,7 @@ export async function PATCH(
 
     const updated = await prisma.chatMessage.update({
       where: { id: messageId },
-      data: { content: content.trim(), editedAt: new Date() },
+      data: { content: sanitizeHtml(content.trim()), editedAt: new Date() },
       include: {
         author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
       },
