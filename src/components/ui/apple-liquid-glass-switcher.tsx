@@ -113,7 +113,7 @@ export function ThemeSwitcher({
         themeOptions.find((o) => o.value === activeValue)?.cOption
       }
     >
-      <legend className="switcher__legend">Choose theme</legend>
+      <legend className="switcher__legend">Scegli tema</legend>
 
       {themeOptions.map((option) => (
         <label key={option.value} className="switcher__option">

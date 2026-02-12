@@ -90,7 +90,7 @@ export const MarketingDashboard = React.forwardRef<
   return (
     <motion.div
       ref={ref}
-      className={cn("w-full max-w-2xl p-6 bg-card text-card-foreground rounded-2xl border", className)}
+      className={cn("w-full p-6 bg-card text-card-foreground rounded-2xl border", className)}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -98,7 +98,7 @@ export const MarketingDashboard = React.forwardRef<
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">{title}</h2>
-        <Button variant="ghost" size="icon" onClick={onFilterClick} aria-label="Filter activities">
+        <Button variant="ghost" size="icon" onClick={onFilterClick} aria-label="Filtra attività">
           <Filter className="w-5 h-5" />
         </Button>
       </motion.div>
@@ -114,14 +114,14 @@ export const MarketingDashboard = React.forwardRef<
           <Card className="h-full p-4 overflow-hidden rounded-xl">
             <CardContent className="p-2">
               <div className="flex items-center justify-between mb-4">
-                <p className="font-medium text-muted-foreground">Team Activities</p>
+                <p className="font-medium text-muted-foreground">Attività Team</p>
                 <Clock className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="mb-4">
                 <span className="text-4xl font-bold">
                   <AnimatedNumber value={teamActivities.totalHours} />
                 </span>
-                <span className="ml-1 text-muted-foreground">hours</span>
+                <span className="ml-1 text-muted-foreground">ore</span>
               </div>
               {/* Progress Bar */}
               <div className="w-full h-2 mb-2 overflow-hidden rounded-full bg-muted flex">
@@ -154,17 +154,17 @@ export const MarketingDashboard = React.forwardRef<
           whileHover={{ scale: 1.03, y: -5 }} // Added for hover effect
           transition={hoverTransition} // Added for hover effect
         >
-          <Card className="h-full p-4 overflow-hidden rounded-xl bg-lime-50 dark:bg-lime-900/30 border-lime-200 dark:border-lime-800">
+          <Card className="h-full p-4 overflow-hidden rounded-xl bg-accent/5 border-accent/20">
             <CardContent className="p-2">
               <div className="flex items-center justify-between mb-4">
-                <p className="font-medium text-lime-900 dark:text-lime-200">Team</p>
-                <Users className="w-5 h-5 text-lime-900 dark:text-lime-200" />
+                <p className="font-medium text-accent">Team</p>
+                <Users className="w-5 h-5 text-accent" />
               </div>
               <div className="mb-6">
-                <span className="text-4xl font-bold text-lime-950 dark:text-lime-50">
+                <span className="text-4xl font-bold text-foreground">
                    <AnimatedNumber value={team.memberCount} />
                 </span>
-                <span className="ml-1 text-lime-800 dark:text-lime-300">members</span>
+                <span className="ml-1 text-accent">membri</span>
               </div>
               {/* Avatar Stack */}
               <div className="flex -space-x-2">
@@ -176,7 +176,7 @@ export const MarketingDashboard = React.forwardRef<
                     transition={{ duration: 0.5, delay: 0.8 + index * 0.1 }}
                     whileHover={{ scale: 1.2, zIndex: 10, y: -2 }} // Added for hover effect
                   >
-                    <Avatar src={member.avatarUrl} name={member.name} size="md" className="border-2 border-lime-100 dark:border-lime-900" />
+                    <Avatar src={member.avatarUrl} name={member.name} size="md" className="border-2 border-accent/20" />
                   </motion.div>
                 ))}
               </div>

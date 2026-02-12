@@ -541,6 +541,159 @@ body.modal-open [data-bottom-nav] {
   --destructive-foreground: oklch(1 0 0);
 }
 
+/* ===== Apple Liquid Glass Theme Switcher ===== */
+
+.switcher {
+  --switcher-w: 120px;
+  --switcher-h: 40px;
+  --switcher-icon-size: 20px;
+  --switcher-padding: 4px;
+  --switcher-radius: 20px;
+  --switcher-option-size: calc((var(--switcher-w) - var(--switcher-padding) * 2) / 3);
+  --c: var(--color-muted);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: var(--switcher-w);
+  height: var(--switcher-h);
+  padding: var(--switcher-padding);
+  margin: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--switcher-radius);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.switcher::before {
+  content: "";
+  position: absolute;
+  top: var(--switcher-padding);
+  left: var(--switcher-padding);
+  width: var(--switcher-option-size);
+  height: calc(var(--switcher-h) - var(--switcher-padding) * 2);
+  border-radius: calc(var(--switcher-radius) - var(--switcher-padding));
+  background: var(--color-primary);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+  filter: url(#toggler);
+}
+
+/* Slide indicator based on active option */
+.switcher:has(.switcher__input[c-option="1"]:checked)::before {
+  transform: translateX(0);
+}
+.switcher:has(.switcher__input[c-option="2"]:checked)::before {
+  transform: translateX(calc(var(--switcher-option-size)));
+}
+.switcher:has(.switcher__input[c-option="3"]:checked)::before {
+  transform: translateX(calc(var(--switcher-option-size) * 2));
+}
+
+/* Scale animation on transition */
+.switcher[data-previous="1"]:has(.switcher__input[c-option="2"]:checked)::before,
+.switcher[data-previous="2"]:has(.switcher__input[c-option="1"]:checked)::before,
+.switcher[data-previous="2"]:has(.switcher__input[c-option="3"]:checked)::before,
+.switcher[data-previous="3"]:has(.switcher__input[c-option="2"]:checked)::before {
+  animation: scaleToggle 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.switcher[data-previous="1"]:has(.switcher__input[c-option="3"]:checked)::before,
+.switcher[data-previous="3"]:has(.switcher__input[c-option="1"]:checked)::before {
+  animation: scaleToggle2 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.switcher__legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.switcher__option {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--switcher-option-size);
+  height: calc(var(--switcher-h) - var(--switcher-padding) * 2);
+  cursor: pointer;
+  border-radius: calc(var(--switcher-radius) - var(--switcher-padding));
+  transition: transform 0.2s ease;
+}
+
+.switcher__option:active {
+  transform: scale(0.92);
+}
+
+.switcher__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  appearance: none;
+}
+
+.switcher__icon {
+  width: var(--switcher-icon-size);
+  height: var(--switcher-icon-size);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  --c: var(--color-muted);
+  filter: url(#switcher);
+}
+
+/* Active icon styling */
+.switcher__input:checked + .switcher__icon {
+  --c: var(--color-primary-foreground);
+  transform: scale(1.05);
+}
+
+/* Hover non-active icons */
+.switcher__option:hover .switcher__icon {
+  opacity: 0.8;
+}
+.switcher__option:hover .switcher__input:checked + .switcher__icon {
+  opacity: 1;
+}
+
+/* SVG filter container - hidden */
+.switcher__filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Focus-visible ring for accessibility */
+.switcher__input:focus-visible + .switcher__icon {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ===== End: Apple Liquid Glass Theme Switcher ===== */
+
 @layer base {
   * {
     @apply border-border;

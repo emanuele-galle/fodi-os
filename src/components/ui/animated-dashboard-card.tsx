@@ -28,8 +28,8 @@ interface BonusesIncentivesCardProps {
 }
 
 const defaultProps: Partial<BonusesIncentivesCardProps> = {
-  bonusText: "Bonus and Incentives",
-  incentivesText: "Incentives",
+  bonusText: "Entrate",
+  incentivesText: "Uscite",
   bonusesValue: 1250,
   incentivesValue: 875,
   borderColor: "border-border/30",
@@ -43,6 +43,8 @@ const defaultProps: Partial<BonusesIncentivesCardProps> = {
 
 export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
   const {
+    bonusText,
+    incentivesText,
     bonusesValue,
     incentivesValue,
     borderColor,
@@ -83,7 +85,7 @@ export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
       y: 0,
       scale: 1,
       transition: {
-        type: "spring" as const,
+        type: "spring",
         stiffness: 300,
         damping: 30,
         staggerChildren: 0.08,
@@ -102,7 +104,7 @@ export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
       scale: 1,
       transition: {
         duration: 0.5,
-        ease: "easeOut" as const,
+        ease: "easeOut",
       }
     }
   };
@@ -161,11 +163,11 @@ export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
             {/* Center Text Overlay */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none -mt-24 -ml-12">
               <div className="text-center" style={{ zIndex: 20 }}>
-                <motion.div 
+                <motion.div
                   className="text-xl font-medium text-foreground mb-2"
                   initial={shouldAnimate ? { opacity: 0, y: -10, scale: 0.95 } : {}}
                   animate={shouldAnimate ? { opacity: 1, y: 0, scale: 1 } : {}}
-                  transition={{ 
+                  transition={{
                     delay: 0.3,
                     type: "spring",
                     stiffness: 400,
@@ -173,13 +175,13 @@ export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
                     mass: 0.6
                   }}
                 >
-                  TOTAL
+                  TOTALE
                 </motion.div>
-                <motion.div 
+                <motion.div
                   className="text-5xl font-bold text-foreground"
                   initial={shouldAnimate ? { opacity: 0, y: 20, scale: 0.8, filter: "blur(4px)" } : {}}
                   animate={shouldAnimate ? { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } : {}}
-                  transition={{ 
+                  transition={{
                     delay: 0.5,
                     type: "spring",
                     stiffness: 300,
@@ -187,7 +189,7 @@ export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
                     mass: 0.8
                   }}
                 >
-                  ${(bonusesValue! + incentivesValue!).toLocaleString()}
+                  €{(bonusesValue! + incentivesValue!).toLocaleString()}
                 </motion.div>
               </div>
             </div>
@@ -221,7 +223,7 @@ export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
                   animate={shouldAnimate ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: 0.5 }}
                 >
-                  Bonuses
+                  {bonusText}
                 </motion.div>
               </div>
               <div className="flex flex-col">
@@ -231,7 +233,7 @@ export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
                   animate={shouldAnimate ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: 0.6 }}
                 >
-                  ${bonusesValue!.toLocaleString()}
+                  €{bonusesValue!.toLocaleString()}
                 </motion.div>
                 <motion.div
                   className="text-xs font-medium text-left"
@@ -261,7 +263,7 @@ export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
                   animate={shouldAnimate ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: 0.9 }}
                 >
-                  Incentives
+                  {incentivesText}
                 </motion.div>
               </div>
               <div className="flex flex-col">
@@ -271,7 +273,7 @@ export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
                   animate={shouldAnimate ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: 1.0 }}
                 >
-                  ${incentivesValue!.toLocaleString()}
+                  €{incentivesValue!.toLocaleString()}
                 </motion.div>
                 <motion.div
                   className="text-xs font-medium text-left"
@@ -295,7 +297,7 @@ export function BonusesIncentivesCard(props: BonusesIncentivesCardProps) {
             whileTap={shouldAnimate ? { scale: 0.98 } : {}}
             onClick={onMoreDetails}
           >
-            More Details
+            Dettagli
           </motion.button>
         </div>
         </div>

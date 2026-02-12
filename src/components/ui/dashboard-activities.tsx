@@ -37,7 +37,7 @@ export interface RecentActivityFeedProps {
  */
 export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
   activities,
-  cardTitle = "Recent Activity",
+  cardTitle = "Attività Recenti",
   className,
 }) => {
   // Framer Motion variants for individual list items
@@ -55,7 +55,7 @@ export const RecentActivityFeed: React.FC<RecentActivityFeedProps> = ({
       <CardContent className="p-0">
         {activities.length === 0 ? (
           <div className="p-6 text-center text-muted-foreground text-sm">
-            No recent activity to display.
+            Nessuna attività recente da visualizzare.
           </div>
         ) : (
           <motion.div layout className="divide-y divide-border">

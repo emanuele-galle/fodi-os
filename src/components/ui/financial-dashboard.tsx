@@ -5,15 +5,8 @@ import {
   ChevronRight,
   History,
   Library,
-  Search,
 } from 'lucide-react';
-import clsx from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-// --- UTILS ---
-function cn(...inputs: any[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '@/lib/utils';
 
 // --- TYPE DEFINITIONS ---
 type QuickAction = {
@@ -89,22 +82,9 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="bg-card text-card-foreground rounded-2xl border shadow-sm max-w-2xl mx-auto font-sans"
+      className="bg-card text-card-foreground rounded-2xl border shadow-sm font-sans"
     >
       <div className="p-4 md:p-6">
-        {/* Search Bar */}
-        <motion.div variants={itemVariants} className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search transactions, payments, or type a command..."
-            className="bg-background w-full border rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background outline-none"
-          />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center justify-center text-xs font-mono text-muted-foreground bg-muted p-1 rounded-md">
-            ⌘K
-          </kbd>
-        </motion.div>
-
         {/* Quick Actions Grid */}
         <motion.div
           variants={containerVariants}
@@ -133,7 +113,7 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
         <motion.div variants={itemVariants} className="mb-6">
           <div className="flex items-center gap-2 mb-4">
             <History className="w-5 h-5 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">Recent activity</h2>
+            <h2 className="text-sm font-semibold">Attività recente</h2>
           </div>
           <motion.ul
             variants={containerVariants}
@@ -171,7 +151,7 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
                       : 'text-red-600 dark:text-red-400 bg-red-500/10'
                   )}
                 >
-                  {activity.amount > 0 ? '+' : '-'}$
+                  {activity.amount > 0 ? '+' : '-'}€
                   {Math.abs(activity.amount).toFixed(2)}
                 </div>
               </motion.li>
@@ -183,7 +163,7 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
         <motion.div variants={itemVariants}>
           <div className="flex items-center gap-2 mb-4">
             <Library className="w-5 h-5 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">Financial services</h2>
+            <h2 className="text-sm font-semibold">Servizi</h2>
           </div>
           <motion.div
             variants={containerVariants}

@@ -219,7 +219,7 @@ export default function DashboardPage() {
           { label: 'Progetti in Corso', value: String(projectsRes?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
           { label: 'Preventivi Aperti', value: String(quotesRes?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
           { label: 'Ore Questa Settimana', value: hours.toFixed(1) + 'h', icon: Clock, color: 'text-muted', href: '/time' },
-          { label: 'Revenue MTD', value: formatCurrency(revenueMTD), icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
+          { label: 'Fatturato Mese', value: formatCurrency(revenueMTD), icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
           { label: 'Ticket Aperti', value: '\u2014', icon: AlertCircle, color: 'text-destructive', href: '/support' },
         ])
 
@@ -471,7 +471,7 @@ export default function DashboardPage() {
               <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                 <Activity className="h-5 w-5" />
               </div>
-              <CardTitle>Trend Attivit\u00e0</CardTitle>
+              <CardTitle>Trend Attività</CardTitle>
             </div>
             <AreaCharts1
               color="var(--color-primary)"
@@ -543,7 +543,7 @@ export default function DashboardPage() {
       {/* ── ROW 5: TEAM ACTIVITIES + ATTIVITA RECENTI ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
         <MarketingDashboard
-          title="Attivit\u00e0 Team"
+          title="Attività Team"
           className="shadow-lift border-border/20 rounded-2xl max-w-none"
           teamActivities={{
             totalHours: weekHours,
@@ -571,7 +571,7 @@ export default function DashboardPage() {
         />
 
         <RecentActivityFeed
-          cardTitle="Attivit\u00e0 Recenti"
+          cardTitle="Attività Recenti"
           className="shadow-lift border-border/20 rounded-2xl"
           activities={activities.map((activity) => {
             const ActionIcon = ACTIVITY_ICONS[activity.entityType] || Activity
