@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
-  ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer, Video,
+  ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer, Video, Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
@@ -150,6 +150,8 @@ export default function ProjectDetailPage() {
   const [workspaces, setWorkspaces] = useState<WorkspaceOption[]>([])
   const [teamMembers, setTeamMembers] = useState<{ id: string; firstName: string; lastName: string; avatarUrl?: string | null }[]>([])
   const [taskAssigneeIds, setTaskAssigneeIds] = useState<string[]>([])
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
@@ -260,6 +262,18 @@ export default function ProjectDetailPage() {
       }
     } finally {
       setEditSubmitting(false)
+    }
+  }
+
+  async function handleDeleteProject() {
+    setDeleteSubmitting(true)
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.push(fromInternal ? '/internal' : '/projects')
+      }
+    } finally {
+      setDeleteSubmitting(false)
     }
   }
 
@@ -493,8 +507,32 @@ export default function ProjectDetailPage() {
             <Edit className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Modifica</span>
           </Button>
+          <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)} className="touch-manipulation">
+            <Trash2 className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Elimina</span>
+          </Button>
         </div>
       </div>
+
+      {/* Confirm delete modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm" onClick={() => setConfirmDelete(false)}>
+          <div className="bg-card rounded-2xl p-6 shadow-xl max-w-sm mx-4 border border-border" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-2">Elimina progetto</h3>
+            <p className="text-sm text-muted mb-4">
+              Sei sicuro di voler eliminare <strong>{project.name}</strong>? Il progetto verrà archiviato e non sarà più visibile.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)}>
+                Annulla
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleDeleteProject} disabled={deleteSubmitting}>
+                {deleteSubmitting ? 'Eliminazione...' : 'Elimina'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 animate-stagger">
         <Card>

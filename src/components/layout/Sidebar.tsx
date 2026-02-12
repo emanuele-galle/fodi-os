@@ -25,6 +25,7 @@ import type { Role } from '@/generated/prisma/client'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { Logo } from '@/components/ui/Logo'
 import { useUserPreferences } from '@/hooks/useUserPreferences'
+import { getEffectiveSectionAccess, HREF_TO_SECTION, type SectionAccessMap } from '@/lib/section-access'
 
 interface NavItem {
   label: string
@@ -68,7 +69,7 @@ const navigation: NavItem[] = [
     ],
   },
   {
-    label: 'Progetti',
+    label: 'Progetti Clienti',
     href: '/projects',
     icon: FolderKanban,
     roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'],
@@ -141,9 +142,10 @@ const navigation: NavItem[] = [
 
 interface SidebarProps {
   userRole: Role
+  sectionAccess?: SectionAccessMap | null
 }
 
-export function Sidebar({ userRole }: SidebarProps) {
+export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
   const pathname = usePathname()
   const { preferences, updatePreference, loaded } = useUserPreferences()
   const [collapsed, setCollapsed] = useState(false)
@@ -160,9 +162,13 @@ export function Sidebar({ userRole }: SidebarProps) {
     updatePreference('sidebarCollapsed', next)
   }
 
-  const filteredNav = navigation.filter(
-    (item) => !item.roles || item.roles.includes(userRole)
-  )
+  const effective = getEffectiveSectionAccess(userRole, sectionAccess)
+  const filteredNav = navigation.filter((item) => {
+    const section = HREF_TO_SECTION[item.href]
+    if (section) return effective[section]?.view
+    // Fallback to old role-based logic for unmapped items
+    return !item.roles || item.roles.includes(userRole)
+  })
 
   return (
     <aside
@@ -213,10 +219,10 @@ export function Sidebar({ userRole }: SidebarProps) {
                   }
                 }}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200 relative',
+                  'flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200 relative',
                   isActive
-                    ? 'bg-primary/15 text-primary border-l-3 border-primary'
-                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-white/8 border-l-3 border-transparent'
+                    ? 'bg-sidebar-active/15 text-sidebar-active'
+                    : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-white/8'
                 )}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
@@ -252,9 +258,9 @@ export function Sidebar({ userRole }: SidebarProps) {
                       key={child.href}
                       href={child.href}
                       className={cn(
-                        'block px-3 py-1.5 rounded-md text-sm transition-colors duration-200',
+                        'block px-3 py-1.5 rounded-lg text-sm transition-colors duration-200',
                         pathname === child.href
-                          ? 'text-primary bg-primary/10'
+                          ? 'text-sidebar-active bg-sidebar-active/10'
                           : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-white/5'
                       )}
                     >

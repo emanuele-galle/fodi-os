@@ -13,11 +13,11 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-lg border border-border/50 p-6 transition-all duration-200',
+        'rounded-2xl border border-border/40 p-4 md:p-6 transition-all duration-200',
         variant === 'glass'
           ? 'glass-card'
-          : 'bg-card shadow-[var(--shadow-md)]',
-        'hover:border-primary/20',
+          : 'bg-card shadow-[var(--shadow-sm)]',
+        'hover:border-primary/15',
         className
       )}
       {...props}

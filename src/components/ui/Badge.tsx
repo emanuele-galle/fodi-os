@@ -12,11 +12,11 @@ export function Badge({ className, variant = 'default', pulse, dotColor, ...prop
       className={cn(
         'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors duration-200',
         {
-          'bg-gradient-to-r from-primary/15 to-primary/5 text-primary border border-primary/20': variant === 'default',
-          'bg-gradient-to-r from-green-500/15 to-green-500/5 text-green-700 border border-green-500/20': variant === 'success',
-          'bg-gradient-to-r from-amber-500/15 to-amber-500/5 text-amber-700 border border-amber-500/20': variant === 'warning',
-          'bg-gradient-to-r from-red-500/15 to-red-500/5 text-red-700 border border-red-500/20': variant === 'destructive',
-          'border border-border text-foreground bg-transparent': variant === 'outline',
+          'bg-primary/10 text-primary border border-primary/15': variant === 'default',
+          'bg-green-500/10 text-green-600 border border-green-500/15': variant === 'success',
+          'bg-amber-500/10 text-amber-600 border border-amber-500/15': variant === 'warning',
+          'bg-red-500/10 text-red-600 border border-red-500/15': variant === 'destructive',
+          'border border-border/60 text-foreground bg-transparent': variant === 'outline',
           'bg-secondary/50 text-foreground gap-1.5': variant === 'dot',
         },
         pulse && 'animate-pulse',
