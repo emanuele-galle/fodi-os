@@ -479,9 +479,9 @@ export default function AssetsPage() {
   const [activeTab, setActiveTab] = useState<'minio' | 'drive'>('minio')
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Asset Library</h1>
+        <h1 className="text-xl md:text-2xl font-bold">Asset Library</h1>
       </div>
 
       {/* Tab navigation */}

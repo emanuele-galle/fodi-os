@@ -157,11 +157,16 @@ export default function TeamPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Team</h1>
-          <p className="text-sm text-muted mt-1">{filtered.length} membri</p>
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/10 text-primary p-2.5 rounded-lg">
+            <Users className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">Team</h1>
+            <p className="text-xs md:text-sm text-muted">{filtered.length} membri</p>
+          </div>
         </div>
       </div>
 

@@ -96,7 +96,7 @@ export default function ReviewsPage() {
             <ClipboardCheck className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Review</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Review</h1>
             <p className="text-sm text-muted">Approvazione e feedback sui contenuti</p>
           </div>
         </div>

@@ -25,6 +25,35 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
+// Push notifications
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {}
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'FODI OS', {
+      body: data.message || '',
+      icon: '/favicon.png',
+      badge: '/favicon.png',
+      data: { url: data.link || '/dashboard' },
+    })
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((clients) => {
+      // Focus existing window if available
+      for (const client of clients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(event.notification.data.url)
+          return client.focus()
+        }
+      }
+      return self.clients.openWindow(event.notification.data.url)
+    })
+  )
+})
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 

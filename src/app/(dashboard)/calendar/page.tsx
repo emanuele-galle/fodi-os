@@ -243,7 +243,7 @@ export default function CalendarPage() {
             <Calendar className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Calendario</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Calendario</h1>
             <p className="text-sm text-muted">Visualizza e gestisci i tuoi eventi</p>
           </div>
         </div>
@@ -270,7 +270,7 @@ export default function CalendarPage() {
             <Calendar className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Calendario</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Calendario</h1>
             <p className="text-sm text-muted">Visualizza e gestisci i tuoi eventi</p>
           </div>
         </div>

@@ -127,7 +127,7 @@ export default function TimeTrackingPage() {
             <Clock className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Time Tracking</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Time Tracking</h1>
             <p className="text-sm text-muted">Registrazione e analisi ore lavorate</p>
           </div>
         </div>

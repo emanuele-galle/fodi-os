@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { sseManager } from '@/lib/sse'
+import { sendPush } from '@/lib/push'
 import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
@@ -91,6 +93,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }))
       if (notifData.length > 0) {
         await prisma.notification.createMany({ data: notifData })
+        // SSE + Push: notify assigned users in real-time
+        for (const nd of notifData) {
+          sseManager.sendToUser(nd.userId, {
+            type: 'notification',
+            data: { type: nd.type, title: nd.title, message: nd.message, link: nd.link },
+          })
+          sendPush(nd.userId, { title: nd.title, message: nd.message, link: nd.link })
+        }
       }
     }
 

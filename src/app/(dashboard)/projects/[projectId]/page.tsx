@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useFormPersist } from '@/hooks/useFormPersist'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
   ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer, Video, Trash2,
@@ -174,6 +175,14 @@ export default function ProjectDetailPage() {
     color: '',
   })
 
+  const taskForm = useFormPersist(`new-task:${projectId}`, {
+    title: '',
+    description: '',
+    priority: 'MEDIUM',
+    dueDate: '',
+    estimatedHours: '',
+  })
+
   const fetchProject = useCallback(async () => {
     try {
       const res = await fetch(`/api/projects/${projectId}`)
@@ -342,11 +351,10 @@ export default function ProjectDetailPage() {
   async function handleAddTask(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
-    const form = new FormData(e.currentTarget)
     const body: Record<string, unknown> = { projectId, boardColumn: taskModalColumn }
-    form.forEach((v, k) => {
+    for (const [k, v] of Object.entries(taskForm.values)) {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
-    })
+    }
     if (body.estimatedHours) body.estimatedHours = parseFloat(body.estimatedHours as string)
     if (taskAssigneeIds.length > 0) body.assigneeIds = taskAssigneeIds
     if (selectedFolderId) body.folderId = selectedFolderId
@@ -357,6 +365,8 @@ export default function ProjectDetailPage() {
         body: JSON.stringify(body),
       })
       if (res.ok) {
+        taskForm.reset()
+        setTaskAssigneeIds([])
         setTaskModalOpen(false)
         fetchProject()
       }
@@ -641,16 +651,23 @@ export default function ProjectDetailPage() {
 
       <Modal open={taskModalOpen} onClose={() => setTaskModalOpen(false)} title="Nuovo Task" size="md">
         <form onSubmit={handleAddTask} className="space-y-4">
-          <Input name="title" label="Titolo *" required />
+          {taskForm.hasPersistedData && (
+            <div className="flex items-center justify-between rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+              <span>Bozza recuperata</span>
+              <button type="button" onClick={taskForm.reset} className="underline hover:no-underline">Scarta bozza</button>
+            </div>
+          )}
+          <Input label="Titolo *" required value={taskForm.values.title} onChange={(e) => taskForm.setValue('title', e.target.value)} />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-foreground">Descrizione</label>
             <textarea
-              name="description"
               rows={3}
+              value={taskForm.values.description}
+              onChange={(e) => taskForm.setValue('description', e.target.value)}
               className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             />
           </div>
-          <Select name="priority" label="Priorità" options={PRIORITY_OPTIONS} />
+          <Select label="Priorità" options={PRIORITY_OPTIONS} value={taskForm.values.priority} onChange={(e) => taskForm.setValue('priority', e.target.value)} />
           <MultiUserSelect
             users={teamMembers}
             selected={taskAssigneeIds}
@@ -659,8 +676,8 @@ export default function ProjectDetailPage() {
             placeholder="Seleziona assegnatari..."
           />
           <div className="grid grid-cols-2 gap-4">
-            <Input name="dueDate" label="Scadenza" type="date" />
-            <Input name="estimatedHours" label="Ore Stimate" type="number" step="0.5" />
+            <Input label="Scadenza" type="date" value={taskForm.values.dueDate} onChange={(e) => taskForm.setValue('dueDate', e.target.value)} />
+            <Input label="Ore Stimate" type="number" step="0.5" value={taskForm.values.estimatedHours} onChange={(e) => taskForm.setValue('estimatedHours', e.target.value)} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setTaskModalOpen(false)}>Annulla</Button>

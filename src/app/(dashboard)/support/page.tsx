@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useFormPersist } from '@/hooks/useFormPersist'
 import { useRouter } from 'next/navigation'
 import { LifeBuoy, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -99,6 +100,14 @@ export default function SupportPage() {
   const [clients, setClients] = useState<{ value: string; label: string }[]>([])
   const limit = 20
 
+  const ticketForm = useFormPersist('new-ticket', {
+    clientId: '',
+    subject: '',
+    description: '',
+    priority: 'MEDIUM',
+    category: 'general',
+  })
+
   const fetchTickets = useCallback(async () => {
     setLoading(true)
     try {
@@ -145,11 +154,10 @@ export default function SupportPage() {
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
-    const form = new FormData(e.currentTarget)
     const body: Record<string, string> = {}
-    form.forEach((v, k) => {
+    for (const [k, v] of Object.entries(ticketForm.values)) {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
-    })
+    }
     try {
       const res = await fetch('/api/tickets', {
         method: 'POST',
@@ -157,6 +165,7 @@ export default function SupportPage() {
         body: JSON.stringify(body),
       })
       if (res.ok) {
+        ticketForm.reset()
         setModalOpen(false)
         fetchTickets()
       }
@@ -336,21 +345,28 @@ export default function SupportPage() {
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuovo Ticket" size="lg">
         <form onSubmit={handleCreate} className="space-y-4">
-          <Select name="clientId" label="Cliente" options={clients} />
-          <Input name="subject" label="Oggetto *" required />
+          {ticketForm.hasPersistedData && (
+            <div className="flex items-center justify-between rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+              <span>Bozza recuperata</span>
+              <button type="button" onClick={ticketForm.reset} className="underline hover:no-underline">Scarta bozza</button>
+            </div>
+          )}
+          <Select label="Cliente" options={clients} value={ticketForm.values.clientId} onChange={(e) => ticketForm.setValue('clientId', e.target.value)} />
+          <Input label="Oggetto *" required value={ticketForm.values.subject} onChange={(e) => ticketForm.setValue('subject', e.target.value)} />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-foreground">Descrizione *</label>
             <textarea
-              name="description"
               rows={4}
               required
+              value={ticketForm.values.description}
+              onChange={(e) => ticketForm.setValue('description', e.target.value)}
               className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-base md:text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               placeholder="Descrivi il problema..."
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select name="priority" label="Priorità" options={PRIORITY_CREATE_OPTIONS} />
-            <Select name="category" label="Categoria" options={CATEGORY_CREATE_OPTIONS} />
+            <Select label="Priorità" options={PRIORITY_CREATE_OPTIONS} value={ticketForm.values.priority} onChange={(e) => ticketForm.setValue('priority', e.target.value)} />
+            <Select label="Categoria" options={CATEGORY_CREATE_OPTIONS} value={ticketForm.values.category} onChange={(e) => ticketForm.setValue('category', e.target.value)} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>

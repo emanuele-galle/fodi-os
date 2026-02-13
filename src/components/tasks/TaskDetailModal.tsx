@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useFormPersist } from '@/hooks/useFormPersist'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -103,12 +104,19 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [status, setStatus] = useState('TODO')
-  const [priority, setPriority] = useState('MEDIUM')
+  const editForm = useFormPersist(`task-edit:${taskId || 'none'}`, {
+    title: '',
+    description: '',
+    status: 'TODO',
+    priority: 'MEDIUM',
+    dueDate: '',
+  })
+  const title = editForm.values.title
+  const description = editForm.values.description
+  const status = editForm.values.status
+  const priority = editForm.values.priority
+  const dueDate = editForm.values.dueDate
   const [assigneeIds, setAssigneeIds] = useState<string[]>([])
-  const [dueDate, setDueDate] = useState('')
 
   const fetchTask = useCallback(async () => {
     if (!taskId) return
@@ -118,20 +126,26 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
       if (res.ok) {
         const data: TaskDetail = await res.json()
         setTask(data)
-        setTitle(data.title)
-        setDescription(data.description || '')
-        setStatus(data.status)
-        setPriority(data.priority)
+        // Only overwrite form if no persisted edits exist
+        if (!editForm.hasPersistedData) {
+          editForm.setValues({
+            title: data.title,
+            description: data.description || '',
+            status: data.status,
+            priority: data.priority,
+            dueDate: data.dueDate ? data.dueDate.slice(0, 10) : '',
+          })
+        }
         setAssigneeIds(
           data.assignments?.length
             ? data.assignments.map((a) => a.user.id)
             : data.assigneeId ? [data.assigneeId] : []
         )
-        setDueDate(data.dueDate ? data.dueDate.slice(0, 10) : '')
       }
     } finally {
       setLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId])
 
   const fetchAttachments = useCallback(async () => {
@@ -189,6 +203,7 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
         body: JSON.stringify(body),
       })
       if (res.ok) {
+        editForm.reset()
         onUpdated()
         onClose()
       }
@@ -289,17 +304,24 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
         </div>
       ) : (
         <div className="space-y-5">
+          {editForm.hasPersistedData && (
+            <div className="flex items-center justify-between rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+              <span>Bozza recuperata</span>
+              <button type="button" onClick={editForm.reset} className="underline hover:no-underline">Scarta bozza</button>
+            </div>
+          )}
+
           <Input
             label="Titolo"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => editForm.setValue('title', e.target.value)}
           />
 
           <div className="space-y-1">
             <label className="block text-sm font-medium text-foreground">Descrizione</label>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => editForm.setValue('description', e.target.value)}
               rows={3}
               className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-base md:text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               placeholder="Aggiungi una descrizione..."
@@ -311,13 +333,13 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
               label="Stato"
               options={STATUS_OPTIONS}
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => editForm.setValue('status', e.target.value)}
             />
             <Select
               label="Priorità"
               options={PRIORITY_OPTIONS}
               value={priority}
-              onChange={(e) => setPriority(e.target.value)}
+              onChange={(e) => editForm.setValue('priority', e.target.value)}
             />
           </div>
 
@@ -333,7 +355,7 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
             label="Scadenza"
             type="date"
             value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
+            onChange={(e) => editForm.setValue('dueDate', e.target.value)}
           />
 
           {task.project && (

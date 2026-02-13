@@ -65,7 +65,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
 
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 30000)
+    const interval = setInterval(fetchNotifications, 15000)
     return () => clearInterval(interval)
   }, [fetchNotifications])
 
@@ -130,7 +130,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
       {/* Search trigger */}
       <button
         onClick={onOpenCommandPalette}
-        className="group flex items-center gap-2 h-9 px-4 rounded-lg border border-border/30 bg-secondary/30 text-muted text-sm hover:border-primary/30 hover:bg-secondary/50 focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all duration-200 w-96"
+        className="group flex items-center gap-2 h-9 px-4 rounded-lg border border-border/30 bg-secondary/30 text-muted text-sm hover:border-primary/30 hover:bg-secondary/50 focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all duration-200 flex-1 max-w-96"
       >
         <Search className="h-4 w-4 text-muted group-hover:text-primary transition-colors" />
         <span>Cerca o premi Cmd+K...</span>

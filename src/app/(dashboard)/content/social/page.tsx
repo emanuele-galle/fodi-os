@@ -106,7 +106,7 @@ export default function SocialPage() {
             <CalendarDays className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Social Calendar</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Social Calendar</h1>
             <p className="text-sm text-muted">Pianifica e pubblica i tuoi contenuti social</p>
           </div>
         </div>

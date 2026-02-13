@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createMessageSchema } from '@/lib/validation'
 import { sseManager } from '@/lib/sse'
+import { sendPush } from '@/lib/push'
 import { sanitizeHtml } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
 
@@ -140,15 +141,21 @@ export async function POST(
 
       if (mentionedUsers.length > 0) {
         const author = message.author
-        await prisma.notification.createMany({
-          data: mentionedUsers.map((u) => ({
-            userId: u.id,
-            type: 'MENTION',
-            title: 'Menzione in chat',
-            message: `${author.firstName} ${author.lastName} ti ha menzionato in un messaggio`,
-            link: `/chat?channel=${channelId}`,
-          })),
-        })
+        const mentionNotifs = mentionedUsers.map((u) => ({
+          userId: u.id,
+          type: 'MENTION',
+          title: 'Menzione in chat',
+          message: `${author.firstName} ${author.lastName} ti ha menzionato in un messaggio`,
+          link: `/chat?channel=${channelId}`,
+        }))
+        await prisma.notification.createMany({ data: mentionNotifs })
+        for (const nd of mentionNotifs) {
+          sseManager.sendToUser(nd.userId, {
+            type: 'notification',
+            data: { type: nd.type, title: nd.title, message: nd.message, link: nd.link },
+          })
+          sendPush(nd.userId, { title: nd.title, message: nd.message, link: nd.link })
+        }
       }
     }
 

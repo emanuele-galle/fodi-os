@@ -71,10 +71,10 @@ interface ChartSegment {
 }
 
 const NOTE_COLORS = [
-  { value: 'bg-amber-50 border-amber-200', label: 'Giallo' },
-  { value: 'bg-emerald-50 border-emerald-200', label: 'Verde' },
-  { value: 'bg-indigo-50 border-indigo-200', label: 'Blu' },
-  { value: 'bg-rose-50 border-rose-200', label: 'Rosa' },
+  { value: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800', label: 'Giallo' },
+  { value: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800', label: 'Verde' },
+  { value: 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800', label: 'Blu' },
+  { value: 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800', label: 'Rosa' },
 ]
 
 const STORAGE_KEY = 'fodi-os-sticky-notes'
@@ -165,7 +165,7 @@ export default function DashboardPage() {
         const todayStr = now.toISOString().split('T')[0]
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-        const [clientsRes, projectsRes, quotesRes, timeRes, invoicesRes, allInvoicesRes, teamRes, expensesRes] = await Promise.all([
+        const [clientsRes, projectsRes, quotesRes, timeRes, invoicesRes, allInvoicesRes, teamRes, expensesRes, ticketsRes] = await Promise.all([
           fetch('/api/clients?status=ACTIVE&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/projects?status=IN_PROGRESS&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/quotes?status=SENT&limit=1').then((r) => r.ok ? r.json() : null),
@@ -174,6 +174,7 @@ export default function DashboardPage() {
           fetch('/api/invoices?limit=200').then((r) => r.ok ? r.json() : null),
           fetch('/api/team').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/expenses?limit=200').then((r) => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/tickets?status=OPEN,IN_PROGRESS,WAITING_CLIENT&limit=1').then((r) => r.ok ? r.json() : null).catch(() => null),
         ])
 
         const hours = (timeRes?.items || []).reduce((s: number, e: { hours: number }) => s + e.hours, 0)
@@ -200,7 +201,7 @@ export default function DashboardPage() {
           { label: 'Preventivi Aperti', value: String(quotesRes?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
           { label: 'Ore Questa Settimana', value: hours.toFixed(1) + 'h', icon: Clock, color: 'text-muted', href: '/time' },
           { label: 'Fatturato Mese', value: formatCurrency(revenueMTD), icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
-          { label: 'Ticket Aperti', value: '\u2014', icon: AlertCircle, color: 'text-destructive', href: '/support' },
+          { label: 'Ticket Aperti', value: String(ticketsRes?.total ?? 0), icon: AlertCircle, color: 'text-destructive', href: '/support' },
         ])
 
         // Donut chart data

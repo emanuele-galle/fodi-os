@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { AvatarUpload } from '@/components/ui/AvatarUpload'
 import { Badge } from '@/components/ui/Badge'
-import { Settings } from 'lucide-react'
+import { Settings, Bell } from 'lucide-react'
 
 interface UserProfile {
   id: string
@@ -33,6 +33,70 @@ export default function SettingsPage() {
   const [googleStatus, setGoogleStatus] = useState<GoogleStatus | null>(null)
   const [googleLoading, setGoogleLoading] = useState(true)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushLoading, setPushLoading] = useState(false)
+  const [pushSupported, setPushSupported] = useState(false)
+
+  // Check push notification status
+  useEffect(() => {
+    const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
+    setPushSupported(supported)
+    if (supported && Notification.permission === 'granted') {
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.pushManager.getSubscription().then((sub) => {
+          setPushEnabled(!!sub)
+        })
+      })
+    }
+  }, [])
+
+  const handleTogglePush = async () => {
+    setPushLoading(true)
+    try {
+      if (pushEnabled) {
+        // Unsubscribe
+        const reg = await navigator.serviceWorker.ready
+        const sub = await reg.pushManager.getSubscription()
+        if (sub) {
+          await fetch('/api/notifications/unsubscribe', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          })
+          await sub.unsubscribe()
+        }
+        setPushEnabled(false)
+        setMessage('Notifiche push disabilitate')
+      } else {
+        // Subscribe
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') {
+          setMessage('Permesso notifiche negato dal browser')
+          return
+        }
+        const reg = await navigator.serviceWorker.ready
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        })
+        const subJson = sub.toJSON()
+        await fetch('/api/notifications/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: subJson.endpoint,
+            keys: subJson.keys,
+          }),
+        })
+        setPushEnabled(true)
+        setMessage('Notifiche push abilitate con successo')
+      }
+    } catch {
+      setMessage('Errore nella gestione delle notifiche push')
+    } finally {
+      setPushLoading(false)
+    }
+  }
 
   // Check for Google callback result
   useEffect(() => {
@@ -240,6 +304,55 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Push Notifications */}
+      {pushSupported && (
+        <Card className="mt-6">
+          <CardTitle>Notifiche Push</CardTitle>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Bell className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Notifiche Push</p>
+                    <p className="text-xs text-muted">
+                      {pushEnabled
+                        ? 'Ricevi notifiche anche quando non sei su FODI OS'
+                        : 'Abilita per ricevere notifiche in tempo reale'}
+                    </p>
+                  </div>
+                </div>
+                <Badge variant={pushEnabled ? 'success' : 'outline'}>
+                  {pushEnabled ? 'Attivo' : 'Disattivato'}
+                </Badge>
+              </div>
+
+              <Button
+                variant={pushEnabled ? 'outline' : 'default'}
+                size="sm"
+                onClick={handleTogglePush}
+                disabled={pushLoading}
+                className={pushEnabled ? 'text-destructive hover:text-destructive' : ''}
+              >
+                {pushLoading
+                  ? 'Elaborazione...'
+                  : pushEnabled
+                    ? 'Disabilita notifiche push'
+                    : 'Abilita notifiche push'}
+              </Button>
+
+              {Notification.permission === 'denied' && (
+                <p className="text-xs text-destructive">
+                  Le notifiche sono bloccate dal browser. Modifica le impostazioni del sito per abilitarle.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

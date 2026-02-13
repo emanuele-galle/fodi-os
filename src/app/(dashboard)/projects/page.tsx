@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useFormPersist } from '@/hooks/useFormPersist'
 import { useRouter } from 'next/navigation'
 import { FolderKanban, Plus, Search, ChevronLeft, ChevronRight, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -83,6 +84,18 @@ export default function ProjectsPage() {
   const [clients, setClients] = useState<ClientOption[]>([])
   const limit = 20
 
+  const projectForm = useFormPersist('new-project', {
+    name: '',
+    clientId: '',
+    description: '',
+    priority: 'MEDIUM',
+    startDate: '',
+    endDate: '',
+    budgetAmount: '',
+    budgetHours: '',
+    color: '#6366F1',
+  })
+
   const fetchProjects = useCallback(async () => {
     setLoading(true)
     try {
@@ -119,11 +132,10 @@ export default function ProjectsPage() {
   async function handleCreateProject(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
-    const form = new FormData(e.currentTarget)
     const body: Record<string, unknown> = {}
-    form.forEach((v, k) => {
+    for (const [k, v] of Object.entries(projectForm.values)) {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
-    })
+    }
     if (body.budgetAmount) body.budgetAmount = parseFloat(body.budgetAmount as string)
     if (body.budgetHours) body.budgetHours = parseInt(body.budgetHours as string, 10)
     try {
@@ -133,6 +145,7 @@ export default function ProjectsPage() {
         body: JSON.stringify(body),
       })
       if (res.ok) {
+        projectForm.reset()
         setModalOpen(false)
         fetchProjects()
       }
@@ -290,10 +303,17 @@ export default function ProjectsPage() {
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuovo Progetto" size="lg">
         <form onSubmit={handleCreateProject} className="space-y-4">
-          <Input name="name" label="Nome Progetto *" required />
+          {projectForm.hasPersistedData && (
+            <div className="flex items-center justify-between rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+              <span>Bozza recuperata</span>
+              <button type="button" onClick={projectForm.reset} className="underline hover:no-underline">Scarta bozza</button>
+            </div>
+          )}
+          <Input label="Nome Progetto *" required value={projectForm.values.name} onChange={(e) => projectForm.setValue('name', e.target.value)} />
           <Select
-            name="clientId"
             label="Cliente"
+            value={projectForm.values.clientId}
+            onChange={(e) => projectForm.setValue('clientId', e.target.value)}
             options={[
               { value: '', label: 'Seleziona cliente' },
               ...clients.map((c) => ({ value: c.id, label: c.companyName })),
@@ -302,26 +322,27 @@ export default function ProjectsPage() {
           <div className="space-y-1">
             <label className="block text-sm font-medium text-foreground">Descrizione</label>
             <textarea
-              name="description"
               rows={3}
+              value={projectForm.values.description}
+              onChange={(e) => projectForm.setValue('description', e.target.value)}
               className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             />
           </div>
-          <Select name="priority" label="Priorità" options={PRIORITY_OPTIONS} />
+          <Select label="Priorità" options={PRIORITY_OPTIONS} value={projectForm.values.priority} onChange={(e) => projectForm.setValue('priority', e.target.value)} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input name="startDate" label="Data Inizio" type="date" />
-            <Input name="endDate" label="Data Fine" type="date" />
+            <Input label="Data Inizio" type="date" value={projectForm.values.startDate} onChange={(e) => projectForm.setValue('startDate', e.target.value)} />
+            <Input label="Data Fine" type="date" value={projectForm.values.endDate} onChange={(e) => projectForm.setValue('endDate', e.target.value)} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input name="budgetAmount" label="Budget (EUR)" type="number" step="0.01" />
-            <Input name="budgetHours" label="Ore Previste" type="number" />
+            <Input label="Budget (EUR)" type="number" step="0.01" value={projectForm.values.budgetAmount} onChange={(e) => projectForm.setValue('budgetAmount', e.target.value)} />
+            <Input label="Ore Previste" type="number" value={projectForm.values.budgetHours} onChange={(e) => projectForm.setValue('budgetHours', e.target.value)} />
           </div>
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">Colore</label>
             <input
-              name="color"
               type="color"
-              defaultValue="#6366F1"
+              value={projectForm.values.color}
+              onChange={(e) => projectForm.setValue('color', e.target.value)}
               className="h-10 w-20 rounded-md border border-border cursor-pointer"
             />
           </div>

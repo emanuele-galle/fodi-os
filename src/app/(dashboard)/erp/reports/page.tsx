@@ -151,7 +151,7 @@ export default function ReportsPage() {
   ]
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0 bg-primary/10 text-primary">
           <TrendingUp className="h-5 w-5" />

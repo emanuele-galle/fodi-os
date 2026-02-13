@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useFormPersist } from '@/hooks/useFormPersist'
 import { useRouter } from 'next/navigation'
 import { Users, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -85,6 +86,18 @@ export default function CrmPage() {
   const [submitting, setSubmitting] = useState(false)
   const limit = 20
 
+  const clientForm = useFormPersist('new-client', {
+    companyName: '',
+    vatNumber: '',
+    pec: '',
+    sdi: '',
+    website: '',
+    industry: '',
+    source: '',
+    status: 'LEAD',
+    notes: '',
+  })
+
   const fetchClients = useCallback(async () => {
     setLoading(true)
     try {
@@ -115,11 +128,10 @@ export default function CrmPage() {
   async function handleCreateClient(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
-    const form = new FormData(e.currentTarget)
     const body: Record<string, string> = {}
-    form.forEach((v, k) => {
+    for (const [k, v] of Object.entries(clientForm.values)) {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
-    })
+    }
     try {
       const res = await fetch('/api/clients', {
         method: 'POST',
@@ -127,6 +139,7 @@ export default function CrmPage() {
         body: JSON.stringify(body),
       })
       if (res.ok) {
+        clientForm.reset()
         setModalOpen(false)
         fetchClients()
       }
@@ -309,27 +322,35 @@ export default function CrmPage() {
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuovo Cliente" size="lg">
         <form onSubmit={handleCreateClient} className="space-y-4">
-          <Input name="companyName" label="Ragione Sociale *" required />
+          {clientForm.hasPersistedData && (
+            <div className="flex items-center justify-between rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+              <span>Bozza recuperata</span>
+              <button type="button" onClick={clientForm.reset} className="underline hover:no-underline">Scarta bozza</button>
+            </div>
+          )}
+          <Input label="Ragione Sociale *" required value={clientForm.values.companyName} onChange={(e) => clientForm.setValue('companyName', e.target.value)} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input name="vatNumber" label="P.IVA" />
-            <Input name="pec" label="PEC" type="email" />
-            <Input name="sdi" label="Codice SDI" />
-            <Input name="website" label="Sito Web" />
+            <Input label="P.IVA" value={clientForm.values.vatNumber} onChange={(e) => clientForm.setValue('vatNumber', e.target.value)} />
+            <Input label="PEC" type="email" value={clientForm.values.pec} onChange={(e) => clientForm.setValue('pec', e.target.value)} />
+            <Input label="Codice SDI" value={clientForm.values.sdi} onChange={(e) => clientForm.setValue('sdi', e.target.value)} />
+            <Input label="Sito Web" value={clientForm.values.website} onChange={(e) => clientForm.setValue('website', e.target.value)} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select name="industry" label="Settore" options={INDUSTRY_OPTIONS} />
-            <Select name="source" label="Fonte" options={SOURCE_OPTIONS} />
+            <Select label="Settore" options={INDUSTRY_OPTIONS} value={clientForm.values.industry} onChange={(e) => clientForm.setValue('industry', e.target.value)} />
+            <Select label="Fonte" options={SOURCE_OPTIONS} value={clientForm.values.source} onChange={(e) => clientForm.setValue('source', e.target.value)} />
           </div>
           <Select
-            name="status"
             label="Stato"
+            value={clientForm.values.status}
+            onChange={(e) => clientForm.setValue('status', e.target.value)}
             options={STATUS_OPTIONS.filter((o) => o.value !== '')}
           />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-foreground">Note</label>
             <textarea
-              name="notes"
               rows={3}
+              value={clientForm.values.notes}
+              onChange={(e) => clientForm.setValue('notes', e.target.value)}
               className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             />
           </div>

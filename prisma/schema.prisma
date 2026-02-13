@@ -52,6 +52,7 @@ model User {
   chatMessages     ChatMessage[]
   taskAttachments      TaskAttachment[]
   projectAttachments   ProjectAttachment[]
+  pushSubscriptions    PushSubscription[]
 
   @@index([email])
   @@index([role])
@@ -893,6 +894,21 @@ model Notification {
   @@index([isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 model ActivityLog {

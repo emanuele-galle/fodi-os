@@ -145,7 +145,7 @@ function DroppableColumn({ columnKey, children }: { columnKey: string; children:
   return (
     <div
       ref={setNodeRef}
-      className={`flex-shrink-0 w-72 rounded-lg p-3 transition-colors ${
+      className={`flex-shrink-0 w-[75vw] md:w-72 snap-center md:snap-align-none rounded-lg p-3 transition-colors ${
         isOver ? 'bg-primary/5 ring-2 ring-primary/20' : 'bg-secondary/30'
       }`}
     >
@@ -216,7 +216,7 @@ export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskCl
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none -mx-4 px-4 md:mx-0 md:px-0">
         {BOARD_COLUMNS.map((col) => {
           const tasks = tasksByColumn[col.key] || []
           return (

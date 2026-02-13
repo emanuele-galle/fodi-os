@@ -72,7 +72,7 @@ export default function QuotesPage() {
   const totalPages = Math.ceil(total / limit)
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0 bg-primary/10 text-primary">
@@ -122,6 +122,14 @@ export default function QuotesPage() {
           icon={Receipt}
           title="Nessun preventivo trovato"
           description={search || statusFilter ? 'Prova a modificare i filtri.' : 'Crea il tuo primo preventivo.'}
+          action={
+            !search && !statusFilter ? (
+              <Button onClick={() => router.push('/erp/quotes/new')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuovo Preventivo
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
         <>

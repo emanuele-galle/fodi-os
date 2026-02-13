@@ -73,7 +73,7 @@ export default function InvoicesPage() {
   const totalPages = Math.ceil(total / limit)
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0 bg-primary/10 text-primary">
@@ -123,6 +123,14 @@ export default function InvoicesPage() {
           icon={Receipt}
           title="Nessuna fattura trovata"
           description={search || statusFilter ? 'Prova a modificare i filtri.' : 'Crea la tua prima fattura o converti un preventivo.'}
+          action={
+            !search && !statusFilter ? (
+              <Button onClick={() => router.push('/erp/invoices/new')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuova Fattura
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
         <>

@@ -54,7 +54,7 @@ export function MobileHeader({ user, unreadCount, onOpenSearch, onOpenNotificati
         {sectionName && (
           <>
             <span className="text-border/50 text-sm flex-shrink-0">/</span>
-            <span className="text-sm font-medium text-foreground/70 truncate max-w-[100px]">
+            <span className="text-sm font-medium text-foreground/70 truncate max-w-[140px] sm:max-w-[200px]">
               {sectionName}
             </span>
           </>
