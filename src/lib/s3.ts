@@ -20,7 +20,8 @@ export async function uploadFile(key: string, body: Buffer | Uint8Array | Readab
     Body: body,
     ContentType: contentType,
   }))
-  return `${process.env.S3_ENDPOINT}/${bucket}/${key}`
+  const publicBase = process.env.S3_PUBLIC_URL || process.env.S3_ENDPOINT!
+  return `${publicBase}/${bucket}/${key}`
 }
 
 export async function getSignedUrl(key: string): Promise<string> {

@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile
       args:
         - DATABASE_URL=${DATABASE_URL}
+        - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
     restart: unless-stopped
     env_file:
       - .env.docker
