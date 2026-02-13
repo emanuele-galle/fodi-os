@@ -4,7 +4,8 @@ import { useState } from 'react'
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
+  pointerWithin,
+  rectIntersection,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -12,6 +13,7 @@ import {
   useDroppable,
   type DragStartEvent,
   type DragEndEvent,
+  type CollisionDetection,
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -38,6 +40,26 @@ const BOARD_COLUMNS = [
 
 const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
   LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
+}
+
+// Custom collision detection: prioritize columns over individual cards
+const kanbanCollision: CollisionDetection = (args) => {
+  // First try pointerWithin - finds the droppable under the cursor
+  const pointerCollisions = pointerWithin(args)
+
+  // If pointer is within a column droppable, prefer that
+  const columnHit = pointerCollisions.find((c) => String(c.id).startsWith('column-'))
+  if (columnHit) return [columnHit]
+
+  // If pointer is over a task card, return that (we extract column from it)
+  if (pointerCollisions.length > 0) return pointerCollisions
+
+  // Fallback to rectIntersection for edge cases (dragging fast)
+  const rectCollisions = rectIntersection(args)
+  const rectColumnHit = rectCollisions.find((c) => String(c.id).startsWith('column-'))
+  if (rectColumnHit) return [rectColumnHit]
+
+  return rectCollisions
 }
 
 function SortableTaskCard({ task, onClick }: { task: Task; onClick?: () => void }) {
@@ -170,6 +192,12 @@ export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskCl
       targetColumn = overData.columnKey as string
     } else if (overData?.type === 'task') {
       targetColumn = (overData.task as Task).boardColumn
+    } else {
+      // Fallback: extract column from droppable ID (e.g. "column-done")
+      const overId = String(over.id)
+      if (overId.startsWith('column-')) {
+        targetColumn = overId.replace('column-', '')
+      }
     }
 
     if (!targetColumn) return
@@ -184,7 +212,7 @@ export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskCl
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={kanbanCollision}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
