@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
         avatarUrl: true,
         phone: !isClient,
         lastLoginAt: !isClient,
+        lastActiveAt: !isClient,
         ...(!isClient && {
           workspaceMembers: {
             select: {

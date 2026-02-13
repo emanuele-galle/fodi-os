@@ -82,6 +82,16 @@ export default function DashboardLayout({
     return () => clearInterval(interval)
   }, [])
 
+  // Heartbeat: update lastActiveAt every 60s
+  useEffect(() => {
+    function sendHeartbeat() {
+      fetch('/api/heartbeat', { method: 'POST' }).catch(() => {})
+    }
+    sendHeartbeat()
+    const interval = setInterval(sendHeartbeat, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
   // Global Cmd+K shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

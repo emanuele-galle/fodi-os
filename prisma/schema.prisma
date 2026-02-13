@@ -22,9 +22,10 @@ model User {
   role          Role      @default(DEVELOPER)
   isActive      Boolean   @default(true)
   sectionAccess Json?
-  lastLoginAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  lastLoginAt  DateTime?
+  lastActiveAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   refreshTokens    RefreshToken[]
   permissions      UserPermission[]

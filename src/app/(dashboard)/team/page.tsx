@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Users, Search, Mail, Phone, CheckCircle2, Clock, Calendar, Video, ChevronDown, ChevronUp, Plus, ListTodo } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
@@ -38,6 +38,7 @@ interface TeamMember {
   avatarUrl: string | null
   phone: string | null
   lastLoginAt: string | null
+  lastActiveAt: string | null
   workspaceMembers: WorkspaceMembership[]
   totalTasks: number
   totalTimeEntries: number
@@ -109,11 +110,15 @@ function formatHoursMinutes(hours: number): string {
   return `${h}h ${m}m`
 }
 
-function getActivityStatus(lastLoginAt: string | null): { label: string; color: string } {
-  if (!lastLoginAt) return { label: 'Mai connesso', color: '#94A3B8' }
-  const diff = Date.now() - new Date(lastLoginAt).getTime()
+function getActivityStatus(lastActiveAt: string | null, lastLoginAt: string | null): { label: string; color: string } {
+  const lastSeen = lastActiveAt || lastLoginAt
+  if (!lastSeen) return { label: 'Mai connesso', color: '#94A3B8' }
+  const diff = Date.now() - new Date(lastSeen).getTime()
+  const minutes = diff / (1000 * 60)
+  if (minutes < 2) return { label: 'Online ora', color: '#22C55E' }
+  if (minutes < 10) return { label: 'Attivo', color: '#22C55E' }
   const hours = diff / (1000 * 60 * 60)
-  if (hours < 1) return { label: 'Online', color: '#22C55E' }
+  if (hours < 1) return { label: `${Math.round(minutes)}m fa`, color: '#3B82F6' }
   if (hours < 24) return { label: 'Oggi', color: '#3B82F6' }
   if (hours < 72) return { label: 'Recente', color: '#F59E0B' }
   return { label: 'Inattivo', color: '#94A3B8' }
@@ -144,41 +149,49 @@ export default function TeamPage() {
     const totalWeeklyHours = members.reduce((s, m) => s + m.weeklyHours, 0)
     const totalCompletedWeek = members.reduce((s, m) => s + m.completedThisWeek, 0)
     const activeCount = members.filter((m) => {
-      if (!m.lastLoginAt) return false
-      return Date.now() - new Date(m.lastLoginAt).getTime() < 72 * 60 * 60 * 1000
+      const lastSeen = m.lastActiveAt || m.lastLoginAt
+      if (!lastSeen) return false
+      return Date.now() - new Date(lastSeen).getTime() < 72 * 60 * 60 * 1000
     }).length
     const activePercent = members.length ? Math.round((activeCount / members.length) * 100) : 0
     const taskPercent = Math.min(100, members.length ? Math.round((totalTasks / Math.max(totalTasks + totalTime, 1)) * 100) : 0)
     return { totalTime, totalTasks, activePercent, taskPercent, activeCount, totalWeeklyHours, totalCompletedWeek }
   }, [members])
 
-  useEffect(() => {
-    async function loadTeam() {
-      setLoading(true)
-      try {
-        const params = new URLSearchParams()
-        if (workspaceFilter) params.set('workspace', workspaceFilter)
-        const res = await fetch(`/api/team?${params}`)
-        if (res.ok) {
-          const data = await res.json()
-          const items: TeamMember[] = data.items || []
-          setMembers(items)
+  const isFirstLoad = useRef(true)
 
-          const wsMap = new Map<string, string>()
-          items.forEach((m) =>
-            m.workspaceMembers?.forEach((wm) => wsMap.set(wm.workspace.id, wm.workspace.name))
-          )
-          setWorkspaces([
-            { value: '', label: 'Tutti i workspace' },
-            ...Array.from(wsMap.entries()).map(([id, name]) => ({ value: id, label: name })),
-          ])
-        }
-      } finally {
-        setLoading(false)
+  const loadTeam = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (workspaceFilter) params.set('workspace', workspaceFilter)
+      const res = await fetch(`/api/team?${params}`)
+      if (res.ok) {
+        const data = await res.json()
+        const items: TeamMember[] = data.items || []
+        setMembers(items)
+
+        const wsMap = new Map<string, string>()
+        items.forEach((m) =>
+          m.workspaceMembers?.forEach((wm) => wsMap.set(wm.workspace.id, wm.workspace.name))
+        )
+        setWorkspaces([
+          { value: '', label: 'Tutti i workspace' },
+          ...Array.from(wsMap.entries()).map(([id, name]) => ({ value: id, label: name })),
+        ])
       }
+    } finally {
+      if (showLoading) setLoading(false)
     }
-    loadTeam()
   }, [workspaceFilter])
+
+  // Initial load + auto-refresh every 60s
+  useEffect(() => {
+    loadTeam(isFirstLoad.current)
+    isFirstLoad.current = false
+    const interval = setInterval(() => loadTeam(false), 60000)
+    return () => clearInterval(interval)
+  }, [loadTeam])
 
   // Search tasks for assign modal
   useEffect(() => {
@@ -359,7 +372,7 @@ export default function TeamPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
           {filtered.map((member) => {
-            const activity = getActivityStatus(member.lastLoginAt)
+            const activity = getActivityStatus(member.lastActiveAt, member.lastLoginAt)
             const isExpanded = expandedMember === member.id
             return (
               <Card key={member.id} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
@@ -401,8 +414,8 @@ export default function TeamPage() {
                     <div className="flex items-center gap-2 text-sm text-muted">
                       <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
                       <span>
-                        {member.lastLoginAt
-                          ? `Ultimo accesso ${formatDistanceToNow(new Date(member.lastLoginAt), { locale: it, addSuffix: true })}`
+                        {(member.lastActiveAt || member.lastLoginAt)
+                          ? `Attivo ${formatDistanceToNow(new Date(member.lastActiveAt || member.lastLoginAt!), { locale: it, addSuffix: true })}`
                           : 'Mai connesso'}
                       </span>
                     </div>
