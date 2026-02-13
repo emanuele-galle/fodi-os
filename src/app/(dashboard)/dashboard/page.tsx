@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -6,28 +5,23 @@ import { useRouter } from 'next/navigation'
 import {
   Users, FolderKanban, Receipt, Clock, TrendingUp, AlertCircle,
   ArrowRight, Activity, UserPlus, FileText, CheckCircle2, TicketCheck,
-  Plus, Zap, TicketPlus, FilePlus2, ClockPlus, X, Pencil,
-  LayoutDashboard, CalendarCheck, BarChart3, Wallet, StickyNote, History,
+  Plus, TicketPlus, FilePlus2, ClockPlus, X, Pencil,
+  LayoutDashboard, CalendarCheck, BarChart3, Wallet, StickyNote,
 } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
-import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 import { RevenueChart } from '@/components/dashboard/RevenueChart'
 import { CashFlowChart } from '@/components/dashboard/CashFlowChart'
 import { PipelineFunnel } from '@/components/dashboard/PipelineFunnel'
-import { DonutChart, type DonutChartSegment } from '@/components/ui/donut-chart'
-import { RecentActivityFeed, type ActivityItem as ActivityFeedItem } from '@/components/ui/dashboard-activities'
-import { CommandDeck } from '@/components/ui/command-deck'
-import { MorphButton } from '@/components/ui/MorphButton'
-import { BonusesIncentivesCard } from '@/components/ui/animated-dashboard-card'
-import { MarketingDashboard } from '@/components/ui/dashboard-1'
-import { FinancialDashboard } from '@/components/ui/financial-dashboard'
-import { ActionSearchBar, type Action } from '@/components/ui/action-search-bar'
-import { AreaCharts1 } from '@/components/ui/area-charts-1'
+import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
+import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard'
+import { QuickActionsGrid } from '@/components/dashboard/QuickActionsGrid'
+import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
+import { InvoiceStatusChart } from '@/components/dashboard/InvoiceStatusChart'
+import { ActivityTrendChart } from '@/components/dashboard/ActivityTrendChart'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/ui/dropzone'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
@@ -57,7 +51,7 @@ interface TaskItem {
   project?: { name: string } | null
 }
 
-interface StickyNote {
+interface StickyNoteItem {
   id: string
   text: string
   color: string
@@ -70,27 +64,17 @@ interface TeamMember {
   avatarUrl?: string | null
 }
 
-interface InvoiceItem {
-  id: string
-  number: string
-  status: string
-  total: string
-  paidDate?: string | null
-  createdAt: string
-}
-
-interface ExpenseItem {
-  id: string
-  amount: string
-  description: string
-  date: string
+interface ChartSegment {
+  label: string
+  value: number
+  color: string
 }
 
 const NOTE_COLORS = [
-  { value: 'bg-yellow-100 border-yellow-200', label: 'Giallo' },
-  { value: 'bg-green-100 border-green-200', label: 'Verde' },
-  { value: 'bg-blue-100 border-blue-200', label: 'Blu' },
-  { value: 'bg-pink-100 border-pink-200', label: 'Rosa' },
+  { value: 'bg-amber-50 border-amber-200', label: 'Giallo' },
+  { value: 'bg-emerald-50 border-emerald-200', label: 'Verde' },
+  { value: 'bg-indigo-50 border-indigo-200', label: 'Blu' },
+  { value: 'bg-rose-50 border-rose-200', label: 'Rosa' },
 ]
 
 const STORAGE_KEY = 'fodi-os-sticky-notes'
@@ -118,15 +102,14 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState('')
-  const [notes, setNotes] = useState<StickyNote[]>([])
+  const [notes, setNotes] = useState<StickyNoteItem[]>([])
   const [editingNote, setEditingNote] = useState<string | null>(null)
-  const [invoiceDonutData, setInvoiceDonutData] = useState<DonutChartSegment[]>([])
+  const [invoiceDonutData, setInvoiceDonutData] = useState<ChartSegment[]>([])
   const [invoiceTotal, setInvoiceTotal] = useState(0)
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [weekHours, setWeekHours] = useState(0)
   const [totalRevenue, setTotalRevenue] = useState(0)
   const [totalExpenses, setTotalExpenses] = useState(0)
-  const [allInvoices, setAllInvoices] = useState<InvoiceItem[]>([])
   const [showDropzone, setShowDropzone] = useState(false)
 
   // Sticky notes - localStorage
@@ -137,7 +120,7 @@ export default function DashboardPage() {
     } catch {}
   }, [])
 
-  function saveNotes(updated: StickyNote[]) {
+  function saveNotes(updated: StickyNoteItem[]) {
     setNotes(updated)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
   }
@@ -145,7 +128,7 @@ export default function DashboardPage() {
   function addNote() {
     if (notes.length >= 5) return
     const colorIndex = notes.length % NOTE_COLORS.length
-    const newNote: StickyNote = {
+    const newNote: StickyNoteItem = {
       id: Date.now().toString(),
       text: '',
       color: NOTE_COLORS[colorIndex].value,
@@ -206,13 +189,10 @@ export default function DashboardPage() {
           .reduce((s: number, e: { amount: string }) => s + parseFloat(e.amount), 0)
         setTotalExpenses(expenses)
 
-        // Team members
         const members = teamRes?.items || teamRes?.members || []
         setTeamMembers(Array.isArray(members) ? members : [])
 
-        // All invoices for donut + financial dashboard
         const invoices = allInvoicesRes?.items || []
-        setAllInvoices(invoices)
 
         setStats([
           { label: 'Clienti Attivi', value: String(clientsRes?.total ?? 0), icon: Users, color: 'text-primary', href: '/crm?status=ACTIVE' },
@@ -231,16 +211,16 @@ export default function DashboardPage() {
           statusGroups[inv.status].total += parseFloat(inv.total)
         })
         const STATUS_COLORS: Record<string, string> = {
-          PAID: 'hsl(142, 71%, 45%)', SENT: 'hsl(217, 91%, 60%)',
-          OVERDUE: 'hsl(0, 84%, 60%)', DRAFT: 'hsl(220, 9%, 46%)',
+          PAID: '#059669', SENT: '#4F46E5',
+          OVERDUE: '#DC2626', DRAFT: '#8C8680',
         }
         const STATUS_LABELS: Record<string, string> = {
           PAID: 'Pagate', SENT: 'Inviate', OVERDUE: 'Scadute', DRAFT: 'Bozze',
         }
-        const donutSegments: DonutChartSegment[] = Object.entries(statusGroups).map(([status, data]) => ({
+        const donutSegments: ChartSegment[] = Object.entries(statusGroups).map(([status, data]) => ({
           label: STATUS_LABELS[status] || status,
           value: data.total,
-          color: STATUS_COLORS[status] || 'hsl(220, 9%, 46%)',
+          color: STATUS_COLORS[status] || '#8C8680',
         }))
         setInvoiceDonutData(donutSegments)
         setInvoiceTotal(invoices.reduce((s: number, i: { total: string }) => s + parseFloat(i.total), 0))
@@ -292,17 +272,15 @@ export default function DashboardPage() {
     return `${actionLabel} ${entityLabel}${name ? ` "${name}"` : ''}`
   }
 
-  // Recent invoices for FinancialDashboard
-  const recentInvoiceActivity = allInvoices.slice(0, 5).map((inv) => ({
-    icon: inv.status === 'PAID' ? CheckCircle2 : Receipt,
-    title: `Fattura ${inv.number || inv.id.slice(0, 8)}`,
-    time: inv.createdAt
-      ? formatDistanceToNow(new Date(inv.createdAt), { addSuffix: true, locale: it })
-      : '',
-    amount: parseFloat(inv.total) * (inv.status === 'PAID' ? 1 : -1),
-  }))
+  const ICON_COLORS: Record<string, string> = {
+    project: 'text-accent bg-accent/10',
+    client: 'text-primary bg-primary/10',
+    quote: 'text-[var(--color-warning)] bg-[var(--color-warning)]/10',
+    invoice: 'text-accent bg-accent/10',
+    task: 'text-primary bg-primary/10',
+    ticket: 'text-destructive bg-destructive/10',
+  }
 
-  // Quick actions for MorphButton
   const quickActions = [
     { label: 'Nuovo Cliente', icon: <UserPlus className="h-4 w-4" />, href: '/crm', variant: 'secondary' as const },
     { label: 'Nuovo Progetto', icon: <FolderKanban className="h-4 w-4" />, href: '/projects', variant: 'secondary' as const },
@@ -311,87 +289,80 @@ export default function DashboardPage() {
     { label: 'Registra Ore', icon: <ClockPlus className="h-4 w-4" />, href: '/time', variant: 'ghost' as const },
   ]
 
-  const searchActions: Action[] = [
-    { id: '1', label: 'Nuovo Cliente', icon: <UserPlus className="h-4 w-4 text-primary" />, description: 'CRM', short: '\u2318N', end: 'Azione' },
-    { id: '2', label: 'Nuovo Preventivo', icon: <FilePlus2 className="h-4 w-4 text-[var(--color-warning)]" />, description: 'ERP', short: '', end: 'Azione' },
-    { id: '3', label: 'Registra Ore', icon: <ClockPlus className="h-4 w-4 text-muted" />, description: 'Time', short: '', end: 'Azione' },
-    { id: '4', label: 'Calendario', icon: <CalendarCheck className="h-4 w-4 text-accent" />, description: 'Vai', short: '', end: 'Navigazione' },
-    { id: '5', label: 'Report Finanziario', icon: <BarChart3 className="h-4 w-4 text-accent" />, description: 'ERP', short: '', end: 'Report' },
-  ]
-
   return (
-    <CommandDeck>
     <div>
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <div className="mb-8 md:mb-10">
         <div className="flex items-center gap-3 md:gap-4 mb-1">
-          <div className="p-2.5 md:p-3 rounded-2xl shadow-[0_4px_16px_rgba(0,122,255,0.2)]" style={{ background: 'var(--gold-gradient)' }}>
-            <LayoutDashboard className="h-6 w-6 md:h-7 md:w-7 text-white" />
+          <div className="p-2.5 md:p-3 rounded-lg bg-primary/10 text-primary">
+            <LayoutDashboard className="h-6 w-6 md:h-7 md:w-7" />
           </div>
           <div className="min-w-0">
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight truncate">
-              {getGreeting()}{userName ? <>, <span className="gold-accent">{userName}</span></> : ''}
+              {getGreeting()}{userName ? <>, <span className="text-primary font-bold">{userName}</span></> : ''}
             </h1>
             <p className="text-xs md:text-sm text-muted mt-1 capitalize">{formatTodayDate()}</p>
           </div>
         </div>
       </div>
 
-      {/* ── SEARCH BAR ── */}
+      {/* Cmd+K hint */}
       <div className="mb-6">
-        <ActionSearchBar actions={searchActions} />
+        <p className="text-xs text-muted">
+          Premi <kbd className="px-1.5 py-0.5 text-[10px] font-medium bg-secondary rounded border border-border/50">Cmd+K</kbd> per cercare o eseguire azioni rapide
+        </p>
       </div>
 
-      {/* ── STAT CARDS ── */}
+      {/* STAT CARDS */}
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5 mb-6 md:mb-8">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 md:h-28 rounded-2xl" />)}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 md:h-28 rounded-xl" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5 mb-6 md:mb-8 animate-stagger">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8 animate-stagger">
           {stats.map((stat) => (
             <div
               key={stat.label}
               onClick={() => router.push(stat.href)}
-              className="relative overflow-hidden rounded-2xl border border-border/30 bg-card p-4 md:p-5 cursor-pointer stat-card-glow group touch-manipulation active:scale-[0.97] transition-all duration-300"
+              className="relative overflow-hidden rounded-xl border border-border/30 bg-card p-4 md:p-5 cursor-pointer hover:border-primary/20 transition-colors group touch-manipulation active:scale-[0.97]"
             >
-              <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'var(--gold-gradient)' }} />
               <div className="flex items-start justify-between mb-3">
-                <div className={`p-2.5 md:p-3 rounded-2xl ${stat.color} transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg flex-shrink-0`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
-                  <stat.icon className="h-5 w-5 md:h-6 md:w-6" />
+                <div className={`p-2 md:p-2.5 rounded-lg ${stat.color} transition-all duration-300 group-hover:scale-110 flex-shrink-0`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+                  <stat.icon className="h-4 w-4 md:h-5 md:w-5" />
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary" />
+                <ArrowRight className="h-3.5 w-3.5 text-muted/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary" />
               </div>
-              <p className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate animate-count-up">{stat.value}</p>
+              <p className="text-2xl md:text-3xl font-bold tracking-tight truncate animate-count-up tabular-nums">{stat.value}</p>
               <p className="text-[10px] md:text-xs text-muted uppercase tracking-wider font-medium mt-1 truncate">{stat.label}</p>
             </div>
           ))}
         </div>
       )}
 
-      {/* ── QUICK ACTIONS (MorphButton) ── */}
+      {/* QUICK ACTIONS */}
       <div className="mb-6 md:mb-8">
-        <div className="flex gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-none">
           {quickActions.map((action) => (
-            <MorphButton
+            <Button
               key={action.label}
-              text={action.label}
-              icon={action.icon}
               variant={action.variant}
               size="sm"
               onClick={() => router.push(action.href)}
-            />
+            >
+              {action.icon}
+              {action.label}
+            </Button>
           ))}
         </div>
       </div>
 
-      {/* ── ROW 1: FATTURATO + CASH FLOW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
-        <Card className="shadow-lift border-border/20 rounded-2xl">
+      {/* ROW 1: FATTURATO + CASH FLOW */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <Card>
           <CardContent>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 rounded-xl bg-accent/10 text-accent">
-                <BarChart3 className="h-5 w-5" />
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                <BarChart3 className="h-4 w-4" />
               </div>
               <CardTitle>Fatturato Mensile</CardTitle>
             </div>
@@ -399,11 +370,11 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lift border-border/20 rounded-2xl">
+        <Card>
           <CardContent>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 rounded-xl" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
-                <Wallet className="h-5 w-5" />
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
+                <Wallet className="h-4 w-4" />
               </div>
               <CardTitle>Cash Flow</CardTitle>
             </div>
@@ -412,80 +383,35 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ── ROW 2: ENTRATE/USCITE + DONUT FATTURE ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
-        <div className="flex justify-center">
-          <BonusesIncentivesCard
-            bonusText="Entrate"
-            incentivesText="Uscite"
-            bonusesValue={totalRevenue}
-            incentivesValue={totalExpenses}
-            onMoreDetails={() => router.push('/erp/reports')}
-            enableAnimations
-          />
-        </div>
-
-        <Card className="shadow-lift border-border/20 rounded-2xl">
-          <CardContent>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                <Receipt className="h-5 w-5" />
-              </div>
-              <CardTitle>Distribuzione Fatture</CardTitle>
-            </div>
-            {invoiceDonutData.length === 0 ? (
-              <p className="text-sm text-muted py-4">Nessuna fattura trovata.</p>
-            ) : (
-              <div className="flex flex-col items-center gap-4">
-                <DonutChart
-                  data={invoiceDonutData}
-                  size={200}
-                  strokeWidth={24}
-                  animationDuration={1.2}
-                  centerContent={
-                    <div className="text-center">
-                      <p className="text-xs text-muted uppercase tracking-wider">Totale</p>
-                      <p className="text-lg font-bold">{formatCurrency(invoiceTotal)}</p>
-                    </div>
-                  }
-                />
-                <div className="flex flex-wrap justify-center gap-3">
-                  {invoiceDonutData.map((seg) => (
-                    <div key={seg.label} className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: seg.color }} />
-                      <span className="text-xs text-muted">{seg.label}: {formatCurrency(seg.value)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* ROW 2: FINANCIAL SUMMARY + INVOICE DONUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <FinancialSummaryCard
+          income={totalRevenue}
+          expenses={totalExpenses}
+          onViewDetails={() => router.push('/erp/reports')}
+        />
+        <InvoiceStatusChart data={invoiceDonutData} total={invoiceTotal} />
       </div>
 
-      {/* ── ROW 3: TREND ATTIVITA + PIPELINE ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
-        <Card className="shadow-lift border-border/20 rounded-2xl">
+      {/* ROW 3: TREND + PIPELINE */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <Card>
           <CardContent>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                <Activity className="h-5 w-5" />
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                <Activity className="h-4 w-4" />
               </div>
-              <CardTitle>Trend Attività</CardTitle>
+              <CardTitle>Trend Attivita</CardTitle>
             </div>
-            <AreaCharts1
-              color="var(--color-primary)"
-              height={220}
-              gradientId="trendArea"
-            />
+            <ActivityTrendChart />
           </CardContent>
         </Card>
 
-        <Card className="shadow-lift border-border/20 rounded-2xl">
+        <Card>
           <CardContent>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 rounded-xl bg-accent/10 text-accent">
-                <TrendingUp className="h-5 w-5" />
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                <TrendingUp className="h-4 w-4" />
               </div>
               <CardTitle>Pipeline Commerciale</CardTitle>
             </div>
@@ -494,20 +420,20 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ── ROW 4: TASK IN SCADENZA ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
-        <Card className="shadow-lift border-border/20 rounded-2xl">
+      {/* ROW 4: TASK IN SCADENZA + TEAM ACTIVITY */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <Card>
           <CardContent>
             <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                  <CalendarCheck className="h-5 w-5" />
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  <CalendarCheck className="h-4 w-4" />
                 </div>
                 <CardTitle>Task in Scadenza</CardTitle>
               </div>
               <button
                 onClick={() => router.push('/projects')}
-                className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-full bg-primary/5 hover:bg-primary/10 transition-all"
+                className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-md bg-primary/5 hover:bg-primary/10 transition-all"
               >
                 Vedi tutti
               </button>
@@ -517,7 +443,7 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-1">
                 {tasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg border-b border-border/50 last:border-0 hover:bg-secondary/50 transition-colors">
+                  <div key={task.id} className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg border-b border-border/30 last:border-0 hover:bg-secondary/50 transition-colors">
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{task.title}</p>
                       {task.project && (
@@ -538,86 +464,62 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
+
+        <TeamActivityCard
+          totalHours={weekHours}
+          breakdown={[
+            { label: 'Sviluppo', value: 50, color: 'bg-primary' },
+            { label: 'Design', value: 30, color: 'bg-accent' },
+            { label: 'Gestione', value: 20, color: 'bg-amber-400' },
+          ]}
+          members={teamMembers.length > 0
+            ? teamMembers.map((m) => ({
+                id: m.id,
+                name: `${m.firstName} ${m.lastName}`,
+                avatarUrl: m.avatarUrl || undefined,
+              }))
+            : [{ id: '1', name: userName || 'Team', avatarUrl: undefined }]
+          }
+          onManageTeam={() => router.push('/team')}
+        />
       </div>
 
-      {/* ── ROW 5: TEAM ACTIVITIES + ATTIVITA RECENTI ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
-        <MarketingDashboard
-          title="Attività Team"
-          className="shadow-lift border-border/20 rounded-2xl max-w-none"
-          teamActivities={{
-            totalHours: weekHours,
-            stats: [
-              { label: 'Sviluppo', value: 50, color: 'bg-primary' },
-              { label: 'Design', value: 30, color: 'bg-accent' },
-              { label: 'Gestione', value: 20, color: 'bg-amber-400' },
-            ],
-          }}
-          team={{
-            memberCount: teamMembers.length || 1,
-            members: teamMembers.length > 0
-              ? teamMembers.map((m) => ({
-                  id: m.id,
-                  name: `${m.firstName} ${m.lastName}`,
-                  avatarUrl: m.avatarUrl || '',
-                }))
-              : [{ id: '1', name: userName || 'Team', avatarUrl: '' }],
-          }}
-          cta={{
-            text: 'Gestisci il tuo team',
-            buttonText: 'Team',
-            onButtonClick: () => router.push('/team'),
-          }}
-        />
-
-        <RecentActivityFeed
-          cardTitle="Attività Recenti"
-          className="shadow-lift border-border/20 rounded-2xl"
+      {/* ROW 5: ACTIVITY TIMELINE */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <ActivityTimeline
           activities={activities.map((activity) => {
             const ActionIcon = ACTIVITY_ICONS[activity.entityType] || Activity
             const label = getActivityLabel(activity)
-            const ICON_COLORS: Record<string, string> = {
-              project: 'text-accent bg-accent/10',
-              client: 'text-primary bg-primary/10',
-              quote: 'text-[var(--color-warning)] bg-[var(--color-warning)]/10',
-              invoice: 'text-accent bg-accent/10',
-              task: 'text-primary bg-primary/10',
-              ticket: 'text-destructive bg-destructive/10',
-            }
             return {
               id: activity.id,
               icon: ActionIcon,
               message: (
                 <>
-                  <span className="font-bold text-foreground">{activity.user.firstName} {activity.user.lastName}</span>
+                  <span className="font-semibold text-foreground">{activity.user.firstName} {activity.user.lastName}</span>
                   {' '}{label}
                 </>
               ),
               timestamp: formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: it }),
-              iconColorClass: ICON_COLORS[activity.entityType] || 'text-muted-foreground bg-muted',
+              iconColorClass: ICON_COLORS[activity.entityType] || 'text-muted bg-secondary',
             }
           })}
         />
-      </div>
 
-      {/* ── STICKY NOTES ── */}
-      <div className="mb-6">
-        <Card className="shadow-lift border-border/20 rounded-2xl">
+        {/* STICKY NOTES */}
+        <Card>
           <CardContent>
             <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
-                  <StickyNote className="h-5 w-5" />
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
+                  <StickyNote className="h-4 w-4" />
                 </div>
                 <CardTitle>Note Rapide</CardTitle>
               </div>
               {notes.length < 5 && (
-                <MicroExpander
-                  text="Aggiungi"
-                  icon={<Plus className="h-4 w-4" />}
-                  variant="ghost"
-                  onClick={addNote}
-                />
+                <Button variant="ghost" size="sm" onClick={addNote}>
+                  <Plus className="h-4 w-4" />
+                  Aggiungi
+                </Button>
               )}
             </div>
             {notes.length === 0 ? (
@@ -632,11 +534,11 @@ export default function DashboardPage() {
                 </Button>
               </div>
             ) : (
-              <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 md:overflow-visible scrollbar-none">
+              <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 md:overflow-visible scrollbar-none">
                 {notes.map((note) => (
                   <div
                     key={note.id}
-                    className={`relative rounded-xl border p-3 min-h-[100px] min-w-[200px] flex-shrink-0 md:min-w-0 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-shadow duration-200 ${note.color}`}
+                    className={`relative rounded-lg border p-3 min-h-[100px] min-w-[200px] flex-shrink-0 md:min-w-0 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-shadow duration-200 ${note.color}`}
                   >
                     <div className="absolute top-1.5 right-1.5 flex gap-0.5">
                       <button
@@ -678,12 +580,10 @@ export default function DashboardPage() {
               </div>
             )}
             <div className="mt-4 pt-4 border-t border-border/30">
-              <MicroExpander
-                text="Carica Documento"
-                icon={<Plus className="h-4 w-4" />}
-                variant="ghost"
-                onClick={() => setShowDropzone(!showDropzone)}
-              />
+              <Button variant="ghost" size="sm" onClick={() => setShowDropzone(!showDropzone)}>
+                <Plus className="h-4 w-4" />
+                Carica Documento
+              </Button>
               {showDropzone && (
                 <div className="mt-3">
                   <Dropzone
@@ -703,23 +603,17 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ── AZIONI FINANZIARIE ── */}
+      {/* ROW 6: QUICK ACTIONS */}
       <div className="mb-6">
-        <FinancialDashboard
-          quickActions={[
-            { icon: FilePlus2, title: 'Nuova Fattura', description: 'Crea fattura' },
-            { icon: Receipt, title: 'Nuovo Preventivo', description: 'Crea preventivo' },
-            { icon: Wallet, title: 'Registra Spesa', description: 'Aggiungi spesa' },
-            { icon: BarChart3, title: 'Report', description: 'Vedi report' },
-          ]}
-          recentActivity={recentInvoiceActivity}
-          financialServices={[
-            { icon: TrendingUp, title: 'Analisi Revenue', description: 'Trend e previsioni', hasAction: true },
-            { icon: Receipt, title: 'Fatturazione Elettronica', description: 'XML FatturaPA', isPremium: true, hasAction: true },
+        <QuickActionsGrid
+          actions={[
+            { icon: FilePlus2, title: 'Nuova Fattura', description: 'Crea fattura', onClick: () => router.push('/erp/invoices') },
+            { icon: Receipt, title: 'Nuovo Preventivo', description: 'Crea preventivo', onClick: () => router.push('/erp/quotes/new') },
+            { icon: Wallet, title: 'Registra Spesa', description: 'Aggiungi spesa', onClick: () => router.push('/erp/expenses') },
+            { icon: BarChart3, title: 'Report', description: 'Vedi report', onClick: () => router.push('/erp/reports') },
           ]}
         />
       </div>
     </div>
-    </CommandDeck>
   )
 }

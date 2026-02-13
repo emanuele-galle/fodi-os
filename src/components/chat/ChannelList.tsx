@@ -49,7 +49,7 @@ const ROLE_COLORS: Record<string, string> = {
   ADMIN: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
   MANAGER: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
   SALES: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-  PM: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  PM: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400',
   DEVELOPER: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400',
   CONTENT: 'bg-pink-500/15 text-pink-600 dark:text-pink-400',
   SUPPORT: 'bg-orange-500/15 text-orange-600 dark:text-orange-400',

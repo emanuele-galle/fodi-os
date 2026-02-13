@@ -6,8 +6,10 @@ import {
   DragOverlay,
   closestCorners,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
@@ -38,7 +40,7 @@ const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destru
   LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
 }
 
-function SortableTaskCard({ task }: { task: Task }) {
+function SortableTaskCard({ task, onClick }: { task: Task; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'task', task },
@@ -56,6 +58,12 @@ function SortableTaskCard({ task }: { task: Task }) {
       style={style}
       {...attributes}
       {...listeners}
+      onClick={(e) => {
+        if (!isDragging && onClick) {
+          e.stopPropagation()
+          onClick()
+        }
+      }}
       className="bg-card rounded-md border border-border p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow"
     >
       <p className="font-medium text-sm mb-2">{task.title}</p>
@@ -107,7 +115,7 @@ function TaskCardOverlay({ task }: { task: Task }) {
 }
 
 function DroppableColumn({ columnKey, children }: { columnKey: string; children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useSortable({
+  const { setNodeRef, isOver } = useDroppable({
     id: `column-${columnKey}`,
     data: { type: 'column', columnKey },
   })
@@ -128,14 +136,18 @@ interface KanbanBoardProps {
   tasksByColumn: Record<string, Task[]>
   onColumnChange: (taskId: string, newColumn: string) => void
   onAddTask?: (column: string) => void
+  onTaskClick?: (taskId: string) => void
 }
 
-export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask }: KanbanBoardProps) {
+export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskClick }: KanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
     })
   )
 
@@ -194,7 +206,7 @@ export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask }: Kanban
               >
                 <div className="space-y-2 min-h-[60px] mb-2">
                   {tasks.map((task) => (
-                    <SortableTaskCard key={task.id} task={task} />
+                    <SortableTaskCard key={task.id} task={task} onClick={onTaskClick ? () => onTaskClick(task.id) : undefined} />
                   ))}
                 </div>
               </SortableContext>

@@ -15,10 +15,10 @@ interface StatusBadgeProps {
 
 const variantStyles: Record<StatusVariant, { bg: string; text: string; dot: string; divider: string }> = {
   success: {
-    bg: 'bg-green-500/8',
-    text: 'text-green-600',
-    dot: 'bg-green-500',
-    divider: 'bg-green-500/20',
+    bg: 'bg-emerald-500/8',
+    text: 'text-emerald-600',
+    dot: 'bg-emerald-500',
+    divider: 'bg-emerald-500/20',
   },
   error: {
     bg: 'bg-red-500/8',
@@ -33,10 +33,10 @@ const variantStyles: Record<StatusVariant, { bg: string; text: string; dot: stri
     divider: 'bg-amber-500/20',
   },
   info: {
-    bg: 'bg-blue-500/8',
-    text: 'text-blue-600',
-    dot: 'bg-blue-500',
-    divider: 'bg-blue-500/20',
+    bg: 'bg-indigo-500/8',
+    text: 'text-indigo-600',
+    dot: 'bg-indigo-500',
+    divider: 'bg-indigo-500/20',
   },
   default: {
     bg: 'bg-secondary/50',

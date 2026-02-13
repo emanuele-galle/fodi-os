@@ -3,8 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Clock, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { MorphButton } from '@/components/ui/MorphButton'
-import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -125,8 +123,8 @@ export default function TimeTrackingPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3 mb-1">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-            <Clock className="h-5 w-5 text-white" />
+          <div className="bg-primary/10 text-primary p-2.5 rounded-lg">
+            <Clock className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Time Tracking</h1>
@@ -134,11 +132,10 @@ export default function TimeTrackingPage() {
           </div>
         </div>
         <div className="hidden sm:block flex-shrink-0">
-          <MicroExpander
-            text="Registra Ore"
-            icon={<Plus className="h-4 w-4" />}
-            onClick={() => setModalOpen(true)}
-          />
+          <Button size="sm" onClick={() => setModalOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Registra Ore
+          </Button>
         </div>
         <Button onClick={() => setModalOpen(true)} className="sm:hidden flex-shrink-0">
           <Plus className="h-4 w-4 mr-1" />
@@ -147,7 +144,7 @@ export default function TimeTrackingPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-stagger">
-        <Card className="shadow-lift accent-line-top">
+        <Card>
           <CardContent className="flex items-center gap-4">
             <div className="p-3 rounded-full bg-primary/10 text-primary">
               <Clock className="h-5 w-5" />
@@ -158,7 +155,7 @@ export default function TimeTrackingPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="shadow-lift accent-line-top">
+        <Card>
           <CardContent className="flex items-center gap-4">
             <div className="p-3 rounded-full bg-primary/10 text-primary">
               <Clock className="h-5 w-5" />
@@ -169,7 +166,7 @@ export default function TimeTrackingPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="shadow-lift accent-line-top">
+        <Card>
           <CardContent className="flex items-center gap-4">
             <div className="p-3 rounded-full bg-accent/10 text-accent">
               <Clock className="h-5 w-5" />
@@ -304,7 +301,7 @@ export default function TimeTrackingPage() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
-            <MorphButton type="submit" text="Registra" isLoading={submitting} />
+            <Button type="submit" loading={submitting}>Registra</Button>
           </div>
         </form>
       </Modal>

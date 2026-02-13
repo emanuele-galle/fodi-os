@@ -15,7 +15,7 @@ interface FunnelData {
 const STATUS_CONFIG: { status: string; label: string; color: string }[] = [
   { status: 'LEAD', label: 'Lead', color: '#94A3B8' },
   { status: 'PROSPECT', label: 'Prospect', color: '#F59E0B' },
-  { status: 'ACTIVE', label: 'Attivo', color: '#22C55E' },
+  { status: 'ACTIVE', label: 'Attivo', color: '#059669' },
   { status: 'INACTIVE', label: 'Inattivo', color: '#64748B' },
   { status: 'CHURNED', label: 'Perso', color: '#EF4444' },
 ]

@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { LifeBuoy, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { MorphButton } from '@/components/ui/MorphButton'
-import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
@@ -171,8 +169,8 @@ export default function SupportPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
-            <LifeBuoy className="h-5 w-5 text-white" />
+          <div className="bg-primary/10 text-primary p-2 md:p-2.5 rounded-lg flex-shrink-0">
+            <LifeBuoy className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <h1 className="text-xl md:text-2xl font-bold">Supporto</h1>
@@ -180,11 +178,10 @@ export default function SupportPage() {
           </div>
         </div>
         <div className="hidden sm:block flex-shrink-0">
-          <MicroExpander
-            text="Nuovo Ticket"
-            icon={<Plus className="h-4 w-4" />}
-            onClick={() => setModalOpen(true)}
-          />
+          <Button size="sm" onClick={() => setModalOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nuovo Ticket
+          </Button>
         </div>
         <Button onClick={() => setModalOpen(true)} className="sm:hidden flex-shrink-0">
           <Plus className="h-4 w-4 mr-1" />
@@ -244,7 +241,7 @@ export default function SupportPage() {
               <div
                 key={ticket.id}
                 onClick={() => router.push(`/support/${ticket.id}`)}
-                className="glass-card p-4 space-y-2.5 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)] accent-line-left"
+                className="p-4 space-y-2.5 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)] rounded-lg border border-border/80 bg-card"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -359,7 +356,7 @@ export default function SupportPage() {
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
               Annulla
             </Button>
-            <MorphButton type="submit" text="Crea Ticket" isLoading={submitting} />
+            <Button type="submit" loading={submitting}>Crea Ticket</Button>
           </div>
         </form>
       </Modal>

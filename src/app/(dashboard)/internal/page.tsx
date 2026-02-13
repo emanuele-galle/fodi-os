@@ -21,6 +21,7 @@ interface Project {
   name: string
   status: string
   priority: string
+  color: string | null
   workspaceId?: string | null
   _count?: { tasks: number }
   completedTasks?: number
@@ -156,9 +157,9 @@ export default function InternalPage() {
     return (
       <Card
         key={p.id}
-        className="glass-card cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98]"
+        className="cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98]"
         onClick={() => router.push(`/projects/${p.id}?from=internal`)}
-        style={{ borderTop: `3px solid ${STATUS_COLORS[p.status] || 'var(--color-primary)'}` }}
+        style={{ borderTop: `3px solid ${p.color || STATUS_COLORS[p.status] || 'var(--color-primary)'}` }}
       >
         <CardContent>
           <div className="flex items-center justify-between mb-2">
@@ -183,7 +184,7 @@ export default function InternalPage() {
                   className="h-full rounded-full transition-all"
                   style={{
                     width: `${(doneT / totalT) * 100}%`,
-                    background: 'var(--gold-gradient)',
+                    background: 'var(--color-primary)',
                   }}
                 />
               </div>
@@ -225,8 +226,8 @@ export default function InternalPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-            <Building2 className="h-5 w-5 text-white" />
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+            <Building2 className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Azienda</h1>
@@ -247,7 +248,7 @@ export default function InternalPage() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 animate-stagger">
           {stats.map((stat) => (
-            <Card key={stat.label} className="shadow-lift glow-gold accent-line-top">
+            <Card key={stat.label} className="">
               <CardContent className="flex items-center gap-4">
                 <div
                   className={`p-3 rounded-xl ${stat.color} transition-transform duration-200`}
@@ -310,7 +311,7 @@ export default function InternalPage() {
 
             if (filteredProjects.length === 0) {
               return (
-                <Card className="glass-card">
+                <Card className="">
                   <CardContent>
                     <p className="text-sm text-muted py-4 text-center">Nessun progetto interno trovato.</p>
                   </CardContent>
@@ -361,7 +362,7 @@ export default function InternalPage() {
       {loading ? (
         <Skeleton className="h-64" />
       ) : (
-        <Card className="accent-line-top shadow-lift">
+        <Card className="">
           <CardContent>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">

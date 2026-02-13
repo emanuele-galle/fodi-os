@@ -173,8 +173,8 @@ export default function TasksPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
-            <CheckSquare className="h-5 w-5 text-white" />
+          <div className="bg-primary/10 text-primary p-2 md:p-2.5 rounded-lg flex-shrink-0">
+            <CheckSquare className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <h1 className="text-xl md:text-2xl font-bold truncate">I Miei Task</h1>
@@ -206,7 +206,7 @@ export default function TasksPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 animate-stagger">
         {stats.map((s) => (
-          <Card key={s.label} className="accent-line-top shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
+          <Card key={s.label} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
             <CardContent className="flex items-center gap-4">
               <div className={`p-3 rounded-full ${s.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
                 <s.icon className="h-5 w-5" />
@@ -278,7 +278,7 @@ export default function TasksPage() {
                 <div
                   key={task.id}
                   onClick={() => openTask(task.id)}
-                  className="glass-card p-4 space-y-2.5 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)]"
+                  className="p-4 space-y-2.5 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)] rounded-lg border border-border/80 bg-card"
                   style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
                 >
                   <div className="flex items-start justify-between gap-2">

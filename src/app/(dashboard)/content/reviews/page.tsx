@@ -92,8 +92,8 @@ export default function ReviewsPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-            <ClipboardCheck className="h-5 w-5 text-white" />
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+            <ClipboardCheck className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Review</h1>
@@ -134,7 +134,7 @@ export default function ReviewsPage() {
                     const isExpanded = expandedId === review.id
 
                     return (
-                      <Card key={review.id} className="overflow-hidden glass-card shadow-lift">
+                      <Card key={review.id} className="overflow-hidden">
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : review.id)}
                           className="w-full flex items-center justify-between p-4 text-left hover:bg-secondary/30 transition-colors"

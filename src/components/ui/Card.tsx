@@ -14,11 +14,7 @@ export function Card({
     <div
       data-slot="card"
       className={cn(
-        'rounded-2xl border border-border/40 p-4 md:p-6 transition-all duration-200',
-        variant === 'glass'
-          ? 'glass-card'
-          : 'bg-card shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)]',
-        'hover:border-primary/15',
+        'rounded-xl border border-border/40 bg-card p-4 md:p-6',
         className
       )}
       {...props}
@@ -46,7 +42,7 @@ export function CardTitle({
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 data-slot="card-title" className={cn('text-lg font-semibold text-foreground leading-none tracking-tight', className)} {...props}>
+    <h3 data-slot="card-title" className={cn('text-base font-semibold text-foreground leading-none tracking-tight', className)} {...props}>
       {children}
     </h3>
   )
@@ -82,7 +78,7 @@ export function CardFooter({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div data-slot="card-footer" className={cn('flex items-center pt-4 border-t border-border/40 mt-4', className)} {...props}>
+    <div data-slot="card-footer" className={cn('flex items-center pt-4 border-t border-border/30 mt-4', className)} {...props}>
       {children}
     </div>
   )

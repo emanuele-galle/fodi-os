@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Receipt, FileText, CreditCard, BarChart3, ArrowRight, Landmark, Send, PiggyBank, Wallet, TrendingUp } from 'lucide-react'
+import { Receipt, FileText, CreditCard, BarChart3, ArrowRight, Landmark } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 import { MarginChart } from '@/components/erp/MarginChart'
-import { FinancialDashboard } from '@/components/ui/financial-dashboard'
+import { QuickActionsGrid } from '@/components/dashboard/QuickActionsGrid'
 
 export default function ErpPage() {
   const router = useRouter()
@@ -91,8 +91,8 @@ export default function ErpPage() {
   return (
     <div className="animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-          <Landmark className="h-5 w-5 text-white" />
+        <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+          <Landmark className="h-5 w-5" />
         </div>
         <div>
           <h1 className="text-xl md:text-2xl font-bold">ERP</h1>
@@ -106,7 +106,7 @@ export default function ErpPage() {
           return (
             <Card
               key={section.href}
-              className="glass-card accent-line-top cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98]"
+              className="cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98]"
               onClick={() => router.push(section.href)}
             >
               <CardHeader>
@@ -134,32 +134,19 @@ export default function ErpPage() {
       </div>
 
       {!loading && (
-        <div className="mt-6 flex justify-center">
-          <FinancialDashboard
-            quickActions={[
-              { icon: FileText, title: 'Preventivo', description: 'Crea nuovo' },
-              { icon: Receipt, title: 'Fattura', description: 'Emetti' },
-              { icon: CreditCard, title: 'Spesa', description: 'Registra' },
-              { icon: BarChart3, title: 'Report', description: 'Visualizza' },
-            ]}
-            recentActivity={recentInvoices.map((inv) => ({
-              icon: inv.status === 'PAID' ? <div className="p-2 rounded-full bg-green-500/10 text-green-500"><Receipt className="w-5 h-5" /></div>
-                : inv.status === 'OVERDUE' ? <div className="p-2 rounded-full bg-red-500/10 text-red-500"><Receipt className="w-5 h-5" /></div>
-                : <div className="p-2 rounded-full bg-blue-500/10 text-blue-500"><Receipt className="w-5 h-5" /></div>,
-              title: `${inv.number} - ${inv.client}`,
-              time: inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('it-IT') : '',
-              amount: inv.status === 'PAID' ? inv.total : -inv.total,
-            }))}
-            financialServices={[
-              { icon: TrendingUp, title: 'Report Finanziari', description: 'Analisi completa ricavi e spese', hasAction: true },
-              { icon: PiggyBank, title: 'Gestione Spese', description: 'Tracciamento e categorizzazione', hasAction: true },
-              { icon: Send, title: 'Invio Fatture', description: 'Invio automatico ai clienti', isPremium: true, hasAction: true },
+        <div className="mt-6">
+          <QuickActionsGrid
+            actions={[
+              { icon: FileText, title: 'Preventivo', description: 'Crea nuovo', onClick: () => router.push('/erp/quotes/new') },
+              { icon: Receipt, title: 'Fattura', description: 'Emetti', onClick: () => router.push('/erp/invoices') },
+              { icon: CreditCard, title: 'Spesa', description: 'Registra', onClick: () => router.push('/erp/expenses') },
+              { icon: BarChart3, title: 'Report', description: 'Visualizza', onClick: () => router.push('/erp/reports') },
             ]}
           />
         </div>
       )}
 
-      <Card className="mt-6 accent-line-top">
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle>Margine per Progetto</CardTitle>
           <CardDescription>Confronto ricavi vs costi per ciascun progetto</CardDescription>

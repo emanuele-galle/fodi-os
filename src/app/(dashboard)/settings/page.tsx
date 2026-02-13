@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Card, CardTitle, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { Avatar } from '@/components/ui/Avatar'
+import { AvatarUpload } from '@/components/ui/AvatarUpload'
 import { Badge } from '@/components/ui/Badge'
 import { Settings } from 'lucide-react'
 
@@ -112,8 +112,8 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-          <Settings className="h-5 w-5 text-white" />
+        <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+          <Settings className="h-5 w-5" />
         </div>
         <div>
           <h1 className="text-2xl font-bold">Impostazioni</h1>
@@ -134,16 +134,16 @@ export default function SettingsPage() {
       )}
 
       {/* Profile */}
-      <Card className="mb-6 glass-card accent-line-top">
+      <Card className="mb-6">
         <CardTitle>Profilo</CardTitle>
         <CardContent>
           <form onSubmit={handleSave} className="space-y-4">
-            <div className="flex items-center gap-4 mb-4">
-              <Avatar name={`${user.firstName} ${user.lastName}`} size="lg" />
-              <div>
-                <p className="font-medium">{user.firstName} {user.lastName}</p>
-                <p className="text-sm text-muted">{user.role}</p>
-              </div>
+            <div className="mb-4">
+              <AvatarUpload
+                name={`${user.firstName} ${user.lastName}`}
+                currentUrl={user.avatarUrl}
+                onUploaded={(url) => setUser({ ...user, avatarUrl: url })}
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -177,7 +177,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Google Workspace Integration */}
-      <Card className="glass-card accent-line-top">
+      <Card>
         <CardTitle>Integrazioni Google Workspace</CardTitle>
         <CardContent>
           {googleLoading ? (

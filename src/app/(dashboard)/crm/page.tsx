@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Users, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { MorphButton } from '@/components/ui/MorphButton'
-import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -141,8 +139,8 @@ export default function CrmPage() {
     <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-            <Users className="h-5 w-5 text-white" />
+          <div className="bg-primary/10 text-primary p-2.5 rounded-lg">
+            <Users className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Clienti</h1>
@@ -150,11 +148,10 @@ export default function CrmPage() {
           </div>
         </div>
         <div className="hidden sm:block">
-          <MicroExpander
-            text="Nuovo Cliente"
-            icon={<Plus className="h-4 w-4" />}
-            onClick={() => setModalOpen(true)}
-          />
+          <Button size="sm" onClick={() => setModalOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nuovo Cliente
+          </Button>
         </div>
         <Button onClick={() => setModalOpen(true)} className="sm:hidden w-full">
           <Plus className="h-4 w-4 mr-2" />
@@ -207,7 +204,7 @@ export default function CrmPage() {
             {clients.map((client) => (
               <Card
                 key={client.id}
-                className="!p-4 accent-line-left cursor-pointer active:bg-secondary/30 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200 touch-manipulation"
+                className="!p-4 cursor-pointer active:bg-secondary/30 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200 touch-manipulation"
                 onClick={() => router.push(`/crm/${client.id}`)}
               >
                 <div className="flex items-center gap-3 mb-2">
@@ -340,7 +337,7 @@ export default function CrmPage() {
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
               Annulla
             </Button>
-            <MorphButton type="submit" text="Crea Cliente" isLoading={submitting} />
+            <Button type="submit" loading={submitting}>Crea Cliente</Button>
           </div>
         </form>
       </Modal>

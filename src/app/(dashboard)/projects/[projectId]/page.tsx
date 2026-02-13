@@ -19,6 +19,9 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { KanbanBoard } from '@/components/projects/KanbanBoard'
 import { GanttChart } from '@/components/projects/GanttChart'
 import { ProjectChat } from '@/components/chat/ProjectChat'
+import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
+import { ProjectFolders } from '@/components/projects/ProjectFolders'
+import { ProjectAttachments } from '@/components/projects/ProjectAttachments'
 
 interface ClientOption {
   id: string
@@ -43,6 +46,7 @@ interface Task {
   status: string
   priority: string
   boardColumn: string
+  folderId: string | null
   dueDate: string | null
   estimatedHours: number | null
   assignee?: TaskUser | null
@@ -152,6 +156,10 @@ export default function ProjectDetailPage() {
   const [taskAssigneeIds, setTaskAssigneeIds] = useState<string[]>([])
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleteSubmitting, setDeleteSubmitting] = useState(false)
+  const [taskDetailId, setTaskDetailId] = useState<string | null>(null)
+  const [taskDetailOpen, setTaskDetailOpen] = useState(false)
+  const [folders, setFolders] = useState<{ id: string; name: string; description: string | null; color: string; sortOrder: number; _count?: { tasks: number } }[]>([])
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
@@ -178,8 +186,17 @@ export default function ProjectDetailPage() {
     }
   }, [projectId])
 
+  const fetchFolders = useCallback(async () => {
+    const res = await fetch(`/api/projects/${projectId}/folders`)
+    if (res.ok) {
+      const data = await res.json()
+      setFolders(data)
+    }
+  }, [projectId])
+
   useEffect(() => {
     fetchProject()
+    fetchFolders()
     fetch(`/api/time?projectId=${projectId}&limit=50`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.items) setTimeEntries(d.items) })
@@ -195,7 +212,7 @@ export default function ProjectDetailPage() {
       else if (d?.items) setTeamMembers(d.items)
       else if (Array.isArray(d)) setTeamMembers(d)
     })
-  }, [fetchProject, projectId])
+  }, [fetchProject, fetchFolders, projectId])
 
   async function handleProjectMeet() {
     if (creatingMeet || !project) return
@@ -283,6 +300,11 @@ export default function ProjectDetailPage() {
     }
   }
 
+  function openTaskDetail(taskId: string) {
+    setTaskDetailId(taskId)
+    setTaskDetailOpen(true)
+  }
+
   function openAddTask(column: string) {
     setTaskModalColumn(column)
     setTaskAssigneeIds([])
@@ -327,6 +349,7 @@ export default function ProjectDetailPage() {
     })
     if (body.estimatedHours) body.estimatedHours = parseFloat(body.estimatedHours as string)
     if (taskAssigneeIds.length > 0) body.assigneeIds = taskAssigneeIds
+    if (selectedFolderId) body.folderId = selectedFolderId
     try {
       const res = await fetch(`/api/projects/${projectId}/tasks`, {
         method: 'POST',
@@ -366,7 +389,10 @@ export default function ProjectDetailPage() {
     )
   }
 
-  const allTasks = project.tasks || []
+  const allProjectTasks = project.tasks || []
+  const allTasks = selectedFolderId
+    ? allProjectTasks.filter((t) => t.folderId === selectedFolderId)
+    : allProjectTasks
   const doneTasks = allTasks.filter((t) => t.status === 'DONE').length
   const totalEstimated = allTasks.reduce((s, t) => s + (t.estimatedHours || 0), 0)
   const totalLogged = timeEntries.reduce((s, e) => s + e.hours, 0)
@@ -384,6 +410,7 @@ export default function ProjectDetailPage() {
       tasksByColumn={tasksByColumn}
       onColumnChange={handleColumnChange}
       onAddTask={openAddTask}
+      onTaskClick={openTaskDetail}
     />
   )
 
@@ -404,7 +431,7 @@ export default function ProjectDetailPage() {
           </thead>
           <tbody>
             {allTasks.map((task) => (
-              <tr key={task.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors duration-200 even:bg-secondary/20">
+              <tr key={task.id} onClick={() => openTaskDetail(task.id)} className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-colors duration-200 even:bg-secondary/20">
                 <td className="py-3 px-4 font-medium">{task.title}</td>
                 <td className="py-3 px-4 text-muted hidden md:table-cell">
                   {(task.assignments?.length ?? 0) > 0 ? (
@@ -438,7 +465,7 @@ export default function ProjectDetailPage() {
         <GanttChart
           tasks={allTasks}
           milestones={project.milestones || []}
-          onTaskClick={() => {}}
+          onTaskClick={openTaskDetail}
         />
       )}
     </div>
@@ -496,6 +523,12 @@ export default function ProjectDetailPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            {project.color && (
+              <span
+                className="inline-block w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: project.color }}
+              />
+            )}
             <h1 className="text-xl sm:text-2xl font-semibold truncate">{project.name}</h1>
             <Badge variant={STATUS_BADGE[project.status] || 'default'}>{STATUS_LABEL[project.status] || project.status}</Badge>
             <Badge variant={PRIORITY_BADGE[project.priority] || 'default'}>{PRIORITY_LABEL[project.priority] || project.priority}</Badge>
@@ -523,7 +556,7 @@ export default function ProjectDetailPage() {
       {/* Confirm delete modal */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm" onClick={() => setConfirmDelete(false)}>
-          <div className="bg-card rounded-2xl p-6 shadow-xl max-w-sm mx-4 border border-border" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card rounded-xl p-6 shadow-xl max-w-sm mx-4 border border-border" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-2">Elimina progetto</h3>
             <p className="text-sm text-muted mb-4">
               Sei sicuro di voler eliminare <strong>{project.name}</strong>? Il progetto verrà archiviato e non sarà più visibile.
@@ -587,12 +620,21 @@ export default function ProjectDetailPage() {
         </Card>
       </div>
 
+      <ProjectFolders
+        projectId={projectId}
+        folders={folders}
+        onFoldersChange={fetchFolders}
+        selectedFolderId={selectedFolderId}
+        onSelectFolder={setSelectedFolderId}
+      />
+
       <Tabs
         tabs={[
           { id: 'board', label: 'Board', content: boardTab },
           { id: 'list', label: 'Lista', content: listTab },
           { id: 'milestones', label: 'Timeline', content: milestonesTab },
           { id: 'time', label: 'Tempi', content: timeTab },
+          { id: 'files', label: 'File', content: <ProjectAttachments projectId={projectId} /> },
           { id: 'chat', label: 'Chat', content: <ProjectChat projectId={projectId} /> },
         ]}
       />
@@ -722,6 +764,16 @@ export default function ProjectDetailPage() {
           </div>
         </form>
       </Modal>
+
+      <TaskDetailModal
+        taskId={taskDetailId}
+        open={taskDetailOpen}
+        onClose={() => {
+          setTaskDetailOpen(false)
+          setTaskDetailId(null)
+        }}
+        onUpdated={fetchProject}
+      />
     </div>
   )
 }

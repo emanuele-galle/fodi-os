@@ -3,8 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Receipt, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { MorphButton } from '@/components/ui/MorphButton'
-import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -100,8 +98,8 @@ export default function ExpensesPage() {
     <div>
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
-            <Receipt className="h-5 w-5 text-white" />
+          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0 bg-primary/10 text-primary">
+            <Receipt className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <h1 className="text-xl md:text-2xl font-bold">Spese</h1>
@@ -109,11 +107,10 @@ export default function ExpensesPage() {
           </div>
         </div>
         <div className="hidden sm:block flex-shrink-0">
-          <MicroExpander
-            text="Nuova Spesa"
-            icon={<Plus className="h-4 w-4" />}
-            onClick={() => setModalOpen(true)}
-          />
+          <Button size="sm" onClick={() => setModalOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nuova Spesa
+          </Button>
         </div>
         <Button onClick={() => setModalOpen(true)} className="sm:hidden flex-shrink-0">
           <Plus className="h-4 w-4 mr-1" />
@@ -121,7 +118,7 @@ export default function ExpensesPage() {
         </Button>
       </div>
 
-      <Card className="mb-6 shadow-lift">
+      <Card className="mb-6">
         <CardContent className="flex items-center gap-4">
           <div className="p-3 rounded-full bg-secondary text-primary">
             <Receipt className="h-5 w-5" />
@@ -237,7 +234,7 @@ export default function ExpensesPage() {
           <Input name="receipt" label="URL Ricevuta" placeholder="https://..." />
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
-            <MorphButton type="submit" text="Aggiungi Spesa" isLoading={submitting} />
+            <Button type="submit" loading={submitting}>Aggiungi Spesa</Button>
           </div>
         </form>
       </Modal>

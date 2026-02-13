@@ -20,8 +20,8 @@ export function Tabs({ tabs, defaultTab, className }: TabsProps) {
 
   return (
     <div className={className}>
-      {/* Apple-style segmented control */}
-      <div className="flex bg-secondary/60 rounded-xl p-1 overflow-x-auto scrollbar-none -mx-1">
+      {/* Segmented control */}
+      <div className="flex bg-secondary/60 rounded-lg p-1 overflow-x-auto scrollbar-none -mx-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}

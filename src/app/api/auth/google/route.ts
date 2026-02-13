@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
+import { jwtVerify, SignJWT } from 'jose'
 import { getAuthUrl } from '@/lib/google'
 
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
@@ -27,6 +27,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', siteUrl))
   }
 
-  const url = getAuthUrl(userId)
+  // Sign state as JWT to prevent forgery in callback
+  const stateToken = await new SignJWT({ sub: userId, purpose: 'google_oauth' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('10m')
+    .sign(ACCESS_SECRET)
+
+  const url = getAuthUrl(stateToken)
   return NextResponse.redirect(url)
 }

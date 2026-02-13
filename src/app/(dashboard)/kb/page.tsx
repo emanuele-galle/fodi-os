@@ -2,10 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { BookOpen, Plus, Search, ChevronRight, FolderOpen, FileText, Edit } from 'lucide-react'
-import { MicroExpander } from '@/components/ui/MicroExpander'
 import { WikiPageComments } from '@/components/kb/WikiPageComments'
 import { Button } from '@/components/ui/Button'
-import { MorphButton } from '@/components/ui/MorphButton'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
@@ -234,8 +232,8 @@ export default function KnowledgeBasePage() {
     <div className="flex flex-col h-full animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-            <BookOpen className="h-5 w-5 text-white" />
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+            <BookOpen className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Knowledge Base</h1>
@@ -250,11 +248,10 @@ export default function KnowledgeBasePage() {
             {showTree ? 'Nascondi Albero' : 'Mostra Albero'}
           </button>
           <div className="hidden sm:block">
-            <MicroExpander
-              text="Nuova Pagina"
-              icon={<Plus className="h-4 w-4" />}
-              onClick={() => setModalOpen(true)}
-            />
+            <Button size="sm" onClick={() => setModalOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Nuova Pagina
+            </Button>
           </div>
           <Button onClick={() => setModalOpen(true)} className="sm:hidden">
             <Plus className="h-4 w-4 mr-1" />
@@ -292,7 +289,7 @@ export default function KnowledgeBasePage() {
             ))}
           </div>
 
-          <div className="border border-border rounded-lg p-2 max-h-[60vh] overflow-auto animate-fade-in glass-card">
+          <div className="border border-border rounded-lg p-2 max-h-[60vh] overflow-auto animate-fade-in">
             {loading ? (
               <div className="space-y-2 p-2">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -318,7 +315,7 @@ export default function KnowledgeBasePage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 border border-border rounded-lg p-4 md:p-6 min-h-[400px] animate-fade-in glass-card">
+        <div className="flex-1 border border-border rounded-lg p-4 md:p-6 min-h-[400px] animate-fade-in">
           {loadingPage ? (
             <div className="space-y-4">
               <Skeleton className="h-8 w-64" />
@@ -417,7 +414,7 @@ export default function KnowledgeBasePage() {
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
               Annulla
             </Button>
-            <MorphButton type="submit" text="Crea Pagina" isLoading={submitting} />
+            <Button type="submit" loading={submitting}>Crea Pagina</Button>
           </div>
         </form>
       </Modal>

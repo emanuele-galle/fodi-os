@@ -118,8 +118,8 @@ export default function BillingSettingsPage() {
   return (
     <div className="max-w-2xl animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-          <Building2 className="h-5 w-5 text-white" />
+        <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+          <Building2 className="h-5 w-5" />
         </div>
         <div>
           <h1 className="text-2xl font-bold">Fatturazione</h1>
@@ -137,7 +137,7 @@ export default function BillingSettingsPage() {
         </div>
       )}
 
-      <Card className="glass-card accent-line-top">
+      <Card>
         <CardTitle>Profilo Azienda (CedentePrestatore)</CardTitle>
         <CardContent>
           <p className="text-sm text-muted mb-4">

@@ -10,15 +10,15 @@ export function Badge({ className, variant = 'default', pulse, dotColor, ...prop
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors duration-200',
+        'inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium transition-colors duration-200',
         {
           'bg-primary/10 text-primary': variant === 'default',
-          'bg-green-500/10 text-green-600': variant === 'success',
+          'bg-emerald-500/10 text-emerald-600': variant === 'success',
           'bg-amber-500/10 text-amber-600': variant === 'warning',
           'bg-red-500/10 text-red-600': variant === 'destructive',
-          'bg-blue-500/10 text-blue-600': variant === 'info',
-          'border border-border/60 text-foreground bg-transparent': variant === 'outline',
-          'bg-secondary/50 text-foreground gap-1.5': variant === 'dot',
+          'bg-indigo-500/10 text-indigo-600': variant === 'info',
+          'border border-border/50 text-foreground bg-transparent': variant === 'outline',
+          'bg-secondary/60 text-foreground gap-1.5': variant === 'dot',
         },
         pulse && 'animate-pulse',
         className

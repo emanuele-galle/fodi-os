@@ -30,7 +30,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         ...(milestoneId && { milestoneId }),
         ...(boardColumn && { boardColumn }),
       },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      orderBy: [{ priority: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
       include: {
         assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
         assignments: {
@@ -64,9 +64,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         { status: 400 }
       )
     }
-    const { title, description, milestoneId, assigneeId, assigneeIds, priority, boardColumn, dueDate, estimatedHours, tags } = parsed.data
+    const { title, description, milestoneId, folderId, assigneeId, assigneeIds, priority, boardColumn, dueDate, estimatedHours, tags } = parsed.data
 
-    const effectiveAssigneeIds = assigneeIds?.length ? assigneeIds : assigneeId ? [assigneeId] : []
+    // Default: se nessun assegnatario specificato, assegna al creatore
+    const effectiveAssigneeIds = assigneeIds?.length ? assigneeIds : assigneeId ? [assigneeId] : [userId]
 
     const task = await prisma.task.create({
       data: {
@@ -75,7 +76,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         title,
         description,
         milestoneId,
-        assigneeId: effectiveAssigneeIds[0] || null,
+        folderId,
+        assigneeId: effectiveAssigneeIds[0],
         priority,
         boardColumn,
         dueDate: dueDate ? new Date(dueDate) : undefined,

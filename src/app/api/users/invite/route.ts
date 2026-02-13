@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword } from '@/lib/auth'
+import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
 
 const ADMIN_ROLES: Role[] = ['ADMIN', 'MANAGER']
 const VALID_ROLES: Role[] = ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT']
+
+const inviteUserSchema = z.object({
+  email: z.string().email('Email non valida').max(255),
+  firstName: z.string().min(1, 'Nome obbligatorio').max(100),
+  lastName: z.string().min(1, 'Cognome obbligatorio').max(100),
+  userRole: z.enum(['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT']).optional(),
+  phone: z.string().max(30).optional().nullable(),
+})
 
 function generateTempPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
@@ -24,16 +33,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, firstName, lastName, userRole, phone } = body
-
-    if (!email || !firstName || !lastName) {
+    const parsed = inviteUserSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Email, nome e cognome sono obbligatori' },
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
 
-    const assignedRole: Role = VALID_ROLES.includes(userRole) ? userRole : 'DEVELOPER'
+    const { email, firstName, lastName, userRole, phone } = parsed.data
+    const assignedRole: Role = userRole && VALID_ROLES.includes(userRole) ? userRole : 'DEVELOPER'
 
     // Check if user already exists
     const existing = await prisma.user.findUnique({ where: { email } })

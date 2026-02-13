@@ -524,8 +524,8 @@ export default function UsersAdminPage() {
             <CardContent>
               {inviteResult ? (
                 <div className="text-center">
-                  <div className="mx-auto h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
-                    <Check className="h-6 w-6 text-green-600" />
+                  <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
+                    <Check className="h-6 w-6 text-emerald-600" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">Utente Creato</h3>
                   <p className="text-sm text-muted mb-4">
@@ -546,7 +546,7 @@ export default function UsersAdminPage() {
                           title="Copia password"
                         >
                           {copiedPassword ? (
-                            <Check className="h-3.5 w-3.5 text-green-600" />
+                            <Check className="h-3.5 w-3.5 text-emerald-600" />
                           ) : (
                             <Copy className="h-3.5 w-3.5 text-muted" />
                           )}
@@ -816,7 +816,7 @@ export default function UsersAdminPage() {
                             title="Copia password"
                           >
                             {copiedResetPw ? (
-                              <Check className="h-3.5 w-3.5 text-green-600" />
+                              <Check className="h-3.5 w-3.5 text-emerald-600" />
                             ) : (
                               <Copy className="h-3.5 w-3.5 text-muted" />
                             )}
@@ -1009,7 +1009,7 @@ export default function UsersAdminPage() {
                               disabled={!sectionOverrideActive}
                               className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                                 perm.view
-                                  ? 'bg-green-500/15 text-green-600 hover:bg-green-500/25'
+                                  ? 'bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25'
                                   : 'bg-secondary text-muted hover:bg-secondary/80'
                               } ${!sectionOverrideActive ? 'opacity-50 cursor-not-allowed' : ''}`}
                               title={perm.view ? 'Visibile' : 'Nascosto'}
@@ -1026,7 +1026,7 @@ export default function UsersAdminPage() {
                               disabled={!sectionOverrideActive || !perm.view}
                               className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                                 perm.edit
-                                  ? 'bg-blue-500/15 text-blue-600 hover:bg-blue-500/25'
+                                  ? 'bg-indigo-500/15 text-indigo-600 hover:bg-indigo-500/25'
                                   : 'bg-secondary text-muted hover:bg-secondary/80'
                               } ${(!sectionOverrideActive || !perm.view) ? 'opacity-50 cursor-not-allowed' : ''}`}
                               title={perm.edit ? 'Modifica attiva' : 'Solo lettura'}
@@ -1179,7 +1179,7 @@ export default function UsersAdminPage() {
                     onClick={() => handleToggleActive(u.id, u.isActive)}
                     className={`p-1.5 rounded-md transition-colors ${
                       u.isActive
-                        ? 'text-green-600 hover:bg-green-500/10'
+                        ? 'text-emerald-600 hover:bg-emerald-500/10'
                         : 'text-muted hover:bg-secondary'
                     }`}
                     title={u.isActive ? 'Disattiva utente' : 'Riattiva utente'}

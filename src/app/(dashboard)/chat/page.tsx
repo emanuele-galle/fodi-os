@@ -624,7 +624,7 @@ export default function ChatPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-background to-secondary/20">
             <div className="text-center px-6">
-              <div className="h-16 w-16 rounded-2xl bg-primary/10 mx-auto mb-4 flex items-center justify-center">
+              <div className="h-16 w-16 rounded-xl bg-primary/10 mx-auto mb-4 flex items-center justify-center">
                 <MessageCircle className="h-8 w-8 text-primary/60" />
               </div>
               <h3 className="text-lg font-semibold text-foreground/80 mb-1">Chat Team</h3>

@@ -6,8 +6,8 @@ import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { DonutChart, type DonutChartSegment } from '@/components/ui/donut-chart'
-import { BonusesIncentivesCard } from '@/components/ui/animated-dashboard-card'
+import { InvoiceStatusChart } from '@/components/dashboard/InvoiceStatusChart'
+import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
 
 const MONTH_LABELS = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic']
 
@@ -32,7 +32,7 @@ export default function ReportsPage() {
   const [stats, setStats] = useState<Stats>({ revenueMTD: 0, invoiced: 0, paid: 0, outstanding: 0 })
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([])
   const [expenseData, setExpenseData] = useState<ExpenseDataPoint[]>([])
-  const [invoiceDonut, setInvoiceDonut] = useState<DonutChartSegment[]>([])
+  const [invoiceDonut, setInvoiceDonut] = useState<{ label: string; value: number; color: string }[]>([])
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -122,9 +122,9 @@ export default function ReportsPage() {
           statusGroups[inv.status] = (statusGroups[inv.status] || 0) + parseFloat(inv.total)
         })
         const STATUS_COLORS: Record<string, string> = {
-          PAID: 'hsl(142, 71%, 45%)', SENT: 'hsl(217, 91%, 60%)',
+          PAID: 'hsl(160, 84%, 39%)', SENT: 'hsl(239, 84%, 67%)',
           OVERDUE: 'hsl(0, 84%, 60%)', DRAFT: 'hsl(220, 9%, 46%)',
-          PARTIALLY_PAID: 'hsl(45, 93%, 47%)',
+          PARTIALLY_PAID: 'hsl(38, 92%, 50%)',
         }
         const STATUS_LABELS: Record<string, string> = {
           PAID: 'Pagate', SENT: 'Inviate', OVERDUE: 'Scadute', DRAFT: 'Bozze', PARTIALLY_PAID: 'Parz. Pagate',
@@ -153,8 +153,8 @@ export default function ReportsPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
-          <TrendingUp className="h-5 w-5 text-white" />
+        <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0 bg-primary/10 text-primary">
+          <TrendingUp className="h-5 w-5" />
         </div>
         <div className="min-w-0">
           <h1 className="text-xl md:text-2xl font-bold">Report Finanziari</h1>
@@ -169,7 +169,7 @@ export default function ReportsPage() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8 animate-stagger">
           {statCards.map((stat) => (
-            <Card key={stat.label} className="shadow-lift">
+            <Card key={stat.label}>
               <CardContent className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 !p-3 md:!p-4">
                 <div className={`p-2 md:p-3 rounded-full bg-secondary ${stat.color}`}>
                   <stat.icon className="h-4 w-4 md:h-6 md:w-6" />
@@ -184,48 +184,15 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* Donut Chart + Animated Card */}
+      {/* Donut Chart + Financial Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-        <Card className="shadow-lift">
-          <CardContent>
-            <CardTitle className="mb-4 text-base md:text-lg">Distribuzione Fatture</CardTitle>
-            {invoiceDonut.length === 0 ? (
-              <p className="text-sm text-muted py-4 text-center">Nessuna fattura.</p>
-            ) : (
-              <div className="flex flex-col items-center gap-4">
-                <DonutChart
-                  data={invoiceDonut}
-                  size={180}
-                  strokeWidth={22}
-                  animationDuration={1.2}
-                  centerContent={
-                    <div className="text-center">
-                      <p className="text-[10px] text-muted uppercase tracking-wider">Totale</p>
-                      <p className="text-base font-bold">{formatCurrency(stats.invoiced)}</p>
-                    </div>
-                  }
-                />
-                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
-                  {invoiceDonut.map((seg) => (
-                    <div key={seg.label} className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: seg.color }} />
-                      <span className="text-xs text-muted">{seg.label}: {formatCurrency(seg.value)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="flex items-center justify-center">
-          <BonusesIncentivesCard
-            bonusText="Incassato"
-            incentivesText="Spese"
-            bonusesValue={Math.round(stats.paid)}
-            incentivesValue={Math.round(totalExpenses)}
-          />
-        </div>
+        <InvoiceStatusChart data={invoiceDonut} total={stats.invoiced} />
+        <FinancialSummaryCard
+          income={stats.paid}
+          expenses={totalExpenses}
+          incomeLabel="Incassato"
+          expenseLabel="Spese"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">

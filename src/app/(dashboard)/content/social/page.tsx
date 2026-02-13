@@ -102,8 +102,8 @@ export default function SocialPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-            <CalendarDays className="h-5 w-5 text-white" />
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+            <CalendarDays className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Social Calendar</h1>
@@ -154,7 +154,7 @@ export default function SocialPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {posts.map((post) => (
-            <Card key={post.id} className="p-4 shadow-lift glass-card accent-line-top">
+            <Card key={post.id} className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <Badge variant={PLATFORM_BADGE[post.platform] || 'default'}>
                   {post.platform}

@@ -13,7 +13,7 @@ export async function PATCH(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { firstName, lastName, phone, avatarUrl } = parsed.data
+    const { firstName, lastName, phone } = parsed.data
 
     const user = await prisma.user.update({
       where: { id: userId },
@@ -21,7 +21,6 @@ export async function PATCH(request: NextRequest) {
         ...(firstName !== undefined && { firstName }),
         ...(lastName !== undefined && { lastName }),
         ...(phone !== undefined && { phone }),
-        ...(avatarUrl !== undefined && { avatarUrl }),
       },
       select: {
         id: true,

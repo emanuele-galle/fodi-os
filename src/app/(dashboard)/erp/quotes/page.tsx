@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Receipt, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
@@ -76,8 +75,8 @@ export default function QuotesPage() {
     <div>
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
-            <Receipt className="h-5 w-5 text-white" />
+          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0 bg-primary/10 text-primary">
+            <Receipt className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <h1 className="text-xl md:text-2xl font-bold">Preventivi</h1>
@@ -85,11 +84,10 @@ export default function QuotesPage() {
           </div>
         </div>
         <div className="hidden sm:block flex-shrink-0">
-          <MicroExpander
-            text="Nuovo Preventivo"
-            icon={<Plus className="h-4 w-4" />}
-            onClick={() => router.push('/erp/quotes/new')}
-          />
+          <Button size="sm" onClick={() => router.push('/erp/quotes/new')}>
+            <Plus className="h-4 w-4" />
+            Nuovo Preventivo
+          </Button>
         </div>
         <Button onClick={() => router.push('/erp/quotes/new')} className="sm:hidden flex-shrink-0">
           <Plus className="h-4 w-4 mr-1" />

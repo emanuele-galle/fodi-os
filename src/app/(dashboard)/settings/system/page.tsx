@@ -226,12 +226,12 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const STATUS_BAR_COLORS: Record<string, string> = {
-  LEAD: 'bg-blue-500',
+  LEAD: 'bg-indigo-500',
   PROSPECT: 'bg-amber-500',
   ACTIVE: 'bg-emerald-500',
   INACTIVE: 'bg-slate-400',
   CHURNED: 'bg-red-500',
-  PLANNING: 'bg-blue-500',
+  PLANNING: 'bg-indigo-500',
   IN_PROGRESS: 'bg-emerald-500',
   ON_HOLD: 'bg-amber-500',
   REVIEW: 'bg-purple-500',
@@ -301,8 +301,8 @@ export default function SystemStatsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-              <Server className="h-5 w-5 text-white" />
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+              <Server className="h-5 w-5" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">Sistema</h1>
@@ -351,7 +351,7 @@ export default function SystemStatsPage() {
           {/* Summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 animate-stagger">
             {[
-              { label: 'Utenti', value: stats.users.active, sub: `${stats.users.total} totali, ${stats.users.active} attivi`, icon: Users, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
+              { label: 'Utenti', value: stats.users.active, sub: `${stats.users.total} totali, ${stats.users.active} attivi`, icon: Users, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-500/10' },
               { label: 'Clienti', value: totalClients, sub: `${stats.clients.ACTIVE || 0} attivi`, icon: Briefcase, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
               { label: 'Progetti', value: totalProjects, sub: `${stats.projects.IN_PROGRESS || 0} in corso`, icon: FolderKanban, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10' },
             ].map((stat) => (
@@ -372,7 +372,7 @@ export default function SystemStatsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Clients by status */}
-            <Card className="accent-line-top">
+            <Card>
               <CardContent>
                 <div className="flex items-center gap-2 mb-5">
                   <Briefcase className="h-4 w-4 text-primary" />
@@ -401,7 +401,7 @@ export default function SystemStatsPage() {
             </Card>
 
             {/* Projects by status */}
-            <Card className="accent-line-top">
+            <Card>
               <CardContent>
                 <div className="flex items-center gap-2 mb-5">
                   <FolderKanban className="h-4 w-4 text-primary" />
@@ -432,7 +432,7 @@ export default function SystemStatsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             {/* Recent logins */}
-            <Card className="accent-line-left">
+            <Card>
               <CardContent>
                 <div className="flex items-center gap-2 mb-5">
                   <Clock className="h-4 w-4 text-primary" />
@@ -471,7 +471,7 @@ export default function SystemStatsPage() {
             </Card>
 
             {/* App info */}
-            <Card className="accent-line-left">
+            <Card>
               <CardContent>
                 <div className="flex items-center gap-2 mb-5">
                   <Zap className="h-4 w-4 text-primary" />
@@ -512,7 +512,7 @@ export default function SystemStatsPage() {
             const isExpanded = expandedVersions[entry.version]
             const isLatest = entry.version === CHANGELOG[0].version
             return (
-              <Card key={entry.version} className={isLatest ? 'accent-line-left ring-1 ring-primary/10' : ''}>
+              <Card key={entry.version} className={isLatest ? 'ring-1 ring-primary/10' : ''}>
                 <CardContent>
                   <button
                     onClick={() => toggleVersion(entry.version)}

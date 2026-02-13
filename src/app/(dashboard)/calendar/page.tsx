@@ -20,7 +20,6 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { FullScreenCalendar } from '@/components/ui/fullscreen-calendar'
 
 interface CalendarEvent {
   id: string
@@ -101,7 +100,7 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showNewEvent, setShowNewEvent] = useState(false)
   const [mobileView, setMobileView] = useState<'calendar' | 'agenda'>('agenda')
-  const [desktopView, setDesktopView] = useState<'grid' | 'fullscreen'>('grid')
+  const [desktopView] = useState<'grid' | 'fullscreen'>('grid')
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [selectedAttendees, setSelectedAttendees] = useState<string[]>([])
   const [attendeeSearch, setAttendeeSearch] = useState('')
@@ -287,24 +286,6 @@ export default function CalendarPage() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="hidden md:flex rounded-lg border border-border bg-secondary/30 p-1">
-            <button
-              onClick={() => setDesktopView('grid')}
-              className={`text-xs font-medium px-3 py-1 rounded-md transition-colors ${
-                desktopView === 'grid' ? 'bg-card shadow-sm text-foreground' : 'text-muted'
-              }`}
-            >
-              Compatto
-            </button>
-            <button
-              onClick={() => setDesktopView('fullscreen')}
-              className={`text-xs font-medium px-3 py-1 rounded-md transition-colors ${
-                desktopView === 'fullscreen' ? 'bg-card shadow-sm text-foreground' : 'text-muted'
-              }`}
-            >
-              Espanso
-            </button>
-          </div>
           <Button size="sm" className="ml-auto sm:ml-0" onClick={() => {
             const d = new Date()
             const dateStr = d.toISOString().split('T')[0]
@@ -404,7 +385,7 @@ export default function CalendarPage() {
                                 )}
                               </div>
                               {ev.conferenceData?.entryPoints?.find(ep => ep.entryPointType === 'video') && (
-                                <Video className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                <Video className="h-4 w-4 text-indigo-500 flex-shrink-0" />
                               )}
                             </button>
                           )
@@ -417,19 +398,8 @@ export default function CalendarPage() {
             </div>
           )}
 
-          {/* FullScreen Calendar view (desktop only) */}
-          {desktopView === 'fullscreen' && (
-            <div className="hidden md:block">
-              <Card>
-                <CardContent className="p-0">
-                  <FullScreenCalendar data={fullCalendarData} />
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Calendar Grid - always on desktop (compact view), conditional on mobile */}
-          <Card className={`${mobileView === 'calendar' ? '' : 'hidden md:block'} ${desktopView === 'fullscreen' ? 'md:hidden' : ''}`}>
+          {/* Calendar Grid - always on desktop, conditional on mobile */}
+          <Card className={`${mobileView === 'calendar' ? '' : 'hidden md:block'}`}>
             <CardContent className="p-0">
               <div className="grid grid-cols-7 border-b border-border">
                 {DAYS.map((day) => (
@@ -554,7 +524,7 @@ export default function CalendarPage() {
                   {selectedEvent.attendees.map((a) => (
                     <div key={a.email} className="flex items-center gap-2 text-sm">
                       <div className={`w-2 h-2 rounded-full ${
-                        a.responseStatus === 'accepted' ? 'bg-green-500' :
+                        a.responseStatus === 'accepted' ? 'bg-emerald-500' :
                         a.responseStatus === 'declined' ? 'bg-red-500' :
                         'bg-amber-500'
                       }`} />
@@ -570,7 +540,7 @@ export default function CalendarPage() {
                 href={selectedEvent.conferenceData.entryPoints.find(ep => ep.entryPointType === 'video')!.uri}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-blue-500/10 text-blue-600 text-sm font-medium hover:bg-blue-500/20 transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-500/10 text-indigo-600 text-sm font-medium hover:bg-indigo-500/20 transition-colors"
               >
                 <Video className="h-4 w-4" />
                 Partecipa a Google Meet
@@ -729,7 +699,7 @@ export default function CalendarPage() {
               disabled={selectedAttendees.length > 0}
               className="rounded border-border"
             />
-            <Video className="h-4 w-4 text-blue-500" />
+            <Video className="h-4 w-4 text-indigo-500" />
             Aggiungi Google Meet
             {selectedAttendees.length > 0 && (
               <span className="text-xs text-muted">(automatico con partecipanti)</span>

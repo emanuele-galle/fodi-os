@@ -135,7 +135,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           initial={{ opacity: 0, scale: 0.95, y: -10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          className="w-full max-w-lg mx-4 bg-card/95 backdrop-blur-xl rounded-2xl border border-border/40 shadow-[var(--shadow-xl)] overflow-hidden"
+          className="w-full max-w-lg mx-4 bg-card/95 backdrop-blur-xl rounded-xl border border-border/30 shadow-[var(--shadow-xl)] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Search input */}

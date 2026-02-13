@@ -126,51 +126,50 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
   }
 
   return (
-    <header className="h-16 bg-card/60 backdrop-blur-2xl border-b border-white/10 shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex items-center justify-between px-6 relative z-40">
+    <header className="h-16 glass-header flex items-center justify-between px-6 relative z-40">
       {/* Search trigger */}
       <button
         onClick={onOpenCommandPalette}
-        className="group flex items-center gap-2 h-9 px-4 rounded-full border border-border/30 bg-secondary/40 backdrop-blur-sm text-muted text-sm focus-within:border-primary/40 focus-within:bg-secondary/60 focus-within:shadow-[0_0_0_3px_rgba(0,122,255,0.1)] hover:border-primary/40 hover:bg-secondary/60 transition-all duration-200 w-96"
+        className="group flex items-center gap-2 h-9 px-4 rounded-lg border border-border/30 bg-secondary/30 text-muted text-sm hover:border-primary/30 hover:bg-secondary/50 focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all duration-200 w-96"
       >
-        <Search className="h-4.5 w-4.5 text-primary transition-colors group-focus-within:text-primary" />
+        <Search className="h-4 w-4 text-muted group-hover:text-primary transition-colors" />
         <span>Cerca o premi Cmd+K...</span>
-        <kbd className="ml-auto text-xs bg-secondary px-1.5 py-0.5 rounded">⌘K</kbd>
+        <kbd className="ml-auto text-[10px] font-medium bg-secondary/80 px-1.5 py-0.5 rounded border border-border/40">Cmd+K</kbd>
       </button>
 
       {/* Right side */}
-      <div className="flex items-center gap-4">
-        {/* Theme Switcher */}
+      <div className="flex items-center gap-3">
         <ThemeSwitcher />
 
         {/* Quick Meet */}
         <button
           onClick={handleQuickMeet}
           disabled={creatingMeet}
-          className="p-2.5 rounded-xl hover:bg-secondary/80 hover:shadow-[var(--shadow-sm)] transition-all duration-200 disabled:opacity-50"
+          className="p-2 rounded-lg hover:bg-secondary/60 transition-all duration-200 disabled:opacity-50"
           title="Avvia riunione veloce"
         >
-          <Video className="h-5 w-5 text-muted" />
+          <Video className="h-[18px] w-[18px] text-muted" />
         </button>
 
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2.5 rounded-xl hover:bg-secondary/80 hover:shadow-[var(--shadow-sm)] transition-all duration-200"
+            className="relative p-2 rounded-lg hover:bg-secondary/60 transition-all duration-200"
             title="Notifiche"
           >
-            <Bell className="h-5 w-5 text-muted" />
+            <Bell className="h-[18px] w-[18px] text-muted" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 ring-2 ring-card rounded-full" />
+              <span className="absolute top-1 right-1 h-2 w-2 bg-destructive ring-2 ring-card rounded-full" />
             )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 backdrop-blur-xl bg-card/95 rounded-2xl border border-border/30 shadow-[var(--shadow-xl)] z-50 animate-scale-in">
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <div className="absolute right-0 mt-2 w-80 bg-card border border-border/40 rounded-xl shadow-[var(--shadow-xl)] z-50 animate-scale-in">
+              <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
                 <p className="text-sm font-medium">Notifiche</p>
                 {unreadCount > 0 && (
-                  <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full font-medium">
+                  <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-md font-medium">
                     {unreadCount}
                   </span>
                 )}
@@ -185,8 +184,8 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                     <button
                       key={notif.id}
                       onClick={() => handleNotificationClick(notif)}
-                      className={`w-full text-left px-4 py-3 border-b border-border last:border-b-0 hover:bg-secondary/50 transition-colors ${
-                        !notif.isRead ? 'bg-primary/5' : ''
+                      className={`w-full text-left px-4 py-3 border-b border-border/20 last:border-b-0 hover:bg-secondary/40 transition-colors ${
+                        !notif.isRead ? 'bg-primary/[0.03]' : ''
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -206,7 +205,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                 )}
               </div>
               {unreadCount > 0 && (
-                <div className="px-4 py-2 border-t border-border">
+                <div className="px-4 py-2 border-t border-border/30">
                   <button
                     onClick={markAllAsRead}
                     className="text-xs text-primary hover:underline w-full text-center"
@@ -223,10 +222,10 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 hover:bg-secondary/80 rounded-xl p-1.5 transition-all duration-200"
+            className="flex items-center gap-2 hover:bg-secondary/50 rounded-lg p-1.5 transition-all duration-200"
             title="Menu utente"
           >
-            <span className="ring-2 ring-primary/20 rounded-full">
+            <span className="ring-2 ring-primary/15 rounded-full">
               <Avatar
                 name={`${user.firstName} ${user.lastName}`}
                 src={user.avatarUrl}
@@ -237,15 +236,15 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 backdrop-blur-xl bg-card/95 rounded-2xl border border-border/30 shadow-[var(--shadow-xl)] py-1 z-50 animate-scale-in">
-              <div className="px-4 py-2 border-b border-border">
+            <div className="absolute right-0 mt-2 w-56 bg-card border border-border/40 rounded-xl shadow-[var(--shadow-xl)] py-1 z-50 animate-scale-in">
+              <div className="px-4 py-2.5 border-b border-border/30">
                 <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
                 <p className="text-xs text-muted">{user.email}</p>
                 <span className="text-xs text-primary">{user.role}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-destructive/80 hover:text-destructive hover:bg-destructive/5 transition-colors"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-destructive/80 hover:text-destructive hover:bg-destructive/5 transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 Esci

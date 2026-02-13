@@ -82,11 +82,11 @@ export function Modal({ open, onClose, title, children, className, size = 'md' }
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         className={cn(
-          'bg-card/95 backdrop-blur-xl shadow-[var(--shadow-xl)] border border-border/40 animate-scale-in flex flex-col',
+          'bg-card/95 backdrop-blur-xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in flex flex-col',
           // Mobile: full-screen sheet
           'w-full rounded-none',
-          // Desktop: centered dialog with Apple-style rounded corners
-          'md:h-auto md:max-h-[85vh] md:rounded-2xl',
+          // Desktop: centered dialog
+          'md:h-auto md:max-h-[85vh] md:rounded-xl',
           {
             'md:max-w-sm': size === 'sm',
             'md:max-w-md': size === 'md',
@@ -103,7 +103,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md' }
         {title && (
           <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-border/30 flex-shrink-0">
             <h2 className="text-base md:text-lg font-semibold">{title}</h2>
-            <button onClick={onClose} className="text-muted hover:text-foreground transition-colors p-2 rounded-xl hover:bg-secondary min-h-[44px] min-w-[44px] flex items-center justify-center">
+            <button onClick={onClose} className="text-muted hover:text-foreground transition-colors p-2 rounded-lg hover:bg-secondary min-h-[44px] min-w-[44px] flex items-center justify-center">
               <X className="h-5 w-5" />
             </button>
           </div>

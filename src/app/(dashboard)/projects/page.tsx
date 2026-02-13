@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { FolderKanban, Plus, Search, ChevronLeft, ChevronRight, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { MorphButton } from '@/components/ui/MorphButton'
-import { MicroExpander } from '@/components/ui/MicroExpander'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -20,6 +18,7 @@ interface Project {
   name: string
   status: string
   priority: string
+  color: string | null
   startDate: string | null
   endDate: string | null
   client?: { companyName: string } | null
@@ -146,8 +145,8 @@ export default function ProjectsPage() {
     <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: 'var(--gold-gradient)' }}>
-            <FolderKanban className="h-5 w-5 text-white" />
+          <div className="bg-primary/10 text-primary p-2.5 rounded-lg">
+            <FolderKanban className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Progetti Clienti</h1>
@@ -155,11 +154,10 @@ export default function ProjectsPage() {
           </div>
         </div>
         <div className="hidden sm:block">
-          <MicroExpander
-            text="Nuovo Progetto"
-            icon={<Plus className="h-4 w-4" />}
-            onClick={() => setModalOpen(true)}
-          />
+          <Button size="sm" onClick={() => setModalOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nuovo Progetto
+          </Button>
         </div>
         <Button onClick={() => setModalOpen(true)} className="sm:hidden w-full">
           <Plus className="h-4 w-4 mr-2" />
@@ -223,9 +221,9 @@ export default function ProjectsPage() {
               return (
                 <Card
                   key={p.id}
-                  className="glass-card cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98]"
+                  className="cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98]"
                   onClick={() => router.push(`/projects/${p.id}`)}
-                  style={{ borderTop: `3px solid ${STATUS_COLORS[p.status] || 'var(--color-primary)'}` }}
+                  style={{ borderTop: `3px solid ${p.color || STATUS_COLORS[p.status] || 'var(--color-primary)'}` }}
                 >
                   <CardContent>
                     <div className="flex items-center justify-between mb-2">
@@ -256,10 +254,9 @@ export default function ProjectsPage() {
                       <div className="mt-2.5 relative">
                         <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
                           <div
-                            className="h-full rounded-full transition-all"
+                            className="h-full rounded-full transition-all bg-primary"
                             style={{
                               width: `${(doneTasks / totalTasks) * 100}%`,
-                              background: 'var(--gold-gradient)',
                             }}
                           />
                         </div>
@@ -319,9 +316,18 @@ export default function ProjectsPage() {
             <Input name="budgetAmount" label="Budget (EUR)" type="number" step="0.01" />
             <Input name="budgetHours" label="Ore Previste" type="number" />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Colore</label>
+            <input
+              name="color"
+              type="color"
+              defaultValue="#6366F1"
+              className="h-10 w-20 rounded-md border border-border cursor-pointer"
+            />
+          </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
-            <MorphButton type="submit" text="Crea Progetto" isLoading={submitting} />
+            <Button type="submit" loading={submitting}>Crea Progetto</Button>
           </div>
         </form>
       </Modal>

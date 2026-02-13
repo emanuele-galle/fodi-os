@@ -71,8 +71,8 @@ export default function ContentPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0" style={{ background: 'var(--gold-gradient)' }}>
-            <LayoutGrid className="h-5 w-5 text-white" />
+          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0 bg-primary/10 text-primary">
+            <LayoutGrid className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Contenuti</h1>
@@ -88,7 +88,7 @@ export default function ContentPage() {
           return (
             <Card
               key={section.href}
-              className="cursor-pointer hover:scale-[1.01] transition-all duration-200 glass-card accent-line-top shadow-lift"
+              className="cursor-pointer hover:scale-[1.01] transition-all duration-200"
               onClick={() => router.push(section.href)}
             >
               <CardHeader>
@@ -139,7 +139,7 @@ export default function ContentPage() {
             {recentAssets.map((asset) => (
               <div
                 key={asset.id}
-                className="rounded-lg border border-border overflow-hidden bg-card glow-gold cursor-pointer"
+                className="rounded-lg border border-border overflow-hidden bg-card cursor-pointer"
                 onClick={() => router.push('/content/assets')}
               >
                 <div className="h-20 bg-secondary flex items-center justify-center overflow-hidden">

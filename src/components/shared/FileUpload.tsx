@@ -275,7 +275,7 @@ export function FileUpload({
                       </span>
                     )}
                     {entry.status === 'done' && (
-                      <span className="text-green-600 flex items-center gap-1">
+                      <span className="text-emerald-600 flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3" />
                         Caricato
                       </span>

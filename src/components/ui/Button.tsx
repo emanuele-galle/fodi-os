@@ -19,12 +19,12 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          'btn-ripple inline-flex items-center justify-center font-medium transition-all duration-200 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.96]',
+          'btn-ripple inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]',
           {
-            'bg-primary text-primary-foreground font-semibold shadow-[0_2px_8px_rgba(0,122,255,0.25)] hover:brightness-110 hover:shadow-[0_4px_16px_rgba(0,122,255,0.35)]': resolvedVariant === 'primary',
+            'bg-primary text-primary-foreground font-semibold shadow-[0_1px_3px_rgba(79,70,229,0.3)] hover:bg-primary-hover hover:shadow-[0_4px_12px_rgba(79,70,229,0.25)]': resolvedVariant === 'primary',
             'bg-secondary text-secondary-foreground hover:bg-secondary/80': resolvedVariant === 'secondary',
-            'border border-border bg-transparent rounded-xl hover:bg-secondary/50': resolvedVariant === 'outline',
-            'bg-transparent hover:bg-secondary/70': resolvedVariant === 'ghost',
+            'border border-border/60 bg-transparent rounded-lg hover:bg-secondary/50': resolvedVariant === 'outline',
+            'bg-transparent hover:bg-secondary/60': resolvedVariant === 'ghost',
             'bg-destructive text-white hover:bg-destructive/90 hover:shadow-md': resolvedVariant === 'destructive',
             'text-primary underline-offset-4 hover:underline bg-transparent': resolvedVariant === 'link',
           },

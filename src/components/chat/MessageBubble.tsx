@@ -80,8 +80,8 @@ function renderRichText(text: string, isOwn: boolean) {
         parts.push(
           <span key={key++} className="block mt-1.5">
             <span className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/60 bg-card max-w-[280px]">
-              <span className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                <Video className="h-4.5 w-4.5 text-green-600" />
+              <span className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                <Video className="h-4.5 w-4.5 text-emerald-600" />
               </span>
               <span className="flex-1 min-w-0">
                 <span className="block text-sm font-semibold text-foreground">Google Meet</span>
@@ -90,7 +90,7 @@ function renderRichText(text: string, isOwn: boolean) {
             </span>
             <button
               onClick={() => window.open(meetUrl, '_blank', 'noopener,noreferrer')}
-              className="mt-1.5 w-full max-w-[280px] inline-flex items-center justify-center gap-1.5 h-8 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors"
+              className="mt-1.5 w-full max-w-[280px] inline-flex items-center justify-center gap-1.5 h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors"
             >
               <Video className="h-3.5 w-3.5" />
               Partecipa al meeting

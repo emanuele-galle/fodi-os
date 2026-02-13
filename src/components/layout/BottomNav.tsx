@@ -31,7 +31,7 @@ const TAB_ITEMS = [
   { label: 'Menu', href: '#menu', icon: Menu },
 ]
 
-type CategoryColor = 'blue' | 'green' | 'amber' | 'purple' | 'rose' | 'slate'
+type CategoryColor = 'indigo' | 'emerald' | 'amber' | 'violet' | 'rose' | 'slate'
 
 interface MenuItem {
   label: string
@@ -42,25 +42,25 @@ interface MenuItem {
 }
 
 const MENU_ITEMS: MenuItem[] = [
-  { label: 'CRM', href: '/crm', icon: Users, roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'SUPPORT'] as Role[], category: 'blue' },
-  { label: 'Progetti Clienti', href: '/projects', icon: FolderKanban, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'] as Role[], category: 'green' },
-  { label: 'Calendario', href: '/calendar', icon: CalendarDays, category: 'purple' },
-  { label: 'Contabilità', href: '/erp', icon: Euro, roles: ['ADMIN', 'MANAGER', 'SALES'] as Role[], category: 'amber' },
+  { label: 'CRM', href: '/crm', icon: Users, roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'SUPPORT'] as Role[], category: 'indigo' },
+  { label: 'Progetti Clienti', href: '/projects', icon: FolderKanban, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'] as Role[], category: 'emerald' },
+  { label: 'Calendario', href: '/calendar', icon: CalendarDays, category: 'violet' },
+  { label: 'Contabilita', href: '/erp', icon: Euro, roles: ['ADMIN', 'MANAGER', 'SALES'] as Role[], category: 'amber' },
   { label: 'Knowledge Base', href: '/kb', icon: BookOpen, roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'] as Role[], category: 'rose' },
-  { label: 'Contenuti', href: '/content', icon: Film, roles: ['ADMIN', 'MANAGER', 'CONTENT'] as Role[], category: 'purple' },
+  { label: 'Contenuti', href: '/content', icon: Film, roles: ['ADMIN', 'MANAGER', 'CONTENT'] as Role[], category: 'violet' },
   { label: 'Supporto', href: '/support', icon: LifeBuoy, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'] as Role[], category: 'rose' },
-  { label: 'Team', href: '/team', icon: UsersRound, category: 'blue' },
+  { label: 'Team', href: '/team', icon: UsersRound, category: 'indigo' },
   { label: 'Azienda', href: '/internal', icon: Building2, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT', 'SUPPORT'] as Role[], category: 'amber' },
   { label: 'Impostazioni', href: '/settings', icon: Settings, category: 'slate' },
 ]
 
 const CATEGORY_STYLES: Record<CategoryColor, string> = {
-  blue: 'bg-blue-500/15 text-blue-600 [data-theme="dark"]_&:bg-blue-400/20 [data-theme="dark"]_&:text-blue-400',
-  green: 'bg-emerald-500/15 text-emerald-600',
-  amber: 'bg-amber-500/15 text-amber-600',
-  purple: 'bg-purple-500/15 text-purple-600',
-  rose: 'bg-rose-500/15 text-rose-600',
-  slate: 'bg-slate-500/15 text-slate-600',
+  indigo: 'bg-indigo-500/12 text-indigo-500',
+  emerald: 'bg-emerald-500/12 text-emerald-500',
+  amber: 'bg-amber-500/12 text-amber-600',
+  violet: 'bg-violet-500/12 text-violet-500',
+  rose: 'bg-rose-500/12 text-rose-500',
+  slate: 'bg-slate-500/12 text-slate-500',
 }
 
 interface BottomNavProps {
@@ -78,13 +78,11 @@ export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNav
   const dragStartY = useRef(0)
   const currentTranslateY = useRef(0)
 
-  // Close menu on route change
   useEffect(() => {
     if (menuOpen) closeMenu()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
 
-  // Lock body scroll when menu is open
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = 'hidden'
@@ -128,7 +126,6 @@ export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNav
     }
   }
 
-  // Drag-to-dismiss handlers
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     dragStartY.current = e.touches[0].clientY
     currentTranslateY.current = 0
@@ -149,7 +146,6 @@ export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNav
       } else {
         sheetRef.current.style.transition = 'transform 0.2s ease-out'
         sheetRef.current.style.transform = ''
-        // Reset transition after snap-back completes
         setTimeout(() => {
           if (sheetRef.current) sheetRef.current.style.transition = ''
         }, 200)
@@ -176,16 +172,15 @@ export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNav
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             className={cn(
-              'mobile-bottom-sheet absolute bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/50 rounded-t-2xl max-h-[70vh] overflow-y-auto z-50 shadow-[var(--shadow-xl)]',
+              'mobile-bottom-sheet absolute bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 bg-card border-t border-border/30 rounded-t-xl max-h-[70vh] overflow-y-auto z-50 shadow-[var(--shadow-xl)]',
               closing ? 'animate-menu-slide-down' : 'animate-menu-slide-up'
             )}
           >
-            {/* Drag handle - larger touch area for easier grabbing */}
             <div className="flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing">
-              <div className="w-10 h-1.5 rounded-full bg-muted/40" />
+              <div className="w-10 h-1.5 rounded-full bg-muted/30" />
             </div>
 
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border/30">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border/20">
               <span className="text-sm font-semibold text-foreground">Menu</span>
               <button
                 onClick={closeMenu}
@@ -196,7 +191,6 @@ export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNav
               </button>
             </div>
 
-            {/* Grid menu */}
             <nav className="p-4 grid grid-cols-3 gap-3">
               {filteredMenu.map((item) => {
                 const isActive = pathname.startsWith(item.href)
@@ -207,17 +201,17 @@ export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNav
                     href={item.href}
                     onClick={closeMenu}
                     className={cn(
-                      'flex flex-col items-center gap-2 p-3 rounded-xl transition-all touch-manipulation active:scale-95',
+                      'flex flex-col items-center gap-2 p-3 rounded-lg transition-all touch-manipulation active:scale-95',
                       isActive
-                        ? 'bg-primary/10 ring-1 ring-primary/30'
-                        : 'hover:bg-secondary/50 active:bg-secondary/70'
+                        ? 'bg-primary/8 ring-1 ring-primary/20'
+                        : 'hover:bg-secondary/40 active:bg-secondary/60'
                     )}
                   >
                     <div className={cn(
-                      'w-11 h-11 rounded-xl flex items-center justify-center transition-colors',
-                      isActive ? 'bg-primary/20 text-primary' : CATEGORY_STYLES[item.category]
+                      'w-11 h-11 rounded-lg flex items-center justify-center transition-colors',
+                      isActive ? 'bg-primary/15 text-primary' : CATEGORY_STYLES[item.category]
                     )}>
-                      <Icon className="h-5.5 w-5.5" />
+                      <Icon className="h-5 w-5" />
                     </div>
                     <span className={cn(
                       'text-xs font-medium text-center leading-tight',
@@ -234,7 +228,7 @@ export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNav
       )}
 
       {/* Bottom Nav Bar */}
-      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/90 backdrop-blur-xl border-t border-border/50 shadow-[var(--shadow-lg)] pb-[env(safe-area-inset-bottom,0px)]">
+      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/90 backdrop-blur-xl border-t border-border/30 pb-[env(safe-area-inset-bottom,0px)]">
         <div className="flex items-center justify-around h-16">
           {TAB_ITEMS.map((tab) => {
             const active = isTabActive(tab.href)
@@ -249,9 +243,9 @@ export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNav
                   active ? 'text-primary' : 'text-muted'
                 )}
               >
-                {/* Active indicator line */}
+                {/* Active indicator dot */}
                 {active && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-[3px] rounded-full bg-primary" />
+                  <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary" />
                 )}
 
                 <div className="relative p-1">

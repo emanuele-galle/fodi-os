@@ -18,8 +18,9 @@ import {
   UsersRound,
   Settings,
   ChevronRight,
-  Pin,
-  PinOff,
+  ChevronLeft,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
@@ -70,7 +71,7 @@ const navigation: NavItem[] = [
   },
   { label: 'Calendario', href: '/calendar', icon: CalendarDays },
   {
-    label: 'Contabilità',
+    label: 'Contabilita',
     href: '/erp',
     icon: Euro,
     roles: ['ADMIN', 'MANAGER', 'SALES'],
@@ -88,7 +89,7 @@ const navigation: NavItem[] = [
     roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
     children: [
       { label: 'Tutte le Pagine', href: '/kb' },
-      { label: 'Attività Recenti', href: '/kb/activity' },
+      { label: 'Attivita Recenti', href: '/kb/activity' },
     ],
   },
   {
@@ -122,11 +123,6 @@ const navigation: NavItem[] = [
   },
 ]
 
-// Group separator indices: after Chat (group 1), after Calendario (group 2), after Contenuti (group 3)
-// Group 1: Dashboard, I Miei Task, Chat
-// Group 2: Azienda, CRM, Progetti Clienti, Calendario
-// Group 3: Contabilita, Knowledge Base, Contenuti
-// Group 4: Supporto, Team, Impostazioni
 const GROUP_SEPARATOR_LABELS = new Set(['Chat', 'Calendario', 'Contenuti'])
 
 interface SidebarProps {
@@ -137,22 +133,19 @@ interface SidebarProps {
 export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
   const pathname = usePathname()
   const { preferences, updatePreference, loaded } = useUserPreferences()
-  const [pinned, setPinned] = useState(false)
-  const [hovered, setHovered] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
 
-  // Sync pinned state from preferences (inverted: sidebarCollapsed=true means NOT pinned)
   useEffect(() => {
-    if (loaded) setPinned(!preferences.sidebarCollapsed)
+    if (loaded) setExpanded(!preferences.sidebarCollapsed)
   }, [loaded, preferences.sidebarCollapsed])
 
-  const togglePin = useCallback(() => {
-    const next = !pinned
-    setPinned(next)
+  const toggleSidebar = useCallback(() => {
+    const next = !expanded
+    setExpanded(next)
     updatePreference('sidebarCollapsed', !next)
-  }, [pinned, updatePreference])
-
-  const expanded = pinned || hovered
+    if (!next) setExpandedItem(null)
+  }, [expanded, updatePreference])
 
   const effective = getEffectiveSectionAccess(userRole, sectionAccess)
   const filteredNav = navigation.filter((item) => {
@@ -163,53 +156,43 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
 
   return (
     <motion.aside
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); if (!pinned) setExpandedItem(null) }}
       animate={{ width: expanded ? 256 : 64 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="flex flex-col h-screen bg-sidebar/95 backdrop-blur-xl text-sidebar-foreground border-r border-border/10 overflow-hidden shadow-[var(--shadow-lg)]"
+      className="flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-white/10 overflow-hidden"
     >
-      {/* Logo */}
+      {/* Logo + Toggle */}
       <div className="flex items-center h-16 px-3 gap-2">
-        {!expanded && (
-          <Link
-            href="/dashboard"
-            className="flex items-center justify-center w-10 h-10 flex-shrink-0"
+        {!expanded ? (
+          <button
+            onClick={toggleSidebar}
+            className="flex items-center justify-center w-10 h-10 flex-shrink-0 rounded-lg hover:bg-white/10 transition-colors"
+            title="Apri sidebar"
           >
-            <img src="/logo-official.png" alt="FODI" width={28} height={28} />
-          </Link>
-        )}
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.15 }}
-              className="flex items-center justify-between flex-1 min-w-0"
+            <PanelLeft className="h-5 w-5 text-sidebar-foreground/60" />
+          </button>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex items-center justify-between flex-1 min-w-0"
+          >
+            <Link href="/dashboard" className="flex items-center">
+              <Logo variant="light" />
+            </Link>
+            <button
+              onClick={toggleSidebar}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              title="Chiudi sidebar"
             >
-              <Link href="/dashboard" className="flex items-center">
-                <Logo variant="light" />
-              </Link>
-              <Tooltip content={pinned ? 'Sblocca sidebar' : 'Blocca sidebar aperta'} position="right">
-                <button
-                  onClick={togglePin}
-                  className="p-1.5 rounded-lg hover:bg-white/15 transition-colors"
-                >
-                  {pinned ? (
-                    <PinOff className="h-3.5 w-3.5 text-sidebar-foreground/60" />
-                  ) : (
-                    <Pin className="h-3.5 w-3.5 text-sidebar-foreground/40" />
-                  )}
-                </button>
-              </Tooltip>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <PanelLeftClose className="h-4 w-4 text-sidebar-foreground/50" />
+            </button>
+          </motion.div>
+        )}
       </div>
 
       {/* Divider */}
-      <div className="border-b border-white/5 mx-3" />
+      <div className="border-b border-white/10 mx-3" />
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-none">
@@ -218,7 +201,6 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
           const isExpanded = expandedItem === item.label
           const Icon = item.icon
 
-          // Check if previous item (in filtered list) should have a separator after it
           const prevItem = index > 0 ? filteredNav[index - 1] : null
           const showSeparator = prevItem && GROUP_SEPARATOR_LABELS.has(prevItem.label)
 
@@ -232,18 +214,19 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
                 }
               }}
               className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200 relative group',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors duration-150 relative group',
                 isActive
-                  ? 'bg-primary/15 text-white font-semibold border-l-[3px] border-sidebar-active'
-                  : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-white/12 hover:pl-4'
+                  ? 'bg-white/[0.08] text-white font-medium'
+                  : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-white/[0.05]'
               )}
             >
+              {isActive && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-active" />
+              )}
               <Icon
                 className={cn(
-                  'flex-shrink-0 transition-all duration-200',
-                  isActive
-                    ? 'h-[22px] w-[22px] drop-shadow-[0_0_6px_var(--sidebar-active)]'
-                    : 'h-5 w-5'
+                  'flex-shrink-0 h-5 w-5',
+                  isActive && 'text-sidebar-active'
                 )}
               />
               <AnimatePresence>
@@ -267,18 +250,13 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
                   )}
                 />
               )}
-              {/* Active indicator bar when collapsed */}
-              {!expanded && isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-active shadow-[0_0_8px_var(--sidebar-active)]" />
-              )}
             </Link>
           )
 
           return (
             <div key={item.label}>
-              {/* Group separator */}
               {showSeparator && (
-                <div className="h-px bg-white/8 mx-3 my-2" />
+                <div className="h-px bg-white/10 mx-3 my-2" />
               )}
               <div className="mb-0.5">
                 {!expanded ? (
@@ -287,7 +265,6 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
                   </Tooltip>
                 ) : navContent}
 
-                {/* Sub-items */}
                 <AnimatePresence>
                   {expanded && item.children && isExpanded && (
                     <motion.div
@@ -303,15 +280,15 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
                             key={child.href}
                             href={child.href}
                             className={cn(
-                              'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors duration-200',
+                              'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors duration-150',
                               pathname === child.href
                                 ? 'text-sidebar-active bg-sidebar-active/10'
-                                : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-white/5'
+                                : 'text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/[0.04]'
                             )}
                           >
                             <span className={cn(
                               'w-1.5 h-1.5 rounded-full flex-shrink-0',
-                              pathname === child.href ? 'bg-sidebar-active' : 'bg-sidebar-foreground/25'
+                              pathname === child.href ? 'bg-sidebar-active' : 'bg-sidebar-foreground/20'
                             )} />
                             {child.label}
                           </Link>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requirePermission } from '@/lib/permissions'
+import { hasPermission, requirePermission } from '@/lib/permissions'
 import { updateTaskSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
@@ -72,9 +72,31 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role
-    requirePermission(role, 'pm', 'write')
-
+    const currentUserId = request.headers.get('x-user-id')
     const { taskId } = await params
+
+    // Allow edit if user has pm:write OR is creator/assignee of this task
+    if (!hasPermission(role, 'pm', 'write')) {
+      requirePermission(role, 'pm', 'read')
+      const taskCheck = await prisma.task.findUnique({
+        where: { id: taskId },
+        select: {
+          creatorId: true,
+          assigneeId: true,
+          assignments: { select: { userId: true } },
+        },
+      })
+      if (!taskCheck) {
+        return NextResponse.json({ error: 'Task non trovato' }, { status: 404 })
+      }
+      const isCreator = taskCheck.creatorId === currentUserId
+      const isAssignee = taskCheck.assigneeId === currentUserId
+      const isInAssignments = taskCheck.assignments.some((a) => a.userId === currentUserId)
+      if (!isCreator && !isAssignee && !isInAssignments) {
+        return NextResponse.json({ error: 'Permission denied: non sei creatore o assegnatario di questa task' }, { status: 403 })
+      }
+    }
+
     const body = await request.json()
     const parsed = updateTaskSchema.safeParse(body)
     if (!parsed.success) {
@@ -83,8 +105,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         { status: 400 }
       )
     }
-    const currentUserId = request.headers.get('x-user-id')
-    const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, milestoneId, dueDate, estimatedHours, sortOrder, tags } = parsed.data
+    const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, folderId, milestoneId, dueDate, estimatedHours, sortOrder, tags } = parsed.data
 
     const data: Record<string, unknown> = {}
     if (title !== undefined) data.title = title
@@ -97,6 +118,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (priority !== undefined) data.priority = priority
     if (boardColumn !== undefined) data.boardColumn = boardColumn
     if (assigneeId !== undefined) data.assigneeId = assigneeId
+    if (folderId !== undefined) data.folderId = folderId
     if (milestoneId !== undefined) data.milestoneId = milestoneId
     if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null
     if (estimatedHours !== undefined) data.estimatedHours = estimatedHours

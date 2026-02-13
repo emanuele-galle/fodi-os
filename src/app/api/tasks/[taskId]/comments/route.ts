@@ -37,7 +37,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const role = request.headers.get('x-user-role') as Role
     const userId = request.headers.get('x-user-id')!
-    requirePermission(role, 'pm', 'write')
+    // Tutti gli utenti autenticati che possono leggere le task possono commentare
+    requirePermission(role, 'pm', 'read')
 
     const { taskId } = await params
     const body = await request.json()

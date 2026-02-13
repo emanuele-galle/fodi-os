@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { [sort]: order },
+        orderBy: [{ priority: 'desc' }, { [sort]: order }],
         include: {
           assignee: {
             select: { id: true, firstName: true, lastName: true, avatarUrl: true },
@@ -119,13 +119,16 @@ export async function POST(request: NextRequest) {
 
     const { title, description, projectId, milestoneId, assigneeId, assigneeIds, priority, boardColumn, dueDate, estimatedHours, tags, isPersonal } = parsed.data
 
+    // Default: se nessun assegnatario specificato, assegna al creatore
+    const effectiveAssigneeId = assigneeId || (assigneeIds.length > 0 ? assigneeIds[0] : userId)
+
     const task = await prisma.task.create({
       data: {
         title,
         description,
         projectId: projectId || null,
         milestoneId: milestoneId || null,
-        assigneeId: assigneeId || null,
+        assigneeId: effectiveAssigneeId,
         creatorId: userId,
         priority,
         boardColumn,
@@ -136,9 +139,10 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Collect all user IDs for assignments
+    // Collect all user IDs for assignments (include creator as default if no one specified)
     const allAssigneeIds = new Set(assigneeIds)
     if (assigneeId) allAssigneeIds.add(assigneeId)
+    if (allAssigneeIds.size === 0) allAssigneeIds.add(userId)
 
     if (allAssigneeIds.size > 0) {
       await prisma.taskAssignment.createMany({

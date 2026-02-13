@@ -20,9 +20,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         tasks: {
           include: {
             assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+            assignments: {
+              include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } },
+              orderBy: { assignedAt: 'asc' },
+            },
             dependsOn: true,
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
         },
         _count: { select: { tasks: true } },
       },
