@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const assigneeId = searchParams.get('assigneeId')
     const projectId = searchParams.get('projectId')
     const mine = searchParams.get('mine')
-    const scope = searchParams.get('scope') // 'assigned' | 'created' | 'all' (default: all my tasks)
+    const scope = searchParams.get('scope') // 'assigned' | 'created' | 'delegated' | 'all' (default: all my tasks)
     const personal = searchParams.get('personal')
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
@@ -51,6 +51,15 @@ export async function GET(request: NextRequest) {
         ]
       } else if (scope === 'created') {
         where.creatorId = userId
+      } else if (scope === 'delegated') {
+        // Tasks created by me but assigned to someone else
+        where.creatorId = userId
+        where.NOT = {
+          OR: [
+            { assigneeId: userId },
+            { assignments: { some: { userId: userId! } } },
+          ],
+        }
       } else {
         // Default: all my tasks (created + assigned + in assignments)
         where.OR = [
@@ -61,6 +70,9 @@ export async function GET(request: NextRequest) {
         ]
       }
     }
+
+    // scope=all without mine: no user filter (team view)
+    // Already handled: if mine is not 'true', no user filter is applied
 
     if (personal === 'true') {
       where.isPersonal = true
@@ -77,6 +89,9 @@ export async function GET(request: NextRequest) {
           assignee: {
             select: { id: true, firstName: true, lastName: true, avatarUrl: true },
           },
+          creator: {
+            select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          },
           assignments: {
             include: {
               user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
@@ -85,6 +100,9 @@ export async function GET(request: NextRequest) {
           },
           project: {
             select: { id: true, name: true },
+          },
+          _count: {
+            select: { comments: true },
           },
         },
       }),
