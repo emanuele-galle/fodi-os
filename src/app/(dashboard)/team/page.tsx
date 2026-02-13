@@ -145,7 +145,6 @@ export default function TeamPage() {
 
   const teamSummary = useMemo(() => {
     const totalTasks = members.reduce((s, m) => s + m.totalTasks, 0)
-    const totalTime = members.reduce((s, m) => s + m.totalTimeEntries, 0)
     const totalWeeklyHours = members.reduce((s, m) => s + m.weeklyHours, 0)
     const totalCompletedWeek = members.reduce((s, m) => s + m.completedThisWeek, 0)
     const activeCount = members.filter((m) => {
@@ -154,8 +153,10 @@ export default function TeamPage() {
       return Date.now() - new Date(lastSeen).getTime() < 72 * 60 * 60 * 1000
     }).length
     const activePercent = members.length ? Math.round((activeCount / members.length) * 100) : 0
-    const taskPercent = Math.min(100, members.length ? Math.round((totalTasks / Math.max(totalTasks + totalTime, 1)) * 100) : 0)
-    return { totalTime, totalTasks, activePercent, taskPercent, activeCount, totalWeeklyHours, totalCompletedWeek }
+    // Completion rate: completed this week / (completed + active tasks)
+    const totalWorkload = totalCompletedWeek + totalTasks
+    const completionPercent = totalWorkload > 0 ? Math.round((totalCompletedWeek / totalWorkload) * 100) : 0
+    return { totalTasks, activePercent, completionPercent, activeCount, totalWeeklyHours, totalCompletedWeek }
   }, [members])
 
   const isFirstLoad = useRef(true)
@@ -315,11 +316,11 @@ export default function TeamPage() {
       {!loading && members.length > 0 && (
         <div className="mb-8">
           <TeamActivityCard
-            totalHours={teamSummary.totalTime}
+            totalHours={teamSummary.totalWeeklyHours}
             breakdown={[
               { label: 'Attivi', value: teamSummary.activePercent, color: 'bg-emerald-500' },
-              { label: 'Task', value: teamSummary.taskPercent, color: 'bg-primary' },
-              { label: 'Altro', value: Math.max(0, 100 - teamSummary.activePercent - teamSummary.taskPercent), color: 'bg-muted' },
+              { label: 'Completate', value: teamSummary.completionPercent, color: 'bg-primary' },
+              { label: 'In corso', value: Math.max(0, 100 - teamSummary.completionPercent), color: 'bg-amber-400' },
             ]}
             members={members.slice(0, 5).map((m) => ({
               id: m.id,

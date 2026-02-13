@@ -108,6 +108,7 @@ export default function DashboardPage() {
   const [invoiceTotal, setInvoiceTotal] = useState(0)
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [weekHours, setWeekHours] = useState(0)
+  const [weekBillableHours, setWeekBillableHours] = useState(0)
   const [totalRevenue, setTotalRevenue] = useState(0)
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [showDropzone, setShowDropzone] = useState(false)
@@ -177,8 +178,11 @@ export default function DashboardPage() {
           fetch('/api/tickets?status=OPEN,IN_PROGRESS,WAITING_CLIENT&limit=1').then((r) => r.ok ? r.json() : null).catch(() => null),
         ])
 
-        const hours = (timeRes?.items || []).reduce((s: number, e: { hours: number }) => s + e.hours, 0)
+        const timeItems = timeRes?.items || []
+        const hours = timeItems.reduce((s: number, e: { hours: number }) => s + e.hours, 0)
+        const billable = timeItems.filter((e: { billable: boolean }) => e.billable).reduce((s: number, e: { hours: number }) => s + e.hours, 0)
         setWeekHours(hours)
+        setWeekBillableHours(billable)
 
         const revenueMTD = (invoicesRes?.items || [])
           .filter((i: { paidDate: string | null }) => i.paidDate && i.paidDate >= monthStart)
@@ -475,10 +479,12 @@ export default function DashboardPage() {
 
         <TeamActivityCard
           totalHours={weekHours}
-          breakdown={[
-            { label: 'Sviluppo', value: 50, color: 'bg-primary' },
-            { label: 'Design', value: 30, color: 'bg-accent' },
-            { label: 'Gestione', value: 20, color: 'bg-amber-400' },
+          breakdown={weekHours > 0 ? [
+            { label: 'Fatturabili', value: Math.round((weekBillableHours / weekHours) * 100), color: 'bg-primary' },
+            { label: 'Non fatt.', value: Math.round(((weekHours - weekBillableHours) / weekHours) * 100), color: 'bg-amber-400' },
+          ] : [
+            { label: 'Fatturabili', value: 0, color: 'bg-primary' },
+            { label: 'Non fatt.', value: 0, color: 'bg-amber-400' },
           ]}
           members={teamMembers.length > 0
             ? teamMembers.map((m) => ({
