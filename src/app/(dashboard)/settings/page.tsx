@@ -37,10 +37,18 @@ export default function SettingsPage() {
   const [pushLoading, setPushLoading] = useState(false)
   const [pushSupported, setPushSupported] = useState(false)
 
+  const [isIOSNotPWA, setIsIOSNotPWA] = useState(false)
+
   // Check push notification status
   useEffect(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || ('standalone' in navigator && (navigator as unknown as { standalone: boolean }).standalone)
     const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
-    setPushSupported(supported)
+    setPushSupported(supported || (isIOS && !isStandalone))
+    if (isIOS && !isStandalone) {
+      setIsIOSNotPWA(true)
+    }
     if (supported && Notification.permission === 'granted') {
       navigator.serviceWorker.ready.then((reg) => {
         reg.pushManager.getSubscription().then((sub) => {
@@ -49,6 +57,18 @@ export default function SettingsPage() {
       })
     }
   }, [])
+
+  // Convert base64url VAPID key to Uint8Array (required by iOS Safari)
+  function urlBase64ToUint8Array(base64String: string): Uint8Array {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const rawData = window.atob(base64)
+    const outputArray = new Uint8Array(rawData.length)
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i)
+    }
+    return outputArray
+  }
 
   const handleTogglePush = async () => {
     setPushLoading(true)
@@ -69,15 +89,20 @@ export default function SettingsPage() {
         setMessage('Notifiche push disabilitate')
       } else {
         // Subscribe
+        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        if (!vapidKey) {
+          setMessage('Configurazione push non disponibile')
+          return
+        }
         const permission = await Notification.requestPermission()
         if (permission !== 'granted') {
-          setMessage('Permesso notifiche negato dal browser')
+          setMessage('Permesso notifiche negato. Vai nelle impostazioni del browser/app per abilitarle.')
           return
         }
         const reg = await navigator.serviceWorker.ready
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
         })
         const subJson = sub.toJSON()
         await fetch('/api/notifications/subscribe', {
@@ -91,8 +116,14 @@ export default function SettingsPage() {
         setPushEnabled(true)
         setMessage('Notifiche push abilitate con successo')
       }
-    } catch {
-      setMessage('Errore nella gestione delle notifiche push')
+    } catch (err) {
+      console.error('Push notification error:', err)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      if (isIOS) {
+        setMessage('Errore: assicurati di aver aggiunto FODI OS alla schermata Home (Condividi → Aggiungi alla schermata Home)')
+      } else {
+        setMessage('Errore nella gestione delle notifiche push')
+      }
     } finally {
       setPushLoading(false)
     }
@@ -334,7 +365,7 @@ export default function SettingsPage() {
                 variant={pushEnabled ? 'outline' : 'default'}
                 size="sm"
                 onClick={handleTogglePush}
-                disabled={pushLoading}
+                disabled={pushLoading || isIOSNotPWA}
                 className={pushEnabled ? 'text-destructive hover:text-destructive' : ''}
               >
                 {pushLoading
@@ -344,7 +375,18 @@ export default function SettingsPage() {
                     : 'Abilita notifiche push'}
               </Button>
 
-              {Notification.permission === 'denied' && (
+              {isIOSNotPWA && (
+                <div className="p-3 rounded-md bg-warning/10 border border-warning/20">
+                  <p className="text-xs text-warning font-medium mb-1">Installazione richiesta su iPhone</p>
+                  <p className="text-xs text-muted">
+                    Per ricevere notifiche push su iPhone, devi prima aggiungere FODI OS alla schermata Home:
+                    tocca il pulsante <strong>Condividi</strong> (quadrato con freccia) in Safari, poi <strong>Aggiungi alla schermata Home</strong>.
+                    Dopo, apri l&apos;app dalla Home e torna qui per abilitare le notifiche.
+                  </p>
+                </div>
+              )}
+
+              {typeof Notification !== 'undefined' && Notification.permission === 'denied' && (
                 <p className="text-xs text-destructive">
                   Le notifiche sono bloccate dal browser. Modifica le impostazioni del sito per abilitarle.
                 </p>
