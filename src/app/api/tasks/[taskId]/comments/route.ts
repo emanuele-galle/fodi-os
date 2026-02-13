@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         type: 'task_comment',
         title: 'Nuovo commento',
         message: `${authorName} ha commentato "${task.title}"`,
-        link: `/tasks?taskId=${taskId}`,
+        link: `/tasks?taskId=${taskId}&commentId=${comment.id}`,
       }
     )
 

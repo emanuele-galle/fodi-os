@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
-import { uploadFile, deleteFile } from '@/lib/s3'
+import { uploadToGDrive, deleteFromGDrive } from '@/lib/storage'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
@@ -54,26 +54,32 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Tipo di file non consentito' }, { status: 400 })
     }
 
-    // Verify project exists
-    const project = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true } })
+    // Verify project exists and get its name for GDrive folder
+    const project = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true, name: true } })
     if (!project) {
       return NextResponse.json({ error: 'Progetto non trovato' }, { status: 404 })
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())
     const safeFileName = file.name.replace(/[\/\\:*?"<>|]/g, '_')
-    const key = `projects/${projectId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
-    const fileUrl = await uploadFile(key, buffer, file.type || 'application/octet-stream')
+    // Upload to Google Drive (admin account)
+    const { fileId, webViewLink } = await uploadToGDrive(
+      safeFileName,
+      buffer,
+      file.type || 'application/octet-stream',
+      project.name
+    )
 
     const attachment = await prisma.projectAttachment.create({
       data: {
         projectId,
         uploadedById: userId,
         fileName: safeFileName,
-        fileUrl,
+        fileUrl: webViewLink,
         fileSize: file.size,
         mimeType: file.type || 'application/octet-stream',
+        driveFileId: fileId,
       },
       include: {
         uploadedBy: { select: { id: true, firstName: true, lastName: true } },
@@ -108,14 +114,19 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Allegato non trovato' }, { status: 404 })
     }
 
-    // Delete file from S3 before removing DB record
+    // Delete from Google Drive if driveFileId exists, otherwise try S3 (legacy)
     try {
-      const url = new URL(attachment.fileUrl)
-      const key = url.pathname.replace(/^\/[^/]+\//, '') // Remove leading /bucket/
-      await deleteFile(key)
+      if (attachment.driveFileId) {
+        await deleteFromGDrive(attachment.driveFileId)
+      } else {
+        // Legacy: file was on S3/MinIO
+        const { deleteFile } = await import('@/lib/s3')
+        const url = new URL(attachment.fileUrl)
+        const key = url.pathname.replace(/^\/[^/]+\//, '')
+        await deleteFile(key)
+      }
     } catch {
-      // Log but don't block deletion if S3 cleanup fails
-      console.error(`Failed to delete S3 file for attachment ${attachmentId}`)
+      console.error(`Failed to delete file for attachment ${attachmentId}`)
     }
 
     await prisma.projectAttachment.delete({ where: { id: attachmentId } })

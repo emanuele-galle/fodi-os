@@ -189,8 +189,9 @@ export default function TasksPage() {
       .catch(() => {})
   }, [])
 
-  // Open task from URL ?taskId=xxx (e.g. from notification links)
+  // Open task from URL ?taskId=xxx&commentId=yyy (e.g. from notification links)
   const urlTaskId = useMemo(() => searchParams.get('taskId'), [searchParams])
+  const urlCommentId = useMemo(() => searchParams.get('commentId'), [searchParams])
   useEffect(() => {
     if (urlTaskId) {
       setSelectedTaskId(urlTaskId)
@@ -480,6 +481,7 @@ export default function TasksPage() {
 
       <TaskDetailModal
         taskId={selectedTaskId}
+        highlightCommentId={urlCommentId}
         open={modalOpen}
         onClose={() => {
           setModalOpen(false)

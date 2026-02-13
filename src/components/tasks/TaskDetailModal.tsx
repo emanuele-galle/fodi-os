@@ -70,6 +70,7 @@ interface TeamMember {
 
 interface TaskDetailModalProps {
   taskId: string | null
+  highlightCommentId?: string | null
   open: boolean
   onClose: () => void
   onUpdated: () => void
@@ -94,7 +95,7 @@ const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destru
   LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
 }
 
-export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetailModalProps) {
+export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onUpdated }: TaskDetailModalProps) {
   const [task, setTask] = useState<TaskDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -169,6 +170,20 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
       setConfirmDelete(false)
     }
   }, [open, taskId, fetchTask, fetchAttachments])
+
+  // Scroll to specific comment when opened from notification deep link
+  useEffect(() => {
+    if (!highlightCommentId || !open || loading || !task) return
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`comment-${highlightCommentId}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.classList.add('bg-primary/10')
+        setTimeout(() => el.classList.remove('bg-primary/10'), 2000)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [highlightCommentId, open, loading, task])
 
   useEffect(() => {
     fetch('/api/users?limit=200')
@@ -393,7 +408,7 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
             {task.comments && task.comments.length > 0 ? (
               <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
                 {task.comments.map((c) => (
-                  <div key={c.id} className="flex gap-3">
+                  <div key={c.id} id={`comment-${c.id}`} className="flex gap-3 transition-colors duration-500 rounded-md p-1 -m-1">
                     <Avatar
                       name={`${c.author.firstName} ${c.author.lastName}`}
                       src={c.author.avatarUrl}

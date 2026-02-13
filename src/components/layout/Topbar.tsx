@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search, LogOut, Video } from 'lucide-react'
+import { Bell, Search, LogOut, Video, MessageSquare, UserCheck, CheckCircle, FileText } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -10,11 +10,26 @@ import { it } from 'date-fns/locale'
 
 interface Notification {
   id: string
+  type: string
   title: string
   message: string | null
   link: string | null
   isRead: boolean
   createdAt: string
+}
+
+const NOTIF_ICONS: Record<string, typeof Bell> = {
+  task_comment: MessageSquare,
+  ticket_comment: MessageSquare,
+  task_assigned: UserCheck,
+  task_completed: CheckCircle,
+  task_status_changed: CheckCircle,
+  MEETING: Video,
+  file_uploaded: FileText,
+}
+
+function getNotifIcon(type: string) {
+  return NOTIF_ICONS[type] || Bell
 }
 
 interface TopbarProps {
@@ -180,28 +195,38 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                     Nessuna notifica
                   </div>
                 ) : (
-                  notifications.map((notif) => (
-                    <button
-                      key={notif.id}
-                      onClick={() => handleNotificationClick(notif)}
-                      className={`w-full text-left px-4 py-3 border-b border-border/20 last:border-b-0 hover:bg-secondary/40 transition-colors ${
-                        !notif.isRead ? 'bg-primary/[0.03]' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-medium">{notif.title}</p>
-                        {!notif.isRead && (
-                          <span className="mt-1 h-2 w-2 shrink-0 bg-primary rounded-full" />
-                        )}
-                      </div>
-                      {notif.message && (
-                        <p className="text-xs text-muted mt-0.5 line-clamp-2">{notif.message}</p>
-                      )}
-                      <p className="text-xs text-muted mt-1">
-                        {formatDistanceToNow(new Date(notif.createdAt), { locale: it, addSuffix: true })}
-                      </p>
-                    </button>
-                  ))
+                  notifications.map((notif) => {
+                    const NotifIcon = getNotifIcon(notif.type)
+                    return (
+                      <button
+                        key={notif.id}
+                        onClick={() => handleNotificationClick(notif)}
+                        className={`w-full text-left px-4 py-3 border-b border-border/20 last:border-b-0 hover:bg-secondary/40 transition-colors ${
+                          !notif.isRead ? 'bg-primary/[0.03]' : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <div className="mt-0.5 p-1.5 rounded-md bg-secondary/60 shrink-0">
+                            <NotifIcon className="h-3.5 w-3.5 text-muted" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-medium">{notif.title}</p>
+                              {!notif.isRead && (
+                                <span className="mt-1 h-2 w-2 shrink-0 bg-primary rounded-full" />
+                              )}
+                            </div>
+                            {notif.message && (
+                              <p className="text-xs text-muted mt-0.5 line-clamp-2">{notif.message}</p>
+                            )}
+                            <p className="text-xs text-muted mt-1">
+                              {formatDistanceToNow(new Date(notif.createdAt), { locale: it, addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })
                 )}
               </div>
               {unreadCount > 0 && (

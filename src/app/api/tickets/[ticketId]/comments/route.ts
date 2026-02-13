@@ -81,7 +81,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         type: 'ticket_comment',
         title: 'Nuovo commento su ticket',
         message: `${authorName} ha commentato il ticket "${ticket.subject}"`,
-        link: `/support/${ticketId}`,
+        link: `/support/${ticketId}?commentId=${comment.id}`,
       }
     )
 
