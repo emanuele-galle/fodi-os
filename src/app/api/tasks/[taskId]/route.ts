@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hasPermission, requirePermission } from '@/lib/permissions'
 import { updateTaskSchema } from '@/lib/validation'
+import { getTaskParticipants, notifyUsers } from '@/lib/notifications'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
@@ -107,6 +108,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, folderId, milestoneId, dueDate, estimatedHours, sortOrder, tags } = parsed.data
 
+    // Fetch previous state for auto-logging on status change
+    let previousTask: { status: string; title: string; projectId: string | null; timerStartedAt: Date | null; timerUserId: string | null } | null = null
+    if (status !== undefined) {
+      previousTask = await prisma.task.findUnique({
+        where: { id: taskId },
+        select: { status: true, title: true, projectId: true, timerStartedAt: true, timerUserId: true },
+      })
+    }
+
     const data: Record<string, unknown> = {}
     if (title !== undefined) data.title = title
     if (description !== undefined) data.description = description
@@ -114,6 +124,22 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       data.status = status
       if (status === 'DONE') data.completedAt = new Date()
       else data.completedAt = null
+
+      // Auto-log: start timer tracking when moving to IN_PROGRESS
+      if (status === 'IN_PROGRESS') {
+        data.timerStartedAt = new Date()
+        data.timerUserId = currentUserId
+      }
+
+      // Auto-log: stop timer and create TimeEntry when leaving IN_PROGRESS
+      if (
+        (status === 'DONE' || status === 'IN_REVIEW') &&
+        previousTask?.status === 'IN_PROGRESS' &&
+        previousTask?.timerStartedAt
+      ) {
+        data.timerStartedAt = null
+        data.timerUserId = null
+      }
     }
     if (priority !== undefined) data.priority = priority
     if (boardColumn !== undefined) data.boardColumn = boardColumn
@@ -129,6 +155,129 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       where: { id: taskId },
       data,
     })
+
+    // Auto-create TimeEntry when transitioning from IN_PROGRESS to DONE/IN_REVIEW
+    if (
+      status !== undefined &&
+      (status === 'DONE' || status === 'IN_REVIEW') &&
+      previousTask?.status === 'IN_PROGRESS' &&
+      previousTask?.timerStartedAt
+    ) {
+      const startTime = new Date(previousTask.timerStartedAt)
+      const endTime = new Date()
+      const diffMs = endTime.getTime() - startTime.getTime()
+      const hours = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100
+
+      const timeEntry = await prisma.timeEntry.create({
+        data: {
+          userId: previousTask.timerUserId || currentUserId!,
+          taskId,
+          projectId: previousTask.projectId,
+          date: startTime,
+          hours: Math.max(hours, 0.01),
+          description: `Auto-log: cambio stato → ${status === 'DONE' ? 'Completato' : 'In Revisione'} (${previousTask.title})`,
+          billable: true,
+        },
+      })
+
+      await prisma.activityLog.create({
+        data: {
+          userId: previousTask.timerUserId || currentUserId!,
+          action: 'AUTO_TIME_LOG',
+          entityType: 'TimeEntry',
+          entityId: timeEntry.id,
+          metadata: {
+            taskId,
+            taskTitle: previousTask.title,
+            hours: Math.max(hours, 0.01),
+            fromStatus: 'IN_PROGRESS',
+            toStatus: status,
+          },
+        },
+      })
+    }
+
+    // --- Notifications ---
+    const currentUser = await prisma.user.findUnique({
+      where: { id: currentUserId! },
+      select: { firstName: true, lastName: true },
+    })
+    const actorName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Qualcuno'
+    const taskLink = `/tasks?taskId=${taskId}`
+
+    // Status change notification
+    if (status !== undefined && previousTask && status !== previousTask.status) {
+      const statusLabels: Record<string, string> = {
+        TODO: 'Da fare',
+        IN_PROGRESS: 'In corso',
+        IN_REVIEW: 'In revisione',
+        DONE: 'Completata',
+        CANCELLED: 'Cancellata',
+      }
+      const newLabel = statusLabels[status] || status
+      const participants = await getTaskParticipants(taskId)
+
+      // If completed, special notification to creator
+      if (status === 'DONE') {
+        await notifyUsers(
+          [task.creatorId],
+          currentUserId,
+          {
+            type: 'task_completed',
+            title: 'Task completata',
+            message: `${actorName} ha completato "${task.title}"`,
+            link: taskLink,
+          }
+        )
+        // Notify other participants (excluding creator, already notified above)
+        const others = participants.filter((id) => id !== task.creatorId)
+        if (others.length > 0) {
+          await notifyUsers(
+            others,
+            currentUserId,
+            {
+              type: 'task_status_changed',
+              title: 'Stato task cambiato',
+              message: `${actorName} ha completato "${task.title}"`,
+              link: taskLink,
+            }
+          )
+        }
+      } else {
+        await notifyUsers(
+          participants,
+          currentUserId,
+          {
+            type: 'task_status_changed',
+            title: 'Stato task cambiato',
+            message: `${actorName} ha cambiato lo stato di "${task.title}" in "${newLabel}"`,
+            link: taskLink,
+          }
+        )
+      }
+    }
+
+    // Priority/dueDate/description change notification
+    if (priority !== undefined || dueDate !== undefined || description !== undefined) {
+      const changes: string[] = []
+      if (priority !== undefined) changes.push('priorita')
+      if (dueDate !== undefined) changes.push('scadenza')
+      if (description !== undefined) changes.push('descrizione')
+
+      if (changes.length > 0) {
+        const participants = await getTaskParticipants(taskId)
+        await notifyUsers(
+          participants,
+          currentUserId,
+          {
+            type: 'task_updated',
+            title: 'Task modificata',
+            message: `${actorName} ha modificato ${changes.join(', ')} di "${task.title}"`,
+            link: taskLink,
+          }
+        )
+      }
+    }
 
     // Handle multi-assignee updates
     if (assigneeIds !== undefined) {

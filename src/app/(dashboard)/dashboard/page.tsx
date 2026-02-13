@@ -283,11 +283,11 @@ export default function DashboardPage() {
   }
 
   const quickActions = [
-    { label: 'Nuovo Cliente', icon: <UserPlus className="h-4 w-4" />, href: '/crm', variant: 'secondary' as const },
-    { label: 'Nuovo Progetto', icon: <FolderKanban className="h-4 w-4" />, href: '/projects', variant: 'secondary' as const },
-    { label: 'Nuovo Preventivo', icon: <FilePlus2 className="h-4 w-4" />, href: '/erp/quotes/new', variant: 'secondary' as const },
-    { label: 'Nuovo Ticket', icon: <TicketPlus className="h-4 w-4" />, href: '/support', variant: 'secondary' as const },
-    { label: 'Registra Ore', icon: <ClockPlus className="h-4 w-4" />, href: '/time', variant: 'ghost' as const },
+    { label: 'Nuovo Cliente', description: 'Aggiungi cliente', icon: UserPlus, href: '/crm', color: 'text-primary', bg: 'bg-primary/10', hoverBorder: 'hover:border-primary/30' },
+    { label: 'Nuovo Progetto', description: 'Crea progetto', icon: FolderKanban, href: '/projects', color: 'text-accent', bg: 'bg-accent/10', hoverBorder: 'hover:border-accent/30' },
+    { label: 'Nuovo Preventivo', description: 'Crea preventivo', icon: FilePlus2, href: '/erp/quotes/new', color: 'text-[var(--color-warning)]', bg: 'bg-[var(--color-warning)]/10', hoverBorder: 'hover:border-[var(--color-warning)]/30' },
+    { label: 'Nuovo Ticket', description: 'Apri ticket', icon: TicketPlus, href: '/support', color: 'text-destructive', bg: 'bg-destructive/10', hoverBorder: 'hover:border-destructive/30' },
+    { label: 'Registra Ore', description: 'Traccia tempo', icon: ClockPlus, href: '/time', color: 'text-primary', bg: 'bg-primary/10', hoverBorder: 'hover:border-primary/30' },
   ]
 
   return (
@@ -342,18 +342,25 @@ export default function DashboardPage() {
 
       {/* QUICK ACTIONS */}
       <div className="mb-6 md:mb-8">
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible scrollbar-none">
-          {quickActions.map((action) => (
-            <Button
-              key={action.label}
-              variant={action.variant}
-              size="sm"
-              onClick={() => router.push(action.href)}
-            >
-              {action.icon}
-              {action.label}
-            </Button>
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 md:gap-3">
+          {quickActions.map((action) => {
+            const Icon = action.icon
+            return (
+              <button
+                key={action.label}
+                onClick={() => router.push(action.href)}
+                className={`group relative flex flex-col items-center gap-2 p-4 md:p-5 rounded-xl border border-border/30 ${action.hoverBorder} bg-card hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.97]`}
+              >
+                <div className={`p-2.5 md:p-3 rounded-xl ${action.bg} ${action.color} transition-transform duration-200 group-hover:scale-110`}>
+                  <Icon className="h-5 w-5 md:h-6 md:w-6" />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs md:text-sm font-semibold leading-tight">{action.label}</p>
+                  <p className="text-[10px] md:text-xs text-muted mt-0.5 hidden sm:block">{action.description}</p>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 

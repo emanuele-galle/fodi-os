@@ -369,10 +369,12 @@ model Task {
   startDate      DateTime?
   dueDate        DateTime?
   completedAt    DateTime?
-  estimatedHours Float?
-  tags           String[]   @default([])
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  estimatedHours   Float?
+  tags             String[]   @default([])
+  timerStartedAt   DateTime?
+  timerUserId      String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   project    Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   milestone  Milestone? @relation(fields: [milestoneId], references: [id])

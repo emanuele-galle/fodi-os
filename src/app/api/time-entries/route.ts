@@ -88,6 +88,22 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId,
+        action: 'CREATE',
+        entityType: 'TimeEntry',
+        entityId: entry.id,
+        metadata: {
+          hours,
+          taskId: taskId || null,
+          projectId: projectId || null,
+          description: description || null,
+        },
+      },
+    })
+
     return NextResponse.json(entry, { status: 201 })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Errore interno del server'

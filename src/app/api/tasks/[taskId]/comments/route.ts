@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
-import { sseManager } from '@/lib/sse'
-import { sendPush } from '@/lib/push'
+import { getTaskParticipants, notifyUsers } from '@/lib/notifications'
 import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
@@ -70,40 +69,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    // Notify task creator + all assignees (except comment author)
-    const taskWithAssignments = await prisma.task.findUnique({
-      where: { id: taskId },
-      include: {
-        assignments: { select: { userId: true } },
-      },
-    })
-    if (taskWithAssignments) {
-      const recipientIds = new Set<string>()
-      if (taskWithAssignments.creatorId !== userId) {
-        recipientIds.add(taskWithAssignments.creatorId)
+    // Notify all task participants (creator + assignees + commenters) except comment author
+    const participants = await getTaskParticipants(taskId)
+    const authorName = `${comment.author.firstName} ${comment.author.lastName}`
+    await notifyUsers(
+      participants,
+      userId,
+      {
+        type: 'task_comment',
+        title: 'Nuovo commento',
+        message: `${authorName} ha commentato "${task.title}"`,
+        link: `/tasks?taskId=${taskId}`,
       }
-      for (const a of taskWithAssignments.assignments) {
-        if (a.userId !== userId) recipientIds.add(a.userId)
-      }
-      if (recipientIds.size > 0) {
-        const authorName = `${comment.author.firstName} ${comment.author.lastName}`
-        const notifData = Array.from(recipientIds).map((uid) => ({
-          userId: uid,
-          type: 'task_comment',
-          title: 'Nuovo commento',
-          message: `${authorName} ha commentato il task "${task.title}"`,
-          link: '/tasks',
-        }))
-        await prisma.notification.createMany({ data: notifData })
-        for (const nd of notifData) {
-          sseManager.sendToUser(nd.userId, {
-            type: 'notification',
-            data: { type: nd.type, title: nd.title, message: nd.message, link: nd.link },
-          })
-          sendPush(nd.userId, { title: nd.title, message: nd.message, link: nd.link })
-        }
-      }
-    }
+    )
 
     return NextResponse.json(comment, { status: 201 })
   } catch (e) {

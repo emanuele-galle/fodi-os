@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { updateTicketSchema } from '@/lib/validation'
+import { notifyUsers } from '@/lib/notifications'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ ticketId: string }> }) {
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ ticketId: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role
+    const currentUserId = request.headers.get('x-user-id')!
     requirePermission(role, 'support', 'write')
 
     const { ticketId } = await params
@@ -53,6 +55,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       )
     }
     const { status, priority, assigneeId, category } = parsed.data
+
+    // Fetch previous ticket state for notification comparison
+    const previousTicket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      select: { status: true, assigneeId: true, creatorId: true, subject: true },
+    })
 
     const data: Record<string, unknown> = {}
     if (status !== undefined) {
@@ -73,6 +81,50 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         assignee: { select: { id: true, firstName: true, lastName: true } },
       },
     })
+
+    // Notifications for ticket changes
+    if (previousTicket) {
+      const ticketLink = `/support/${ticketId}`
+      const recipients = new Set<string>()
+      if (previousTicket.creatorId) recipients.add(previousTicket.creatorId)
+      if (previousTicket.assigneeId) recipients.add(previousTicket.assigneeId)
+      if (assigneeId) recipients.add(assigneeId)
+
+      // Status change notification
+      if (status !== undefined && status !== previousTicket.status) {
+        const statusLabels: Record<string, string> = {
+          OPEN: 'Aperto',
+          IN_PROGRESS: 'In corso',
+          WAITING_CLIENT: 'In attesa cliente',
+          RESOLVED: 'Risolto',
+          CLOSED: 'Chiuso',
+        }
+        await notifyUsers(
+          Array.from(recipients),
+          currentUserId,
+          {
+            type: 'ticket_status_changed',
+            title: 'Stato ticket cambiato',
+            message: `Ticket "${previousTicket.subject}" cambiato in "${statusLabels[status] || status}"`,
+            link: ticketLink,
+          }
+        )
+      }
+
+      // Assignee change notification
+      if (assigneeId !== undefined && assigneeId !== previousTicket.assigneeId && assigneeId) {
+        await notifyUsers(
+          [assigneeId],
+          currentUserId,
+          {
+            type: 'ticket_assigned',
+            title: 'Ticket assegnato',
+            message: `Ti è stato assegnato il ticket "${previousTicket.subject}"`,
+            link: ticketLink,
+          }
+        )
+      }
+    }
 
     return NextResponse.json(ticket)
   } catch (e) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createTicketCommentSchema } from '@/lib/validation'
+import { notifyUsers } from '@/lib/notifications'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ ticketId: string }> }) {
@@ -59,6 +60,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         author: { select: { id: true, firstName: true, lastName: true } },
       },
     })
+
+    // Notify ticket creator + assignee + previous commenters (except comment author)
+    const recipients = new Set<string>()
+    if (ticket.creatorId) recipients.add(ticket.creatorId)
+    if (ticket.assigneeId) recipients.add(ticket.assigneeId)
+    // Also notify users who previously commented on this ticket
+    const previousCommenters = await prisma.comment.findMany({
+      where: { ticketId },
+      select: { authorId: true },
+      distinct: ['authorId'],
+    })
+    for (const c of previousCommenters) recipients.add(c.authorId)
+
+    const authorName = `${comment.author.firstName} ${comment.author.lastName}`
+    await notifyUsers(
+      Array.from(recipients),
+      userId,
+      {
+        type: 'ticket_comment',
+        title: 'Nuovo commento su ticket',
+        message: `${authorName} ha commentato il ticket "${ticket.subject}"`,
+        link: `/support/${ticketId}`,
+      }
+    )
 
     return NextResponse.json(comment, { status: 201 })
   } catch (e) {

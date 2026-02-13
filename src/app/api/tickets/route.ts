@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createTicketSchema } from '@/lib/validation'
+import { notifyUsers } from '@/lib/notifications'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -21,8 +22,8 @@ export async function GET(request: NextRequest) {
 
     const where = {
       ...(clientId && { clientId }),
-      ...(status && { status: status as never }),
-      ...(priority && { priority: priority as never }),
+      ...(status && { status: { in: status.split(',').map((s) => s.trim()) } as never }),
+      ...(priority && { priority: { in: priority.split(',').map((s) => s.trim()) } as never }),
       ...(assigneeId && { assigneeId }),
       ...(search && {
         OR: [
@@ -98,6 +99,25 @@ export async function POST(request: NextRequest) {
         creator: { select: { id: true, firstName: true, lastName: true } },
       },
     })
+
+    // Notify support team (ADMIN + SUPPORT roles) about new ticket
+    const supportUsers = await prisma.user.findMany({
+      where: {
+        role: { in: ['ADMIN', 'SUPPORT'] },
+        isActive: true,
+      },
+      select: { id: true },
+    })
+    await notifyUsers(
+      supportUsers.map((u) => u.id),
+      userId,
+      {
+        type: 'ticket_created',
+        title: 'Nuovo ticket',
+        message: `Nuovo ticket "${subject}" (${number})`,
+        link: `/support/${ticket.id}`,
+      }
+    )
 
     return NextResponse.json(ticket, { status: 201 })
   } catch (e) {

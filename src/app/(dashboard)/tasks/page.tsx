@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   CheckSquare,
   Plus,
@@ -10,6 +11,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Target,
+  Timer,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
@@ -49,6 +51,8 @@ interface Task {
   assignments?: TaskAssignment[]
   project: { id: string; name: string } | null
   createdAt: string
+  timerStartedAt: string | null
+  timerUserId: string | null
 }
 
 const STATUS_OPTIONS = [
@@ -121,6 +125,16 @@ export default function TasksPage() {
   const [view, setView] = useState<ViewMode>('list')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const searchParams = useSearchParams()
+
+  // Open task from URL ?taskId=xxx (e.g. from notification links)
+  const urlTaskId = useMemo(() => searchParams.get('taskId'), [searchParams])
+  useEffect(() => {
+    if (urlTaskId) {
+      setSelectedTaskId(urlTaskId)
+      setModalOpen(true)
+    }
+  }, [urlTaskId])
 
   // Sync view preference
   useEffect(() => {
@@ -282,7 +296,12 @@ export default function TasksPage() {
                   style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-medium text-sm line-clamp-2">{task.title}</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {task.timerStartedAt && (
+                        <Timer className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
+                      )}
+                      <span className="font-medium text-sm line-clamp-2">{task.title}</span>
+                    </div>
                     <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} pulse={task.priority === 'URGENT'}>
                       {PRIORITY_LABELS[task.priority] || task.priority}
                     </Badge>
@@ -364,7 +383,12 @@ function ListView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: str
               className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-colors even:bg-secondary/20"
             >
               <td className="px-4 py-3">
-                <span className="text-sm font-medium">{task.title}</span>
+                <div className="flex items-center gap-1.5">
+                  {task.timerStartedAt && (
+                    <Timer className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
+                  )}
+                  <span className="text-sm font-medium">{task.title}</span>
+                </div>
               </td>
               <td className="px-4 py-3 hidden md:table-cell">
                 <Badge variant={STATUS_BADGE[task.status] || 'default'}>
@@ -443,7 +467,12 @@ function KanbanView({ tasks, onTaskClick }: { tasks: Task[]; onTaskClick: (id: s
                   onClick={() => onTaskClick(task.id)}
                   style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
                 >
-                  <p className="text-sm font-medium mb-2 line-clamp-2">{task.title}</p>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    {task.timerStartedAt && (
+                      <Timer className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
+                    )}
+                    <p className="text-sm font-medium line-clamp-2">{task.title}</p>
+                  </div>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} pulse={task.priority === 'URGENT'}>
                       {PRIORITY_LABELS[task.priority]}

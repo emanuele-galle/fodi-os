@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { MultiUserSelect } from '@/components/ui/MultiUserSelect'
 import { Trash2, Send, Paperclip, FileText, Image, Download, X } from 'lucide-react'
+import { TaskTimer } from '@/components/tasks/TaskTimer'
 
 interface TaskUser {
   id: string
@@ -56,6 +57,8 @@ interface TaskDetail {
   project: { id: string; name: string } | null
   comments: Comment[]
   tags: string[]
+  timerStartedAt: string | null
+  timerUserId: string | null
 }
 
 interface TeamMember {
@@ -370,6 +373,19 @@ export function TaskDetailModal({ taskId, open, onClose, onUpdated }: TaskDetail
               <Badge variant={PRIORITY_BADGE[priority] || 'default'}>Personale</Badge>
             </div>
           )}
+
+          {/* Timer */}
+          <div className="flex items-center justify-between border-t border-border pt-4">
+            <div className="flex items-center gap-2 text-sm text-muted">
+              <span>Timer</span>
+            </div>
+            <TaskTimer
+              taskId={task.id}
+              timerStartedAt={task.timerStartedAt}
+              timerUserId={task.timerUserId}
+              onTimerChange={fetchTask}
+            />
+          </div>
 
           {/* Comments section */}
           <div className="border-t border-border pt-4">

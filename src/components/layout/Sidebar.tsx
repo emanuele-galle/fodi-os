@@ -66,6 +66,7 @@ const navigation: NavItem[] = [
     roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'],
     children: [
       { label: 'Lista', href: '/projects' },
+      { label: 'Analytics', href: '/projects/analytics' },
       { label: 'Tracciamento Ore', href: '/time' },
     ],
   },
