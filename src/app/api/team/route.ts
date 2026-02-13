@@ -45,14 +45,66 @@ export async function GET(request: NextRequest) {
             timeEntries: true,
           },
         },
+        ...(!isClient && {
+          assignedTasks: {
+            where: { status: { in: ['TODO', 'IN_PROGRESS'] } },
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              priority: true,
+              dueDate: true,
+            },
+            orderBy: { updatedAt: 'desc' },
+            take: 5,
+          },
+        }),
       },
       orderBy: { firstName: 'asc' },
     })
+
+    // Calculate weekly hours and completed tasks this week for each user
+    const oneWeekAgo = new Date()
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+    const startOfWeek = new Date(oneWeekAgo)
+    startOfWeek.setHours(0, 0, 0, 0)
+
+    const userIds = users.map((u) => u.id)
+
+    const [weeklyTimeEntries, weeklyCompletedTasks] = await Promise.all([
+      prisma.timeEntry.groupBy({
+        by: ['userId'],
+        where: {
+          userId: { in: userIds },
+          date: { gte: startOfWeek },
+        },
+        _sum: { hours: true },
+      }),
+      prisma.task.groupBy({
+        by: ['assigneeId'],
+        where: {
+          assigneeId: { in: userIds },
+          status: 'DONE',
+          completedAt: { gte: startOfWeek },
+        },
+        _count: true,
+      }),
+    ])
+
+    const weeklyHoursMap = new Map(
+      weeklyTimeEntries.map((e) => [e.userId, e._sum.hours || 0])
+    )
+    const weeklyCompletedMap = new Map(
+      weeklyCompletedTasks.map((t) => [t.assigneeId, t._count])
+    )
 
     const items = users.map((u) => ({
       ...u,
       totalTasks: u._count.assignedTasks,
       totalTimeEntries: u._count.timeEntries,
+      weeklyHours: Math.round((weeklyHoursMap.get(u.id) || 0) * 100) / 100,
+      completedThisWeek: weeklyCompletedMap.get(u.id) || 0,
+      activeTasks: (u as Record<string, unknown>).assignedTasks || [],
     }))
 
     return NextResponse.json({ items, total: items.length })

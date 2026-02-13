@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
-import { uploadToGDrive, deleteFromGDrive } from '@/lib/storage'
+import { uploadToGDrive, deleteFromGDrive, renameOnGDrive } from '@/lib/storage'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
@@ -87,6 +87,57 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     return NextResponse.json(attachment, { status: 201 })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
+    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
+  try {
+    const role = request.headers.get('x-user-role') as Role
+    requirePermission(role, 'pm', 'write')
+
+    const { projectId } = await params
+    const { searchParams } = request.nextUrl
+    const attachmentId = searchParams.get('attachmentId')
+
+    if (!attachmentId) {
+      return NextResponse.json({ error: 'attachmentId obbligatorio' }, { status: 400 })
+    }
+
+    const body = await request.json()
+    const newFileName = body.fileName?.trim()
+    if (!newFileName) {
+      return NextResponse.json({ error: 'fileName obbligatorio' }, { status: 400 })
+    }
+
+    const attachment = await prisma.projectAttachment.findFirst({
+      where: { id: attachmentId, projectId },
+    })
+    if (!attachment) {
+      return NextResponse.json({ error: 'Allegato non trovato' }, { status: 404 })
+    }
+
+    // Rename on Google Drive if available
+    if (attachment.driveFileId) {
+      try {
+        await renameOnGDrive(attachment.driveFileId, newFileName)
+      } catch {
+        console.error(`Failed to rename file on GDrive for attachment ${attachmentId}`)
+      }
+    }
+
+    const updated = await prisma.projectAttachment.update({
+      where: { id: attachmentId },
+      data: { fileName: newFileName },
+      include: {
+        uploadedBy: { select: { id: true, firstName: true, lastName: true } },
+      },
+    })
+
+    return NextResponse.json(updated)
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })

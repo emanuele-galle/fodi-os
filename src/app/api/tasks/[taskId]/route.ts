@@ -217,8 +217,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const newLabel = statusLabels[status] || status
       const participants = await getTaskParticipants(taskId)
 
-      // If completed, special notification to creator
+      // If completed, special notification to creator + assigners
       if (status === 'DONE') {
+        // Get assignedBy users from task assignments
+        const assignments = await prisma.taskAssignment.findMany({
+          where: { taskId },
+          select: { assignedBy: true },
+        })
+        const assignerIds = [...new Set(
+          assignments
+            .map((a) => a.assignedBy)
+            .filter((id): id is string => id != null && id !== currentUserId && id !== task.creatorId)
+        )]
+
+        // Notify creator
         await notifyUsers(
           [task.creatorId],
           currentUserId,
@@ -229,8 +241,24 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             link: taskLink,
           }
         )
-        // Notify other participants (excluding creator, already notified above)
-        const others = participants.filter((id) => id !== task.creatorId)
+
+        // Notify assigners (who assigned this task to someone)
+        if (assignerIds.length > 0) {
+          await notifyUsers(
+            assignerIds,
+            currentUserId,
+            {
+              type: 'task_completed',
+              title: 'Task completata',
+              message: `${actorName} ha completato "${task.title}"`,
+              link: taskLink,
+            }
+          )
+        }
+
+        // Notify other participants (excluding creator and assigners, already notified above)
+        const alreadyNotified = new Set([task.creatorId, ...assignerIds])
+        const others = participants.filter((id) => !alreadyNotified.has(id))
         if (others.length > 0) {
           await notifyUsers(
             others,

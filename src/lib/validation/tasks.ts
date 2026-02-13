@@ -42,3 +42,13 @@ export const createTimeEntrySchema = z.object({
   billable: z.boolean().default(true),
   hourlyRate: z.number().min(0).optional(),
 })
+
+export const updateTimeEntrySchema = z.object({
+  hours: z.number().positive('Le ore devono essere positive').optional(),
+  description: z.string().optional().nullable(),
+  billable: z.boolean().optional(),
+  hourlyRate: z.number().min(0).optional().nullable(),
+  date: z.string().date('Data non valida').optional(),
+  taskId: z.string().uuid('Task ID non valido').optional().nullable(),
+  projectId: z.string().uuid('Project ID non valido').optional().nullable(),
+})

@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Paperclip, Upload, Trash2, Download, FileText, Image, File } from 'lucide-react'
+import { Upload, Trash2, Download, FileText, Image, File, Eye, Pencil, X, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
+import { Input } from '@/components/ui/Input'
 
 interface Attachment {
   id: string
@@ -31,9 +33,31 @@ function getFileIcon(mimeType: string) {
   return File
 }
 
+function isPreviewable(mimeType: string): boolean {
+  return (
+    mimeType.startsWith('image/') ||
+    mimeType === 'application/pdf' ||
+    mimeType.startsWith('video/') ||
+    mimeType.startsWith('audio/')
+  )
+}
+
+function getGDrivePreviewUrl(fileUrl: string): string {
+  // Convert Google Drive view link to preview/embed link
+  const match = fileUrl.match(/\/d\/([^/]+)/)
+  if (match) {
+    return `https://drive.google.com/file/d/${match[1]}/preview`
+  }
+  return fileUrl
+}
+
 export function ProjectAttachments({ projectId }: ProjectAttachmentsProps) {
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(false)
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const [renaming, setRenaming] = useState(false)
 
   const fetchAttachments = useCallback(async () => {
     const res = await fetch(`/api/projects/${projectId}/attachments`)
@@ -80,6 +104,30 @@ export function ProjectAttachments({ projectId }: ProjectAttachmentsProps) {
     }
   }
 
+  function startRename(att: Attachment) {
+    setRenamingId(att.id)
+    setRenameValue(att.fileName)
+  }
+
+  async function handleRename(attachmentId: string) {
+    if (!renameValue.trim()) return
+    setRenaming(true)
+    try {
+      const res = await fetch(`/api/projects/${projectId}/attachments?attachmentId=${attachmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: renameValue.trim() }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setAttachments((prev) => prev.map((a) => a.id === attachmentId ? { ...a, fileName: updated.fileName } : a))
+        setRenamingId(null)
+      }
+    } finally {
+      setRenaming(false)
+    }
+  }
+
   return (
     <div>
       <div
@@ -105,40 +153,175 @@ export function ProjectAttachments({ projectId }: ProjectAttachmentsProps) {
         <div className="space-y-2">
           {attachments.map((att) => {
             const Icon = getFileIcon(att.mimeType)
+            const canPreview = isPreviewable(att.mimeType) || att.fileUrl.includes('drive.google.com')
+            const isRenaming = renamingId === att.id
             return (
               <div
                 key={att.id}
                 className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-secondary/30 transition-colors"
               >
-                <Icon className="h-5 w-5 text-muted flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{att.fileName}</p>
-                  <p className="text-xs text-muted">
-                    {formatFileSize(att.fileSize)} - {att.uploadedBy.firstName} {att.uploadedBy.lastName} - {new Date(att.createdAt).toLocaleDateString('it-IT')}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <a
-                    href={att.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1.5 rounded hover:bg-primary/10 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Download className="h-4 w-4 text-muted" />
-                  </a>
+                {/* Thumbnail for images */}
+                {att.mimeType.startsWith('image/') ? (
                   <button
-                    onClick={() => handleDelete(att.id)}
-                    className="p-1.5 rounded hover:bg-destructive/10 transition-colors"
+                    onClick={() => setPreviewAttachment(att)}
+                    className="flex-shrink-0 w-10 h-10 rounded overflow-hidden bg-secondary/50 hover:opacity-80 transition-opacity"
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={att.fileUrl}
+                      alt={att.fileName}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
                   </button>
+                ) : (
+                  <Icon className="h-5 w-5 text-muted flex-shrink-0" />
+                )}
+
+                <div className="flex-1 min-w-0">
+                  {isRenaming ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        className="h-7 text-sm"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleRename(att.id)
+                          if (e.key === 'Escape') setRenamingId(null)
+                        }}
+                      />
+                      <button
+                        onClick={() => handleRename(att.id)}
+                        disabled={renaming}
+                        className="p-1 rounded hover:bg-primary/10 text-primary transition-colors"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setRenamingId(null)}
+                        className="p-1 rounded hover:bg-secondary transition-colors"
+                      >
+                        <X className="h-4 w-4 text-muted" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium truncate">{att.fileName}</p>
+                      <p className="text-xs text-muted">
+                        {formatFileSize(att.fileSize)} - {att.uploadedBy.firstName} {att.uploadedBy.lastName} - {new Date(att.createdAt).toLocaleDateString('it-IT')}
+                      </p>
+                    </>
+                  )}
                 </div>
+
+                {!isRenaming && (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {canPreview && (
+                      <button
+                        onClick={() => setPreviewAttachment(att)}
+                        className="p-1.5 rounded hover:bg-primary/10 transition-colors"
+                        title="Anteprima"
+                      >
+                        <Eye className="h-4 w-4 text-muted" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => startRename(att)}
+                      className="p-1.5 rounded hover:bg-primary/10 transition-colors"
+                      title="Rinomina"
+                    >
+                      <Pencil className="h-4 w-4 text-muted" />
+                    </button>
+                    <a
+                      href={att.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded hover:bg-primary/10 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                      title="Scarica"
+                    >
+                      <Download className="h-4 w-4 text-muted" />
+                    </a>
+                    <button
+                      onClick={() => handleDelete(att.id)}
+                      className="p-1.5 rounded hover:bg-destructive/10 transition-colors"
+                      title="Elimina"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </button>
+                  </div>
+                )}
               </div>
             )
           })}
         </div>
       )}
+
+      {/* Preview Modal */}
+      <Modal
+        open={!!previewAttachment}
+        onClose={() => setPreviewAttachment(null)}
+        title={previewAttachment?.fileName || 'Anteprima'}
+        size="lg"
+      >
+        {previewAttachment && (
+          <div className="max-h-[70vh] overflow-auto">
+            {previewAttachment.mimeType.startsWith('image/') ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={previewAttachment.fileUrl}
+                alt={previewAttachment.fileName}
+                className="max-w-full h-auto rounded-lg mx-auto"
+                referrerPolicy="no-referrer"
+              />
+            ) : previewAttachment.mimeType === 'application/pdf' || previewAttachment.fileUrl.includes('drive.google.com') ? (
+              <iframe
+                src={getGDrivePreviewUrl(previewAttachment.fileUrl)}
+                className="w-full h-[65vh] rounded-lg border-0"
+                allow="autoplay"
+                title={previewAttachment.fileName}
+              />
+            ) : previewAttachment.mimeType.startsWith('video/') ? (
+              <video
+                src={previewAttachment.fileUrl}
+                controls
+                className="max-w-full h-auto rounded-lg mx-auto"
+              />
+            ) : previewAttachment.mimeType.startsWith('audio/') ? (
+              <audio
+                src={previewAttachment.fileUrl}
+                controls
+                className="w-full mt-4"
+              />
+            ) : (
+              <div className="text-center py-8">
+                <File className="h-12 w-12 mx-auto mb-3 text-muted" />
+                <p className="text-sm text-muted">Anteprima non disponibile per questo tipo di file.</p>
+                <a
+                  href={previewAttachment.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline mt-2 inline-block"
+                >
+                  Apri in una nuova scheda
+                </a>
+              </div>
+            )}
+            <div className="mt-4 flex items-center justify-between text-xs text-muted">
+              <span>{formatFileSize(previewAttachment.fileSize)} - {previewAttachment.mimeType}</span>
+              <a
+                href={previewAttachment.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Apri in Drive
+              </a>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

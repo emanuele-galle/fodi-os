@@ -123,6 +123,17 @@ export async function uploadToGDrive(
 }
 
 /**
+ * Rename a file on Google Drive.
+ */
+export async function renameOnGDrive(fileId: string, newName: string): Promise<void> {
+  const drive = await getAdminDriveClient()
+  await drive.files.update({
+    fileId,
+    requestBody: { name: newName },
+  })
+}
+
+/**
  * Delete a file from Google Drive by its file ID.
  */
 export async function deleteFromGDrive(fileId: string): Promise<void> {
