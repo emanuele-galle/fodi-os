@@ -109,11 +109,18 @@ export async function POST(
       },
     })
 
-    // Update channel timestamp
-    await prisma.chatChannel.update({
-      where: { id: channelId },
-      data: { updatedAt: new Date() },
-    })
+    // Update channel timestamp + mark as read for sender
+    const now = new Date()
+    await Promise.all([
+      prisma.chatChannel.update({
+        where: { id: channelId },
+        data: { updatedAt: now },
+      }),
+      prisma.chatMember.updateMany({
+        where: { channelId, userId },
+        data: { lastReadAt: now },
+      }),
+    ])
 
     // Get all channel member user IDs for SSE broadcast
     const members = await prisma.chatMember.findMany({
