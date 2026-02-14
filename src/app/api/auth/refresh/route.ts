@@ -35,11 +35,22 @@ export async function POST() {
       return NextResponse.json({ error: 'Token riutilizzato - sessioni invalidate' }, { status: 401 })
     }
 
-    // Rotate: invalidate old token
-    await prisma.refreshToken.update({
-      where: { id: stored.id },
-      data: { isRevoked: true },
-    })
+    // Rotate: invalidate old token and cleanup revoked/expired tokens for this user
+    await prisma.$transaction([
+      prisma.refreshToken.update({
+        where: { id: stored.id },
+        data: { isRevoked: true },
+      }),
+      prisma.refreshToken.deleteMany({
+        where: {
+          userId: stored.userId,
+          OR: [
+            { isRevoked: true, id: { not: stored.id } },
+            { expiresAt: { lt: new Date() } },
+          ],
+        },
+      }),
+    ])
 
     // Re-read user from DB to get current role/status (not stale JWT data)
     const user = await prisma.user.findUnique({

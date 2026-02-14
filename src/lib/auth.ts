@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose'
+import { randomUUID } from 'crypto'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import type { Role } from '@/generated/prisma/client'
@@ -36,6 +37,7 @@ export async function createAccessToken(payload: Omit<SessionPayload, 'type'>): 
 export async function createRefreshToken(payload: Omit<SessionPayload, 'type'>): Promise<string> {
   return new SignJWT({ ...payload, type: 'refresh' as const })
     .setProtectedHeader({ alg: 'HS256' })
+    .setJti(randomUUID())
     .setIssuedAt()
     .setExpirationTime(REFRESH_EXPIRES)
     .sign(REFRESH_SECRET)
