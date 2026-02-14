@@ -96,8 +96,8 @@ export default function ErpPage() {
   return (
     <div className="animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-          <Landmark className="h-5 w-5" />
+        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Landmark className="h-6 w-6 text-primary" />
         </div>
         <div>
           <h1 className="text-xl md:text-2xl font-bold">ERP</h1>
@@ -111,27 +111,27 @@ export default function ErpPage() {
           return (
             <Card
               key={section.href}
-              className="cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98]"
+              className="cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.02] transition-all duration-200 touch-manipulation active:scale-[0.98] group"
               onClick={() => router.push(section.href)}
             >
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div className="p-3 md:p-2.5 rounded-xl bg-primary/10">
-                    <Icon className="h-6 w-6 text-primary" />
+                  <div className="p-3.5 rounded-xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                    <Icon className="h-8 w-8 text-primary" />
                   </div>
                   {loading ? (
                     <Skeleton className="h-6 w-24" />
                   ) : section.stat ? (
-                    <Badge variant="outline" className="text-xs md:text-sm">{section.stat}</Badge>
+                    <Badge variant="outline" className="text-xs md:text-sm font-semibold">{section.stat}</Badge>
                   ) : null}
                 </div>
                 <CardTitle className="mt-3 text-base md:text-lg">{section.title}</CardTitle>
                 <CardDescription className="text-sm">{section.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="ghost" size="sm" className="p-0 text-primary">
-                  Vai alla sezione <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary group-hover:gap-2.5 transition-all">
+                  Vai alla sezione <ArrowRight className="h-4 w-4" />
+                </span>
               </CardContent>
             </Card>
           )

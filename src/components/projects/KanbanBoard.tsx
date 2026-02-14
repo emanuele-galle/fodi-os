@@ -38,9 +38,6 @@ const BOARD_COLUMNS = [
   { key: 'done', label: 'Completato' },
 ]
 
-const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
-}
 
 // Custom collision detection: prioritize columns over individual cards
 const kanbanCollision: CollisionDetection = (args) => {
@@ -90,7 +87,7 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
     >
       <p className="font-medium text-sm mb-2">{task.title}</p>
       <div className="flex items-center justify-between">
-        <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} className="text-[10px]">
+        <Badge status={task.priority} className="text-[10px]">
           {task.priority}
         </Badge>
         <div className="flex items-center gap-2">
@@ -118,7 +115,7 @@ function TaskCardOverlay({ task }: { task: Task }) {
     <div className="bg-card rounded-md border-2 border-primary p-3 shadow-lg w-72">
       <p className="font-medium text-sm mb-2">{task.title}</p>
       <div className="flex items-center justify-between">
-        <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} className="text-[10px]">
+        <Badge status={task.priority} className="text-[10px]">
           {task.priority}
         </Badge>
         <div className="flex items-center gap-2">

@@ -36,14 +36,6 @@ const STATUS_OPTIONS = [
   { value: 'CHURNED', label: 'Perso' },
 ]
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  LEAD: 'default',
-  PROSPECT: 'warning',
-  ACTIVE: 'success',
-  INACTIVE: 'outline',
-  CHURNED: 'destructive',
-}
-
 const STATUS_LABELS: Record<string, string> = {
   LEAD: 'Lead',
   PROSPECT: 'Prospect',
@@ -192,8 +184,8 @@ export default function CrmPage() {
     <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-3">
-          <div className="bg-primary/10 text-primary p-2.5 rounded-lg">
-            <Users className="h-5 w-5" />
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Users className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Clienti</h1>
@@ -285,7 +277,7 @@ export default function CrmPage() {
                   <StatusBadge
                     leftLabel={STATUS_LABELS[client.status] || client.status}
                     rightLabel={`${client._count?.projects ?? 0} prog.`}
-                    variant={client.status === 'ACTIVE' ? 'success' : client.status === 'CHURNED' ? 'error' : client.status === 'PROSPECT' ? 'warning' : client.status === 'LEAD' ? 'info' : 'default'}
+                    status={client.status}
                   />
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted">
@@ -297,16 +289,16 @@ export default function CrmPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
+          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                  <th className="py-3 px-4 font-medium">Cliente</th>
-                  <th className="py-3 px-4 font-medium">Stato</th>
-                  <th className="py-3 px-4 font-medium">Settore</th>
-                  <th className="py-3 px-4 font-medium hidden lg:table-cell">Contatti</th>
-                  <th className="py-3 px-4 font-medium hidden lg:table-cell">Progetti</th>
-                  <th className="py-3 px-4 font-medium text-right">Revenue</th>
+                <tr className="border-b border-border/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Cliente</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Stato</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Settore</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Contatti</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Progetti</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Revenue</th>
                 </tr>
               </thead>
               <tbody>
@@ -314,29 +306,29 @@ export default function CrmPage() {
                   <tr
                     key={client.id}
                     onClick={() => router.push(`/crm/${client.id}`)}
-                    className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-all duration-200 even:bg-secondary/20"
+                    className="border-b border-border/10 hover:bg-secondary/8 transition-colors cursor-pointer group even:bg-secondary/[0.03]"
                   >
-                    <td className="py-3 px-4">
+                    <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
                         <Avatar name={client.companyName} size="sm" />
                         <span className="font-medium">{client.companyName}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <Badge variant={STATUS_BADGE[client.status] || 'default'}>
+                    <td className="px-4 py-3.5">
+                      <Badge status={client.status}>
                         {STATUS_LABELS[client.status] || client.status}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-muted">
+                    <td className="px-4 py-3.5 text-muted">
                       {client.industry || '—'}
                     </td>
-                    <td className="py-3 px-4 hidden lg:table-cell text-muted">
+                    <td className="px-4 py-3.5 hidden lg:table-cell text-muted tabular-nums">
                       {client._count?.contacts ?? 0}
                     </td>
-                    <td className="py-3 px-4 hidden lg:table-cell text-muted">
+                    <td className="px-4 py-3.5 hidden lg:table-cell text-muted tabular-nums">
                       {client._count?.projects ?? 0}
                     </td>
-                    <td className="py-3 px-4 text-right font-medium">
+                    <td className="px-4 py-3.5 text-right font-medium tabular-nums">
                       {formatCurrency(client.totalRevenue)}
                     </td>
                   </tr>

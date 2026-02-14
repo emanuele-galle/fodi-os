@@ -28,12 +28,17 @@ interface Client {
 }
 
 const COLUMNS = [
-  { status: 'LEAD', label: 'Lead', variant: 'default' as const },
-  { status: 'PROSPECT', label: 'Prospect', variant: 'warning' as const },
-  { status: 'ACTIVE', label: 'Attivo', variant: 'success' as const },
-  { status: 'INACTIVE', label: 'Inattivo', variant: 'outline' as const },
-  { status: 'CHURNED', label: 'Perso', variant: 'destructive' as const },
+  { status: 'LEAD', label: 'Lead', variant: 'default' as const, headerBg: 'bg-blue-500/10', headerText: 'text-blue-600', borderColor: 'border-l-blue-500' },
+  { status: 'PROSPECT', label: 'Prospect', variant: 'warning' as const, headerBg: 'bg-amber-500/10', headerText: 'text-amber-600', borderColor: 'border-l-amber-500' },
+  { status: 'ACTIVE', label: 'Attivo', variant: 'success' as const, headerBg: 'bg-emerald-500/10', headerText: 'text-emerald-600', borderColor: 'border-l-emerald-500' },
+  { status: 'INACTIVE', label: 'Inattivo', variant: 'outline' as const, headerBg: 'bg-gray-500/10', headerText: 'text-gray-500', borderColor: 'border-l-gray-400' },
+  { status: 'CHURNED', label: 'Perso', variant: 'destructive' as const, headerBg: 'bg-red-500/10', headerText: 'text-red-500', borderColor: 'border-l-red-500' },
 ]
+
+function getStatusBorderColor(status: string): string {
+  const col = COLUMNS.find((c) => c.status === status)
+  return col?.borderColor || 'border-l-gray-400'
+}
 
 const SortableClientCard = memo(function SortableClientCard({ client, onClick }: { client: Client; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -54,15 +59,15 @@ const SortableClientCard = memo(function SortableClientCard({ client, onClick }:
       {...attributes}
       {...listeners}
       onClick={onClick}
-      className="bg-card rounded-md border border-border p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow"
+      className={`bg-card rounded-lg border border-border/60 border-l-4 ${getStatusBorderColor(client.status)} p-3.5 cursor-grab active:cursor-grabbing hover:shadow-md transition-all`}
     >
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2.5 mb-2">
         <Avatar name={client.companyName} size="sm" />
-        <span className="font-medium text-sm truncate">{client.companyName}</span>
+        <span className="font-semibold text-sm truncate">{client.companyName}</span>
       </div>
       <div className="flex items-center justify-between text-xs text-muted">
         <span>{client.industry || 'N/D'}</span>
-        <span className="font-medium">{formatCurrency(client.totalRevenue)}</span>
+        <span className="font-semibold text-foreground">{formatCurrency(client.totalRevenue)}</span>
       </div>
     </div>
   )
@@ -143,9 +148,9 @@ export function PipelineKanban({ clientsByStatus, onStatusChange }: PipelineKanb
           const clients = clientsByStatus[col.status] || []
           return (
             <DroppableColumn key={col.status} status={col.status}>
-              <div className="flex items-center justify-between mb-3">
-                <Badge variant={col.variant}>{col.label}</Badge>
-                <span className="text-xs text-muted font-medium bg-secondary rounded-full px-2 py-0.5">
+              <div className={`flex items-center justify-between mb-3 px-3 py-2.5 rounded-lg ${col.headerBg}`}>
+                <span className={`text-sm font-bold ${col.headerText}`}>{col.label}</span>
+                <span className={`text-xs font-semibold ${col.headerText} bg-white/60 dark:bg-white/10 rounded-full px-2 py-0.5`}>
                   {clients.length}
                 </span>
               </div>
@@ -154,7 +159,7 @@ export function PipelineKanban({ clientsByStatus, onStatusChange }: PipelineKanb
                 items={clients.map((c) => c.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-2 min-h-[60px]">
+                <div className="space-y-2.5 min-h-[200px]">
                   {clients.map((client) => (
                     <SortableClientCard
                       key={client.id}
@@ -188,8 +193,8 @@ function DroppableColumn({ status, children }: { status: string; children: React
   return (
     <div
       ref={setNodeRef}
-      className={`flex-shrink-0 w-[75vw] md:w-72 snap-center md:snap-align-none rounded-lg p-3 transition-colors ${
-        isOver ? 'bg-primary/5 ring-2 ring-primary/20' : 'bg-secondary/30'
+      className={`flex-shrink-0 w-[75vw] md:w-72 snap-center md:snap-align-none rounded-xl p-3 transition-all ${
+        isOver ? 'bg-primary/5 ring-2 ring-primary/20 shadow-lg' : 'bg-secondary/20 border border-border/30'
       }`}
     >
       {children}

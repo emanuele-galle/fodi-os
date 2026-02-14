@@ -31,14 +31,6 @@ interface QuoteDetail {
   createdAt: string
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  DRAFT: 'default',
-  SENT: 'default',
-  APPROVED: 'success',
-  REJECTED: 'destructive',
-  EXPIRED: 'outline',
-  INVOICED: 'warning',
-}
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Bozza',
@@ -118,7 +110,7 @@ export default function PortalQuoteDetailPage() {
         </Button>
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-xl font-bold">Preventivo {quote.number}</h1>
-          <Badge variant={STATUS_BADGE[quote.status] || 'default'}>
+          <Badge status={quote.status}>
             {STATUS_LABELS[quote.status] || quote.status}
           </Badge>
         </div>

@@ -29,11 +29,6 @@ const STATUS_OPTIONS = [
   { value: 'ARCHIVED', label: 'Archiviato' },
 ]
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning'> = {
-  DRAFT: 'default',
-  PUBLISHED: 'success',
-  ARCHIVED: 'warning',
-}
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Bozza',
   PUBLISHED: 'Pubblicato',
@@ -161,7 +156,7 @@ export default function WizardsPage() {
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-bold text-sm truncate">{w.name}</span>
-                  <Badge variant={STATUS_BADGE[w.status] || 'default'}>
+                  <Badge status={w.status}>
                     {STATUS_LABELS[w.status] || w.status}
                   </Badge>
                 </div>
@@ -200,7 +195,7 @@ export default function WizardsPage() {
                       {w.description && <p className="text-xs text-muted truncate max-w-xs">{w.description}</p>}
                     </td>
                     <td className="py-3 pr-4">
-                      <Badge variant={STATUS_BADGE[w.status] || 'default'}>
+                      <Badge status={w.status}>
                         {STATUS_LABELS[w.status] || w.status}
                       </Badge>
                     </td>

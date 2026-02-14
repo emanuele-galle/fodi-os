@@ -46,9 +46,6 @@ interface QuoteDetail {
   lineItems: LineItem[]
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  DRAFT: 'default', SENT: 'default', APPROVED: 'success', REJECTED: 'destructive', EXPIRED: 'outline', INVOICED: 'warning',
-}
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Bozza', SENT: 'Inviato', APPROVED: 'Approvato', REJECTED: 'Rifiutato', EXPIRED: 'Scaduto', INVOICED: 'Fatturato',
 }
@@ -265,7 +262,7 @@ export default function QuoteDetailPage() {
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-semibold">{quote.number}</h1>
-            <Badge variant={STATUS_BADGE[quote.status] || 'default'}>
+            <Badge status={quote.status}>
               {STATUS_LABELS[quote.status] || quote.status}
             </Badge>
           </div>

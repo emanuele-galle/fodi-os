@@ -315,8 +315,8 @@ export default function SettingsPage() {
   return (
     <div className="animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-          <Settings className="h-5 w-5" />
+        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Settings className="h-6 w-6 text-primary" />
         </div>
         <div>
           <h1 className="text-xl md:text-2xl font-bold">Impostazioni</h1>
@@ -338,8 +338,8 @@ export default function SettingsPage() {
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar navigation */}
-        <nav className="lg:w-56 flex-shrink-0">
-          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+        <nav className="lg:w-60 flex-shrink-0">
+          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 lg:border lg:border-border/30 lg:rounded-xl lg:p-2 lg:bg-secondary/20">
             {sections.map((section) => {
               const Icon = section.icon
               return (
@@ -347,13 +347,13 @@ export default function SettingsPage() {
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
                   className={cn(
-                    'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
+                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap touch-manipulation min-h-[44px] md:min-h-0',
                     activeSection === section.id
-                      ? 'bg-primary/10 text-primary'
+                      ? 'bg-primary/10 text-primary border-l-2 border-primary lg:border-l-2'
                       : 'text-muted hover:text-foreground hover:bg-secondary/60'
                   )}
                 >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <Icon className="h-4.5 w-4.5 flex-shrink-0" />
                   {section.label}
                 </button>
               )
@@ -366,18 +366,18 @@ export default function SettingsPage() {
 
           {/* Profile */}
           {activeSection === 'profile' && (
-            <Card>
+            <Card className="rounded-xl border border-border/20">
               <CardTitle>Profilo</CardTitle>
               <CardContent>
-                <form onSubmit={handleSave} className="space-y-5">
-                  <div className="flex items-center gap-4">
+                <form onSubmit={handleSave} className="space-y-6">
+                  <div className="flex flex-col items-center gap-3 pb-5 border-b border-border/30">
                     <AvatarUpload
                       name={`${user.firstName} ${user.lastName}`}
                       currentUrl={user.avatarUrl}
                       onUploaded={(url) => setUser({ ...user, avatarUrl: url })}
                     />
-                    <div>
-                      <p className="font-medium">{user.firstName} {user.lastName}</p>
+                    <div className="text-center">
+                      <p className="text-lg font-semibold">{user.firstName} {user.lastName}</p>
                       <Badge variant="outline" className="mt-1">{ROLE_LABELS[user.role] || user.role}</Badge>
                     </div>
                   </div>
@@ -414,7 +414,7 @@ export default function SettingsPage() {
                     placeholder="+39 333 1234567"
                   />
 
-                  <Button type="submit" loading={saving}>
+                  <Button type="submit" loading={saving} className="w-full">
                     Salva Modifiche
                   </Button>
                 </form>

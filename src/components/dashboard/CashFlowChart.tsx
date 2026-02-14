@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
+import { TrendingUp } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 
@@ -86,10 +87,21 @@ export function CashFlowChart() {
     load()
   }, [])
 
-  if (loading) return <Skeleton className="h-64 w-full" />
+  if (loading) return <Skeleton className="h-48 w-full" />
+
+  const allZero = data.every(d => d.entrate === 0 && d.uscite === 0)
+
+  if (allZero) {
+    return (
+      <div className="flex flex-col items-center justify-center h-48 text-muted">
+        <TrendingUp className="h-10 w-10 mb-2 opacity-30" />
+        <p className="text-sm">Nessun dato disponibile</p>
+      </div>
+    )
+  }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ResponsiveContainer width="100%" height={240}>
       <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
         <defs>
           <linearGradient id="gradEntrate" x1="0" y1="0" x2="0" y2="1">

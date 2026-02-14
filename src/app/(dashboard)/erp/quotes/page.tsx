@@ -32,9 +32,6 @@ const STATUS_OPTIONS = [
   { value: 'INVOICED', label: 'Fatturato' },
 ]
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  DRAFT: 'default', SENT: 'default', APPROVED: 'success', REJECTED: 'destructive', EXPIRED: 'outline', INVOICED: 'warning',
-}
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Bozza', SENT: 'Inviato', APPROVED: 'Approvato', REJECTED: 'Rifiutato', EXPIRED: 'Scaduto', INVOICED: 'Fatturato',
 }
@@ -159,7 +156,7 @@ export default function QuotesPage() {
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-bold">{q.number}</span>
-                  <Badge variant={STATUS_BADGE[q.status] || 'default'}>
+                  <Badge status={q.status}>
                     {STATUS_LABELS[q.status] || q.status}
                   </Badge>
                 </div>
@@ -176,17 +173,17 @@ export default function QuotesPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
+          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                  <th className="py-3 pr-4 pl-3 font-medium">Numero</th>
-                  <th className="py-3 pr-4 font-medium">Titolo</th>
-                  <th className="py-3 pr-4 font-medium">Cliente</th>
-                  <th className="py-3 pr-4 font-medium">Stato</th>
-                  <th className="py-3 pr-4 font-medium text-right">Totale</th>
-                  <th className="py-3 pr-4 font-medium hidden lg:table-cell">Valido fino a</th>
-                  <th className="py-3 font-medium hidden lg:table-cell">Creato</th>
+                <tr className="border-b border-border/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Numero</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Titolo</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Cliente</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Stato</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Totale</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Valido fino a</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Creato</th>
                 </tr>
               </thead>
               <tbody>
@@ -194,21 +191,21 @@ export default function QuotesPage() {
                   <tr
                     key={q.id}
                     onClick={() => router.push(`/erp/quotes/${q.id}`)}
-                    className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 cursor-pointer transition-colors"
+                    className="border-b border-border/10 hover:bg-secondary/8 transition-colors cursor-pointer group even:bg-secondary/[0.03]"
                   >
-                    <td className="py-3 pr-4 font-medium">{q.number}</td>
-                    <td className="py-3 pr-4">{q.title}</td>
-                    <td className="py-3 pr-4 text-muted">{q.client.companyName}</td>
-                    <td className="py-3 pr-4">
-                      <Badge variant={STATUS_BADGE[q.status] || 'default'}>
+                    <td className="px-4 py-3.5 font-medium">{q.number}</td>
+                    <td className="px-4 py-3.5">{q.title}</td>
+                    <td className="px-4 py-3.5 text-muted">{q.client.companyName}</td>
+                    <td className="px-4 py-3.5">
+                      <Badge status={q.status}>
                         {STATUS_LABELS[q.status] || q.status}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-4 font-medium text-right">{formatCurrency(q.total)}</td>
-                    <td className="py-3 pr-4 text-muted hidden lg:table-cell">
+                    <td className="px-4 py-3.5 font-medium text-right tabular-nums">{formatCurrency(q.total)}</td>
+                    <td className="px-4 py-3.5 text-muted hidden lg:table-cell">
                       {q.validUntil ? new Date(q.validUntil).toLocaleDateString('it-IT') : '—'}
                     </td>
-                    <td className="py-3 text-muted hidden lg:table-cell">
+                    <td className="px-4 py-3.5 text-muted hidden lg:table-cell">
                       {new Date(q.createdAt).toLocaleDateString('it-IT')}
                     </td>
                   </tr>

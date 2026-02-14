@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
+import { BarChart3 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 
@@ -92,10 +93,21 @@ export function RevenueChart() {
     load()
   }, [])
 
-  if (loading) return <Skeleton className="h-64 w-full" />
+  if (loading) return <Skeleton className="h-48 w-full" />
+
+  const allZero = data.every(d => d.paid === 0 && d.sent === 0 && d.overdue === 0)
+
+  if (allZero) {
+    return (
+      <div className="flex flex-col items-center justify-center h-48 text-muted">
+        <BarChart className="h-10 w-10 mb-2 opacity-30" />
+        <p className="text-sm">Nessun dato disponibile</p>
+      </div>
+    )
+  }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
         <defs>
           <linearGradient id="gradPaid" x1="0" y1="0" x2="0" y2="1">

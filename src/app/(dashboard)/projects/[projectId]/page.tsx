@@ -115,14 +115,8 @@ interface ProjectDetail {
   _count?: { tasks: number }
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  PLANNING: 'default', IN_PROGRESS: 'success', ON_HOLD: 'warning', REVIEW: 'default', COMPLETED: 'outline', CANCELLED: 'destructive',
-}
 const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
   LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
-}
-const TASK_STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  TODO: 'default', IN_PROGRESS: 'success', IN_REVIEW: 'warning', DONE: 'outline', CANCELLED: 'destructive',
 }
 const STATUS_LABEL: Record<string, string> = {
   PLANNING: 'Pianificazione', IN_PROGRESS: 'In Corso', ON_HOLD: 'In Pausa',
@@ -510,10 +504,10 @@ export default function ProjectDetailPage() {
                   ) : '—'}
                 </td>
                 <td className="py-3 px-4">
-                  <Badge variant={TASK_STATUS_BADGE[task.status] || 'default'}>{TASK_STATUS_LABEL[task.status] || task.status}</Badge>
+                  <Badge status={task.status}>{TASK_STATUS_LABEL[task.status] || task.status}</Badge>
                 </td>
                 <td className="py-3 px-4 hidden sm:table-cell">
-                  <Badge variant={PRIORITY_BADGE[task.priority] || 'default'}>{PRIORITY_LABEL[task.priority] || task.priority}</Badge>
+                  <Badge status={task.priority}>{PRIORITY_LABEL[task.priority] || task.priority}</Badge>
                 </td>
                 <td className="py-3 px-4 text-muted hidden sm:table-cell">
                   {task.dueDate ? new Date(task.dueDate).toLocaleDateString('it-IT') : '—'}
@@ -599,8 +593,8 @@ export default function ProjectDetailPage() {
               />
             )}
             <h1 className="text-xl sm:text-2xl font-semibold truncate">{project.name}</h1>
-            <Badge variant={STATUS_BADGE[project.status] || 'default'}>{STATUS_LABEL[project.status] || project.status}</Badge>
-            <Badge variant={PRIORITY_BADGE[project.priority] || 'default'}>{PRIORITY_LABEL[project.priority] || project.priority}</Badge>
+            <Badge status={project.status}>{STATUS_LABEL[project.status] || project.status}</Badge>
+            <Badge status={project.priority}>{PRIORITY_LABEL[project.priority] || project.priority}</Badge>
           </div>
           {project.client && (
             <p className="text-sm text-muted mt-1 truncate">{project.client.companyName} - {project.workspace.name}</p>
@@ -655,7 +649,7 @@ export default function ProjectDetailPage() {
               <Target className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-muted uppercase tracking-wider font-medium">Task Totali</p>
+              <p className="text-xs text-muted font-medium">Task Totali</p>
               <p className="text-xl sm:text-2xl font-bold animate-count-up">{allTasks.length}</p>
             </div>
           </CardContent>
@@ -666,7 +660,7 @@ export default function ProjectDetailPage() {
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-muted uppercase tracking-wider font-medium">Completati</p>
+              <p className="text-xs text-muted font-medium">Completati</p>
               <p className="text-xl sm:text-2xl font-bold animate-count-up">{doneTasks}</p>
             </div>
           </CardContent>
@@ -677,7 +671,7 @@ export default function ProjectDetailPage() {
               <Timer className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-muted uppercase tracking-wider font-medium">Ore Stimate</p>
+              <p className="text-xs text-muted font-medium">Ore Stimate</p>
               <p className="text-xl sm:text-2xl font-bold animate-count-up">{totalEstimated}h</p>
             </div>
           </CardContent>
@@ -688,7 +682,7 @@ export default function ProjectDetailPage() {
               <Clock className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-muted uppercase tracking-wider font-medium">Ore Registrate</p>
+              <p className="text-xs text-muted font-medium">Ore Registrate</p>
               <p className="text-xl sm:text-2xl font-bold animate-count-up">{totalLogged}h</p>
             </div>
           </CardContent>

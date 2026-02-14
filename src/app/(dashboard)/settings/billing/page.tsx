@@ -130,8 +130,8 @@ export default function BillingSettingsPage() {
   return (
     <div className="max-w-2xl animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-          <Building2 className="h-5 w-5" />
+        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Building2 className="h-6 w-6 text-primary" />
         </div>
         <div>
           <h1 className="text-xl md:text-2xl font-bold">Fatturazione</h1>

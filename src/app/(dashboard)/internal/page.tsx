@@ -55,14 +55,8 @@ interface UserItem {
   role: string
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  PLANNING: 'default', IN_PROGRESS: 'success', ON_HOLD: 'warning', REVIEW: 'default', COMPLETED: 'outline', CANCELLED: 'destructive',
-}
 const STATUS_LABELS: Record<string, string> = {
   PLANNING: 'Pianificazione', IN_PROGRESS: 'In Corso', ON_HOLD: 'In Pausa', REVIEW: 'Revisione', COMPLETED: 'Completato', CANCELLED: 'Cancellato',
-}
-const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
 }
 const PRIORITY_LABELS: Record<string, string> = {
   LOW: 'Bassa', MEDIUM: 'Media', HIGH: 'Alta', URGENT: 'Urgente',
@@ -196,10 +190,10 @@ export default function InternalPage() {
             <ArrowRight className="h-4 w-4 text-muted/40 flex-shrink-0" />
           </div>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <Badge variant={STATUS_BADGE[p.status] || 'default'}>
+            <Badge status={p.status}>
               {STATUS_LABELS[p.status] || p.status}
             </Badge>
-            <Badge variant={PRIORITY_BADGE[p.priority] || 'default'}>
+            <Badge status={p.priority}>
               {PRIORITY_LABELS[p.priority] || p.priority}
             </Badge>
           </div>
@@ -255,8 +249,8 @@ export default function InternalPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-            <Building2 className="h-5 w-5" />
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Building2 className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight">Azienda</h1>
@@ -296,7 +290,7 @@ export default function InternalPage() {
                   <stat.icon className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-muted uppercase tracking-wider font-medium">{stat.label}</p>
+                  <p className="text-[11px] text-muted font-medium">{stat.label}</p>
                   <p className="text-3xl font-bold mt-1 tracking-tight">{stat.value}</p>
                 </div>
               </CardContent>
@@ -370,7 +364,7 @@ export default function InternalPage() {
                 <div className="space-y-6">
                   {grouped.filter(g => g.projects.length > 0).map(g => (
                     <div key={g.workspace.id}>
-                      <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">{g.workspace.name}</h3>
+                      <h3 className="text-sm font-semibold text-muted mb-3">{g.workspace.name}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
                         {g.projects.map(p => renderProjectCard(p))}
                       </div>
@@ -378,7 +372,7 @@ export default function InternalPage() {
                   ))}
                   {ungrouped.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">Altro</h3>
+                      <h3 className="text-sm font-semibold text-muted mb-3">Altro</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
                         {ungrouped.map(p => renderProjectCard(p))}
                       </div>
@@ -430,7 +424,7 @@ export default function InternalPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                      <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} className="text-[10px]">
+                      <Badge status={task.priority} className="text-[10px]">
                         {PRIORITY_LABELS[task.priority] || task.priority}
                       </Badge>
                       {task.dueDate && (

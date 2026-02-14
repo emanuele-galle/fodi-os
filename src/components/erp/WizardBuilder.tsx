@@ -56,11 +56,6 @@ interface WizardBuilderProps {
   wizardId: string
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning'> = {
-  DRAFT: 'default',
-  PUBLISHED: 'success',
-  ARCHIVED: 'warning',
-}
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Bozza',
   PUBLISHED: 'Pubblicato',
@@ -274,7 +269,7 @@ export function WizardBuilder({ wizardId }: WizardBuilderProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <h1 className="text-xl md:text-2xl font-bold truncate">{wizard.name}</h1>
-            <Badge variant={STATUS_BADGE[wizard.status] || 'default'}>
+            <Badge status={wizard.status}>
               {STATUS_LABELS[wizard.status] || wizard.status}
             </Badge>
             {wizard.isSystem && <Badge variant="outline">Sistema</Badge>}

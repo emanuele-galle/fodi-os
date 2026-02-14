@@ -26,18 +26,6 @@ interface PortalQuote {
   validUntil: string | null
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  PLANNING: 'default',
-  ACTIVE: 'success',
-  ON_HOLD: 'warning',
-  COMPLETED: 'outline',
-  CANCELLED: 'destructive',
-  SENT: 'default',
-  APPROVED: 'success',
-  REJECTED: 'destructive',
-  EXPIRED: 'outline',
-  INVOICED: 'warning',
-}
 
 const STATUS_LABELS: Record<string, string> = {
   PLANNING: 'Pianificazione',
@@ -106,7 +94,7 @@ export default function PortalHomePage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <Badge variant={STATUS_BADGE[q.status] || 'default'}>
+                  <Badge status={q.status}>
                     {STATUS_LABELS[q.status] || q.status}
                   </Badge>
                 </div>
@@ -137,7 +125,7 @@ export default function PortalHomePage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{project.name}</CardTitle>
-                  <Badge variant={STATUS_BADGE[project.status] || 'default'}>
+                  <Badge status={project.status}>
                     {STATUS_LABELS[project.status] || project.status}
                   </Badge>
                 </div>

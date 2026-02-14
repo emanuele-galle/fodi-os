@@ -91,9 +91,6 @@ const PRIORITY_OPTIONS = [
   { value: 'URGENT', label: 'Urgente' },
 ]
 
-const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
-}
 
 export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onUpdated }: TaskDetailModalProps) {
   const [task, setTask] = useState<TaskDetail | null>(null)
@@ -385,7 +382,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
           {!task.project && task.isPersonal && (
             <div className="flex items-center gap-2 text-sm text-muted">
               <span>Tipo:</span>
-              <Badge variant={PRIORITY_BADGE[priority] || 'default'}>Personale</Badge>
+              <Badge status={priority}>Personale</Badge>
             </div>
           )}
 

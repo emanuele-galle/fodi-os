@@ -43,11 +43,6 @@ const PLATFORM_OPTIONS = [
   { value: 'twitter', label: 'Twitter/X' },
 ]
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'outline'> = {
-  DRAFT: 'default',
-  SCHEDULED: 'warning',
-  PUBLISHED: 'success',
-}
 
 export default function SocialPage() {
   const [posts, setPosts] = useState<SocialPost[]>([])
@@ -115,8 +110,8 @@ export default function SocialPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-            <CalendarDays className="h-5 w-5" />
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <CalendarDays className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Calendario Social</h1>
@@ -184,7 +179,7 @@ export default function SocialPage() {
                 <Badge variant={PLATFORM_BADGE[post.platform] || 'default'}>
                   {post.platform}
                 </Badge>
-                <Badge variant={STATUS_BADGE[post.status] || 'default'}>
+                <Badge status={post.status}>
                   {post.status === 'DRAFT' ? 'Bozza' : post.status === 'SCHEDULED' ? 'Programmato' : 'Pubblicato'}
                 </Badge>
               </div>

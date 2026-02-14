@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Users, FolderKanban, Receipt, Clock, TrendingUp, AlertCircle,
-  ArrowRight, Activity, UserPlus, FileText, CheckCircle2, TicketCheck,
+  Activity, UserPlus, FileText, CheckCircle2, TicketCheck,
   Plus, TicketPlus, FilePlus2, ClockPlus, X, Pencil,
   LayoutDashboard, CalendarCheck, BarChart3, Wallet, StickyNote,
 } from 'lucide-react'
@@ -17,7 +17,6 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
 import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
 import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard'
-import { QuickActionsGrid } from '@/components/dashboard/QuickActionsGrid'
 import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
 
 const RevenueChart = dynamic(() => import('@/components/dashboard/RevenueChart').then(m => ({ default: m.RevenueChart })), {
@@ -279,13 +278,19 @@ export default function DashboardPage() {
     const ACTION_LABELS: Record<string, string> = {
       create: 'ha creato', update: 'ha aggiornato', complete: 'ha completato',
       approve: 'ha approvato', pay: 'ha registrato il pagamento di', delete: 'ha eliminato',
+      AUTO_TIME_LOG: 'ha registrato ore di lavoro', TIMER_STOP: 'ha fermato il timer',
     }
     const ENTITY_LABELS: Record<string, string> = {
       project: 'il progetto', client: 'il cliente', quote: 'il preventivo',
       invoice: 'la fattura', task: 'il task', ticket: 'il ticket',
+      TimeEntry: '', timeEntry: '',
+    }
+    // Handle special action types that are self-descriptive
+    if (ACTION_LABELS[activity.action] && (activity.entityType === 'TimeEntry' || activity.entityType === 'timeEntry')) {
+      return ACTION_LABELS[activity.action] + (name ? ` su "${name}"` : '')
     }
     const actionLabel = ACTION_LABELS[activity.action] || activity.action
-    const entityLabel = ENTITY_LABELS[activity.entityType] || activity.entityType
+    const entityLabel = ENTITY_LABELS[activity.entityType] ?? activity.entityType
     return `${actionLabel} ${entityLabel}${name ? ` "${name}"` : ''}`
   }
 
@@ -309,25 +314,18 @@ export default function DashboardPage() {
   return (
     <div>
       {/* HEADER */}
-      <div className="mb-8 md:mb-10">
-        <div className="flex items-center gap-3 md:gap-4 mb-1">
-          <div className="p-2.5 md:p-3 rounded-lg bg-primary/10 text-primary">
-            <LayoutDashboard className="h-6 w-6 md:h-7 md:w-7" />
+      <div className="mb-6">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <LayoutDashboard className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight truncate">
+            <h1 className="text-xl font-bold tracking-tight truncate">
               {getGreeting()}{userName ? <>, <span className="text-primary font-bold">{userName}</span></> : ''}
             </h1>
-            <p className="text-xs md:text-sm text-muted mt-1 capitalize">{formatTodayDate()}</p>
+            <p className="text-xs text-muted capitalize">{formatTodayDate()}</p>
           </div>
         </div>
-      </div>
-
-      {/* Cmd+K hint */}
-      <div className="mb-6">
-        <p className="text-xs text-muted">
-          Premi <kbd className="px-1.5 py-0.5 text-[10px] font-medium bg-secondary rounded border border-border/50">Cmd+K</kbd> per cercare o eseguire azioni rapide
-        </p>
       </div>
 
       {fetchError && (
@@ -342,25 +340,26 @@ export default function DashboardPage() {
 
       {/* STAT CARDS */}
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 md:h-28 rounded-xl" />)}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 md:gap-3 mb-6">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8 animate-stagger">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 md:gap-3 mb-6 animate-stagger">
           {stats.map((stat) => (
             <div
               key={stat.label}
               onClick={() => router.push(stat.href)}
-              className="relative overflow-hidden rounded-xl border border-border/30 bg-card p-4 md:p-5 cursor-pointer hover:border-primary/20 transition-colors group touch-manipulation active:scale-[0.97]"
+              className="relative overflow-hidden rounded-xl border border-border/30 bg-card px-3 py-2.5 cursor-pointer hover:border-primary/20 transition-colors group touch-manipulation active:scale-[0.97]"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className={`p-2 md:p-2.5 rounded-lg ${stat.color} transition-all duration-300 group-hover:scale-110 flex-shrink-0`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
-                  <stat.icon className="h-4 w-4 md:h-5 md:w-5" />
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-lg ${stat.color} flex-shrink-0 transition-all duration-300 group-hover:scale-110`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+                  <stat.icon className="h-4 w-4" />
                 </div>
-                <ArrowRight className="h-3.5 w-3.5 text-muted/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary" />
+                <div className="min-w-0">
+                  <p className="text-lg font-bold tracking-tight truncate tabular-nums leading-tight">{stat.value}</p>
+                  <p className="text-[10px] text-muted font-medium truncate leading-tight">{stat.label}</p>
+                </div>
               </div>
-              <p className="text-2xl md:text-3xl font-bold tracking-tight truncate animate-count-up tabular-nums">{stat.value}</p>
-              <p className="text-[10px] md:text-xs text-muted uppercase tracking-wider font-medium mt-1 truncate">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -619,17 +618,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ROW 6: QUICK ACTIONS */}
-      <div className="mb-6">
-        <QuickActionsGrid
-          actions={[
-            { icon: FilePlus2, title: 'Nuova Fattura', description: 'Crea fattura', onClick: () => router.push('/erp/invoices') },
-            { icon: Receipt, title: 'Nuovo Preventivo', description: 'Crea preventivo', onClick: () => router.push('/erp/quotes/new') },
-            { icon: Wallet, title: 'Registra Spesa', description: 'Aggiungi spesa', onClick: () => router.push('/erp/expenses') },
-            { icon: BarChart3, title: 'Report', description: 'Vedi report', onClick: () => router.push('/erp/reports') },
-          ]}
-        />
-      </div>
+
+
     </div>
   )
 }

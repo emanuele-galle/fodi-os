@@ -128,7 +128,7 @@ const navigation: NavItem[] = [
   },
 ]
 
-const GROUP_SEPARATOR_LABELS = new Set(['Chat', 'Calendario', 'Contenuti'])
+const GROUP_SEPARATOR_LABELS = new Set(['Chat', 'Calendario', 'Contenuti', 'Supporto', 'Team'])
 
 interface SidebarProps {
   userRole: Role
@@ -279,7 +279,7 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="ml-8 mt-1 space-y-0.5 pb-1">
+                      <div className="ml-8 mt-1 space-y-0.5 pb-1 border-l border-white/10 pl-0">
                         {item.children.map((child) => (
                           <Link
                             key={child.href}

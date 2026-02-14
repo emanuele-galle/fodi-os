@@ -81,13 +81,6 @@ const PRIORITY_OPTIONS = [
   { value: 'URGENT', label: 'Urgente' },
 ]
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  TODO: 'outline',
-  IN_PROGRESS: 'success',
-  IN_REVIEW: 'warning',
-  DONE: 'default',
-  CANCELLED: 'destructive',
-}
 const STATUS_LABELS: Record<string, string> = {
   TODO: 'Da fare',
   IN_PROGRESS: 'In Corso',
@@ -96,12 +89,6 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Cancellato',
 }
 
-const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  LOW: 'outline',
-  MEDIUM: 'default',
-  HIGH: 'warning',
-  URGENT: 'destructive',
-}
 const PRIORITY_LABELS: Record<string, string> = {
   LOW: 'Bassa',
   MEDIUM: 'Media',
@@ -117,10 +104,10 @@ const PRIORITY_COLORS: Record<string, string> = {
 }
 
 const KANBAN_COLUMNS = [
-  { key: 'TODO', label: 'Da fare', color: 'border-muted' },
-  { key: 'IN_PROGRESS', label: 'In Corso', color: 'border-primary' },
-  { key: 'IN_REVIEW', label: 'In Revisione', color: 'border-accent' },
-  { key: 'DONE', label: 'Completato', color: 'border-primary' },
+  { key: 'TODO', label: 'Da fare', color: 'border-gray-400', headerBg: 'bg-gray-500/10', headerText: 'text-gray-600 dark:text-gray-300' },
+  { key: 'IN_PROGRESS', label: 'In Corso', color: 'border-blue-500', headerBg: 'bg-blue-500/10', headerText: 'text-blue-600 dark:text-blue-400' },
+  { key: 'IN_REVIEW', label: 'In Revisione', color: 'border-amber-500', headerBg: 'bg-amber-500/10', headerText: 'text-amber-600 dark:text-amber-400' },
+  { key: 'DONE', label: 'Completato', color: 'border-emerald-500', headerBg: 'bg-emerald-500/10', headerText: 'text-emerald-600 dark:text-emerald-400' },
 ]
 
 const PRIORITY_ORDER: Record<string, number> = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
@@ -305,7 +292,7 @@ export default function TasksPage() {
   const progressSegments = activeTotal > 0 ? [
     { key: 'DONE', count: completedCount, color: 'bg-emerald-500', label: 'Completati' },
     { key: 'IN_REVIEW', count: inReviewCount, color: 'bg-amber-500', label: 'In Revisione' },
-    { key: 'IN_PROGRESS', count: inProgressCount, color: 'bg-indigo-500', label: 'In Corso' },
+    { key: 'IN_PROGRESS', count: inProgressCount, color: 'bg-blue-500', label: 'In Corso' },
     { key: 'TODO', count: todoCount, color: 'bg-gray-400', label: 'Da fare' },
   ] : []
   const completionPct = activeTotal > 0 ? Math.round((completedCount / activeTotal) * 100) : 0
@@ -318,8 +305,8 @@ export default function TasksPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-primary/10 text-primary p-2 md:p-2.5 rounded-lg flex-shrink-0">
-            <CheckSquare className="h-5 w-5" />
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <CheckSquare className="h-6 w-6 text-primary" />
           </div>
           <div className="min-w-0">
             <h1 className="text-xl md:text-2xl font-bold truncate">Task</h1>
@@ -352,13 +339,13 @@ export default function TasksPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 animate-stagger">
         {stats.map((s) => (
           <Card key={s.label} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
-            <CardContent className="flex items-center gap-4">
-              <div className={`p-3 rounded-full ${s.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
-                <s.icon className="h-5 w-5" />
+            <CardContent className="flex items-center gap-3 py-3">
+              <div className={`p-2.5 rounded-xl ${s.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+                <s.icon className="h-4.5 w-4.5" />
               </div>
-              <div>
-                <p className="text-xs text-muted uppercase tracking-wider font-medium">{s.label}</p>
-                <p className="text-2xl font-bold animate-count-up">{s.value}</p>
+              <div className="min-w-0">
+                <p className="text-xs text-muted font-medium truncate">{s.label}</p>
+                <p className="text-xl font-bold animate-count-up">{s.value}</p>
               </div>
             </CardContent>
           </Card>
@@ -560,12 +547,12 @@ function MobileTaskCard({ task, activeTab, userId, onClick }: { task: Task; acti
           )}
           <span className="font-medium text-sm line-clamp-2">{task.title}</span>
         </div>
-        <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} pulse={task.priority === 'URGENT'}>
+        <Badge status={task.priority} pulse={task.priority === 'URGENT'}>
           {PRIORITY_LABELS[task.priority] || task.priority}
         </Badge>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
-        <Badge variant={STATUS_BADGE[task.status] || 'default'}>
+        <Badge status={task.status}>
           {STATUS_LABELS[task.status] || task.status}
         </Badge>
         <TaskBadges task={task} activeTab={activeTab} userId={userId} />
@@ -601,16 +588,16 @@ function MobileTaskCard({ task, activeTab, userId, onClick }: { task: Task; acti
 
 function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; activeTab: TabKey; userId: string; onTaskClick: (id: string) => void }) {
   return (
-    <div className="rounded-lg border border-border/80 overflow-hidden shadow-[var(--shadow-sm)]">
+    <div className="rounded-xl border border-border/20 overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-border bg-secondary/40">
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Titolo</th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden md:table-cell">Stato</th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden md:table-cell">Priorità</th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden lg:table-cell">Assegnato</th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden lg:table-cell">Scadenza</th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted uppercase hidden sm:table-cell">Progetto</th>
+          <tr className="border-b border-border/30">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Titolo</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden md:table-cell">Stato</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden md:table-cell">Priorita</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Assegnato</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Scadenza</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden sm:table-cell">Progetto</th>
           </tr>
         </thead>
         <tbody>
@@ -621,11 +608,11 @@ function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; ac
                 key={task.id}
                 onClick={() => onTaskClick(task.id)}
                 className={cn(
-                  'border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-colors even:bg-secondary/20',
+                  'border-b border-border/10 hover:bg-secondary/8 cursor-pointer transition-colors group even:bg-secondary/[0.03]',
                   isOverdue && 'bg-red-500/5 hover:bg-red-500/10'
                 )}
               >
-                <td className="px-4 py-3">
+                <td className="px-4 py-3.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {task.timerStartedAt && (
                       <Timer className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
@@ -634,17 +621,17 @@ function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; ac
                     <TaskBadges task={task} activeTab={activeTab} userId={userId} />
                   </div>
                 </td>
-                <td className="px-4 py-3 hidden md:table-cell">
-                  <Badge variant={STATUS_BADGE[task.status] || 'default'}>
+                <td className="px-4 py-3.5 hidden md:table-cell">
+                  <Badge status={task.status}>
                     {STATUS_LABELS[task.status] || task.status}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 hidden md:table-cell">
-                  <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} pulse={task.priority === 'URGENT'}>
+                <td className="px-4 py-3.5 hidden md:table-cell">
+                  <Badge status={task.priority} pulse={task.priority === 'URGENT'}>
                     {PRIORITY_LABELS[task.priority] || task.priority}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 hidden lg:table-cell">
+                <td className="px-4 py-3.5 hidden lg:table-cell">
                   {(task.assignments?.length ?? 0) > 0 ? (
                     <AvatarStack users={task.assignments!.map(a => a.user)} size="sm" max={4} />
                   ) : task.assignee ? (
@@ -662,17 +649,17 @@ function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; ac
                     <span className="text-sm text-muted">-</span>
                   )}
                 </td>
-                <td className="px-4 py-3 hidden lg:table-cell">
+                <td className="px-4 py-3.5 hidden lg:table-cell">
                   {task.dueDate ? (
                     <span className={`text-sm ${isOverdue ? 'text-destructive font-medium' : 'text-muted'}`}>
-                      {isOverdue && '⚠ '}
+                      {isOverdue && '\u26A0 '}
                       {new Date(task.dueDate).toLocaleDateString('it-IT')}
                     </span>
                   ) : (
                     <span className="text-sm text-muted">-</span>
                   )}
                 </td>
-                <td className="px-4 py-3 hidden sm:table-cell">
+                <td className="px-4 py-3.5 hidden sm:table-cell">
                   <span className="text-sm text-muted">
                     {task.project ? task.project.name : 'Personale'}
                   </span>
@@ -693,9 +680,9 @@ function KanbanView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; 
         const columnTasks = tasks.filter((t) => t.status === col.key)
         return (
           <div key={col.key} className="flex flex-col min-w-[280px] md:min-w-0">
-            <div className={`flex items-center gap-2 mb-3 pb-2 border-b-2 ${col.color} bg-gradient-to-r from-secondary/50 to-transparent rounded-t-lg px-2 pt-2`}>
-              <h3 className="text-sm font-semibold">{col.label}</h3>
-              <span className="text-xs text-muted bg-card rounded-full px-2 py-0.5">
+            <div className={`flex items-center justify-between mb-3 px-3 py-2.5 rounded-lg border-b-2 ${col.color} ${col.headerBg}`}>
+              <h3 className={`text-sm font-bold ${col.headerText}`}>{col.label}</h3>
+              <span className={`text-xs font-semibold ${col.headerText} bg-white/60 dark:bg-white/10 rounded-full px-2 py-0.5`}>
                 {columnTasks.length}
               </span>
             </div>
@@ -716,7 +703,7 @@ function KanbanView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; 
                       <p className="text-sm font-medium line-clamp-2">{task.title}</p>
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} pulse={task.priority === 'URGENT'}>
+                      <Badge status={task.priority} pulse={task.priority === 'URGENT'}>
                         {PRIORITY_LABELS[task.priority]}
                       </Badge>
                       <TaskBadges task={task} activeTab={activeTab} userId={userId} />

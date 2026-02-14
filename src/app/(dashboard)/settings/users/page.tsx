@@ -512,8 +512,8 @@ export default function UsersAdminPage() {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-3">
-          <div className="bg-primary/10 text-primary p-2 md:p-2.5 rounded-lg flex-shrink-0">
-            <Users className="h-5 w-5" />
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Users className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Gestione Utenti</h1>
@@ -899,13 +899,13 @@ export default function UsersAdminPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto rounded-xl border border-border/20 overflow-hidden">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="border-b border-border">
-                              <th className="text-left py-2 pr-4 font-medium text-muted">Modulo</th>
+                            <tr className="border-b border-border/30">
+                              <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Modulo</th>
                               {PERMISSIONS.map((p) => (
-                                <th key={p} className="text-center py-2 px-2 font-medium text-muted">
+                                <th key={p} className="px-2 py-3 text-center text-xs font-medium text-muted uppercase tracking-wider">
                                   {PERMISSION_LABELS[p]}
                                 </th>
                               ))}
@@ -913,8 +913,8 @@ export default function UsersAdminPage() {
                           </thead>
                           <tbody>
                             {MODULES.map((mod) => (
-                              <tr key={mod.key} className="border-b border-border/50">
-                                <td className="py-2.5 pr-4 font-medium">{mod.label}</td>
+                              <tr key={mod.key} className="border-b border-border/10 even:bg-secondary/[0.03]">
+                                <td className="px-4 py-3 font-medium">{mod.label}</td>
                                 {PERMISSIONS.map((perm) => (
                                   <td key={perm} className="text-center p-2">
                                     <button

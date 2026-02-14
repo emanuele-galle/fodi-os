@@ -370,8 +370,8 @@ export default function SystemStatsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-              <Server className="h-5 w-5" />
+            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Server className="h-6 w-6 text-primary" />
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-bold">Sistema</h1>
@@ -430,7 +430,7 @@ export default function SystemStatsPage() {
                     <stat.icon className="h-6 w-6" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs text-muted uppercase tracking-wider font-medium">{stat.label}</p>
+                    <p className="text-xs text-muted font-medium">{stat.label}</p>
                     <p className="text-3xl font-bold mt-0.5">{stat.value}</p>
                     <p className="text-xs text-muted mt-0.5">{stat.sub}</p>
                   </div>

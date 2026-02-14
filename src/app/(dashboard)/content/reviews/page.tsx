@@ -32,12 +32,6 @@ const STATUS_LABELS: Record<string, string> = {
   CHANGES_REQUESTED: 'Modifiche Richieste',
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  PENDING: 'default',
-  IN_REVIEW: 'warning',
-  APPROVED: 'success',
-  CHANGES_REQUESTED: 'destructive',
-}
 
 const STATUS_ORDER = ['PENDING', 'IN_REVIEW', 'CHANGES_REQUESTED', 'APPROVED']
 
@@ -104,8 +98,8 @@ export default function ReviewsPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-            <ClipboardCheck className="h-5 w-5" />
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <ClipboardCheck className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Revisioni</h1>
@@ -145,7 +139,7 @@ export default function ReviewsPage() {
             return (
               <div key={status}>
                 <div className="flex items-center gap-2 mb-3">
-                  <Badge variant={STATUS_BADGE[status]}>
+                  <Badge status={status}>
                     {STATUS_LABELS[status] || status}
                   </Badge>
                   <span className="text-sm text-muted">({statusReviews.length})</span>

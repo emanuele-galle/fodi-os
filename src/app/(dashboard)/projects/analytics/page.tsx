@@ -175,7 +175,7 @@ export default function ProjectsAnalyticsPage() {
                   </div>
                 </div>
                 <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums">{data?.summary.completed ?? 0}</p>
-                <p className="text-[10px] md:text-xs text-muted uppercase tracking-wider font-medium mt-1">Task Completate</p>
+                <p className="text-[10px] md:text-xs text-muted font-medium mt-1">Task Completate</p>
               </CardContent>
             </Card>
 
@@ -187,7 +187,7 @@ export default function ProjectsAnalyticsPage() {
                   </div>
                 </div>
                 <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums">{velocity}</p>
-                <p className="text-[10px] md:text-xs text-muted uppercase tracking-wider font-medium mt-1">Velocità / Settimana</p>
+                <p className="text-[10px] md:text-xs text-muted font-medium mt-1">Velocità / Settimana</p>
               </CardContent>
             </Card>
 
@@ -199,7 +199,7 @@ export default function ProjectsAnalyticsPage() {
                   </div>
                 </div>
                 <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums">{overdueRate}%</p>
-                <p className="text-[10px] md:text-xs text-muted uppercase tracking-wider font-medium mt-1">% Scaduti</p>
+                <p className="text-[10px] md:text-xs text-muted font-medium mt-1">% Scaduti</p>
               </CardContent>
             </Card>
 
@@ -211,7 +211,7 @@ export default function ProjectsAnalyticsPage() {
                   </div>
                 </div>
                 <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums">{data?.summary.avgCompletionDays ?? 0}g</p>
-                <p className="text-[10px] md:text-xs text-muted uppercase tracking-wider font-medium mt-1">Tempo Medio Completamento</p>
+                <p className="text-[10px] md:text-xs text-muted font-medium mt-1">Tempo Medio Completamento</p>
               </CardContent>
             </Card>
           </>

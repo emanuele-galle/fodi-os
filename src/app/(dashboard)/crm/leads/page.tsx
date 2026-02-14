@@ -34,13 +34,6 @@ const STATUS_OPTIONS = [
   { value: 'LOST', label: 'Perso' },
 ]
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  NEW: 'default',
-  CONTACTED: 'warning',
-  QUALIFIED: 'success',
-  CONVERTED: 'success',
-  LOST: 'destructive',
-}
 
 const STATUS_LABELS: Record<string, string> = {
   NEW: 'Nuovo',
@@ -178,7 +171,7 @@ export default function LeadsPage() {
                     <p className="font-medium text-sm truncate">{lead.name}</p>
                     <p className="text-xs text-muted truncate">{lead.email}</p>
                   </div>
-                  <Badge variant={STATUS_BADGE[lead.status] || 'default'}>
+                  <Badge status={lead.status}>
                     {STATUS_LABELS[lead.status] || lead.status}
                   </Badge>
                 </div>
@@ -209,52 +202,54 @@ export default function LeadsPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
+          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                  <th className="py-3 px-4 font-medium">Nome</th>
-                  <th className="py-3 px-4 font-medium">Email</th>
-                  <th className="py-3 px-4 font-medium">Azienda</th>
-                  <th className="py-3 px-4 font-medium hidden lg:table-cell">Servizio</th>
-                  <th className="py-3 px-4 font-medium">Stato</th>
-                  <th className="py-3 px-4 font-medium">Data</th>
-                  <th className="py-3 px-4 font-medium text-right">Azioni</th>
+                <tr className="border-b border-border/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Nome</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Azienda</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Servizio</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Stato</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Data</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Azioni</th>
                 </tr>
               </thead>
               <tbody>
                 {leads.map((lead) => (
                   <tr
                     key={lead.id}
-                    className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-colors duration-200 even:bg-secondary/20"
+                    className="border-b border-border/10 hover:bg-secondary/8 transition-colors cursor-pointer group even:bg-secondary/[0.03]"
                   >
-                    <td className="py-3 px-4 font-medium">{lead.name}</td>
-                    <td className="py-3 px-4 text-muted">{lead.email}</td>
-                    <td className="py-3 px-4 text-muted">
+                    <td className="px-4 py-3.5 font-medium">{lead.name}</td>
+                    <td className="px-4 py-3.5 text-muted">{lead.email}</td>
+                    <td className="px-4 py-3.5 text-muted">
                       {lead.company || '—'}
                     </td>
-                    <td className="py-3 px-4 hidden lg:table-cell text-muted">
+                    <td className="px-4 py-3.5 hidden lg:table-cell text-muted">
                       {lead.service || '—'}
                     </td>
-                    <td className="py-3 px-4">
-                      <Badge variant={STATUS_BADGE[lead.status] || 'default'}>
+                    <td className="px-4 py-3.5">
+                      <Badge status={lead.status}>
                         {STATUS_LABELS[lead.status] || lead.status}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-muted">
+                    <td className="px-4 py-3.5 text-muted">
                       {new Date(lead.createdAt).toLocaleDateString('it-IT')}
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="px-4 py-3.5 text-right">
                       {lead.status !== 'CONVERTED' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={converting === lead.id}
-                          onClick={() => handleConvert(lead)}
-                        >
-                          <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />
-                          {converting === lead.id ? 'Conversione...' : 'Converti'}
-                        </Button>
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={converting === lead.id}
+                            onClick={() => handleConvert(lead)}
+                          >
+                            <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />
+                            {converting === lead.id ? 'Conversione...' : 'Converti'}
+                          </Button>
+                        </span>
                       )}
                     </td>
                   </tr>

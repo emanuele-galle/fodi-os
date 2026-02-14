@@ -186,8 +186,8 @@ export default function TimeTrackingPage() {
     <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-3">
-          <div className="bg-primary/10 text-primary p-2.5 rounded-lg">
-            <Clock className="h-5 w-5" />
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Clock className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Cartellino Presenze</h1>
@@ -218,7 +218,7 @@ export default function TimeTrackingPage() {
               <Timer className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-muted uppercase tracking-wider font-medium">Oggi</p>
+              <p className="text-xs text-muted font-medium">Oggi</p>
               <p className="text-xl font-bold">{formatDuration(todayMins)}</p>
             </div>
           </CardContent>
@@ -229,7 +229,7 @@ export default function TimeTrackingPage() {
               <Calendar className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs text-muted uppercase tracking-wider font-medium">Questa Settimana</p>
+              <p className="text-xs text-muted font-medium">Questa Settimana</p>
               <p className="text-xl font-bold">{formatDuration(weekMins)}</p>
             </div>
           </CardContent>
@@ -240,7 +240,7 @@ export default function TimeTrackingPage() {
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] text-muted uppercase tracking-wider font-medium">Online Adesso</p>
+              <p className="text-[10px] text-muted font-medium">Online Adesso</p>
               <p className="text-xl font-bold">{onlineNow.length}</p>
             </div>
           </CardContent>
@@ -251,7 +251,7 @@ export default function TimeTrackingPage() {
               <Clock className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] text-muted uppercase tracking-wider font-medium">Sessioni</p>
+              <p className="text-[10px] text-muted font-medium">Sessioni</p>
               <p className="text-xl font-bold">{sessions.length}</p>
             </div>
           </CardContent>

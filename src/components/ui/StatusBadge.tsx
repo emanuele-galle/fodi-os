@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { STATUS_COLORS } from './Badge'
 import type { LucideIcon } from 'lucide-react'
 
 type StatusVariant = 'success' | 'error' | 'warning' | 'default' | 'info'
@@ -7,6 +8,7 @@ interface StatusBadgeProps {
   leftLabel: string
   rightLabel: string
   variant?: StatusVariant
+  status?: string
   leftIcon?: LucideIcon
   rightIcon?: LucideIcon
   className?: string
@@ -46,16 +48,29 @@ const variantStyles: Record<StatusVariant, { bg: string; text: string; dot: stri
   },
 }
 
+// Map centralized status to variant for StatusBadge
+function statusToVariant(status: string): StatusVariant {
+  const colors = STATUS_COLORS[status]
+  if (!colors) return 'default'
+  if (colors.includes('emerald')) return 'success'
+  if (colors.includes('red') || colors.includes('orange')) return 'error'
+  if (colors.includes('amber')) return 'warning'
+  if (colors.includes('blue') || colors.includes('indigo') || colors.includes('purple')) return 'info'
+  return 'default'
+}
+
 export function StatusBadge({
   leftLabel,
   rightLabel,
-  variant = 'default',
+  variant,
+  status,
   leftIcon: LeftIcon,
   rightIcon: RightIcon,
   className,
   pulse,
 }: StatusBadgeProps) {
-  const s = variantStyles[variant]
+  const resolvedVariant = status ? statusToVariant(status) : (variant || 'default')
+  const s = variantStyles[resolvedVariant]
 
   return (
     <span

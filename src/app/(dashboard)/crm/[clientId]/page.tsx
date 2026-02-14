@@ -73,20 +73,11 @@ interface ClientDetail {
   quotes: ClientQuote[]
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  LEAD: 'default', PROSPECT: 'warning', ACTIVE: 'success', INACTIVE: 'outline', CHURNED: 'destructive',
-}
 const STATUS_LABELS: Record<string, string> = {
   LEAD: 'Lead', PROSPECT: 'Prospect', ACTIVE: 'Attivo', INACTIVE: 'Inattivo', CHURNED: 'Perso',
 }
-const PROJECT_STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  PLANNING: 'default', IN_PROGRESS: 'success', ON_HOLD: 'warning', REVIEW: 'default', COMPLETED: 'outline', CANCELLED: 'destructive',
-}
 const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
   LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
-}
-const QUOTE_STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  DRAFT: 'default', SENT: 'default', APPROVED: 'success', REJECTED: 'destructive', EXPIRED: 'outline', INVOICED: 'warning',
 }
 
 const INTERACTION_ICONS: Record<string, typeof Phone> = {
@@ -345,8 +336,8 @@ export default function ClientDetailPage() {
               <CardContent className="flex items-center justify-between">
                 <span className="font-medium text-sm">{p.name}</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant={PROJECT_STATUS_BADGE[p.status] || 'default'}>{p.status}</Badge>
-                  <Badge variant={PRIORITY_BADGE[p.priority] || 'default'}>{p.priority}</Badge>
+                  <Badge status={p.status}>{p.status}</Badge>
+                  <Badge status={p.priority}>{p.priority}</Badge>
                 </div>
               </CardContent>
             </Card>
@@ -378,7 +369,7 @@ export default function ClientDetailPage() {
                   <span className="text-muted text-sm ml-2">{q.title}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant={QUOTE_STATUS_BADGE[q.status] || 'default'}>{q.status}</Badge>
+                  <Badge status={q.status}>{q.status}</Badge>
                   <span className="font-medium text-sm">{formatCurrency(q.total)}</span>
                 </div>
               </CardContent>
@@ -404,7 +395,7 @@ export default function ClientDetailPage() {
           <Avatar name={client.companyName} size="lg" />
           <div>
             <h1 className="text-xl md:text-2xl font-semibold truncate">{client.companyName}</h1>
-            <Badge variant={STATUS_BADGE[client.status] || 'default'}>
+            <Badge status={client.status}>
               {STATUS_LABELS[client.status] || client.status}
             </Badge>
           </div>

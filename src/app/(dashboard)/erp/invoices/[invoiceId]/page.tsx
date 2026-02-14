@@ -60,9 +60,6 @@ interface InvoiceDetail {
   lineItems: LineItem[]
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  DRAFT: 'default', SENT: 'default', PAID: 'success', PARTIALLY_PAID: 'warning', OVERDUE: 'destructive', CANCELLED: 'outline',
-}
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Bozza', SENT: 'Inviata', PAID: 'Pagata', PARTIALLY_PAID: 'Parziale', OVERDUE: 'Scaduta', CANCELLED: 'Annullata',
 }
@@ -258,7 +255,7 @@ export default function InvoiceDetailPage() {
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-semibold">{invoice.number}</h1>
-            <Badge variant={STATUS_BADGE[invoice.status] || 'default'}>
+            <Badge status={invoice.status}>
               {STATUS_LABELS[invoice.status] || invoice.status}
             </Badge>
           </div>

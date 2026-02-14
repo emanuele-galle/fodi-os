@@ -31,11 +31,6 @@ interface Submission {
   template: SubmissionTemplate
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive'> = {
-  IN_PROGRESS: 'warning',
-  COMPLETED: 'success',
-  ABANDONED: 'destructive',
-}
 const STATUS_LABELS: Record<string, string> = {
   IN_PROGRESS: 'In corso',
   COMPLETED: 'Completata',

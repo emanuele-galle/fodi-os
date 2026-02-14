@@ -76,12 +76,6 @@ const ROLE_LABELS: Record<string, string> = {
   CLIENT: 'Cliente',
 }
 
-const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  LOW: 'outline',
-  MEDIUM: 'default',
-  HIGH: 'warning',
-  URGENT: 'destructive',
-}
 
 const STATUS_LABELS: Record<string, string> = {
   TODO: 'Da fare',
@@ -309,8 +303,8 @@ export default function TeamPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="bg-primary/10 text-primary p-2.5 rounded-lg">
-            <Users className="h-5 w-5" />
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Users className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Team</h1>
@@ -394,30 +388,33 @@ export default function TeamPage() {
             return (
               <Card key={member.id} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
                 <CardContent>
-                  <div className="flex items-start gap-4">
-                    <div className="relative">
+                  <div className="flex flex-col items-center text-center pb-4 border-b border-border/30">
+                    <div className="relative mb-3">
                       <Avatar
                         src={member.avatarUrl}
                         name={`${member.firstName} ${member.lastName}`}
                         size="lg"
+                        className="!h-16 !w-16 text-lg"
                       />
                       <span
-                        className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-card"
+                        className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-card"
                         style={{ backgroundColor: activity.color }}
                         title={activity.label}
                       />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">
-                        {member.firstName} {member.lastName}
-                      </h3>
-                      <Badge variant={ROLE_BADGE[member.role] || 'default'} className="mt-1">
-                        {ROLE_LABELS[member.role] || member.role}
-                      </Badge>
-                    </div>
+                    <h3 className="text-base font-bold truncate w-full">
+                      {member.firstName} {member.lastName}
+                    </h3>
+                    <Badge variant={ROLE_BADGE[member.role] || 'default'} className="mt-1.5">
+                      {ROLE_LABELS[member.role] || member.role}
+                    </Badge>
+                    <span className="mt-1.5 text-xs text-muted flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: activity.color }} />
+                      {activity.label}
+                    </span>
                   </div>
 
-                  <div className="mt-4 space-y-2">
+                  <div className="mt-3 space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted">
                       <Mail className="h-3.5 w-3.5 flex-shrink-0" />
                       <span className="truncate">{member.email}</span>
@@ -428,29 +425,21 @@ export default function TeamPage() {
                         <span>{member.phone}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2 text-sm text-muted">
-                      <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>
-                        {(member.lastActiveAt || member.lastLoginAt)
-                          ? `Attivo ${formatDistanceToNow(new Date(member.lastActiveAt || member.lastLoginAt!), { locale: it, addSuffix: true })}`
-                          : 'Mai connesso'}
-                      </span>
-                    </div>
                   </div>
 
                   {/* Stats row */}
                   <div className="mt-4 pt-3 border-t border-border/50 grid grid-cols-3 gap-2 text-center">
                     <div>
                       <p className="text-lg font-bold">{member.totalTasks}</p>
-                      <p className="text-[10px] text-muted uppercase">Task attive</p>
+                      <p className="text-[10px] text-muted">Task attive</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold">{formatHoursMinutes(member.weeklyHours)}</p>
-                      <p className="text-[10px] text-muted uppercase">Ore settimana</p>
+                      <p className="text-[10px] text-muted">Ore settimana</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold">{member.completedThisWeek}</p>
-                      <p className="text-[10px] text-muted uppercase">Completate</p>
+                      <p className="text-[10px] text-muted">Completate</p>
                     </div>
                   </div>
 
@@ -487,7 +476,7 @@ export default function TeamPage() {
                   {/* Expandable active tasks */}
                   {isExpanded && member.activeTasks.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
-                      <p className="text-xs font-medium text-muted uppercase tracking-wider">Task attive</p>
+                      <p className="text-xs font-medium text-muted">Task attive</p>
                       {member.activeTasks.map((task) => (
                         <button
                           key={task.id}
@@ -495,7 +484,7 @@ export default function TeamPage() {
                           className="w-full flex items-center gap-2 text-left text-sm p-2 rounded-md hover:bg-secondary/60 transition-colors"
                         >
                           <span className="flex-1 truncate">{task.title}</span>
-                          <Badge variant={PRIORITY_BADGE[task.priority] || 'outline'} className="text-[10px] flex-shrink-0">
+                          <Badge status={task.priority} className="text-[10px] flex-shrink-0">
                             {task.priority}
                           </Badge>
                           <Badge variant={task.status === 'IN_PROGRESS' ? 'success' : 'outline'} className="text-[10px] flex-shrink-0">
@@ -572,7 +561,7 @@ export default function TeamPage() {
                   className="w-full flex items-center gap-2 text-left text-sm p-2 rounded-md hover:bg-primary/5 transition-colors disabled:opacity-50"
                 >
                   <span className="flex-1 truncate">{task.title}</span>
-                  <Badge variant={PRIORITY_BADGE[task.priority] || 'outline'} className="text-[10px]">
+                  <Badge status={task.priority} className="text-[10px]">
                     {task.priority}
                   </Badge>
                   <Badge variant={task.status === 'IN_PROGRESS' ? 'success' : 'outline'} className="text-[10px]">

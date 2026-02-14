@@ -42,14 +42,8 @@ const STATUS_OPTIONS = [
   { value: 'CANCELLED', label: 'Cancellato' },
 ]
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  PLANNING: 'default', IN_PROGRESS: 'success', ON_HOLD: 'warning', REVIEW: 'default', COMPLETED: 'outline', CANCELLED: 'destructive',
-}
 const STATUS_LABELS: Record<string, string> = {
   PLANNING: 'Pianificazione', IN_PROGRESS: 'In Corso', ON_HOLD: 'In Pausa', REVIEW: 'Revisione', COMPLETED: 'Completato', CANCELLED: 'Cancellato',
-}
-const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
 }
 const PRIORITY_LABELS: Record<string, string> = {
   LOW: 'Bassa', MEDIUM: 'Media', HIGH: 'Alta', URGENT: 'Urgente',
@@ -191,8 +185,8 @@ export default function ProjectsPage() {
     <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-3">
-          <div className="bg-primary/10 text-primary p-2.5 rounded-lg">
-            <FolderKanban className="h-5 w-5" />
+          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <FolderKanban className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Progetti Clienti</h1>
@@ -292,9 +286,9 @@ export default function ProjectsPage() {
                       <StatusBadge
                         leftLabel="Stato"
                         rightLabel={STATUS_LABELS[p.status] || p.status}
-                        variant={p.status === 'IN_PROGRESS' ? 'success' : p.status === 'ON_HOLD' ? 'warning' : p.status === 'CANCELLED' ? 'error' : p.status === 'COMPLETED' ? 'default' : 'info'}
+                        status={p.status}
                       />
-                      <Badge variant={PRIORITY_BADGE[p.priority] || 'default'}>
+                      <Badge status={p.priority}>
                         {PRIORITY_LABELS[p.priority] || p.priority}
                       </Badge>
                     </div>

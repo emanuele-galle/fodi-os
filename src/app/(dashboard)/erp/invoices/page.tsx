@@ -33,9 +33,6 @@ const STATUS_OPTIONS = [
   { value: 'CANCELLED', label: 'Annullata' },
 ]
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  DRAFT: 'default', SENT: 'default', PAID: 'success', PARTIALLY_PAID: 'warning', OVERDUE: 'destructive', CANCELLED: 'outline',
-}
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Bozza', SENT: 'Inviata', PAID: 'Pagata', PARTIALLY_PAID: 'Parziale', OVERDUE: 'Scaduta', CANCELLED: 'Annullata',
 }
@@ -180,7 +177,7 @@ export default function InvoicesPage() {
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-bold">{inv.number}</span>
-                  <Badge variant={STATUS_BADGE[inv.status] || 'default'}>
+                  <Badge status={inv.status}>
                     {STATUS_LABELS[inv.status] || inv.status}
                   </Badge>
                 </div>
@@ -197,17 +194,17 @@ export default function InvoicesPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
+          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                  <th className="py-3 pr-4 pl-3 font-medium">Numero</th>
-                  <th className="py-3 pr-4 font-medium">Titolo</th>
-                  <th className="py-3 pr-4 font-medium">Cliente</th>
-                  <th className="py-3 pr-4 font-medium">Stato</th>
-                  <th className="py-3 pr-4 font-medium text-right">Totale</th>
-                  <th className="py-3 pr-4 font-medium hidden lg:table-cell">Scadenza</th>
-                  <th className="py-3 font-medium hidden lg:table-cell">Pagata il</th>
+                <tr className="border-b border-border/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Numero</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Titolo</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Cliente</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Stato</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Totale</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Scadenza</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Pagata il</th>
                 </tr>
               </thead>
               <tbody>
@@ -215,21 +212,21 @@ export default function InvoicesPage() {
                   <tr
                     key={inv.id}
                     onClick={() => router.push(`/erp/invoices/${inv.id}`)}
-                    className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 cursor-pointer transition-colors"
+                    className="border-b border-border/10 hover:bg-secondary/8 transition-colors cursor-pointer group even:bg-secondary/[0.03]"
                   >
-                    <td className="py-3 pr-4 font-medium">{inv.number}</td>
-                    <td className="py-3 pr-4">{inv.title}</td>
-                    <td className="py-3 pr-4 text-muted">{inv.client.companyName}</td>
-                    <td className="py-3 pr-4">
-                      <Badge variant={STATUS_BADGE[inv.status] || 'default'}>
+                    <td className="px-4 py-3.5 font-medium">{inv.number}</td>
+                    <td className="px-4 py-3.5">{inv.title}</td>
+                    <td className="px-4 py-3.5 text-muted">{inv.client.companyName}</td>
+                    <td className="px-4 py-3.5">
+                      <Badge status={inv.status}>
                         {STATUS_LABELS[inv.status] || inv.status}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-4 font-medium text-right">{formatCurrency(inv.total)}</td>
-                    <td className="py-3 pr-4 text-muted hidden lg:table-cell">
+                    <td className="px-4 py-3.5 font-medium text-right tabular-nums">{formatCurrency(inv.total)}</td>
+                    <td className="px-4 py-3.5 text-muted hidden lg:table-cell">
                       {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('it-IT') : '—'}
                     </td>
-                    <td className="py-3 text-muted hidden lg:table-cell">
+                    <td className="px-4 py-3.5 text-muted hidden lg:table-cell">
                       {inv.paidDate ? new Date(inv.paidDate).toLocaleDateString('it-IT') : '—'}
                     </td>
                   </tr>

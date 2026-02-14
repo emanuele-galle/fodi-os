@@ -33,13 +33,6 @@ interface TicketDetail {
   resolvedAt: string | null
 }
 
-const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  OPEN: 'destructive',
-  IN_PROGRESS: 'warning',
-  WAITING_CLIENT: 'default',
-  RESOLVED: 'success',
-  CLOSED: 'outline',
-}
 
 const STATUS_LABELS: Record<string, string> = {
   OPEN: 'Aperto',
@@ -49,12 +42,6 @@ const STATUS_LABELS: Record<string, string> = {
   CLOSED: 'Chiuso',
 }
 
-const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  LOW: 'outline',
-  MEDIUM: 'default',
-  HIGH: 'warning',
-  URGENT: 'destructive',
-}
 
 const PRIORITY_LABELS: Record<string, string> = {
   LOW: 'Bassa',
@@ -162,10 +149,10 @@ export default function TicketDetailPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-muted font-medium">#{ticket.number}</span>
             <h1 className="text-xl font-semibold">{ticket.subject}</h1>
-            <Badge variant={STATUS_BADGE[ticket.status] || 'default'}>
+            <Badge status={ticket.status}>
               {STATUS_LABELS[ticket.status] || ticket.status}
             </Badge>
-            <Badge variant={PRIORITY_BADGE[ticket.priority] || 'default'}>
+            <Badge status={ticket.priority}>
               {PRIORITY_LABELS[ticket.priority] || ticket.priority}
             </Badge>
             {ticket.assignee && (

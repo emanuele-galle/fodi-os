@@ -217,27 +217,27 @@ export default function ExpensesPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
+          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                  <th className="py-3 pr-4 pl-3 font-medium">Data</th>
-                  <th className="py-3 pr-4 font-medium">Categoria</th>
-                  <th className="py-3 pr-4 font-medium">Descrizione</th>
-                  <th className="py-3 font-medium text-right">Importo</th>
+                <tr className="border-b border-border/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Data</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Categoria</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Descrizione</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Importo</th>
                 </tr>
               </thead>
               <tbody>
                 {expenses.map((exp) => (
-                  <tr key={exp.id} className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 transition-colors">
-                    <td className="py-3 pr-4">{new Date(exp.date).toLocaleDateString('it-IT')}</td>
-                    <td className="py-3 pr-4">
+                  <tr key={exp.id} className="border-b border-border/10 hover:bg-secondary/8 transition-colors even:bg-secondary/[0.03]">
+                    <td className="px-4 py-3.5">{new Date(exp.date).toLocaleDateString('it-IT')}</td>
+                    <td className="px-4 py-3.5">
                       <Badge variant={CATEGORY_BADGE[exp.category] || 'default'}>
                         {CATEGORY_LABEL[exp.category] || exp.category}
                       </Badge>
                     </td>
-                    <td className="py-3 pr-4">{exp.description}</td>
-                    <td className="py-3 font-medium text-right">{formatCurrency(exp.amount)}</td>
+                    <td className="px-4 py-3.5">{exp.description}</td>
+                    <td className="px-4 py-3.5 font-medium text-right tabular-nums">{formatCurrency(exp.amount)}</td>
                   </tr>
                 ))}
               </tbody>
