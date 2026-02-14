@@ -1,9 +1,10 @@
 import { SignJWT, jwtVerify } from 'jose'
 
-if (!process.env.SIGNATURE_SECRET) {
-  throw new Error('SIGNATURE_SECRET environment variable is required')
+function getSignatureSecret() {
+  const secret = process.env.SIGNATURE_SECRET
+  if (!secret) throw new Error('SIGNATURE_SECRET environment variable is required')
+  return new TextEncoder().encode(secret)
 }
-const SIGNATURE_SECRET = new TextEncoder().encode(process.env.SIGNATURE_SECRET)
 
 interface SignatureTokenPayload {
   requestId: string
@@ -14,10 +15,10 @@ export async function createSignatureToken(requestId: string): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(SIGNATURE_SECRET)
+    .sign(getSignatureSecret())
 }
 
 export async function verifySignatureToken(token: string): Promise<SignatureTokenPayload> {
-  const { payload } = await jwtVerify(token, SIGNATURE_SECRET)
+  const { payload } = await jwtVerify(token, getSignatureSecret())
   return { requestId: payload.requestId as string }
 }
