@@ -37,6 +37,24 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.0',
+    date: '2026-02-14',
+    sections: [
+      {
+        title: 'Contabilità',
+        icon: Wrench,
+        items: [
+          'Rimosso modulo Fatture (gestione esterna)',
+          'Rimosso modulo FatturaPA e fatturazione elettronica SDI',
+          'Rimosso grafico stato fatture dalla Dashboard e Report',
+          'Sidebar aggiornata: rimosse voci Fatture e FatturaPA',
+          'Pagina ERP semplificata: focus su preventivi, spese e report',
+          'Modello database snellito: rimossi Invoice, InvoiceLineItem, ElectronicInvoice, EInvoiceStatusLog',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.4.0',
     date: '2026-02-14',
     sections: [

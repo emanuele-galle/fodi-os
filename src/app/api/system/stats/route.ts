@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       recentLogins,
       app: {
         name: 'FODI OS',
-        version: process.env.APP_VERSION || '0.4.0',
+        version: process.env.APP_VERSION || '0.5.0',
         environment: process.env.NODE_ENV || 'development',
       },
     })
