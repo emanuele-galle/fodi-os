@@ -120,6 +120,7 @@ const navigation: NavItem[] = [
     children: [
       { label: 'Membri', href: '/team' },
       { label: 'Tracciamento Ore', href: '/time' },
+      { label: 'Log Attività', href: '/team/activity' },
     ],
   },
   {
