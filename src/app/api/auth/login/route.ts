@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { verifyPassword, createAccessToken, createRefreshToken, setAuthCookies } from '@/lib/auth'
 import { loginSchema } from '@/lib/validation'
 import { rateLimit } from '@/lib/rate-limit'
+import { logActivity } from '@/lib/activity-log'
 
 export async function POST(request: NextRequest) {
   try {
@@ -76,6 +77,14 @@ export async function POST(request: NextRequest) {
     })
 
     await setAuthCookies(accessToken, refreshToken)
+
+    logActivity({
+      userId: user.id,
+      action: 'LOGIN',
+      entityType: 'AUTH',
+      entityId: user.id,
+      metadata: { ip: clientIp || 'unknown', userAgent: request.headers.get('user-agent')?.substring(0, 200) || null },
+    })
 
     return NextResponse.json({
       success: true,

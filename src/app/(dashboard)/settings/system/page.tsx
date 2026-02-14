@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Users, FolderKanban, Briefcase, Server, ShieldCheck, Clock,
   Activity, Database, Cpu, HardDrive, Zap, ChevronDown, ChevronRight,
   GitBranch, Sparkles, Bug, Wrench, ArrowUpCircle,
+  FileText, LogIn, LogOut, Trash2, Pencil, Plus, Archive,
+  ChevronLeft, Filter,
 } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -266,6 +268,41 @@ const CHANGELOG: ChangelogEntry[] = [
   },
 ]
 
+interface ActivityItem {
+  id: string
+  userId: string
+  action: string
+  entityType: string
+  entityId: string
+  metadata: Record<string, string | number | boolean | null> | null
+  createdAt: string
+  user: { id: string; firstName: string; lastName: string; avatarUrl: string | null }
+}
+
+const ACTION_CONFIG: Record<string, { label: string; icon: typeof Plus; color: string }> = {
+  CREATE: { label: 'Creazione', icon: Plus, color: 'text-emerald-500' },
+  UPDATE: { label: 'Modifica', icon: Pencil, color: 'text-blue-500' },
+  DELETE: { label: 'Eliminazione', icon: Trash2, color: 'text-red-500' },
+  ARCHIVE: { label: 'Archiviazione', icon: Archive, color: 'text-amber-500' },
+  LOGIN: { label: 'Login', icon: LogIn, color: 'text-indigo-500' },
+  LOGOUT: { label: 'Logout', icon: LogOut, color: 'text-slate-500' },
+}
+
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  AUTH: 'Autenticazione',
+  CLIENT: 'Cliente',
+  PROJECT: 'Progetto',
+  TASK: 'Task',
+  INVOICE: 'Fattura',
+  QUOTE: 'Preventivo',
+  EXPENSE: 'Spesa',
+  WIKI: 'Wiki',
+  TICKET: 'Ticket',
+  USER: 'Utente',
+  MEETING: 'Meeting',
+  CHAT: 'Chat',
+}
+
 const CLIENT_STATUS_LABELS: Record<string, string> = {
   LEAD: 'Lead',
   PROSPECT: 'Prospect',
@@ -313,7 +350,38 @@ export default function SystemStatsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({ '0.4.0': true })
-  const [activeTab, setActiveTab] = useState<'overview' | 'changelog'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'changelog' | 'activity'>('overview')
+
+  // Activity log state
+  const [activityItems, setActivityItems] = useState<ActivityItem[]>([])
+  const [activityPage, setActivityPage] = useState(1)
+  const [activityTotal, setActivityTotal] = useState(0)
+  const [activityTotalPages, setActivityTotalPages] = useState(0)
+  const [activityLoading, setActivityLoading] = useState(false)
+  const [activityFilter, setActivityFilter] = useState<{ entityType: string; action: string }>({ entityType: '', action: '' })
+
+  const fetchActivity = useCallback(async (page: number, filters: { entityType: string; action: string }) => {
+    setActivityLoading(true)
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: '50' })
+      if (filters.entityType) params.set('entityType', filters.entityType)
+      if (filters.action) params.set('action', filters.action)
+      const res = await fetch(`/api/activity?${params}`)
+      if (res.ok) {
+        const data = await res.json()
+        setActivityItems(data.items)
+        setActivityTotal(data.total)
+        setActivityTotalPages(data.totalPages)
+      }
+    } catch { /* ignore */ }
+    setActivityLoading(false)
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'activity') {
+      fetchActivity(activityPage, activityFilter)
+    }
+  }, [activeTab, activityPage, activityFilter, fetchActivity])
 
   useEffect(() => {
     fetch('/api/system/stats')
@@ -403,6 +471,17 @@ export default function SystemStatsPage() {
           Panoramica
         </button>
         <button
+          onClick={() => setActiveTab('activity')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+            activeTab === 'activity'
+              ? 'bg-card shadow-[var(--shadow-sm)] text-foreground'
+              : 'text-muted hover:text-foreground'
+          }`}
+        >
+          <FileText className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
+          Log Attività
+        </button>
+        <button
           onClick={() => setActiveTab('changelog')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
             activeTab === 'changelog'
@@ -415,7 +494,120 @@ export default function SystemStatsPage() {
         </button>
       </div>
 
-      {activeTab === 'overview' ? (
+      {activeTab === 'activity' ? (
+        <div className="space-y-4 animate-fade-in">
+          {/* Filters */}
+          <Card>
+            <CardContent>
+              <div className="flex flex-wrap items-center gap-3">
+                <Filter className="h-4 w-4 text-muted flex-shrink-0" />
+                <select
+                  value={activityFilter.entityType}
+                  onChange={(e) => { setActivityPage(1); setActivityFilter((f) => ({ ...f, entityType: e.target.value })) }}
+                  className="text-sm bg-secondary border-0 rounded-lg px-3 py-1.5 text-foreground"
+                >
+                  <option value="">Tutti i tipi</option>
+                  {Object.entries(ENTITY_TYPE_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
+                <select
+                  value={activityFilter.action}
+                  onChange={(e) => { setActivityPage(1); setActivityFilter((f) => ({ ...f, action: e.target.value })) }}
+                  className="text-sm bg-secondary border-0 rounded-lg px-3 py-1.5 text-foreground"
+                >
+                  <option value="">Tutte le azioni</option>
+                  {Object.entries(ACTION_CONFIG).map(([k, v]) => (
+                    <option key={k} value={k}>{v.label}</option>
+                  ))}
+                </select>
+                <span className="ml-auto text-xs text-muted">{activityTotal} risultati</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Activity list */}
+          <Card>
+            <CardContent className="p-0">
+              {activityLoading ? (
+                <div className="p-6 space-y-3">
+                  {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
+                </div>
+              ) : activityItems.length === 0 ? (
+                <div className="p-8 text-center text-sm text-muted">Nessuna attività trovata.</div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {activityItems.map((item) => {
+                    const config = ACTION_CONFIG[item.action] || { label: item.action, icon: Activity, color: 'text-muted' }
+                    const ActionIcon = config.icon
+                    return (
+                      <div key={item.id} className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors">
+                        <div className={`p-1.5 rounded-lg bg-secondary/80 ${config.color} flex-shrink-0`}>
+                          <ActionIcon className="h-3.5 w-3.5" />
+                        </div>
+                        <Avatar
+                          src={item.user.avatarUrl}
+                          name={`${item.user.firstName} ${item.user.lastName}`}
+                          size="xs"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm">
+                            <span className="font-medium">{item.user.firstName} {item.user.lastName}</span>
+                            {' '}
+                            <span className="text-muted">{config.label.toLowerCase()}</span>
+                            {' '}
+                            <Badge variant="outline" className="text-[10px] mx-0.5">
+                              {ENTITY_TYPE_LABELS[item.entityType] || item.entityType}
+                            </Badge>
+                            {item.metadata && item.metadata.companyName && (
+                              <span className="text-muted"> — {String(item.metadata.companyName)}</span>
+                            )}
+                            {item.metadata && item.metadata.name && (
+                              <span className="text-muted"> — {String(item.metadata.name)}</span>
+                            )}
+                            {item.metadata && item.metadata.number && (
+                              <span className="text-muted"> — #{String(item.metadata.number)}</span>
+                            )}
+                            {item.metadata && item.metadata.ip && (
+                              <span className="text-muted text-xs font-mono ml-1">({String(item.metadata.ip)})</span>
+                            )}
+                          </p>
+                        </div>
+                        <span className="text-[11px] text-muted whitespace-nowrap flex-shrink-0">
+                          {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true, locale: it })}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Pagination */}
+          {activityTotalPages > 1 && (
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                disabled={activityPage === 1}
+                className="p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="text-sm text-muted">
+                Pagina {activityPage} di {activityTotalPages}
+              </span>
+              <button
+                onClick={() => setActivityPage((p) => Math.min(activityTotalPages, p + 1))}
+                disabled={activityPage === activityTotalPages}
+                className="p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      ) : activeTab === 'overview' ? (
         <>
           {/* Summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 animate-stagger">

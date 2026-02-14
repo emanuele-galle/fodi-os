@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { clearAuthCookies, getSession } from '@/lib/auth'
+import { logActivity } from '@/lib/activity-log'
 
 export async function POST() {
   try {
@@ -37,6 +38,10 @@ export async function POST() {
           data: { clockOut: now, durationMins },
         })
       }
+    }
+
+    if (session) {
+      logActivity({ userId: session.sub, action: 'LOGOUT', entityType: 'AUTH', entityId: session.sub })
     }
 
     await clearAuthCookies()
