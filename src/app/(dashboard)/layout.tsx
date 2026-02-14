@@ -101,7 +101,18 @@ export default function DashboardLayout({
 
     fetchCounts()
     const interval = setInterval(fetchCounts, 30000)
-    return () => clearInterval(interval)
+
+    // Instant badge update when chat is read or new message arrives
+    const handleChatRead = () => setUnreadChat((prev) => Math.max(0, prev - 1))
+    const handleChatNew = () => setUnreadChat((prev) => prev + 1)
+    window.addEventListener('chat:read', handleChatRead)
+    window.addEventListener('chat:new-message', handleChatNew)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('chat:read', handleChatRead)
+      window.removeEventListener('chat:new-message', handleChatNew)
+    }
   }, [])
 
   // Heartbeat: update lastActiveAt every 60s, pause when tab hidden

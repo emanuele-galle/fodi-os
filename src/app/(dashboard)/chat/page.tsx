@@ -222,10 +222,12 @@ export default function ChatPage() {
     // Mark as read
     fetch(`/api/chat/channels/${id}/read`, { method: 'POST' })
 
-    // Remove unread indicator
-    setChannels((prev) =>
-      prev.map((ch) => (ch.id === id ? { ...ch, hasUnread: false } : ch))
-    )
+    // Remove unread indicator + notify layout to update sidebar badge
+    setChannels((prev) => {
+      const ch = prev.find((c) => c.id === id)
+      if (ch?.hasUnread) window.dispatchEvent(new Event('chat:read'))
+      return prev.map((c) => (c.id === id ? { ...c, hasUnread: false } : c))
+    })
   }
 
   // Send message (with reply metadata support)
