@@ -112,10 +112,13 @@ function getActivityStatus(lastActiveAt: string | null, lastLoginAt: string | nu
   if (minutes < 2) return { label: 'Online ora', color: '#22C55E' }
   if (minutes < 10) return { label: 'Attivo', color: '#22C55E' }
   const hours = diff / (1000 * 60 * 60)
-  if (hours < 1) return { label: `${Math.round(minutes)}m fa`, color: '#3B82F6' }
-  if (hours < 24) return { label: 'Oggi', color: '#3B82F6' }
-  if (hours < 72) return { label: 'Recente', color: '#F59E0B' }
-  return { label: 'Inattivo', color: '#94A3B8' }
+  if (hours < 1) return { label: `${Math.round(minutes)}min fa`, color: '#3B82F6' }
+  if (hours < 24) return { label: `${Math.round(hours)}h fa`, color: '#3B82F6' }
+  const days = Math.round(hours / 24)
+  if (days === 1) return { label: 'Ieri', color: '#F59E0B' }
+  if (days < 7) return { label: `${days}g fa`, color: '#F59E0B' }
+  if (days < 30) return { label: `${Math.round(days / 7)}sett fa`, color: '#94A3B8' }
+  return { label: `${Math.round(days / 30)}mesi fa`, color: '#94A3B8' }
 }
 
 export default function TeamPage() {
