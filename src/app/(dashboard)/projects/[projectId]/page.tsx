@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
-  ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer, Video, Trash2,
+  ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer, Video, Trash2, Users, UserPlus, X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
@@ -72,6 +72,14 @@ interface TimeEntry {
   task?: { title: string } | null
 }
 
+interface ProjectMember {
+  id: string
+  userId: string
+  role: string
+  joinedAt: string
+  user: { id: string; firstName: string; lastName: string; email: string; role: string; avatarUrl: string | null }
+}
+
 interface ProjectDetail {
   id: string
   name: string
@@ -88,6 +96,7 @@ interface ProjectDetail {
   workspace: { id: string; name: string }
   tasks: Task[]
   milestones: Milestone[]
+  members: ProjectMember[]
   _count?: { tasks: number }
 }
 
@@ -161,6 +170,10 @@ export default function ProjectDetailPage() {
   const [taskDetailOpen, setTaskDetailOpen] = useState(false)
   const [folders, setFolders] = useState<{ id: string; name: string; description: string | null; color: string; sortOrder: number; _count?: { tasks: number } }[]>([])
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+  const [addMemberModalOpen, setAddMemberModalOpen] = useState(false)
+  const [memberUserIds, setMemberUserIds] = useState<string[]>([])
+  const [addingMembers, setAddingMembers] = useState(false)
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
@@ -306,6 +319,37 @@ export default function ProjectDetailPage() {
       }
     } finally {
       setDeleteSubmitting(false)
+    }
+  }
+
+  async function handleAddMembers() {
+    if (memberUserIds.length === 0) return
+    setAddingMembers(true)
+    try {
+      const res = await fetch(`/api/projects/${projectId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: memberUserIds }),
+      })
+      if (res.ok) {
+        setMemberUserIds([])
+        setAddMemberModalOpen(false)
+        fetchProject()
+      }
+    } finally {
+      setAddingMembers(false)
+    }
+  }
+
+  async function handleRemoveMember(userId: string) {
+    setRemovingMemberId(userId)
+    try {
+      const res = await fetch(`/api/projects/${projectId}/members?userId=${userId}`, { method: 'DELETE' })
+      if (res.ok) {
+        fetchProject()
+      }
+    } finally {
+      setRemovingMemberId(null)
     }
   }
 
@@ -546,6 +590,12 @@ export default function ProjectDetailPage() {
           {project.client && (
             <p className="text-sm text-muted mt-1 truncate">{project.client.companyName} - {project.workspace.name}</p>
           )}
+          {(project.members || []).length > 0 && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <AvatarStack users={project.members.map((m) => m.user)} size="xs" max={5} />
+              <span className="text-xs text-muted">{project.members.length} membri</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Button variant="outline" size="sm" onClick={handleProjectMeet} disabled={creatingMeet} className="touch-manipulation">
@@ -645,6 +695,62 @@ export default function ProjectDetailPage() {
           { id: 'milestones', label: 'Timeline', content: milestonesTab },
           { id: 'time', label: 'Tempi', content: timeTab },
           { id: 'files', label: 'File', content: <ProjectAttachments projectId={projectId} /> },
+          { id: 'team', label: 'Team', content: (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted" />
+                  <span className="text-sm font-medium">{(project.members || []).length} membri</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {teamMembers.filter((u) => !(project.members || []).some((m) => m.userId === u.id)).length > 0 && (
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const nonMembers = teamMembers.filter((u) => !(project.members || []).some((m) => m.userId === u.id))
+                      setMemberUserIds(nonMembers.map((u) => u.id))
+                      setAddMemberModalOpen(true)
+                    }}>
+                      <Users className="h-4 w-4 mr-2" />
+                      Aggiungi Tutti
+                    </Button>
+                  )}
+                  <Button size="sm" onClick={() => { setMemberUserIds([]); setAddMemberModalOpen(true) }}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Aggiungi
+                  </Button>
+                </div>
+              </div>
+              {(project.members || []).length === 0 ? (
+                <p className="text-sm text-muted text-center py-8">Nessun membro assegnato a questo progetto.</p>
+              ) : (
+                <div className="space-y-2">
+                  {project.members.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card hover:bg-secondary/30 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={`${m.user.firstName} ${m.user.lastName}`} src={m.user.avatarUrl} size="sm" />
+                        <div>
+                          <p className="text-sm font-medium">{m.user.firstName} {m.user.lastName}</p>
+                          <p className="text-xs text-muted">{m.user.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={m.role === 'OWNER' ? 'default' : 'outline'}>
+                          {m.role === 'OWNER' ? 'Owner' : m.role === 'ADMIN' ? 'Admin' : 'Membro'}
+                        </Badge>
+                        <button
+                          onClick={() => handleRemoveMember(m.userId)}
+                          disabled={removingMemberId === m.userId}
+                          className="p-1.5 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                          title="Rimuovi dal progetto"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) },
           { id: 'chat', label: 'Chat', content: <ProjectChat projectId={projectId} /> },
         ]}
       />
@@ -780,6 +886,24 @@ export default function ProjectDetailPage() {
             <Button type="submit" disabled={editSubmitting}>{editSubmitting ? 'Salvataggio...' : 'Salva Modifiche'}</Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={addMemberModalOpen} onClose={() => setAddMemberModalOpen(false)} title="Aggiungi Membri al Progetto" size="md">
+        <div className="space-y-4">
+          <MultiUserSelect
+            users={teamMembers.filter((u) => !(project.members || []).some((m) => m.userId === u.id))}
+            selected={memberUserIds}
+            onChange={setMemberUserIds}
+            label="Seleziona utenti"
+            placeholder="Cerca utenti..."
+          />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => setAddMemberModalOpen(false)}>Annulla</Button>
+            <Button onClick={handleAddMembers} disabled={addingMembers || memberUserIds.length === 0}>
+              {addingMembers ? 'Salvataggio...' : `Aggiungi ${memberUserIds.length > 0 ? `(${memberUserIds.length})` : ''}`}
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       <TaskDetailModal

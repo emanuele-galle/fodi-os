@@ -7,6 +7,7 @@ import type { Role } from '@/generated/prisma/client'
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role
+    const userId = request.headers.get('x-user-id')!
     requirePermission(role, 'pm', 'read')
 
     const { projectId } = await params
@@ -17,6 +18,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         workspace: { select: { id: true, name: true } },
         client: { select: { id: true, companyName: true } },
         milestones: { orderBy: { sortOrder: 'asc' } },
+        members: {
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true, email: true, role: true, avatarUrl: true } },
+          },
+          orderBy: { joinedAt: 'asc' },
+        },
         tasks: {
           include: {
             assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
@@ -34,6 +41,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!project) {
       return NextResponse.json({ error: 'Progetto non trovato' }, { status: 404 })
+    }
+
+    // Non-admin users can only see projects they are members of
+    const isAdminOrManager = role === 'ADMIN' || role === 'MANAGER'
+    if (!isAdminOrManager) {
+      const isMember = project.members.some((m) => m.userId === userId)
+      if (!isMember) {
+        return NextResponse.json({ error: 'Non hai accesso a questo progetto' }, { status: 403 })
+      }
     }
 
     // Get task counts by status

@@ -8,6 +8,7 @@ import type { Role } from '@/generated/prisma/client'
 export async function GET(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
+    const userId = request.headers.get('x-user-id')!
     requirePermission(role, 'pm', 'read')
 
     const { searchParams } = request.nextUrl
@@ -19,8 +20,13 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
     const skip = (page - 1) * limit
 
+    // ADMIN and MANAGER see all projects; others see only projects they are members of
+    const isAdminOrManager = role === 'ADMIN' || role === 'MANAGER'
+    const memberFilter = isAdminOrManager ? {} : { members: { some: { userId } } }
+
     const where = {
       isArchived: false,
+      ...memberFilter,
       ...(workspaceId && { workspaceId }),
       ...(status && { status: status as never }),
       ...(isInternal !== null && { isInternal: isInternal === 'true' }),
@@ -40,6 +46,9 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         include: {
           client: { select: { id: true, companyName: true } },
+          members: {
+            include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } },
+          },
           _count: { select: { tasks: true } },
         },
       }),
@@ -105,9 +114,15 @@ export async function POST(request: NextRequest) {
         budgetHours,
         color,
         isInternal,
+        members: {
+          create: [{ userId, role: 'OWNER' }],
+        },
       },
       include: {
         client: { select: { id: true, companyName: true } },
+        members: {
+          include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } },
+        },
         _count: { select: { tasks: true } },
       },
     })
