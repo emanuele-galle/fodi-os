@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       where: status ? { status: status as ReviewStatus } : undefined,
       orderBy: { createdAt: 'desc' },
       include: {
-        asset: { select: { id: true, fileName: true, mimeType: true, category: true } },
+        asset: { select: { id: true, fileName: true, fileUrl: true, mimeType: true, category: true } },
         comments: {
           orderBy: { createdAt: 'asc' },
           include: { author: { select: { id: true, firstName: true, lastName: true } } },

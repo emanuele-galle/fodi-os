@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Film, ClipboardCheck, CalendarDays, ArrowRight, LayoutGrid, ImageOff } from 'lucide-react'
+import { Film, ClipboardCheck, CalendarDays, ArrowRight, LayoutGrid, ImageOff, Upload, Plus, Clock } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -16,6 +16,34 @@ interface AssetPreview {
   mimeType: string
   category: string
   createdAt: string
+}
+
+function formatRelativeTime(dateStr: string): string {
+  const now = new Date()
+  const date = new Date(dateStr)
+  const diffMs = now.getTime() - date.getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMin < 1) return 'adesso'
+  if (diffMin < 60) return `${diffMin} minut${diffMin === 1 ? 'o' : 'i'} fa`
+  if (diffHours < 24) return `${diffHours} or${diffHours === 1 ? 'a' : 'e'} fa`
+  if (diffDays === 1) return 'ieri'
+  if (diffDays < 7) return `${diffDays} giorni fa`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} settiman${Math.floor(diffDays / 7) === 1 ? 'a' : 'e'} fa`
+  return `${Math.floor(diffDays / 30)} mes${Math.floor(diffDays / 30) === 1 ? 'e' : 'i'} fa`
+}
+
+function getBadgeVariant(type: 'assets' | 'reviews' | 'social', count: number): string {
+  if (type === 'assets') return count > 0 ? 'success' : 'outline'
+  if (type === 'reviews') {
+    if (count > 3) return 'destructive'
+    if (count > 0) return 'warning'
+    return 'outline'
+  }
+  // social
+  return count > 0 ? 'default' : 'outline'
 }
 
 export default function ContentPage() {
@@ -49,6 +77,7 @@ export default function ContentPage() {
       href: '/content/assets',
       count: counts.assets,
       countLabel: 'asset',
+      badgeType: 'assets' as const,
     },
     {
       title: 'Review',
@@ -57,6 +86,7 @@ export default function ContentPage() {
       href: '/content/reviews',
       count: counts.pendingReviews,
       countLabel: 'in attesa',
+      badgeType: 'reviews' as const,
     },
     {
       title: 'Social Calendar',
@@ -65,6 +95,7 @@ export default function ContentPage() {
       href: '/content/social',
       count: counts.scheduledPosts,
       countLabel: 'programmati',
+      badgeType: 'social' as const,
     },
   ]
 
@@ -79,6 +110,16 @@ export default function ContentPage() {
             <h1 className="text-xl md:text-2xl font-bold">Contenuti</h1>
             <p className="text-xs md:text-sm text-muted">Gestisci asset, review e social media</p>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => router.push('/content/assets')}>
+            <Upload className="h-4 w-4 mr-1" />
+            Carica Asset
+          </Button>
+          <Button variant="default" size="sm" onClick={() => router.push('/content/social')}>
+            <Plus className="h-4 w-4 mr-1" />
+            Nuovo Post
+          </Button>
         </div>
       </div>
 
@@ -100,7 +141,7 @@ export default function ContentPage() {
                   {loading ? (
                     <Skeleton className="h-6 w-16" />
                   ) : (
-                    <Badge variant="outline">
+                    <Badge variant={getBadgeVariant(section.badgeType, section.count) as any}>
                       {section.count} {section.countLabel}
                     </Badge>
                   )}
@@ -165,6 +206,41 @@ export default function ContentPage() {
                   )}
                 </div>
                 <p className="px-2 py-1.5 text-xs truncate">{asset.fileName}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Attività Recente */}
+      <div className="mt-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="h-4 w-4 text-muted" />
+          <h2 className="text-lg font-semibold">Attività Recente</h2>
+        </div>
+
+        {loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : recentAssets.length === 0 ? (
+          <p className="text-sm text-muted">Nessuna attività recente.</p>
+        ) : (
+          <div className="border-l-2 border-border ml-2 pl-4 space-y-4">
+            {recentAssets.slice(0, 5).map((asset) => (
+              <div key={asset.id} className="flex items-start gap-3 relative">
+                <div className="absolute -left-[1.35rem] top-1 h-2.5 w-2.5 rounded-full bg-primary/60 border-2 border-background" />
+                <div className="p-1.5 rounded-md bg-primary/10 flex-shrink-0">
+                  <Upload className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm truncate">
+                    Asset caricato: <span className="font-medium">{asset.fileName}</span>
+                  </p>
+                  <p className="text-xs text-muted">{formatRelativeTime(asset.createdAt)}</p>
+                </div>
               </div>
             ))}
           </div>

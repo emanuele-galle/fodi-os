@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Film, Plus, Search, Image, FileText, FileVideo, FileAudio, File,
   FolderOpen, ArrowLeft, ExternalLink, Upload, FolderPlus, Link2Off, Star,
-  HardDrive, AlertCircle,
+  HardDrive, AlertCircle, LayoutGrid, List,
 } from 'lucide-react'
 import NextImage from 'next/image'
 import { Button } from '@/components/ui/Button'
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Textarea } from '@/components/ui/Textarea'
 import { FileUpload } from '@/components/shared/FileUpload'
 
 // ============================================================
@@ -99,6 +100,19 @@ function MinioAssetsTab() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [detailAsset, setDetailAsset] = useState<Asset | null>(null)
+  // Pagination
+  const [page, setPage] = useState(1)
+  const [totalAssets, setTotalAssets] = useState(0)
+  const PAGE_LIMIT = 18
+  // View mode
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  // Detail modal editing
+  const [editing, setEditing] = useState(false)
+  const [editTags, setEditTags] = useState('')
+  const [editCategory, setEditCategory] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  // Drag & drop
+  const [isDragging, setIsDragging] = useState(false)
 
   const fetchAssets = useCallback(async () => {
     setLoading(true)
@@ -107,10 +121,13 @@ function MinioAssetsTab() {
       const params = new URLSearchParams()
       if (search) params.set('search', search)
       if (categoryFilter) params.set('category', categoryFilter)
+      params.set('page', String(page))
+      params.set('limit', String(PAGE_LIMIT))
       const res = await fetch(`/api/assets?${params}`)
       if (res.ok) {
         const data = await res.json()
         setAssets(data.items || [])
+        setTotalAssets(data.total || 0)
       } else {
         setFetchError('Errore nel caricamento degli asset')
       }
@@ -119,12 +136,113 @@ function MinioAssetsTab() {
     } finally {
       setLoading(false)
     }
-  }, [search, categoryFilter])
+  }, [search, categoryFilter, page])
 
   useEffect(() => { fetchAssets() }, [fetchAssets])
 
+  // Reset page when filters change
+  useEffect(() => { setPage(1) }, [search, categoryFilter])
+
+  // Populate edit fields when detail modal opens
+  useEffect(() => {
+    if (detailAsset) {
+      setEditTags(detailAsset.tags?.join(', ') || '')
+      setEditCategory(detailAsset.category || '')
+      setEditDescription(detailAsset.description || '')
+      setEditing(false)
+    }
+  }, [detailAsset])
+
+  // Detail modal actions
+  const handleSaveDetail = async () => {
+    if (!detailAsset) return
+    try {
+      const res = await fetch(`/api/assets/${detailAsset.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tags: editTags.split(',').map(t => t.trim()).filter(Boolean),
+          category: editCategory,
+          description: editDescription || null,
+        }),
+      })
+      if (res.ok) {
+        setEditing(false)
+        setDetailAsset(null)
+        fetchAssets()
+      }
+    } catch { /* ignore */ }
+  }
+
+  const handleDeleteDetail = async () => {
+    if (!detailAsset) return
+    if (!window.confirm(`Eliminare "${detailAsset.fileName}"?`)) return
+    try {
+      const res = await fetch(`/api/assets/${detailAsset.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setDetailAsset(null)
+        fetchAssets()
+      }
+    } catch { /* ignore */ }
+  }
+
+  const handleStartReview = async () => {
+    if (!detailAsset) return
+    try {
+      const res = await fetch(`/api/assets/${detailAsset.id}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      if (res.ok) {
+        alert('Review creata!')
+      }
+    } catch { /* ignore */ }
+  }
+
+  // Drag & drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (e.currentTarget === e.target) setIsDragging(false)
+  }
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    setModalOpen(true)
+  }
+
+  // Pagination helpers
+  const totalPages = Math.max(1, Math.ceil(totalAssets / PAGE_LIMIT))
+  const rangeStart = totalAssets === 0 ? 0 : (page - 1) * PAGE_LIMIT + 1
+  const rangeEnd = Math.min(page * PAGE_LIMIT, totalAssets)
+
   return (
-    <>
+    <div
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className="relative"
+    >
+      {/* Drag overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-primary/10 border-2 border-dashed border-primary rounded-lg pointer-events-none">
+          <div className="text-center">
+            <Upload className="h-12 w-12 text-primary mx-auto mb-2" />
+            <p className="text-lg font-medium text-primary">Rilascia per caricare</p>
+          </div>
+        </div>
+      )}
+
+      {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
@@ -141,6 +259,23 @@ function MinioAssetsTab() {
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="w-full sm:w-48"
         />
+        {/* View mode toggle */}
+        <div className="hidden sm:flex items-center border border-border rounded-md overflow-hidden flex-shrink-0">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}`}
+            title="Vista griglia"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}`}
+            title="Vista lista"
+          >
+            <List className="h-4 w-4" />
+          </button>
+        </div>
         <div className="hidden sm:block flex-shrink-0">
           <Button size="sm" onClick={() => setModalOpen(true)}>
             <Upload className="h-4 w-4" />
@@ -183,7 +318,7 @@ function MinioAssetsTab() {
             ) : undefined
           }
         />
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {assets.map((asset) => {
             const IconComponent = getFileIcon(asset.mimeType)
@@ -218,10 +353,71 @@ function MinioAssetsTab() {
             )
           })}
         </div>
+      ) : (
+        /* List view */
+        <div className="border border-border rounded-lg divide-y divide-border">
+          {assets.map((asset) => {
+            const IconComponent = getFileIcon(asset.mimeType)
+            const isImage = asset.mimeType.startsWith('image/')
+
+            return (
+              <div
+                key={asset.id}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors cursor-pointer"
+                onClick={() => setDetailAsset(asset)}
+              >
+                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center overflow-hidden rounded relative">
+                  {isImage ? (
+                    <NextImage src={asset.fileUrl} alt={asset.fileName} fill className="object-cover rounded" unoptimized />
+                  ) : (
+                    <IconComponent className="h-5 w-5 text-muted" />
+                  )}
+                </div>
+                <p className="flex-1 text-sm font-medium truncate min-w-0">{asset.fileName}</p>
+                <Badge variant={CATEGORY_BADGE[asset.category] || 'default'} className="flex-shrink-0">{asset.category}</Badge>
+                <span className="text-xs text-muted w-20 text-right flex-shrink-0 hidden md:block">{formatFileSize(asset.fileSize)}</span>
+                <span className="text-xs text-muted w-24 text-right flex-shrink-0 hidden lg:block">{new Date(asset.createdAt).toLocaleDateString('it-IT')}</span>
+                <span className="text-xs text-muted w-28 text-right flex-shrink-0 hidden xl:block truncate">
+                  {asset.uploadedBy ? `${asset.uploadedBy.firstName} ${asset.uploadedBy.lastName}` : '—'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalAssets > 0 && (
+        <div className="flex items-center justify-between mt-6">
+          <p className="text-sm text-muted">
+            Mostra {rangeStart}-{rangeEnd} di {totalAssets}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+            >
+              Precedente
+            </Button>
+            <span className="text-sm text-muted">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            >
+              Successivo
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Detail Modal */}
-      <Modal open={!!detailAsset} onClose={() => setDetailAsset(null)} title={detailAsset?.fileName || 'Dettaglio Asset'} size="lg">
+      <Modal open={!!detailAsset} onClose={() => { setDetailAsset(null); setEditing(false) }} title={detailAsset?.fileName || 'Dettaglio Asset'} size="lg">
         {detailAsset && (
           <div className="space-y-4">
             {detailAsset.mimeType.startsWith('image/') && (
@@ -231,16 +427,71 @@ function MinioAssetsTab() {
             )}
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div><p className="text-muted">Nome File</p><p className="font-medium">{detailAsset.fileName}</p></div>
-              <div><p className="text-muted">Categoria</p><Badge variant={CATEGORY_BADGE[detailAsset.category] || 'default'}>{detailAsset.category}</Badge></div>
               <div><p className="text-muted">Dimensione</p><p className="font-medium">{formatFileSize(detailAsset.fileSize)}</p></div>
               <div><p className="text-muted">Tipo MIME</p><p className="font-medium">{detailAsset.mimeType}</p></div>
+              {!editing && (
+                <div><p className="text-muted">Categoria</p><Badge variant={CATEGORY_BADGE[detailAsset.category] || 'default'}>{detailAsset.category}</Badge></div>
+              )}
             </div>
-            {detailAsset.tags && detailAsset.tags.length > 0 && (
-              <div>
-                <p className="text-sm text-muted mb-1">Tag</p>
-                <div className="flex flex-wrap gap-1">
-                  {detailAsset.tags.map((tag) => <Badge key={tag} variant="outline">{tag}</Badge>)}
+
+            {editing ? (
+              <div className="space-y-3 border-t border-border pt-4">
+                <div>
+                  <label className="text-sm text-muted mb-1 block">Tag (separati da virgola)</label>
+                  <Input
+                    value={editTags}
+                    onChange={(e) => setEditTags(e.target.value)}
+                    placeholder="tag1, tag2, tag3"
+                  />
                 </div>
+                <div>
+                  <label className="text-sm text-muted mb-1 block">Categoria</label>
+                  <Select
+                    options={CATEGORY_OPTIONS.filter(o => o.value !== '')}
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted mb-1 block">Descrizione</label>
+                  <Textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Descrizione opzionale..."
+                    rows={3}
+                  />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" size="sm" onClick={() => setEditing(false)}>Annulla</Button>
+                  <Button size="sm" onClick={handleSaveDetail}>Salva</Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {detailAsset.tags && detailAsset.tags.length > 0 && (
+                  <div>
+                    <p className="text-sm text-muted mb-1">Tag</p>
+                    <div className="flex flex-wrap gap-1">
+                      {detailAsset.tags.map((tag) => <Badge key={tag} variant="outline">{tag}</Badge>)}
+                    </div>
+                  </div>
+                )}
+                {detailAsset.description && (
+                  <div>
+                    <p className="text-sm text-muted mb-1">Descrizione</p>
+                    <p className="text-sm">{detailAsset.description}</p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Action buttons */}
+            {!editing && (
+              <div className="flex gap-2 border-t border-border pt-4">
+                <Button size="sm" onClick={() => setEditing(true)}>Modifica</Button>
+                <Button size="sm" variant="outline" onClick={handleStartReview}>Avvia Review</Button>
+                <div className="flex-1" />
+                <Button size="sm" variant="destructive" onClick={handleDeleteDetail}>Elimina</Button>
               </div>
             )}
           </div>
@@ -251,7 +502,7 @@ function MinioAssetsTab() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Carica Asset" size="lg">
         <FileUpload onUpload={() => { fetchAssets(); setModalOpen(false) }} maxFiles={10} maxSize={10 * 1024 * 1024 * 1024} />
       </Modal>
-    </>
+    </div>
   )
 }
 
