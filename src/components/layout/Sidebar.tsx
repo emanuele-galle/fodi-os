@@ -94,7 +94,7 @@ const navigation: NavItem[] = [
     roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
     children: [
       { label: 'Tutte le Pagine', href: '/kb' },
-      { label: 'Attivita Recenti', href: '/kb/activity' },
+      { label: 'Attività Recenti', href: '/kb/activity' },
     ],
   },
   {

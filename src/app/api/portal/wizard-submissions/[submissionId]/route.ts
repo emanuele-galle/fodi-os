@@ -7,6 +7,12 @@ export async function PATCH(
   { params }: { params: Promise<{ submissionId: string }> }
 ) {
   try {
+    const userId = request.headers.get('x-user-id')
+    const userRole = request.headers.get('x-user-role')
+    if (!userId) {
+      return NextResponse.json({ error: 'Autenticazione richiesta' }, { status: 401 })
+    }
+
     const { submissionId } = await params
     const body = await request.json()
     const parsed = updateSubmissionSchema.safeParse(body)
@@ -20,6 +26,11 @@ export async function PATCH(
     const existing = await prisma.wizardSubmission.findUnique({ where: { id: submissionId } })
     if (!existing) {
       return NextResponse.json({ error: 'Submission non trovata' }, { status: 404 })
+    }
+
+    // Verify ownership: only the submitter or an ADMIN can modify
+    if (existing.submitterId !== userId && userRole !== 'ADMIN') {
+      return NextResponse.json({ error: 'Permesso negato' }, { status: 403 })
     }
 
     if (existing.status === 'COMPLETED') {

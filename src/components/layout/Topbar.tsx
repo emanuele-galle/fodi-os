@@ -162,6 +162,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
           disabled={creatingMeet}
           className="p-2 rounded-lg hover:bg-secondary/60 transition-all duration-200 disabled:opacity-50"
           title="Avvia riunione veloce"
+          aria-label="Riunione veloce"
         >
           <Video className="h-[18px] w-[18px] text-muted" />
         </button>
@@ -172,6 +173,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative p-2 rounded-lg hover:bg-secondary/60 transition-all duration-200"
             title="Notifiche"
+            aria-label="Notifiche"
           >
             <Bell className="h-[18px] w-[18px] text-muted" />
             {unreadCount > 0 && (
@@ -249,6 +251,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center gap-2 hover:bg-secondary/50 rounded-lg p-1.5 transition-all duration-200"
             title="Menu utente"
+            aria-label="Profilo utente"
           >
             <span className="ring-2 ring-primary/15 rounded-full">
               <Avatar

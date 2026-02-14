@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { Building2 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/Skeleton'
 
 interface CompanyProfile {
   id?: string
@@ -113,7 +114,18 @@ export default function BillingSettingsPage() {
     }
   }
 
-  if (loading) return null
+  if (loading) return (
+    <div className="max-w-2xl animate-fade-in space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <Skeleton className="h-10 w-10 rounded-xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+      </div>
+      <Skeleton className="h-[500px] w-full rounded-lg" />
+    </div>
+  )
 
   return (
     <div className="max-w-2xl animate-fade-in">
@@ -152,7 +164,7 @@ export default function BillingSettingsPage() {
               required
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 id="partitaIva"
                 label="Partita IVA *"
@@ -178,7 +190,7 @@ export default function BillingSettingsPage() {
               required
             />
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Input
                 id="cap"
                 label="CAP *"
@@ -189,7 +201,7 @@ export default function BillingSettingsPage() {
               />
               <Input
                 id="citta"
-                label="Citta *"
+                label="Città *"
                 value={profile.citta}
                 onChange={(e) => setProfile({ ...profile, citta: e.target.value })}
                 required
@@ -222,7 +234,7 @@ export default function BillingSettingsPage() {
               maxLength={27}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 id="pec"
                 label="PEC"
@@ -247,8 +259,8 @@ export default function BillingSettingsPage() {
             />
 
             <div className="flex justify-end pt-2">
-              <Button type="submit" disabled={saving}>
-                {saving ? 'Salvataggio...' : 'Salva Profilo'}
+              <Button type="submit" loading={saving}>
+                Salva Profilo
               </Button>
             </div>
           </form>

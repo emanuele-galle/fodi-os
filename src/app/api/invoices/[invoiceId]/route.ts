@@ -85,10 +85,22 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       data.total = total
       data.discount = discountAmount
 
-      await prisma.invoiceLineItem.deleteMany({ where: { invoiceId } })
-      await prisma.invoiceLineItem.createMany({
-        data: itemsWithTotal.map((item: { description: string; quantity: number; unitPrice: number; total: number; sortOrder: number }) => ({ ...item, invoiceId })),
+      const invoice = await prisma.$transaction(async (tx) => {
+        await tx.invoiceLineItem.deleteMany({ where: { invoiceId } })
+        await tx.invoiceLineItem.createMany({
+          data: itemsWithTotal.map((item: { description: string; quantity: number; unitPrice: number; total: number; sortOrder: number }) => ({ ...item, invoiceId })),
+        })
+        return tx.invoice.update({
+          where: { id: invoiceId },
+          data,
+          include: {
+            client: { select: { id: true, companyName: true } },
+            lineItems: { orderBy: { sortOrder: 'asc' } },
+          },
+        })
       })
+
+      return NextResponse.json(invoice)
     }
 
     const invoice = await prisma.invoice.update({

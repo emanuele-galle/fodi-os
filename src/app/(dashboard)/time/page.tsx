@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Clock, LogIn, LogOut, Users, Calendar, Timer } from 'lucide-react'
+import { Clock, LogIn, LogOut, Users, Calendar, Timer, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -69,9 +69,11 @@ export default function TimeTrackingPage() {
   const [userFilter, setUserFilter] = useState('')
   const [users, setUsers] = useState<UserOption[]>([])
   const [clockingOut, setClockingOut] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const fetchSessions = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams()
       if (fromDate) params.set('from', fromDate)
@@ -82,7 +84,11 @@ export default function TimeTrackingPage() {
       if (res.ok) {
         const data = await res.json()
         setSessions(data.items || [])
+      } else {
+        setFetchError('Errore nel caricamento delle sessioni')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento delle sessioni')
     } finally {
       setLoading(false)
     }
@@ -181,7 +187,7 @@ export default function TimeTrackingPage() {
               <Timer className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] text-muted uppercase tracking-wider font-medium">Oggi</p>
+              <p className="text-xs text-muted uppercase tracking-wider font-medium">Oggi</p>
               <p className="text-xl font-bold">{formatDuration(todayMins)}</p>
             </div>
           </CardContent>
@@ -192,7 +198,7 @@ export default function TimeTrackingPage() {
               <Calendar className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] text-muted uppercase tracking-wider font-medium">Questa Settimana</p>
+              <p className="text-xs text-muted uppercase tracking-wider font-medium">Questa Settimana</p>
               <p className="text-xl font-bold">{formatDuration(weekMins)}</p>
             </div>
           </CardContent>
@@ -252,6 +258,16 @@ export default function TimeTrackingPage() {
           className="w-full sm:w-52"
         />
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchSessions()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {/* Sessions list */}
       {loading ? (

@@ -2,7 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { rateLimit } from '@/lib/rate-limit'
+import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
+
+const createLeadSchema = z.object({
+  name: z.string().min(1, 'Nome obbligatorio').max(200, 'Nome troppo lungo'),
+  email: z.string().email('Email non valida'),
+  message: z.string().min(1, 'Messaggio obbligatorio'),
+  company: z.string().max(200).optional().nullable(),
+  phone: z.string().max(50).optional().nullable(),
+  service: z.string().max(200).optional().nullable(),
+  source: z.string().max(100).optional(),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,14 +67,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-
-    const { name, email, company, phone, service, message, source } = body
-    if (!name || !email || !message) {
+    const parsed = createLeadSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Campi obbligatori: name, email, message' },
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
+
+    const { name, email, company, phone, service, message, source } = parsed.data
 
     const lead = await prisma.lead.create({
       data: {

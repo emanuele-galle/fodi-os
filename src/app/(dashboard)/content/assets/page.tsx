@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Film, Plus, Search, Image, FileText, FileVideo, FileAudio, File,
   FolderOpen, ArrowLeft, ExternalLink, Upload, FolderPlus, Link2Off, Star,
-  HardDrive,
+  HardDrive, AlertCircle,
 } from 'lucide-react'
+import NextImage from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -93,6 +94,7 @@ function formatFileSize(bytes: number): string {
 function MinioAssetsTab() {
   const [assets, setAssets] = useState<Asset[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -100,6 +102,7 @@ function MinioAssetsTab() {
 
   const fetchAssets = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams()
       if (search) params.set('search', search)
@@ -108,7 +111,11 @@ function MinioAssetsTab() {
       if (res.ok) {
         const data = await res.json()
         setAssets(data.items || [])
+      } else {
+        setFetchError('Errore nel caricamento degli asset')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento degli asset')
     } finally {
       setLoading(false)
     }
@@ -146,6 +153,16 @@ function MinioAssetsTab() {
         </Button>
       </div>
 
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchAssets()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
+
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -178,9 +195,9 @@ function MinioAssetsTab() {
                 className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
                 onClick={() => setDetailAsset(asset)}
               >
-                <div className="h-32 bg-secondary/50 flex items-center justify-center overflow-hidden">
+                <div className="h-32 bg-secondary/50 flex items-center justify-center overflow-hidden relative">
                   {isImage ? (
-                    <img src={asset.fileUrl} alt={asset.fileName} className="w-full h-full object-cover" />
+                    <NextImage src={asset.fileUrl} alt={asset.fileName} fill className="object-cover" unoptimized />
                   ) : (
                     <IconComponent className="h-12 w-12 text-muted" />
                   )}
@@ -208,7 +225,9 @@ function MinioAssetsTab() {
         {detailAsset && (
           <div className="space-y-4">
             {detailAsset.mimeType.startsWith('image/') && (
-              <img src={detailAsset.fileUrl} alt={detailAsset.fileName} className="w-full max-h-80 object-contain rounded-md bg-secondary" />
+              <div className="relative w-full h-80 bg-secondary rounded-md">
+                <NextImage src={detailAsset.fileUrl} alt={detailAsset.fileName} fill className="object-contain rounded-md" unoptimized />
+              </div>
             )}
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div><p className="text-muted">Nome File</p><p className="font-medium">{detailAsset.fileName}</p></div>
@@ -470,7 +489,7 @@ function GoogleDriveTab() {
                 }}
               >
                 {file.thumbnailLink && !file.isFolder ? (
-                  <img src={file.thumbnailLink} alt="" className="h-8 w-8 rounded object-cover" />
+                  <NextImage src={file.thumbnailLink} alt="" width={32} height={32} className="rounded object-cover" unoptimized />
                 ) : (
                   <IconComponent className={`h-5 w-5 flex-shrink-0 ${file.isFolder ? 'text-amber-500' : 'text-muted'}`} />
                 )}
@@ -531,12 +550,14 @@ export default function AssetsPage() {
   return (
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl md:text-2xl font-bold">Asset Library</h1>
+        <h1 className="text-xl md:text-2xl font-bold">Archivio Media</h1>
       </div>
 
       {/* Tab navigation */}
-      <div className="flex border-b border-border mb-6">
+      <div className="flex border-b border-border mb-6" role="tablist">
         <button
+          role="tab"
+          aria-selected={activeTab === 'minio'}
           onClick={() => setActiveTab('minio')}
           className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${
             activeTab === 'minio'
@@ -548,6 +569,8 @@ export default function AssetsPage() {
           Asset Interni
         </button>
         <button
+          role="tab"
+          aria-selected={activeTab === 'drive'}
           onClick={() => setActiveTab('drive')}
           className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${
             activeTab === 'drive'

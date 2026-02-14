@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Receipt, Plus } from 'lucide-react'
+import { Receipt, Plus, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -48,9 +48,12 @@ export default function ExpensesPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
 
   const fetchExpenses = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams({ limit: '100' })
       if (fromDate) params.set('from', fromDate)
@@ -60,7 +63,11 @@ export default function ExpensesPage() {
       if (res.ok) {
         const data = await res.json()
         setExpenses(data.items || [])
+      } else {
+        setFetchError('Errore nel caricamento delle spese')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento delle spese')
     } finally {
       setLoading(false)
     }
@@ -73,6 +80,7 @@ export default function ExpensesPage() {
   async function handleAddExpense(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
+    setFormError(null)
     const form = new FormData(e.currentTarget)
     const body: Record<string, unknown> = {}
     form.forEach((v, k) => {
@@ -86,9 +94,14 @@ export default function ExpensesPage() {
         body: JSON.stringify(body),
       })
       if (res.ok) {
+        setFormError(null)
         setModalOpen(false)
         fetchExpenses()
+      } else {
+        setFormError('Errore nella creazione della spesa')
       }
+    } catch {
+      setFormError('Errore di rete')
     } finally {
       setSubmitting(false)
     }
@@ -153,6 +166,16 @@ export default function ExpensesPage() {
           className="w-full sm:w-48"
         />
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchExpenses()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">
@@ -232,6 +255,9 @@ export default function ExpensesPage() {
             <Input name="date" label="Data *" type="date" required />
           </div>
           <Input name="receipt" label="URL Ricevuta" placeholder="https://..." />
+          {formError && (
+            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
             <Button type="submit" loading={submitting}>Aggiungi Spesa</Button>

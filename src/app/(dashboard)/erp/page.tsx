@@ -6,10 +6,15 @@ import { Receipt, FileText, CreditCard, BarChart3, ArrowRight, Landmark } from '
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import dynamic from 'next/dynamic'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
-import { MarginChart } from '@/components/erp/MarginChart'
 import { QuickActionsGrid } from '@/components/dashboard/QuickActionsGrid'
+
+const MarginChart = dynamic(() => import('@/components/erp/MarginChart').then(m => ({ default: m.MarginChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
 
 export default function ErpPage() {
   const router = useRouter()

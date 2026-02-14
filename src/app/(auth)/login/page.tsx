@@ -115,7 +115,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="p-3 text-sm text-destructive bg-red-50 rounded-md border border-red-200">
+              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20">
                 {error}
               </div>
             )}

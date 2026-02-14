@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { UserPlus, Search, ChevronLeft, ChevronRight, ArrowRightLeft } from 'lucide-react'
+import { UserPlus, Search, ChevronLeft, ChevronRight, ArrowRightLeft, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -59,10 +59,12 @@ export default function LeadsPage() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [converting, setConverting] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const limit = 20
 
   const fetchLeads = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) })
       if (search) params.set('search', search)
@@ -72,7 +74,11 @@ export default function LeadsPage() {
         const data = await res.json()
         setLeads(data.items || [])
         setTotal(data.total || 0)
+      } else {
+        setFetchError('Errore nel caricamento dei lead')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento dei lead')
     } finally {
       setLoading(false)
     }
@@ -136,6 +142,16 @@ export default function LeadsPage() {
         />
       </div>
 
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchLeads()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -179,12 +195,12 @@ export default function LeadsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={converting === lead.id}
+                      loading={converting === lead.id}
                       onClick={() => handleConvert(lead)}
                       className="touch-manipulation"
                     >
                       <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />
-                      {converting === lead.id ? '...' : 'Converti'}
+                      Converti
                     </Button>
                   )}
                 </div>

@@ -164,8 +164,8 @@ describe('BottomNav - Coerenza tra menu items e permessi API', () => {
 
   for (const item of itemsWithApi) {
     describe(`${item.label} (${item.apiModule})`, () => {
-      const bugs: string[] = []
-      const notes: string[] = []
+      const bugs: Role[] = []
+      const notes: Role[] = []
 
       for (const role of ALL_ROLES) {
         const visibleInMenu = !item.roles || item.roles.includes(role)

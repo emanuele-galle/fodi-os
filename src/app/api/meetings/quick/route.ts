@@ -3,12 +3,22 @@ import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 import { prisma } from '@/lib/prisma'
 import { sseManager } from '@/lib/sse'
 import { sendPush } from '@/lib/push'
+import { requirePermission } from '@/lib/permissions'
+import type { Role } from '@/generated/prisma/client'
 
 // POST /api/meetings/quick - Create a quick meeting with Google Meet
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+  }
+
+  try {
+    const role = request.headers.get('x-user-role') as Role
+    requirePermission(role, 'pm', 'write')
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Permission denied'
+    return NextResponse.json({ error: msg }, { status: 403 })
   }
 
   const auth = await getAuthenticatedClient(userId)

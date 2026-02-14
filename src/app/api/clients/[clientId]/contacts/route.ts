@@ -10,13 +10,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     requirePermission(role, 'crm', 'read')
 
     const { clientId } = await params
+    const { searchParams } = request.nextUrl
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')))
+    const skip = (page - 1) * limit
 
-    const contacts = await prisma.contact.findMany({
-      where: { clientId },
-      orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
-    })
+    const [contacts, total] = await Promise.all([
+      prisma.contact.findMany({
+        where: { clientId },
+        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+        skip,
+        take: limit,
+      }),
+      prisma.contact.count({ where: { clientId } }),
+    ])
 
-    return NextResponse.json({ items: contacts })
+    return NextResponse.json({ items: contacts, total, page, limit })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })

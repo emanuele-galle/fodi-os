@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify, SignJWT } from 'jose'
+import { jwtVerify } from 'jose'
 
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
-const REFRESH_SECRET = new TextEncoder().encode(process.env.REFRESH_SECRET!)
 
 const PUBLIC_PATHS = ['/login', '/forgot-password', '/api/auth/', '/api/health']
 const PORTAL_PATHS = ['/portal']
@@ -28,54 +27,13 @@ async function verifyToken(token: string) {
   }
 }
 
-async function verifyRefresh(token: string) {
-  try {
-    const { payload } = await jwtVerify(token, REFRESH_SECRET)
-    return payload as { sub: string; role: string; email: string; name?: string }
-  } catch {
-    return null
-  }
-}
-
-async function createNewAccessToken(payload: { sub: string; email: string; name?: string; role: string }): Promise<string> {
-  return new SignJWT({ ...payload, type: 'access' as const })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('15m')
-    .sign(ACCESS_SECRET)
-}
-
 /**
- * Try to refresh the access token using the refresh token cookie.
- * Returns the new access token + user payload, or null if refresh fails.
- * Note: This only verifies the JWT signature in the middleware (edge runtime).
- * The DB check for revoked tokens happens on the actual API call.
+ * Check if there's a valid refresh token present (JWT signature only).
+ * The actual refresh (with DB revocation check) happens via /api/auth/refresh.
  */
-async function tryRefreshAccess(request: NextRequest): Promise<{ token: string; payload: { sub: string; role: string; email: string; name?: string } } | null> {
+function hasValidRefreshToken(request: NextRequest): boolean {
   const refreshToken = request.cookies.get('fodi_refresh')?.value
-  if (!refreshToken) return null
-
-  const refreshPayload = await verifyRefresh(refreshToken)
-  if (!refreshPayload) return null
-
-  const newAccessToken = await createNewAccessToken({
-    sub: refreshPayload.sub,
-    email: refreshPayload.email,
-    name: refreshPayload.name,
-    role: refreshPayload.role,
-  })
-
-  return { token: newAccessToken, payload: refreshPayload }
-}
-
-function setAccessCookie(response: NextResponse, token: string): void {
-  response.cookies.set('fodi_access', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 15 * 60,
-  })
+  return !!refreshToken
 }
 
 function setSecurityHeaders(response: NextResponse): NextResponse {
@@ -140,14 +98,9 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Access token expired/missing - try refresh
-    const refreshResult = await tryRefreshAccess(request)
-    if (refreshResult) {
-      const response = NextResponse.next()
-      response.headers.set('x-user-id', refreshResult.payload.sub)
-      response.headers.set('x-user-role', refreshResult.payload.role)
-      setAccessCookie(response, refreshResult.token)
-      return setSecurityHeaders(response)
+    // Access token expired/missing - redirect to refresh endpoint
+    if (hasValidRefreshToken(request)) {
+      return setSecurityHeaders(NextResponse.json({ error: 'Token expired', refresh: true }, { status: 401 }))
     }
 
     return setSecurityHeaders(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
@@ -164,12 +117,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Access token expired/missing - try refresh
-  const refreshResult = await tryRefreshAccess(request)
-  if (refreshResult) {
-    const response = NextResponse.next()
-    setAccessCookie(response, refreshResult.token)
-    return setSecurityHeaders(response)
+  // Access token expired/missing - redirect to refresh endpoint via client
+  if (hasValidRefreshToken(request)) {
+    const refreshUrl = new URL('/api/auth/refresh-redirect', request.url)
+    refreshUrl.searchParams.set('returnTo', pathname)
+    return setSecurityHeaders(NextResponse.redirect(refreshUrl))
   }
 
   // Both tokens invalid - redirect to login

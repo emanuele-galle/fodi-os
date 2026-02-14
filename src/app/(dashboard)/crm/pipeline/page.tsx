@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { AlertCircle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { PipelineKanban } from '@/components/crm/PipelineKanban'
 
@@ -17,30 +18,44 @@ const STATUSES = ['LEAD', 'PROSPECT', 'ACTIVE', 'INACTIVE', 'CHURNED']
 export default function PipelinePage() {
   const [clientsByStatus, setClientsByStatus] = useState<Record<string, Client[]>>({})
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
+  async function loadClients() {
+    setLoading(true)
+    setFetchError(null)
+    try {
+      const res = await fetch('/api/clients?limit=200')
+      if (res.ok) {
+        const data = await res.json()
+        const grouped: Record<string, Client[]> = {}
+        for (const s of STATUSES) grouped[s] = []
+        for (const client of data.items || []) {
+          if (grouped[client.status]) {
+            grouped[client.status].push(client)
+          }
+        }
+        setClientsByStatus(grouped)
+      } else {
+        setFetchError('Errore nel caricamento della pipeline')
+      }
+    } catch {
+      setFetchError('Errore di rete nel caricamento della pipeline')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/clients?limit=200')
-        if (res.ok) {
-          const data = await res.json()
-          const grouped: Record<string, Client[]> = {}
-          for (const s of STATUSES) grouped[s] = []
-          for (const client of data.items || []) {
-            if (grouped[client.status]) {
-              grouped[client.status].push(client)
-            }
-          }
-          setClientsByStatus(grouped)
-        }
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
+    loadClients()
   }, [])
 
   async function handleStatusChange(clientId: string, newStatus: string) {
+    // Save previous state for rollback
+    const previousState = { ...clientsByStatus }
+    for (const key of Object.keys(previousState)) {
+      previousState[key] = [...previousState[key]]
+    }
+
     // Optimistic update
     setClientsByStatus((prev) => {
       const updated = { ...prev }
@@ -66,12 +81,19 @@ export default function PipelinePage() {
       return updated
     })
 
-    // PATCH API
-    await fetch(`/api/clients/${clientId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
-    })
+    // PATCH API with rollback on failure
+    try {
+      const res = await fetch(`/api/clients/${clientId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (!res.ok) {
+        setClientsByStatus(previousState)
+      }
+    } catch {
+      setClientsByStatus(previousState)
+    }
   }
 
   return (
@@ -82,6 +104,16 @@ export default function PipelinePage() {
           <p className="text-sm text-muted mt-1">Gestisci lo stato dei clienti nella pipeline</p>
         </div>
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => loadClients()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex gap-4 overflow-x-auto pb-4">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Users, Search, Mail, Phone, CheckCircle2, Clock, Calendar, Video, ChevronDown, ChevronUp, Plus, ListTodo } from 'lucide-react'
+import { Users, Search, Mail, Phone, CheckCircle2, Clock, Calendar, Video, ChevronDown, ChevronUp, Plus, ListTodo, AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -129,6 +129,7 @@ export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([])
   const [workspaces, setWorkspaces] = useState<{ value: string; label: string }[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [workspaceFilter, setWorkspaceFilter] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
@@ -163,6 +164,7 @@ export default function TeamPage() {
 
   const loadTeam = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams()
       if (workspaceFilter) params.set('workspace', workspaceFilter)
@@ -180,7 +182,11 @@ export default function TeamPage() {
           { value: '', label: 'Tutti i workspace' },
           ...Array.from(wsMap.entries()).map(([id, name]) => ({ value: id, label: name })),
         ])
+      } else {
+        setFetchError('Errore nel caricamento del team')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento del team')
     } finally {
       if (showLoading) setLoading(false)
     }
@@ -357,6 +363,16 @@ export default function TeamPage() {
           />
         )}
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => loadTeam(true)} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

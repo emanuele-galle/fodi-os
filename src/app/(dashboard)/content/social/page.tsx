@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { CalendarDays, Plus, Search } from 'lucide-react'
+import { CalendarDays, Plus, Search, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -52,12 +52,15 @@ const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'outline'
 export default function SocialPage() {
   const [posts, setPosts] = useState<SocialPost[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
   const [activeStatus, setActiveStatus] = useState('DRAFT')
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const fetchPosts = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams()
       if (activeStatus) params.set('status', activeStatus)
@@ -65,7 +68,11 @@ export default function SocialPage() {
       if (res.ok) {
         const data = await res.json()
         setPosts(data.items || [])
+      } else {
+        setFetchError('Errore nel caricamento dei post')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento dei post')
     } finally {
       setLoading(false)
     }
@@ -78,6 +85,7 @@ export default function SocialPage() {
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
+    setFormError(null)
     const form = new FormData(e.currentTarget)
     const body: Record<string, string> = {}
     form.forEach((v, k) => {
@@ -90,9 +98,14 @@ export default function SocialPage() {
         body: JSON.stringify(body),
       })
       if (res.ok) {
+        setFormError(null)
         setModalOpen(false)
         fetchPosts()
+      } else {
+        setFormError('Errore nella creazione del post')
       }
+    } catch {
+      setFormError('Errore di rete')
     } finally {
       setSubmitting(false)
     }
@@ -106,7 +119,7 @@ export default function SocialPage() {
             <CalendarDays className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">Social Calendar</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Calendario Social</h1>
             <p className="text-sm text-muted">Pianifica e pubblica i tuoi contenuti social</p>
           </div>
         </div>
@@ -116,11 +129,23 @@ export default function SocialPage() {
         </Button>
       </div>
 
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchPosts()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
+
       {/* Status Tabs */}
-      <div className="flex border-b border-border mb-6">
+      <div className="flex border-b border-border mb-6" role="tablist">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
+            role="tab"
+            aria-selected={activeStatus === tab.value}
             onClick={() => setActiveStatus(tab.value)}
             className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
               activeStatus === tab.value
@@ -214,13 +239,14 @@ export default function SocialPage() {
             label="Data Programmazione"
             type="datetime-local"
           />
+          {formError && (
+            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
               Annulla
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Salvataggio...' : 'Crea Post'}
-            </Button>
+            <Button type="submit" loading={submitting}>Crea Post</Button>
           </div>
         </form>
       </Modal>

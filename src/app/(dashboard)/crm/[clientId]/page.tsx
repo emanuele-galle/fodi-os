@@ -398,7 +398,7 @@ export default function ClientDetailPage() {
 
       <Modal open={contactModalOpen} onClose={() => setContactModalOpen(false)} title="Aggiungi Contatto" size="md">
         <form onSubmit={handleAddContact} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input name="firstName" label="Nome *" required />
             <Input name="lastName" label="Cognome *" required />
           </div>
@@ -411,7 +411,7 @@ export default function ClientDetailPage() {
           </label>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setContactModalOpen(false)}>Annulla</Button>
-            <Button type="submit" disabled={submitting}>{submitting ? 'Salvataggio...' : 'Aggiungi'}</Button>
+            <Button type="submit" loading={submitting}>Aggiungi</Button>
           </div>
         </form>
       </Modal>
@@ -430,7 +430,7 @@ export default function ClientDetailPage() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setInteractionModalOpen(false)}>Annulla</Button>
-            <Button type="submit" disabled={submitting}>{submitting ? 'Salvataggio...' : 'Aggiungi'}</Button>
+            <Button type="submit" loading={submitting}>Aggiungi</Button>
           </div>
         </form>
       </Modal>

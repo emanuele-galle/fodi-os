@@ -84,6 +84,7 @@ model RefreshToken {
   id        String   @id @default(uuid())
   userId    String
   token     String   @unique
+  isRevoked Boolean  @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -422,6 +423,7 @@ model Task {
   @@index([parentId])
   @@index([boardColumn])
   @@index([folderId])
+  @@index([projectId, status])
   @@map("tasks")
 }
 
@@ -533,6 +535,7 @@ model TimeEntry {
   @@index([userId])
   @@index([taskId])
   @@index([date])
+  @@index([userId, date])
   @@map("time_entries")
 }
 

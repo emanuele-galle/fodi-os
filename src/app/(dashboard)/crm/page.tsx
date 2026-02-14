@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
 import { useRouter } from 'next/navigation'
-import { Users, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Users, Plus, Search, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -78,6 +78,7 @@ export default function CrmPage() {
   const router = useRouter()
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -100,6 +101,7 @@ export default function CrmPage() {
 
   const fetchClients = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) })
       if (search) params.set('search', search)
@@ -109,7 +111,11 @@ export default function CrmPage() {
         const data = await res.json()
         setClients(data.items || [])
         setTotal(data.total || 0)
+      } else {
+        setFetchError('Errore nel caricamento dei clienti')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento dei clienti')
     } finally {
       setLoading(false)
     }
@@ -189,6 +195,16 @@ export default function CrmPage() {
           className="w-full sm:w-48"
         />
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchClients()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">

@@ -79,11 +79,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       data.total = total
       data.discount = discountAmount
 
-      // Replace strategy: delete old, insert new
-      await prisma.quoteLineItem.deleteMany({ where: { quoteId } })
-      await prisma.quoteLineItem.createMany({
-        data: itemsWithTotal.map((item: { description: string; quantity: number; unitPrice: number; total: number; sortOrder: number }) => ({ ...item, quoteId })),
+      // Replace strategy in transaction: delete old, insert new, update quote
+      const quote = await prisma.$transaction(async (tx) => {
+        await tx.quoteLineItem.deleteMany({ where: { quoteId } })
+        await tx.quoteLineItem.createMany({
+          data: itemsWithTotal.map((item: { description: string; quantity: number; unitPrice: number; total: number; sortOrder: number }) => ({ ...item, quoteId })),
+        })
+        return tx.quote.update({
+          where: { id: quoteId },
+          data,
+          include: {
+            client: { select: { id: true, companyName: true } },
+            lineItems: { orderBy: { sortOrder: 'asc' } },
+          },
+        })
       })
+
+      return NextResponse.json(quote)
     } else if (taxRate !== undefined || discount !== undefined) {
       // Recalculate with existing line items
       const existing = await prisma.quote.findUnique({ where: { id: quoteId }, select: { subtotal: true, taxRate: true, discount: true } })

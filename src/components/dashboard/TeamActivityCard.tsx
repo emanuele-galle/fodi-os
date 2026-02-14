@@ -40,7 +40,7 @@ export function TeamActivityCard({
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <Users className="h-4 w-4" />
             </div>
-            <h3 className="text-base font-semibold">Attivita Team</h3>
+            <h3 className="text-base font-semibold">Attività Team</h3>
           </div>
           {onManageTeam && (
             <button

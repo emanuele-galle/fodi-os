@@ -2,12 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import { TrendingUp, Receipt, CheckCircle2, AlertCircle } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { InvoiceStatusChart } from '@/components/dashboard/InvoiceStatusChart'
 import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
+
+const InvoiceStatusChart = dynamic(() => import('@/components/dashboard/InvoiceStatusChart').then(m => ({ default: m.InvoiceStatusChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const RevenueBarChart = dynamic(() => import('@/components/erp/ReportsCharts').then(m => ({ default: m.RevenueBarChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const ExpenseBarChart = dynamic(() => import('@/components/erp/ReportsCharts').then(m => ({ default: m.ExpenseBarChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
 
 const MONTH_LABELS = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic']
 
@@ -35,9 +47,11 @@ export default function ReportsPage() {
   const [invoiceDonut, setInvoiceDonut] = useState<{ label: string; value: number; color: string }[]>([])
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
+      setFetchError(null)
       try {
         const now = new Date()
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
@@ -136,6 +150,8 @@ export default function ReportsPage() {
           }))
         )
 
+      } catch {
+        setFetchError('Errore di rete nel caricamento dei report')
       } finally {
         setLoading(false)
       }
@@ -144,7 +160,7 @@ export default function ReportsPage() {
   }, [])
 
   const statCards = [
-    { label: 'Revenue MTD', value: stats.revenueMTD, icon: TrendingUp, color: 'text-primary' },
+    { label: 'Fatturato Mese', value: stats.revenueMTD, icon: TrendingUp, color: 'text-primary' },
     { label: 'Fatturato Totale', value: stats.invoiced, icon: Receipt, color: 'text-primary' },
     { label: 'Incassato', value: stats.paid, icon: CheckCircle2, color: 'text-primary' },
     { label: 'Da Incassare', value: stats.outstanding, icon: AlertCircle, color: 'text-accent' },
@@ -161,6 +177,16 @@ export default function ReportsPage() {
           <p className="text-xs md:text-sm text-muted">Analisi finanziaria e statistiche</p>
         </div>
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => window.location.reload()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
@@ -196,54 +222,8 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        <Card>
-          <CardContent>
-            <CardTitle className="mb-4 text-base md:text-lg">Andamento Revenue</CardTitle>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={revenueData} margin={{ left: -10, right: 5 }}>
-                <defs>
-                  <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0.5} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
-                <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" width={35} />
-                <Tooltip
-                  formatter={(value) => formatCurrency(Number(value))}
-                  contentStyle={{ background: 'var(--color-card)', borderRadius: 12, border: '1px solid var(--color-border)', backdropFilter: 'blur(8px)', fontSize: 12 }}
-                  cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }}
-                />
-                <Bar dataKey="revenue" fill="url(#gradRevenue)" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <CardTitle className="mb-4 text-base md:text-lg">Distribuzione Spese</CardTitle>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={expenseData} layout="vertical" margin={{ left: 0, right: 5 }}>
-                <defs>
-                  <linearGradient id="gradExpense" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0.9} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="4 8" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-                <XAxis type="number" tickFormatter={(v) => `\u20AC${v}`} tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
-                <YAxis type="category" dataKey="category" width={70} tick={{ fontSize: 10, fill: 'var(--color-muted)' }} stroke="transparent" />
-                <Tooltip
-                  formatter={(value) => formatCurrency(Number(value))}
-                  contentStyle={{ background: 'var(--color-card)', borderRadius: 12, border: '1px solid var(--color-border)', backdropFilter: 'blur(8px)', fontSize: 12 }}
-                  cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }}
-                />
-                <Bar dataKey="amount" fill="url(#gradExpense)" radius={[0, 6, 6, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <RevenueBarChart data={revenueData} />
+        <ExpenseBarChart data={expenseData} />
       </div>
     </div>
   )

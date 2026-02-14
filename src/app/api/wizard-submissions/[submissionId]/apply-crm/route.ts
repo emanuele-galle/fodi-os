@@ -33,7 +33,18 @@ export async function POST(
 
     const answers = submission.answers as Record<string, unknown>
 
-    // Collect mapped values
+    // Whitelist of allowed client fields to prevent mass assignment
+    const ALLOWED_CLIENT_FIELDS = new Set([
+      'companyName', 'vatNumber', 'fiscalCode', 'pec', 'sdi',
+      'phone', 'address', 'city', 'province', 'zip', 'country',
+      'website', 'sector', 'source', 'notes',
+    ])
+
+    const ALLOWED_CONTACT_FIELDS = new Set([
+      'firstName', 'lastName', 'email', 'phone', 'role', 'notes',
+    ])
+
+    // Collect mapped values (filtered by whitelist)
     const clientData: Record<string, string> = {}
     const contactData: Record<string, string> = {}
 
@@ -42,8 +53,8 @@ export async function POST(
         if (field.crmMapping && answers[field.name] !== undefined && answers[field.name] !== '') {
           const [entity, prop] = field.crmMapping.split('.')
           const value = String(answers[field.name])
-          if (entity === 'client') clientData[prop] = value
-          else if (entity === 'contact') contactData[prop] = value
+          if (entity === 'client' && ALLOWED_CLIENT_FIELDS.has(prop)) clientData[prop] = value
+          else if (entity === 'contact' && ALLOWED_CONTACT_FIELDS.has(prop)) contactData[prop] = value
         }
       }
     }

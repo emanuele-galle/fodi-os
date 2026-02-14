@@ -190,7 +190,7 @@ export function TemplateEditor({ initialData, clients, onSubmit, submitLabel, su
               placeholder="{PREFIX}-{YYYY}-{NNN}"
             />
             <Input
-              label="Giorni Validita"
+              label="Giorni Validità"
               type="number"
               min={1}
               max={365}

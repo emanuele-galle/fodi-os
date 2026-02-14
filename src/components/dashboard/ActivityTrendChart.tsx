@@ -16,7 +16,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   return (
     <div className="rounded-lg border border-border/50 bg-card/95 backdrop-blur-sm px-3 py-2 shadow-lg">
       <p className="text-xs text-muted">{label}</p>
-      <p className="text-sm font-semibold">{payload[0].value} attivita</p>
+      <p className="text-sm font-semibold">{payload[0].value} attività</p>
     </div>
   )
 }

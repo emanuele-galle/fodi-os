@@ -44,7 +44,7 @@ const CHANGELOG: ChangelogEntry[] = [
         title: 'Commerciale & ERP',
         icon: Sparkles,
         items: [
-          'Modifica inline preventivi (titolo, voci, IVA, sconto, note, validita)',
+          'Modifica inline preventivi (titolo, voci, IVA, sconto, note, validità)',
           'Modifica inline fatture (titolo, voci, IVA, sconto, note, scadenza, metodo pagamento)',
           'Aggiunta/rimozione dinamica voci con ricalcolo totali in tempo reale',
           'Sistema PDF professionale unificato con logo, dati societari, footer e numerazione pagine',
@@ -286,11 +286,11 @@ const PROJECT_STATUS_LABELS: Record<string, string> = {
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
   MANAGER: 'Manager',
-  SALES: 'Sales',
-  PM: 'PM',
-  DEVELOPER: 'Dev',
-  CONTENT: 'Content',
-  SUPPORT: 'Support',
+  SALES: 'Commerciale',
+  PM: 'Resp. Progetto',
+  DEVELOPER: 'Sviluppatore',
+  CONTENT: 'Contenuti',
+  SUPPORT: 'Assistenza',
   CLIENT: 'Cliente',
 }
 
@@ -595,7 +595,7 @@ export default function SystemStatsPage() {
                         <div className="flex items-center gap-2">
                           <h3 className="text-lg font-bold">v{entry.version}</h3>
                           {isLatest && (
-                            <Badge variant="success" className="text-[10px]">Latest</Badge>
+                            <Badge variant="success" className="text-[10px]">Ultimo</Badge>
                           )}
                         </div>
                         <p className="text-xs text-muted">

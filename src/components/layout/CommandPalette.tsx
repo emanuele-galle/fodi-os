@@ -120,7 +120,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const hasQuery = query.length > 0
 
   return (
-    <div className="fixed inset-0 z-50" onClick={onClose}>
+    <div className="fixed inset-0 z-50" role="dialog" aria-label="Ricerca comandi" onClick={onClose}>
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}

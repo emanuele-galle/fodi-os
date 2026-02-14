@@ -787,7 +787,7 @@ export default function ProjectDetailPage() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setTaskModalOpen(false)}>Annulla</Button>
-            <Button type="submit" disabled={submitting}>{submitting ? 'Salvataggio...' : 'Crea Task'}</Button>
+            <Button type="submit" loading={submitting}>Crea Task</Button>
           </div>
         </form>
       </Modal>

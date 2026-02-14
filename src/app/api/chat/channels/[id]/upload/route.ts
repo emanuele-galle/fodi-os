@@ -29,6 +29,11 @@ export async function POST(
       return NextResponse.json({ error: 'File obbligatorio' }, { status: 400 })
     }
 
+    const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File troppo grande (max 50MB)' }, { status: 400 })
+    }
+
     // Block dangerous file types
     const blockedExts = ['exe', 'bat', 'cmd', 'sh', 'php', 'jsp', 'cgi', 'html', 'htm', 'svg', 'msi', 'dll', 'scr', 'ps1']
     const ext = (file.name.split('.').pop() || 'bin').toLowerCase()

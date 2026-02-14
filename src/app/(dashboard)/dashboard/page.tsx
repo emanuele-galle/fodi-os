@@ -8,21 +8,38 @@ import {
   Plus, TicketPlus, FilePlus2, ClockPlus, X, Pencil,
   LayoutDashboard, CalendarCheck, BarChart3, Wallet, StickyNote,
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
-import { RevenueChart } from '@/components/dashboard/RevenueChart'
-import { CashFlowChart } from '@/components/dashboard/CashFlowChart'
-import { PipelineFunnel } from '@/components/dashboard/PipelineFunnel'
 import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
 import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard'
 import { QuickActionsGrid } from '@/components/dashboard/QuickActionsGrid'
 import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
-import { InvoiceStatusChart } from '@/components/dashboard/InvoiceStatusChart'
-import { ActivityTrendChart } from '@/components/dashboard/ActivityTrendChart'
-import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/ui/dropzone'
+
+const RevenueChart = dynamic(() => import('@/components/dashboard/RevenueChart').then(m => ({ default: m.RevenueChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const CashFlowChart = dynamic(() => import('@/components/dashboard/CashFlowChart').then(m => ({ default: m.CashFlowChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const PipelineFunnel = dynamic(() => import('@/components/dashboard/PipelineFunnel').then(m => ({ default: m.PipelineFunnel })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const InvoiceStatusChart = dynamic(() => import('@/components/dashboard/InvoiceStatusChart').then(m => ({ default: m.InvoiceStatusChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const ActivityTrendChart = dynamic(() => import('@/components/dashboard/ActivityTrendChart').then(m => ({ default: m.ActivityTrendChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
 
@@ -102,6 +119,7 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState('')
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [notes, setNotes] = useState<StickyNoteItem[]>([])
   const [editingNote, setEditingNote] = useState<string | null>(null)
   const [invoiceDonutData, setInvoiceDonutData] = useState<ChartSegment[]>([])
@@ -111,7 +129,6 @@ export default function DashboardPage() {
   const [weekBillableHours, setWeekBillableHours] = useState(0)
   const [totalRevenue, setTotalRevenue] = useState(0)
   const [totalExpenses, setTotalExpenses] = useState(0)
-  const [showDropzone, setShowDropzone] = useState(false)
 
   // Sticky notes - localStorage
   useEffect(() => {
@@ -158,6 +175,7 @@ export default function DashboardPage() {
   // Load dashboard data
   useEffect(() => {
     async function loadDashboard() {
+      setFetchError(null)
       try {
         const now = new Date()
         const monday = new Date(now)
@@ -229,6 +247,8 @@ export default function DashboardPage() {
         }))
         setInvoiceDonutData(donutSegments)
         setInvoiceTotal(invoices.reduce((s: number, i: { total: string }) => s + parseFloat(i.total), 0))
+      } catch {
+        setFetchError('Errore nel caricamento dei dati della dashboard')
       } finally {
         setLoading(false)
       }
@@ -317,6 +337,16 @@ export default function DashboardPage() {
           Premi <kbd className="px-1.5 py-0.5 text-[10px] font-medium bg-secondary rounded border border-border/50">Cmd+K</kbd> per cercare o eseguire azioni rapide
         </p>
       </div>
+
+      {fetchError && (
+        <div className="mb-6 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => window.location.reload()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {/* STAT CARDS */}
       {loading ? (
@@ -413,7 +443,7 @@ export default function DashboardPage() {
               <div className="p-2 rounded-lg bg-primary/10 text-primary">
                 <Activity className="h-4 w-4" />
               </div>
-              <CardTitle>Trend Attivita</CardTitle>
+              <CardTitle>Trend Attività</CardTitle>
             </div>
             <ActivityTrendChart />
           </CardContent>
@@ -451,7 +481,7 @@ export default function DashboardPage() {
               </button>
             </div>
             {tasks.length === 0 ? (
-              <p className="text-sm text-muted py-4">Nessun task in scadenza.</p>
+              <EmptyState icon={CheckCircle2} title="Nessun task in scadenza" description="Ottimo lavoro! Non ci sono task con scadenza imminente." />
             ) : (
               <div className="space-y-1">
                 {tasks.map((task) => (
@@ -593,26 +623,6 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
-            <div className="mt-4 pt-4 border-t border-border/30">
-              <Button variant="ghost" size="sm" onClick={() => setShowDropzone(!showDropzone)}>
-                <Plus className="h-4 w-4" />
-                Carica Documento
-              </Button>
-              {showDropzone && (
-                <div className="mt-3">
-                  <Dropzone
-                    accept={{ 'application/pdf': ['.pdf'], 'image/*': ['.png', '.jpg', '.jpeg'] }}
-                    maxSize={10 * 1024 * 1024}
-                    onDrop={(files) => {
-                      console.log('Files dropped:', files)
-                    }}
-                  >
-                    <DropzoneEmptyState />
-                    <DropzoneContent />
-                  </Dropzone>
-                </div>
-              )}
-            </div>
           </CardContent>
         </Card>
       </div>

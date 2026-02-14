@@ -212,7 +212,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
           )}
 
           {['NUMBER', 'SCALE'].includes(data.type) && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-muted mb-1 block">Valore minimo</label>
                 <Input
@@ -233,7 +233,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
           )}
 
           {['TEXT', 'TEXTAREA'].includes(data.type) && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-muted mb-1 block">Lunghezza minima</label>
                 <Input

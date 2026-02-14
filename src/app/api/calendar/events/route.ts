@@ -1,11 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
+import { requirePermission } from '@/lib/permissions'
+import { z } from 'zod'
+import type { Role } from '@/generated/prisma/client'
+
+const createEventSchema = z.object({
+  summary: z.string().min(1, 'Titolo obbligatorio'),
+  start: z.string().datetime('Data inizio non valida'),
+  end: z.string().datetime('Data fine non valida'),
+  description: z.string().optional(),
+  location: z.string().optional(),
+  attendees: z.array(z.string().email()).optional(),
+  calendarId: z.string().optional(),
+  withMeet: z.boolean().optional(),
+})
 
 // GET /api/calendar/events - List Google Calendar events
 export async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+  }
+
+  try {
+    const role = request.headers.get('x-user-role') as Role
+    requirePermission(role, 'pm', 'read')
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Permission denied'
+    return NextResponse.json({ error: msg }, { status: 403 })
   }
 
   const auth = await getAuthenticatedClient(userId)
@@ -48,20 +70,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
   }
 
+  try {
+    const role = request.headers.get('x-user-role') as Role
+    requirePermission(role, 'pm', 'write')
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Permission denied'
+    return NextResponse.json({ error: msg }, { status: 403 })
+  }
+
   const auth = await getAuthenticatedClient(userId)
   if (!auth) {
     return NextResponse.json({ error: 'Google non connesso', connected: false }, { status: 403 })
   }
 
   const body = await request.json()
-  const { summary, description, start, end, location, attendees, calendarId, withMeet } = body
-
-  if (!summary || !start || !end) {
+  const parsed = createEventSchema.safeParse(body)
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: 'Campi obbligatori: summary, start, end' },
+      { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
       { status: 400 }
     )
   }
+  const { summary, description, start, end, location, attendees, calendarId, withMeet } = parsed.data
 
   try {
     const calendar = getCalendarService(auth)

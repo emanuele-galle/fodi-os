@@ -72,47 +72,49 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const diffMs = endTime.getTime() - startTime.getTime()
     const hours = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100 // Round to 2 decimals
 
-    // Create automatic TimeEntry
-    const timeEntry = await prisma.timeEntry.create({
-      data: {
-        userId: task.timerUserId || userId,
-        taskId,
-        projectId: task.projectId,
-        date: startTime,
-        hours: Math.max(hours, 0.01), // Minimum 0.01h
-        description: `Auto-log: timer (${task.title})`,
-        billable: true,
-      },
-      include: {
-        user: { select: { id: true, firstName: true, lastName: true } },
-        task: { select: { id: true, title: true } },
-      },
-    })
-
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        userId: task.timerUserId || userId,
-        action: 'TIMER_STOP',
-        entityType: 'TimeEntry',
-        entityId: timeEntry.id,
-        metadata: {
+    // Create TimeEntry + log activity + reset timer in a transaction
+    const { timeEntry, activityLog } = await prisma.$transaction(async (tx) => {
+      const timeEntry = await tx.timeEntry.create({
+        data: {
+          userId: task.timerUserId || userId,
           taskId,
-          taskTitle: task.title,
-          hours,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
+          projectId: task.projectId,
+          date: startTime,
+          hours: Math.max(hours, 0.01), // Minimum 0.01h
+          description: `Auto-log: timer (${task.title})`,
+          billable: true,
         },
-      },
-    })
+        include: {
+          user: { select: { id: true, firstName: true, lastName: true } },
+          task: { select: { id: true, title: true } },
+        },
+      })
 
-    // Reset timer on task
-    await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        timerStartedAt: null,
-        timerUserId: null,
-      },
+      const activityLog = await tx.activityLog.create({
+        data: {
+          userId: task.timerUserId || userId,
+          action: 'TIMER_STOP',
+          entityType: 'TimeEntry',
+          entityId: timeEntry.id,
+          metadata: {
+            taskId,
+            taskTitle: task.title,
+            hours,
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+          },
+        },
+      })
+
+      await tx.task.update({
+        where: { id: taskId },
+        data: {
+          timerStartedAt: null,
+          timerUserId: null,
+        },
+      })
+
+      return { timeEntry, activityLog }
     })
 
     return NextResponse.json({

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Building2, FolderKanban, Users, CheckSquare, BookOpen, Settings,
-  ArrowRight, Clock, ListChecks, Plus,
+  ArrowRight, Clock, ListChecks, Plus, AlertCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/utils'
 
 interface Project {
@@ -63,6 +64,9 @@ const STATUS_LABELS: Record<string, string> = {
 const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
   LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
 }
+const PRIORITY_LABELS: Record<string, string> = {
+  LOW: 'Bassa', MEDIUM: 'Media', HIGH: 'Alta', URGENT: 'Urgente',
+}
 const STATUS_COLORS: Record<string, string> = {
   PLANNING: 'var(--color-primary)',
   IN_PROGRESS: 'var(--color-accent)',
@@ -87,6 +91,7 @@ export default function InternalPage() {
   const [tasks, setTasks] = useState<TaskItem[]>([])
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
@@ -94,6 +99,7 @@ export default function InternalPage() {
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null)
 
   const fetchData = async () => {
+    setFetchError(null)
     try {
       const [projRes, taskRes, userRes] = await Promise.all([
         fetch('/api/projects?isInternal=true&limit=50').then((r) => r.ok ? r.json() : null),
@@ -109,6 +115,12 @@ export default function InternalPage() {
       if (userRes?.items) setUsers(userRes.items)
       else if (userRes?.users) setUsers(userRes.users)
       else if (Array.isArray(userRes)) setUsers(userRes)
+
+      if (!projRes && !taskRes && !userRes) {
+        setFetchError('Errore nel caricamento dei dati')
+      }
+    } catch {
+      setFetchError('Errore di rete nel caricamento dei dati')
     } finally {
       setLoading(false)
     }
@@ -188,7 +200,7 @@ export default function InternalPage() {
               {STATUS_LABELS[p.status] || p.status}
             </Badge>
             <Badge variant={PRIORITY_BADGE[p.priority] || 'default'}>
-              {p.priority}
+              {PRIORITY_LABELS[p.priority] || p.priority}
             </Badge>
           </div>
           <div className="flex items-center justify-between text-xs text-muted mb-2">
@@ -256,6 +268,16 @@ export default function InternalPage() {
           Nuovo Progetto Interno
         </Button>
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => { setLoading(true); fetchData() }} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {/* Quick Stats */}
       {loading ? (
@@ -328,11 +350,11 @@ export default function InternalPage() {
 
             if (filteredProjects.length === 0) {
               return (
-                <Card className="">
-                  <CardContent>
-                    <p className="text-sm text-muted py-4 text-center">Nessun progetto interno trovato.</p>
-                  </CardContent>
-                </Card>
+                <EmptyState
+                  icon={FolderKanban}
+                  title="Nessun progetto interno trovato"
+                  description="Crea un nuovo progetto per iniziare."
+                />
               )
             }
 
@@ -396,7 +418,7 @@ export default function InternalPage() {
               </button>
             </div>
             {tasks.length === 0 ? (
-              <p className="text-sm text-muted py-4">Nessun task trovato.</p>
+              <EmptyState icon={ListChecks} title="Nessun task trovato" description="I task appariranno qui quando verranno creati." />
             ) : (
               <div className="space-y-1">
                 {tasks.slice(0, 10).map((task) => (
@@ -409,7 +431,7 @@ export default function InternalPage() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                       <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} className="text-[10px]">
-                        {task.priority}
+                        {PRIORITY_LABELS[task.priority] || task.priority}
                       </Badge>
                       {task.dueDate && (
                         <span className="text-xs text-muted tabular-nums">
@@ -496,7 +518,7 @@ export default function InternalPage() {
           )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
-            <Button type="submit" disabled={submitting}>{submitting ? 'Salvataggio...' : 'Crea Progetto'}</Button>
+            <Button type="submit" loading={submitting}>Crea Progetto</Button>
           </div>
         </form>
       </Modal>

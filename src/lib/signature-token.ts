@@ -1,8 +1,9 @@
 import { SignJWT, jwtVerify } from 'jose'
 
-const SIGNATURE_SECRET = new TextEncoder().encode(
-  process.env.SIGNATURE_SECRET || process.env.JWT_SECRET!
-)
+if (!process.env.SIGNATURE_SECRET) {
+  throw new Error('SIGNATURE_SECRET environment variable is required')
+}
+const SIGNATURE_SECRET = new TextEncoder().encode(process.env.SIGNATURE_SECRET)
 
 interface SignatureTokenPayload {
   requestId: string

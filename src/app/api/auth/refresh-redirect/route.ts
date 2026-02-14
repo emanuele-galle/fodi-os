@@ -1,20 +1,24 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { verifyRefreshToken, createAccessToken, createRefreshToken } from '@/lib/auth'
 
-export async function POST() {
+export async function GET(request: NextRequest) {
+  const returnTo = request.nextUrl.searchParams.get('returnTo') || '/dashboard'
+
+  // Validate returnTo is a relative path (prevent open redirect)
+  const safePath = returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/dashboard'
+
   try {
     const cookieStore = await cookies()
     const refreshToken = cookieStore.get('fodi_refresh')?.value
 
     if (!refreshToken) {
-      return NextResponse.json({ error: 'Refresh token mancante' }, { status: 401 })
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
     const payload = await verifyRefreshToken(refreshToken)
 
-    // Verify token exists in DB
     const stored = await prisma.refreshToken.findUnique({
       where: { token: refreshToken },
     })
@@ -23,7 +27,7 @@ export async function POST() {
       if (stored) {
         await prisma.refreshToken.delete({ where: { id: stored.id } })
       }
-      return NextResponse.json({ error: 'Refresh token scaduto' }, { status: 401 })
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
     // If token is already revoked, possible theft - revoke ALL tokens for this user
@@ -32,7 +36,7 @@ export async function POST() {
         where: { userId: stored.userId },
         data: { isRevoked: true },
       })
-      return NextResponse.json({ error: 'Token riutilizzato - sessioni invalidate' }, { status: 401 })
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
     // Rotate: invalidate old token
@@ -41,7 +45,7 @@ export async function POST() {
       data: { isRevoked: true },
     })
 
-    // Generate new access token
+    // Generate new tokens
     const accessToken = await createAccessToken({
       sub: payload.sub,
       email: payload.email,
@@ -49,7 +53,6 @@ export async function POST() {
       role: payload.role,
     })
 
-    // Generate new refresh token
     const newRefreshTokenJwt = await createRefreshToken({
       sub: payload.sub,
       email: payload.email,
@@ -57,7 +60,6 @@ export async function POST() {
       role: payload.role,
     })
 
-    // Save new refresh token in DB
     await prisma.refreshToken.create({
       data: {
         token: newRefreshTokenJwt,
@@ -66,7 +68,9 @@ export async function POST() {
       },
     })
 
-    cookieStore.set('fodi_access', accessToken, {
+    const response = NextResponse.redirect(new URL(safePath, request.url))
+
+    response.cookies.set('fodi_access', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -74,7 +78,7 @@ export async function POST() {
       maxAge: 15 * 60,
     })
 
-    cookieStore.set('fodi_refresh', newRefreshTokenJwt, {
+    response.cookies.set('fodi_refresh', newRefreshTokenJwt, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -82,9 +86,9 @@ export async function POST() {
       maxAge: 7 * 24 * 60 * 60,
     })
 
-    return NextResponse.json({ success: true })
+    return response
   } catch (error) {
-    console.error('[auth/refresh]', error)
-    return NextResponse.json({ error: 'Refresh token non valido' }, { status: 401 })
+    console.error('[auth/refresh-redirect]', error)
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 }

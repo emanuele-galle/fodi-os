@@ -106,28 +106,32 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const eInvoiceCount = await prisma.electronicInvoice.count()
     const xmlFileName = generateXmlFileName(company.partitaIva, eInvoiceCount + 1)
 
-    const eInvoice = await prisma.electronicInvoice.create({
-      data: {
-        invoiceId,
-        xmlContent,
-        status: 'GENERATED',
-        tipoDocumento: 'TD04',
-        xmlFileName,
-        generatedAt: new Date(),
-        originalInvoiceRef: invoice.number,
-        codiceDestinatario: invoice.client.sdi || '0000000',
-        pecDestinatario: invoice.client.pec,
-      },
-    })
+    const eInvoice = await prisma.$transaction(async (tx) => {
+      const eInvoice = await tx.electronicInvoice.create({
+        data: {
+          invoiceId,
+          xmlContent,
+          status: 'GENERATED',
+          tipoDocumento: 'TD04',
+          xmlFileName,
+          generatedAt: new Date(),
+          originalInvoiceRef: invoice.number,
+          codiceDestinatario: invoice.client.sdi || '0000000',
+          pecDestinatario: invoice.client.pec,
+        },
+      })
 
-    await prisma.eInvoiceStatusLog.create({
-      data: {
-        electronicInvoiceId: eInvoice.id,
-        fromStatus: 'NEW',
-        toStatus: 'GENERATED',
-        note: `Nota di credito TD04 per fattura ${invoice.number}: ${parsed.data.reason}`,
-        performedBy: request.headers.get('x-user-id') || undefined,
-      },
+      await tx.eInvoiceStatusLog.create({
+        data: {
+          electronicInvoiceId: eInvoice.id,
+          fromStatus: 'NEW',
+          toStatus: 'GENERATED',
+          note: `Nota di credito TD04 per fattura ${invoice.number}: ${parsed.data.reason}`,
+          performedBy: request.headers.get('x-user-id') || undefined,
+        },
+      })
+
+      return eInvoice
     })
 
     return NextResponse.json(eInvoice, { status: 201 })

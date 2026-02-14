@@ -165,6 +165,7 @@ export default function TasksPage() {
   const { preferences, updatePreference, loaded: prefsLoaded } = useUserPreferences()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
   const [activeTab, setActiveTab] = useState<TabKey>('mine')
@@ -206,6 +207,7 @@ export default function TasksPage() {
 
   const fetchTasks = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams({ limit: '100' })
       if (statusFilter) params.set('status', statusFilter)
@@ -224,7 +226,11 @@ export default function TasksPage() {
       if (res.ok) {
         const data = await res.json()
         setTasks(data.items || [])
+      } else {
+        setFetchError('Errore nel caricamento dei task')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento dei task')
     } finally {
       setLoading(false)
     }
@@ -434,6 +440,16 @@ export default function TasksPage() {
           className="w-full sm:w-48"
         />
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchTasks()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {/* Content */}
       {loading ? (

@@ -12,6 +12,7 @@ import {
   Video,
   Users,
   Calendar,
+  AlertCircle,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -97,6 +98,7 @@ export default function CalendarPage() {
   const [calendars, setCalendars] = useState<CalendarInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [connected, setConnected] = useState<boolean | null>(null)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showNewEvent, setShowNewEvent] = useState(false)
   const [mobileView, setMobileView] = useState<'calendar' | 'agenda'>('agenda')
@@ -118,6 +120,7 @@ export default function CalendarPage() {
 
   const fetchEvents = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     const timeMin = new Date(year, month, 1).toISOString()
     const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString()
 
@@ -131,6 +134,7 @@ export default function CalendarPage() {
       setConnected(true)
       setEvents(data.events || [])
     } catch {
+      setFetchError('Errore nel caricamento degli eventi')
       setConnected(false)
     } finally {
       setLoading(false)
@@ -308,6 +312,16 @@ export default function CalendarPage() {
               <span className="text-muted">{cal.summary}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchEvents()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
 
@@ -573,7 +587,7 @@ export default function CalendarPage() {
             required
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
               id="startDate"
               label="Data inizio"
@@ -592,7 +606,7 @@ export default function CalendarPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
               id="endDate"
               label="Data fine"
@@ -710,8 +724,8 @@ export default function CalendarPage() {
             <Button type="button" variant="outline" onClick={() => setShowNewEvent(false)}>
               Annulla
             </Button>
-            <Button type="submit" disabled={creating}>
-              {creating ? 'Creazione...' : 'Crea Evento'}
+            <Button type="submit" loading={creating}>
+              Crea Evento
             </Button>
           </div>
         </form>

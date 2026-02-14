@@ -18,7 +18,7 @@ interface ActivityTimelineProps {
   title?: string
 }
 
-export function ActivityTimeline({ activities, maxItems = 10, title = 'Attivita Recenti' }: ActivityTimelineProps) {
+export function ActivityTimeline({ activities, maxItems = 10, title = 'Attività Recenti' }: ActivityTimelineProps) {
   const items = activities.slice(0, maxItems)
 
   return (
@@ -32,7 +32,7 @@ export function ActivityTimeline({ activities, maxItems = 10, title = 'Attivita 
         </div>
 
         {items.length === 0 ? (
-          <p className="text-sm text-muted py-4 text-center">Nessuna attivita recente.</p>
+          <p className="text-sm text-muted py-4 text-center">Nessuna attività recente.</p>
         ) : (
           <div className="space-y-0.5">
             {items.map((item, index) => {

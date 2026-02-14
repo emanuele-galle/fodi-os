@@ -31,17 +31,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Pagina non trovata' }, { status: 404 })
     }
 
-    // Build breadcrumb (parent chain)
+    // Build breadcrumb by collecting ancestor IDs iteratively (max 10 levels)
     const breadcrumb: { id: string; title: string; slug: string }[] = []
-    let currentParentId = page.parentId
-    while (currentParentId) {
-      const parent = await prisma.wikiPage.findUnique({
-        where: { id: currentParentId },
+    if (page.parentId) {
+      // Load all wiki pages' parent relationships in one query to avoid N+1
+      const allPages = await prisma.wikiPage.findMany({
         select: { id: true, title: true, slug: true, parentId: true },
       })
-      if (!parent) break
-      breadcrumb.unshift(parent)
-      currentParentId = parent.parentId
+      const pageMap = new Map(allPages.map((p) => [p.id, p]))
+
+      let currentParentId: string | null = page.parentId
+      let depth = 0
+      while (currentParentId && depth < 10) {
+        const parent = pageMap.get(currentParentId)
+        if (!parent) break
+        breadcrumb.unshift({ id: parent.id, title: parent.title, slug: parent.slug })
+        currentParentId = parent.parentId
+        depth++
+      }
     }
 
     return NextResponse.json({ ...page, breadcrumb })

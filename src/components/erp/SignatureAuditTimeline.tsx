@@ -27,7 +27,7 @@ interface SignatureAuditTimelineProps {
 
 export function SignatureAuditTimeline({ entries }: SignatureAuditTimelineProps) {
   if (entries.length === 0) {
-    return <p className="text-sm text-muted py-4">Nessuna attivita registrata.</p>
+    return <p className="text-sm text-muted py-4">Nessuna attività registrata.</p>
   }
 
   return (

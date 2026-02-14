@@ -73,6 +73,7 @@ export default function ChatPage() {
   const [searching, setSearching] = useState(false)
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set())
+  const [sendError, setSendError] = useState<string | null>(null)
   const selectedIdRef = useRef(selectedId)
   selectedIdRef.current = selectedId
 
@@ -97,12 +98,21 @@ export default function ChatPage() {
       })
   }, [])
 
+  const [channelError, setChannelError] = useState<string | null>(null)
+
   // Fetch channels
   const fetchChannels = useCallback(async () => {
-    const res = await fetch('/api/chat/channels')
-    if (res.ok) {
-      const data = await res.json()
-      setChannels(data.items || [])
+    setChannelError(null)
+    try {
+      const res = await fetch('/api/chat/channels')
+      if (res.ok) {
+        const data = await res.json()
+        setChannels(data.items || [])
+      } else {
+        setChannelError('Errore nel caricamento dei canali')
+      }
+    } catch {
+      setChannelError('Errore di rete nel caricamento dei canali')
     }
   }, [])
 
@@ -222,6 +232,7 @@ export default function ChatPage() {
   async function handleSend(content: string) {
     if (!selectedId || sending) return
     setSending(true)
+    setSendError(null)
     try {
       const body: Record<string, unknown> = { content }
       if (replyTo) {
@@ -237,8 +248,10 @@ export default function ChatPage() {
         body: JSON.stringify(body),
       })
       if (!res.ok) {
-        console.error('Failed to send message')
+        setSendError('Invio messaggio fallito')
       }
+    } catch {
+      setSendError('Errore di rete nell\'invio del messaggio')
     } finally {
       setSending(false)
     }
@@ -313,9 +326,11 @@ export default function ChatPage() {
         const channel = await res.json()
         await fetchChannels()
         handleSelectChannel(channel.id)
+      } else {
+        setSendError('Impossibile avviare la conversazione')
       }
     } catch {
-      console.error('Failed to start DM')
+      setSendError('Errore di rete nell\'avvio della conversazione')
     }
   }
 
@@ -387,13 +402,16 @@ export default function ChatPage() {
   async function handleSendFile(file: File) {
     if (!selectedId) return
     setSending(true)
+    setSendError(null)
     try {
       const formData = new FormData()
       formData.append('file', file)
       const res = await fetch(`/api/chat/channels/${selectedId}/upload`, { method: 'POST', body: formData })
       if (!res.ok) {
-        console.error('Failed to upload file')
+        setSendError('Caricamento file fallito')
       }
+    } catch {
+      setSendError('Errore di rete nel caricamento del file')
     } finally {
       setSending(false)
     }
@@ -430,6 +448,12 @@ export default function ChatPage() {
     <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-4rem)] h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-4rem)] -mx-4 -mt-4 -mb-20 md:-mx-6 md:-mt-6 md:-mb-6 relative overflow-hidden">
       {/* Left panel - Channel list */}
       <div className={`w-full md:w-[320px] lg:w-[340px] border-r border-border/50 flex-shrink-0 bg-card/95 backdrop-blur-sm ${selectedId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
+        {channelError && (
+          <div className="mx-3 mt-3 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
+            <p className="text-xs text-destructive">{channelError}</p>
+            <button onClick={() => fetchChannels()} className="text-xs font-medium text-destructive hover:underline flex-shrink-0 ml-2">Riprova</button>
+          </div>
+        )}
         <ChannelList
           channels={channels}
           selectedId={selectedId}
@@ -610,6 +634,12 @@ export default function ChatPage() {
                     Elimina ({selectedMessages.size})
                   </button>
                 </div>
+              </div>
+            )}
+            {sendError && (
+              <div className="px-4 py-2 bg-destructive/10 border-t border-destructive/20 flex items-center justify-between">
+                <p className="text-xs text-destructive">{sendError}</p>
+                <button onClick={() => setSendError(null)} className="text-xs text-destructive hover:underline ml-2 flex-shrink-0">Chiudi</button>
               </div>
             )}
             <MessageInput

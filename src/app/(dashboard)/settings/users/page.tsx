@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Modal } from '@/components/ui/Modal'
 import {
   Users,
   UserPlus,
@@ -73,11 +74,11 @@ interface UserStats {
 const ROLES = [
   { value: 'ADMIN', label: 'Admin' },
   { value: 'MANAGER', label: 'Manager' },
-  { value: 'SALES', label: 'Sales' },
-  { value: 'PM', label: 'Project Manager' },
-  { value: 'DEVELOPER', label: 'Developer' },
-  { value: 'CONTENT', label: 'Content' },
-  { value: 'SUPPORT', label: 'Support' },
+  { value: 'SALES', label: 'Commerciale' },
+  { value: 'PM', label: 'Resp. Progetto' },
+  { value: 'DEVELOPER', label: 'Sviluppatore' },
+  { value: 'CONTENT', label: 'Contenuti' },
+  { value: 'SUPPORT', label: 'Assistenza' },
   { value: 'CLIENT', label: 'Cliente' },
 ]
 
@@ -165,12 +166,21 @@ export default function UsersAdminPage() {
     loadUsers()
   }, [])
 
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
   async function loadUsers() {
     setLoading(true)
+    setFetchError(null)
     try {
       const res = await fetch('/api/users')
-      const data = await res.json()
-      if (data?.users) setUsers(data.users)
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.users) setUsers(data.users)
+      } else {
+        setFetchError('Errore nel caricamento degli utenti')
+      }
+    } catch {
+      setFetchError('Errore di rete nel caricamento degli utenti')
     } finally {
       setLoading(false)
     }
@@ -512,129 +522,109 @@ export default function UsersAdminPage() {
       </div>
 
       {/* Invite Form Modal */}
-      {showInviteForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <Card className="w-full max-w-md mx-4 relative">
-            <button
-              onClick={() => { setShowInviteForm(false); setInviteResult(null); setInviteError('') }}
-              className="absolute top-4 right-4 p-1 rounded-md hover:bg-secondary transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-            <CardContent>
-              {inviteResult ? (
-                <div className="text-center">
-                  <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
-                    <Check className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Utente Creato</h3>
-                  <p className="text-sm text-muted mb-4">
-                    Comunica queste credenziali all&apos;utente:
-                  </p>
-                  <div className="bg-secondary rounded-lg p-4 text-left space-y-2">
-                    <div>
-                      <span className="text-xs text-muted">Email</span>
-                      <p className="text-sm font-mono">{inviteResult.email}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted">Password temporanea</span>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-mono font-semibold">{inviteResult.password}</p>
-                        <button
-                          onClick={() => copyPassword(inviteResult.password)}
-                          className="p-1 rounded hover:bg-background transition-colors"
-                          title="Copia password"
-                        >
-                          {copiedPassword ? (
-                            <Check className="h-3.5 w-3.5 text-emerald-600" />
-                          ) : (
-                            <Copy className="h-3.5 w-3.5 text-muted" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    className="mt-4 w-full"
-                    onClick={() => { setShowInviteForm(false); setInviteResult(null) }}
+      <Modal
+        open={showInviteForm}
+        onClose={() => { setShowInviteForm(false); setInviteResult(null); setInviteError('') }}
+        title={inviteResult ? 'Utente Creato' : 'Invita Nuovo Utente'}
+      >
+        {inviteResult ? (
+          <div className="text-center">
+            <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
+              <Check className="h-6 w-6 text-emerald-600" />
+            </div>
+            <p className="text-sm text-muted mb-4">
+              Comunica queste credenziali all&apos;utente:
+            </p>
+            <div className="bg-secondary rounded-lg p-4 text-left space-y-2">
+              <div>
+                <span className="text-xs text-muted">Email</span>
+                <p className="text-sm font-mono">{inviteResult.email}</p>
+              </div>
+              <div>
+                <span className="text-xs text-muted">Password temporanea</span>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-mono font-semibold">{inviteResult.password}</p>
+                  <button
+                    onClick={() => copyPassword(inviteResult.password)}
+                    className="p-1 rounded hover:bg-background transition-colors"
+                    title="Copia password"
                   >
-                    Chiudi
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <h3 className="text-lg font-semibold mb-4">Invita Nuovo Utente</h3>
-                  <form onSubmit={handleInvite} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input
-                        label="Nome"
-                        value={inviteData.firstName}
-                        onChange={(e) => setInviteData((d) => ({ ...d, firstName: e.target.value }))}
-                        required
-                      />
-                      <Input
-                        label="Cognome"
-                        value={inviteData.lastName}
-                        onChange={(e) => setInviteData((d) => ({ ...d, lastName: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <Input
-                      label="Email"
-                      type="email"
-                      value={inviteData.email}
-                      onChange={(e) => setInviteData((d) => ({ ...d, email: e.target.value }))}
-                      required
-                    />
-                    <Input
-                      label="Telefono (opzionale)"
-                      type="tel"
-                      value={inviteData.phone}
-                      onChange={(e) => setInviteData((d) => ({ ...d, phone: e.target.value }))}
-                      placeholder="+39 ..."
-                    />
-                    <Select
-                      label="Ruolo"
-                      options={ROLES}
-                      value={inviteData.userRole}
-                      onChange={(e) => setInviteData((d) => ({ ...d, userRole: e.target.value }))}
-                    />
-                    {inviteError && (
-                      <p className="text-sm text-destructive">{inviteError}</p>
+                    {copiedPassword ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 text-muted" />
                     )}
-                    <div className="flex gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => { setShowInviteForm(false); setInviteError('') }}
-                      >
-                        Annulla
-                      </Button>
-                      <Button type="submit" className="flex-1" loading={inviteLoading}>
-                        Crea Utente
-                      </Button>
-                    </div>
-                  </form>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <Button
+              variant="secondary"
+              className="mt-4 w-full"
+              onClick={() => { setShowInviteForm(false); setInviteResult(null) }}
+            >
+              Chiudi
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleInvite} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Nome"
+                value={inviteData.firstName}
+                onChange={(e) => setInviteData((d) => ({ ...d, firstName: e.target.value }))}
+                required
+              />
+              <Input
+                label="Cognome"
+                value={inviteData.lastName}
+                onChange={(e) => setInviteData((d) => ({ ...d, lastName: e.target.value }))}
+                required
+              />
+            </div>
+            <Input
+              label="Email"
+              type="email"
+              value={inviteData.email}
+              onChange={(e) => setInviteData((d) => ({ ...d, email: e.target.value }))}
+              required
+            />
+            <Input
+              label="Telefono (opzionale)"
+              type="tel"
+              value={inviteData.phone}
+              onChange={(e) => setInviteData((d) => ({ ...d, phone: e.target.value }))}
+              placeholder="+39 ..."
+            />
+            <Select
+              label="Ruolo"
+              options={ROLES}
+              value={inviteData.userRole}
+              onChange={(e) => setInviteData((d) => ({ ...d, userRole: e.target.value }))}
+            />
+            {inviteError && (
+              <p className="text-sm text-destructive">{inviteError}</p>
+            )}
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => { setShowInviteForm(false); setInviteError('') }}
+              >
+                Annulla
+              </Button>
+              <Button type="submit" className="flex-1" loading={inviteLoading}>
+                Crea Utente
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
 
       {/* Edit User Modal */}
-      {editUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <Card className="w-full max-w-2xl mx-4 relative max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={closeEditModal}
-              className="absolute top-4 right-4 p-1 rounded-md hover:bg-secondary transition-colors z-10"
-            >
-              <X className="h-4 w-4" />
-            </button>
-            <CardContent>
+      <Modal open={!!editUser} onClose={closeEditModal} title="Modifica Utente" size="xl">
+        {editUser && (<>
               {/* Header with avatar & info */}
               <div className="flex items-center gap-4 mb-6 pb-4 border-b border-border">
                 <div className="relative group">
@@ -847,7 +837,7 @@ export default function UsersAdminPage() {
                       <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4 space-y-3">
                         <p className="text-sm">
                           Sei sicuro di voler eliminare <strong>{editUser.firstName} {editUser.lastName}</strong>?
-                          Questa azione non puo&apos; essere annullata. Tutti i dati associati saranno rimossi.
+                          Questa azione non può essere annullata. Tutti i dati associati saranno rimossi.
                         </p>
                         <Input
                           placeholder={`Scrivi "${editUser.email}" per confermare`}
@@ -915,10 +905,13 @@ export default function UsersAdminPage() {
                               <tr key={mod.key} className="border-b border-border/50">
                                 <td className="py-2.5 pr-4 font-medium">{mod.label}</td>
                                 {PERMISSIONS.map((perm) => (
-                                  <td key={perm} className="text-center py-2.5 px-2">
+                                  <td key={perm} className="text-center p-2">
                                     <button
+                                      role="checkbox"
+                                      aria-checked={hasUserPerm(mod.key, perm)}
+                                      aria-label={`${mod.label} - ${perm}`}
                                       onClick={() => togglePerm(mod.key, perm)}
-                                      className={`h-6 w-6 rounded border-2 transition-all inline-flex items-center justify-center ${
+                                      className={`h-6 w-6 min-h-[44px] min-w-[44px] rounded border-2 transition-all inline-flex items-center justify-center ${
                                         hasUserPerm(mod.key, perm)
                                           ? 'bg-primary border-primary text-primary-foreground'
                                           : 'border-border hover:border-primary/50'
@@ -951,6 +944,9 @@ export default function UsersAdminPage() {
                       <p className="text-xs text-muted">Se disattivo, l&apos;utente usa i permessi default del ruolo</p>
                     </div>
                     <button
+                      role="switch"
+                      aria-checked={sectionOverrideActive}
+                      aria-label="Personalizzazione attiva"
                       onClick={() => {
                         const next = !sectionOverrideActive
                         setSectionOverrideActive(next)
@@ -1061,8 +1057,16 @@ export default function UsersAdminPage() {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+        </>)}
+      </Modal>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => loadUsers()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
 

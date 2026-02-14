@@ -24,6 +24,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'date-fns',
+      'recharts',
+      '@tiptap/react',
+      '@tiptap/starter-kit',
+      'framer-motion',
+    ],
+  },
 }
 
 export default nextConfig

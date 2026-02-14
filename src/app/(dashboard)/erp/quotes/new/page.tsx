@@ -6,10 +6,16 @@ import { ChevronLeft, Plus, Trash2, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
-import { RichTextEditor } from '@/components/shared/RichTextEditor'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
+
+const RichTextEditor = dynamic(() => import('@/components/shared/RichTextEditor').then(m => ({ default: m.RichTextEditor })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-40 w-full rounded-lg" />,
+})
 
 interface LineItem {
   description: string
@@ -241,47 +247,92 @@ export default function NewQuotePage() {
 
             <div className="space-y-3">
               {lineItems.map((item, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Descrizione *"
-                      value={item.description}
-                      onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                      required
-                    />
+                <div key={index}>
+                  {/* Mobile: stack verticale */}
+                  <div className="md:hidden space-y-2 p-3 bg-secondary/20 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Descrizione *"
+                          value={item.description}
+                          onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeLineItem(index)}
+                        disabled={lineItems.length <= 1}
+                      >
+                        <Trash2 className="h-4 w-4 text-muted" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        placeholder="Qty"
+                        value={item.quantity}
+                        onChange={(e) => updateLineItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                      />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        placeholder="Prezzo"
+                        value={item.unitPrice}
+                        onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                      />
+                      <div className="flex items-center justify-end text-sm font-medium">
+                        {formatCurrency(item.quantity * item.unitPrice)}
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-24">
-                    <Input
-                      type="number"
-                      min={1}
-                      placeholder="Qty"
-                      value={item.quantity}
-                      onChange={(e) => updateLineItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                    />
+                  {/* Desktop: flex row */}
+                  <div className="hidden md:flex items-start gap-3">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Descrizione *"
+                        value={item.description}
+                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="w-24">
+                      <Input
+                        type="number"
+                        min={1}
+                        placeholder="Qty"
+                        value={item.quantity}
+                        onChange={(e) => updateLineItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                      />
+                    </div>
+                    <div className="w-32">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        placeholder="Prezzo"
+                        value={item.unitPrice}
+                        onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="w-28 pt-2 text-sm font-medium text-right">
+                      {formatCurrency(item.quantity * item.unitPrice)}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeLineItem(index)}
+                      disabled={lineItems.length <= 1}
+                      className="mt-0.5"
+                    >
+                      <Trash2 className="h-4 w-4 text-muted" />
+                    </Button>
                   </div>
-                  <div className="w-32">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min={0}
-                      placeholder="Prezzo"
-                      value={item.unitPrice}
-                      onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div className="w-28 pt-2 text-sm font-medium text-right">
-                    {formatCurrency(item.quantity * item.unitPrice)}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeLineItem(index)}
-                    disabled={lineItems.length <= 1}
-                    className="mt-0.5"
-                  >
-                    <Trash2 className="h-4 w-4 text-muted" />
-                  </Button>
                 </div>
               ))}
             </div>

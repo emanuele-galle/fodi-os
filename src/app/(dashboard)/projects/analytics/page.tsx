@@ -3,15 +3,26 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   CheckCircle2, TrendingUp, AlertTriangle, Clock,
-  BarChart3, PieChart as PieChartIcon, Users, Timer,
+  BarChart3, PieChart as PieChartIcon, Users, Timer, AlertCircle,
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { TaskCompletionChart } from '@/components/dashboard/TaskCompletionChart'
-import { TaskStatusChart } from '@/components/dashboard/TaskStatusChart'
-import { HoursComparisonChart } from '@/components/dashboard/HoursComparisonChart'
 import { TeamProductivityTable } from '@/components/dashboard/TeamProductivityTable'
+
+const TaskCompletionChart = dynamic(() => import('@/components/dashboard/TaskCompletionChart').then(m => ({ default: m.TaskCompletionChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const TaskStatusChart = dynamic(() => import('@/components/dashboard/TaskStatusChart').then(m => ({ default: m.TaskStatusChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const HoursComparisonChart = dynamic(() => import('@/components/dashboard/HoursComparisonChart').then(m => ({ default: m.HoursComparisonChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
 
 interface AnalyticsData {
   summary: {
@@ -37,6 +48,7 @@ interface ProjectOption {
 export default function ProjectsAnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [projects, setProjects] = useState<ProjectOption[]>([])
   const [projectId, setProjectId] = useState('')
   const [userId, setUserId] = useState('')
@@ -56,13 +68,17 @@ export default function ProjectsAnalyticsPage() {
   // Carica analytics
   const loadAnalytics = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams()
       if (projectId) params.set('projectId', projectId)
       if (userId) params.set('userId', userId)
 
       const res = await fetch(`/api/analytics/tasks?${params.toString()}`)
-      if (!res.ok) return
+      if (!res.ok) {
+        setFetchError('Errore nel caricamento delle analisi')
+        return
+      }
       const json: AnalyticsData = await res.json()
       setData(json)
 
@@ -70,6 +86,8 @@ export default function ProjectsAnalyticsPage() {
       if (json.byUser.length > 0 && users.length === 0) {
         setUsers(json.byUser.map((u) => ({ id: u.userId, name: u.userName })))
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento delle analisi')
     } finally {
       setLoading(false)
     }
@@ -102,9 +120,9 @@ export default function ProjectsAnalyticsPage() {
           </div>
           <div className="min-w-0">
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-              Analytics Task
+              Analisi Task
             </h1>
-            <p className="text-xs md:text-sm text-muted mt-1">Panoramica produttivita e avanzamento task</p>
+            <p className="text-xs md:text-sm text-muted mt-1">Panoramica produttività e avanzamento task</p>
           </div>
         </div>
       </div>
@@ -133,6 +151,16 @@ export default function ProjectsAnalyticsPage() {
         </div>
       </div>
 
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => loadAnalytics()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
+
       {/* KPI CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
         {loading ? (
@@ -159,7 +187,7 @@ export default function ProjectsAnalyticsPage() {
                   </div>
                 </div>
                 <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums">{velocity}</p>
-                <p className="text-[10px] md:text-xs text-muted uppercase tracking-wider font-medium mt-1">Velocity / Settimana</p>
+                <p className="text-[10px] md:text-xs text-muted uppercase tracking-wider font-medium mt-1">Velocità / Settimana</p>
               </CardContent>
             </Card>
 
@@ -171,7 +199,7 @@ export default function ProjectsAnalyticsPage() {
                   </div>
                 </div>
                 <p className="text-2xl md:text-3xl font-bold tracking-tight tabular-nums">{overdueRate}%</p>
-                <p className="text-[10px] md:text-xs text-muted uppercase tracking-wider font-medium mt-1">Overdue Rate</p>
+                <p className="text-[10px] md:text-xs text-muted uppercase tracking-wider font-medium mt-1">% Scaduti</p>
               </CardContent>
             </Card>
 
@@ -240,7 +268,7 @@ export default function ProjectsAnalyticsPage() {
               <div className="p-2 rounded-lg bg-primary/10 text-primary">
                 <Users className="h-4 w-4" />
               </div>
-              <CardTitle>Produttivita Team</CardTitle>
+              <CardTitle>Produttività Team</CardTitle>
             </div>
             <TeamProductivityTable data={data?.byUser ?? []} loading={loading} />
           </CardContent>

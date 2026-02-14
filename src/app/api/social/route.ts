@@ -14,6 +14,9 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const from = searchParams.get('from')
     const to = searchParams.get('to')
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')))
+    const skip = (page - 1) * limit
 
     const where = {
       ...(platform && { platform }),
@@ -26,12 +29,17 @@ export async function GET(request: NextRequest) {
       }),
     }
 
-    const items = await prisma.socialPost.findMany({
-      where,
-      orderBy: { scheduledAt: 'asc' },
-    })
+    const [items, total] = await Promise.all([
+      prisma.socialPost.findMany({
+        where,
+        orderBy: { scheduledAt: 'asc' },
+        skip,
+        take: limit,
+      }),
+      prisma.socialPost.count({ where }),
+    ])
 
-    return NextResponse.json({ items, total: items.length })
+    return NextResponse.json({ items, total, page, limit })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Errore interno del server'
     if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })

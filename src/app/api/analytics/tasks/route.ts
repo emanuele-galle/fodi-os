@@ -30,9 +30,10 @@ export async function GET(request: NextRequest) {
       if (dateTo) (where.createdAt as Record<string, unknown>).lte = new Date(dateTo + 'T23:59:59.999Z')
     }
 
-    // Fetch tutte le task con filtri
+    // Fetch task con filtri (safety limit 10000)
     const tasks = await prisma.task.findMany({
       where,
+      take: 10000,
       include: {
         assignee: { select: { id: true, firstName: true, lastName: true } },
         assignments: {

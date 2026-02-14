@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { AvatarUpload } from '@/components/ui/AvatarUpload'
 import { Badge } from '@/components/ui/Badge'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { Settings, Bell, Lock, Sun, Moon, Sparkles, User, Palette, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -283,7 +284,25 @@ export default function SettingsPage() {
     applyTheme(theme)
   }
 
-  if (!user) return null
+  if (!user) return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <Skeleton className="h-10 w-10 rounded-xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+      </div>
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="lg:w-56 flex-shrink-0 space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+        </div>
+        <div className="flex-1 max-w-2xl">
+          <Skeleton className="h-80 w-full" />
+        </div>
+      </div>
+    </div>
+  )
 
   const sections = [
     { id: 'profile', label: 'Profilo', icon: User },
@@ -395,8 +414,8 @@ export default function SettingsPage() {
                     placeholder="+39 333 1234567"
                   />
 
-                  <Button type="submit" disabled={saving}>
-                    {saving ? 'Salvataggio...' : 'Salva Modifiche'}
+                  <Button type="submit" loading={saving}>
+                    Salva Modifiche
                   </Button>
                 </form>
               </CardContent>
@@ -602,7 +621,7 @@ export default function SettingsPage() {
                       Collega il tuo account Google Workspace per sincronizzare Calendar e Drive con FODI OS.
                     </p>
                     <div className="text-xs text-muted space-y-1">
-                      <p>Funzionalita disponibili dopo la connessione:</p>
+                      <p>Funzionalità disponibili dopo la connessione:</p>
                       <ul className="list-disc ml-4 space-y-0.5">
                         <li>Visualizzazione e creazione eventi Google Calendar</li>
                         <li>Navigazione e upload file su Google Drive</li>

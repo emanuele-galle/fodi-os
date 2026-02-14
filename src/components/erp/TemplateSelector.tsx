@@ -95,7 +95,7 @@ export function TemplateSelector({ open, onClose, onSelect, clientId }: Template
                         {t._count.lineItems} voci
                       </Badge>
                       <span className="text-[10px] text-muted">
-                        IVA {parseFloat(t.defaultTaxRate)}% | {t.defaultValidDays}gg validita
+                        IVA {parseFloat(t.defaultTaxRate)}% | {t.defaultValidDays}gg validità
                       </span>
                     </div>
                   </div>

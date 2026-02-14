@@ -31,7 +31,7 @@ export default function KBActivityPage() {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-semibold mb-6">Attivita Recenti</h1>
+      <h1 className="text-2xl font-semibold mb-6">Attività Recenti</h1>
 
       {loading ? (
         <div className="space-y-3">

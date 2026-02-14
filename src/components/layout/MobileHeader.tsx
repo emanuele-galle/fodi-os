@@ -13,12 +13,13 @@ const SECTION_NAMES: Record<string, string> = {
   '/crm': 'CRM',
   '/projects': 'Progetti',
   '/calendar': 'Calendario',
-  '/erp': 'Contabilita',
+  '/erp': 'Contabilità',
   '/kb': 'Knowledge Base',
   '/content': 'Contenuti',
   '/support': 'Supporto',
   '/team': 'Team',
   '/settings': 'Impostazioni',
+  '/internal': 'Azienda',
 }
 
 function getCurrentSection(pathname: string): string | null {

@@ -1,16 +1,21 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { BookOpen, Plus, Search, ChevronRight, FolderOpen, FileText, Edit } from 'lucide-react'
+import { BookOpen, Plus, Search, ChevronRight, FolderOpen, FileText, Edit, AlertCircle } from 'lucide-react'
 import { WikiPageComments } from '@/components/kb/WikiPageComments'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
+import dynamic from 'next/dynamic'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { RichTextEditor } from '@/components/shared/RichTextEditor'
+
+const RichTextEditor = dynamic(() => import('@/components/shared/RichTextEditor').then(m => ({ default: m.RichTextEditor })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-40 w-full rounded-lg" />,
+})
 
 interface WikiPage {
   id: string
@@ -106,6 +111,7 @@ function TreeItem({
 export default function KnowledgeBasePage() {
   const [pages, setPages] = useState<WikiPage[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
@@ -120,6 +126,7 @@ export default function KnowledgeBasePage() {
 
   const fetchPages = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams()
       if (search) params.set('search', search)
@@ -128,7 +135,11 @@ export default function KnowledgeBasePage() {
       if (res.ok) {
         const data = await res.json()
         setPages(data.items || [])
+      } else {
+        setFetchError('Errore nel caricamento delle pagine')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento delle pagine')
     } finally {
       setLoading(false)
     }
@@ -259,6 +270,16 @@ export default function KnowledgeBasePage() {
           </Button>
         </div>
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchPages()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
         {/* Sidebar - Tree Navigation: hidden on mobile by default */}

@@ -46,7 +46,7 @@ export function InvoiceStatusChart({ data, total }: InvoiceStatusChartProps) {
         ) : (
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
-              <ResponsiveContainer width={200} height={200}>
+              <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
                     data={data}

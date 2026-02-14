@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/utils'
 import { CheckCheck, FileText, Edit2, Trash2, MoreHorizontal, Reply, SmilePlus, Video } from 'lucide-react'
@@ -203,7 +204,7 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
             )}>
               {isImage && fileMeta?.fileUrl ? (
                 <a href={fileMeta.fileUrl} target="_blank" rel="noopener noreferrer">
-                  <img src={fileMeta.fileUrl} alt={fileMeta.fileName || 'Image'} className="max-w-[300px] max-h-[200px] object-cover" />
+                  <Image src={fileMeta.fileUrl} alt={fileMeta.fileName || 'Image'} width={300} height={200} className="max-w-[300px] max-h-[200px] object-cover" unoptimized />
                 </a>
               ) : (
                 <a

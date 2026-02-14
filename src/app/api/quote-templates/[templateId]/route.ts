@@ -49,22 +49,35 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { lineItems, clientId, ...rest } = parsed.data
 
-    // If lineItems provided, replace all
-    if (lineItems) {
-      await prisma.quoteTemplateLineItem.deleteMany({ where: { templateId } })
-      await prisma.quoteTemplateLineItem.createMany({
-        data: lineItems.map((item, i) => ({
-          templateId,
-          description: item.description,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          sortOrder: item.sortOrder ?? i,
-        })),
-      })
-    }
-
     const updateData: Record<string, unknown> = { ...rest }
     if (clientId !== undefined) updateData.clientId = clientId || null
+
+    // If lineItems provided, replace all in a transaction
+    if (lineItems) {
+      const template = await prisma.$transaction(async (tx) => {
+        await tx.quoteTemplateLineItem.deleteMany({ where: { templateId } })
+        await tx.quoteTemplateLineItem.createMany({
+          data: lineItems.map((item, i) => ({
+            templateId,
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            sortOrder: item.sortOrder ?? i,
+          })),
+        })
+        return tx.quoteTemplate.update({
+          where: { id: templateId },
+          data: updateData,
+          include: {
+            client: { select: { id: true, companyName: true } },
+            lineItems: { orderBy: { sortOrder: 'asc' } },
+            _count: { select: { quotes: true } },
+          },
+        })
+      })
+
+      return NextResponse.json(template)
+    }
 
     const template = await prisma.quoteTemplate.update({
       where: { id: templateId },

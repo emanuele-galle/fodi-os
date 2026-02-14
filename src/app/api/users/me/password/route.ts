@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { rateLimit } from '@/lib/rate-limit'
+import { passwordSchema } from '@/lib/validation/auth'
 
 export async function POST(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id')!
+
+    if (!rateLimit(`password:${userId}`, 10, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Troppi tentativi. Riprova tra 15 minuti.' }, { status: 429 })
+    }
+
     const body = await request.json()
     const { currentPassword, newPassword } = body
 
@@ -12,8 +19,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Password attuale e nuova obbligatorie' }, { status: 400 })
     }
 
-    if (newPassword.length < 6) {
-      return NextResponse.json({ error: 'La nuova password deve avere almeno 6 caratteri' }, { status: 400 })
+    const passwordValidation = passwordSchema.safeParse(newPassword)
+    if (!passwordValidation.success) {
+      return NextResponse.json({ error: passwordValidation.error.issues[0].message }, { status: 400 })
     }
 
     const user = await prisma.user.findUnique({

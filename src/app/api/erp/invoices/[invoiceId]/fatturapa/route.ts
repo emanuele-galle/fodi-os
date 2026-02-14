@@ -132,43 +132,46 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       orderBy: { createdAt: 'desc' },
     })
 
-    let eInvoice
-    if (existing && existing.status === 'DRAFT') {
-      eInvoice = await prisma.electronicInvoice.update({
-        where: { id: existing.id },
-        data: {
-          xmlContent,
-          status: 'GENERATED',
-          tipoDocumento,
-          xmlFileName,
-          generatedAt: new Date(),
-          codiceDestinatario: invoice.client.sdi || '0000000',
-          pecDestinatario: invoice.client.pec,
-        },
-      })
-    } else {
-      eInvoice = await prisma.electronicInvoice.create({
-        data: {
-          invoiceId,
-          xmlContent,
-          status: 'GENERATED',
-          tipoDocumento,
-          xmlFileName,
-          generatedAt: new Date(),
-          codiceDestinatario: invoice.client.sdi || '0000000',
-          pecDestinatario: invoice.client.pec,
-        },
-      })
-    }
+    const eInvoice = await prisma.$transaction(async (tx) => {
+      let eInvoice
+      if (existing && existing.status === 'DRAFT') {
+        eInvoice = await tx.electronicInvoice.update({
+          where: { id: existing.id },
+          data: {
+            xmlContent,
+            status: 'GENERATED',
+            tipoDocumento,
+            xmlFileName,
+            generatedAt: new Date(),
+            codiceDestinatario: invoice.client.sdi || '0000000',
+            pecDestinatario: invoice.client.pec,
+          },
+        })
+      } else {
+        eInvoice = await tx.electronicInvoice.create({
+          data: {
+            invoiceId,
+            xmlContent,
+            status: 'GENERATED',
+            tipoDocumento,
+            xmlFileName,
+            generatedAt: new Date(),
+            codiceDestinatario: invoice.client.sdi || '0000000',
+            pecDestinatario: invoice.client.pec,
+          },
+        })
+      }
 
-    // Log status transition
-    await prisma.eInvoiceStatusLog.create({
-      data: {
-        electronicInvoiceId: eInvoice.id,
-        fromStatus: existing?.status || 'NEW',
-        toStatus: 'GENERATED',
-        note: `XML generato (${tipoDocumento})`,
-      },
+      await tx.eInvoiceStatusLog.create({
+        data: {
+          electronicInvoiceId: eInvoice.id,
+          fromStatus: existing?.status || 'NEW',
+          toStatus: 'GENERATED',
+          note: `XML generato (${tipoDocumento})`,
+        },
+      })
+
+      return eInvoice
     })
 
     return NextResponse.json(eInvoice, { status: 201 })

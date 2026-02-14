@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { rateLimit } from '@/lib/rate-limit'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Email non valida'),
@@ -8,6 +9,11 @@ const forgotPasswordSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    if (!rateLimit(`forgot-password:${ip}`, 5, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Troppi tentativi. Riprova tra 15 minuti.' }, { status: 429 })
+    }
+
     const body = await request.json()
     const parsed = forgotPasswordSchema.safeParse(body)
     if (!parsed.success) {

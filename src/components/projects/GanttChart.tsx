@@ -136,7 +136,17 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
+      {/* Mobile: suggerimento ruotare dispositivo */}
+      <div className="md:hidden flex flex-col items-center justify-center py-8 px-4 text-center bg-secondary/20 rounded-lg border border-border">
+        <svg className="h-10 w-10 text-muted mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="2" width="16" height="20" rx="2" />
+          <path d="M12 18h.01" />
+        </svg>
+        <p className="text-sm font-medium mb-1">Gantt non disponibile su mobile</p>
+        <p className="text-xs text-muted">Ruota il dispositivo in orizzontale o usa la vista lista per gestire le attività.</p>
+      </div>
+
+      <div className="hidden md:flex items-center gap-2">
         <Button
           variant={zoom === 'week' ? 'primary' : 'outline'}
           size="sm"
@@ -153,7 +163,7 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
         </Button>
       </div>
 
-      <div className="flex border border-border rounded-lg overflow-hidden">
+      <div className="hidden md:flex border border-border rounded-lg overflow-hidden">
         {/* Left labels */}
         <div className="shrink-0 border-r border-border bg-secondary/20" style={{ width: LABEL_WIDTH }}>
           <div

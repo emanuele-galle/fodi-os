@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import Image from 'next/image'
 import { FileText, CheckCircle, XCircle, Clock, AlertTriangle, Send, Shield, ExternalLink } from 'lucide-react'
 import { OtpInput } from '@/components/sign/OtpInput'
 
@@ -152,8 +153,7 @@ export default function SignPage() {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
           {company?.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={company.logoUrl} alt={company.ragioneSociale} className="h-10 w-auto max-w-[120px] object-contain" />
+            <Image src={company.logoUrl} alt={company.ragioneSociale} width={120} height={40} className="h-10 w-auto max-w-[120px] object-contain" unoptimized />
           ) : (
             <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center">
               <Shield className="h-4 w-4 text-white" />

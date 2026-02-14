@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
-const webhookSecret = process.env.N8N_WEBHOOK_SECRET || ''
+const webhookSecret = process.env.N8N_WEBHOOK_SECRET
 
 const notificationPayload = z.object({
   type: z.literal('notification'),
@@ -35,8 +35,12 @@ const webhookPayload = z.union([
 
 export async function POST(request: NextRequest) {
   try {
+    if (!webhookSecret) {
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+    }
+
     const secret = request.headers.get('x-n8n-secret')
-    if (!webhookSecret || secret !== webhookSecret) {
+    if (secret !== webhookSecret) {
       return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
     }
 

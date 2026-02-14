@@ -17,11 +17,9 @@ const inviteUserSchema = z.object({
 
 function generateTempPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-  let password = ''
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return password
+  const bytes = new Uint8Array(12)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => chars[b % chars.length]).join('')
 }
 
 export async function POST(request: NextRequest) {
@@ -43,6 +41,11 @@ export async function POST(request: NextRequest) {
 
     const { email, firstName, lastName, userRole, phone } = parsed.data
     const assignedRole: Role = userRole && VALID_ROLES.includes(userRole) ? userRole : 'DEVELOPER'
+
+    // Managers cannot create Admin users
+    if (role === 'MANAGER' && assignedRole === 'ADMIN') {
+      return NextResponse.json({ error: 'Un Manager non puo creare utenti Admin' }, { status: 403 })
+    }
 
     // Check if user already exists
     const existing = await prisma.user.findUnique({ where: { email } })

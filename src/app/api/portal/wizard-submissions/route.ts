@@ -4,6 +4,11 @@ import { createSubmissionSchema } from '@/lib/validation'
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = request.headers.get('x-user-id')
+    if (!userId) {
+      return NextResponse.json({ error: 'Autenticazione richiesta' }, { status: 401 })
+    }
+
     const body = await request.json()
     const parsed = createSubmissionSchema.safeParse(body)
     if (!parsed.success) {
@@ -27,6 +32,7 @@ export async function POST(request: NextRequest) {
         leadId: parsed.data.leadId,
         submitterName: parsed.data.submitterName,
         submitterEmail: parsed.data.submitterEmail,
+        submitterId: userId,
         status: 'IN_PROGRESS',
         currentStep: 0,
         answers: {},

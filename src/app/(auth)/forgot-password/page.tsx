@@ -37,8 +37,8 @@ export default function ForgotPasswordPage() {
 
         {submitted ? (
           <div className="text-center space-y-4">
-            <div className="p-4 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-sm text-green-800">
+            <div className="p-4 bg-primary/10 border border-primary/20 rounded-md">
+              <p className="text-sm text-primary">
                 Se l&apos;indirizzo esiste, riceverai un&apos;email con le istruzioni per reimpostare la password.
               </p>
             </div>
