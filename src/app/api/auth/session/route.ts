@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
 
@@ -9,8 +10,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ user: null }, { status: 401 })
     }
 
-    const isImpersonating = request.headers.get('x-impersonating') === 'true'
-    const realAdminId = request.headers.get('x-real-admin-id')
+    const headerStore = await headers()
+    const isImpersonating = headerStore.get('x-impersonating') === 'true'
+    const realAdminId = headerStore.get('x-real-admin-id')
     const impersonateId = request.cookies.get('fodi_impersonate')?.value
 
     // If impersonating, fetch the target user instead

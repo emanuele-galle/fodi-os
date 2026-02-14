@@ -50,10 +50,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE() {
   try {
-    const role = request.headers.get('x-user-role')
-    const isImpersonating = request.headers.get('x-impersonating') === 'true'
+    const headerStore = await (await import('next/headers')).headers()
+    const role = headerStore.get('x-user-role')
+    const isImpersonating = headerStore.get('x-impersonating') === 'true'
 
     // Allow if currently impersonating (role might be the impersonated user's role)
     // or if admin

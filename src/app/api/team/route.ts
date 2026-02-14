@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
     }
 
     // CLIENT role gets limited team view (no email, phone, login details)
+    // Only ADMIN/MANAGER can see login times, IPs, and detailed activity
     const isClient = role === 'CLIENT'
+    const isAdminOrManager = role === 'ADMIN' || role === 'MANAGER'
 
     const workspaceId = request.nextUrl.searchParams.get('workspace') || undefined
 
@@ -30,9 +32,9 @@ export async function GET(request: NextRequest) {
         role: true,
         avatarUrl: true,
         phone: !isClient,
-        lastLoginAt: !isClient,
+        lastLoginAt: isAdminOrManager,
         lastActiveAt: !isClient,
-        lastIpAddress: !isClient,
+        lastIpAddress: isAdminOrManager,
         ...(!isClient && {
           workspaceMembers: {
             select: {
