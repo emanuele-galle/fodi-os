@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
 import { Skeleton } from '@/components/ui/Skeleton'
 
@@ -55,17 +55,19 @@ export function PipelineFunnel() {
   if (loading) return <Skeleton className="h-48 w-full" />
 
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-        <XAxis type="number" tick={{ fontSize: 12 }} stroke="var(--color-muted)" allowDecimals={false} />
-        <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} stroke="var(--color-muted)" width={70} />
+    <ResponsiveContainer width="100%" height={240}>
+      <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 5, bottom: 5 }} barCategoryGap="25%">
+        <CartesianGrid strokeDasharray="3 6" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.3} />
+        <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} allowDecimals={false} />
+        <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: 'var(--color-foreground)', fontWeight: 500 }} stroke="transparent" tickLine={false} axisLine={false} width={75} />
         <Tooltip
           formatter={(value?: number) => [value ?? 0, 'Clienti']}
-          contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8 }}
+          contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 10, boxShadow: 'var(--shadow-lg)', fontSize: 13 }}
+          cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.04 }}
         />
-        <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+        <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={20}>
           {data.map((entry, index) => (
-            <Cell key={index} fill={entry.color} />
+            <Cell key={index} fill={entry.color} fillOpacity={0.85} />
           ))}
         </Bar>
       </BarChart>

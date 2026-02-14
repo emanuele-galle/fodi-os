@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 
 interface UserPreferences {
-  theme: 'light' | 'dark' | 'midnight'
+  theme: 'light' | 'dark'
   sidebarCollapsed: boolean
   defaultView: 'list' | 'kanban'
 }

@@ -46,6 +46,11 @@ class SSEManager {
     }
   }
 
+  isUserConnected(userId: string): boolean {
+    const controllers = this.clients.get(userId)
+    return !!controllers && controllers.size > 0
+  }
+
   sendToUser(userId: string, event: SSEEvent) {
     const controllers = this.clients.get(userId)
     if (!controllers) return

@@ -67,7 +67,6 @@ const navigation: NavItem[] = [
     children: [
       { label: 'Lista', href: '/projects' },
       { label: 'Analytics', href: '/projects/analytics' },
-      { label: 'Tracciamento Ore', href: '/time' },
     ],
   },
   { label: 'Calendario', href: '/calendar', icon: CalendarDays },
@@ -114,7 +113,15 @@ const navigation: NavItem[] = [
     icon: LifeBuoy,
     roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'],
   },
-  { label: 'Team', href: '/team', icon: UsersRound },
+  {
+    label: 'Team',
+    href: '/team',
+    icon: UsersRound,
+    children: [
+      { label: 'Membri', href: '/team' },
+      { label: 'Tracciamento Ore', href: '/time' },
+    ],
+  },
   {
     label: 'Impostazioni',
     href: '/settings',
@@ -133,9 +140,11 @@ const GROUP_SEPARATOR_LABELS = new Set(['Chat', 'Calendario', 'Contenuti', 'Supp
 interface SidebarProps {
   userRole: Role
   sectionAccess?: SectionAccessMap | null
+  unreadChat?: number
+  pendingTaskCount?: number
 }
 
-export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
+export function Sidebar({ userRole, sectionAccess, unreadChat = 0, pendingTaskCount = 0 }: SidebarProps) {
   const pathname = usePathname()
   const { preferences, updatePreference, loaded } = useUserPreferences()
   const [expanded, setExpanded] = useState(true)
@@ -166,7 +175,7 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
       className="flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-white/10 overflow-hidden"
     >
       {/* Logo + Toggle */}
-      <div className="flex items-center h-16 px-3 gap-2">
+      <div className="flex items-center h-14 px-3 gap-2">
         {!expanded ? (
           <button
             onClick={toggleSidebar}
@@ -197,7 +206,7 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
       </div>
 
       {/* Divider */}
-      <div className="border-b border-white/10 mx-3" />
+      <div className="border-b border-white/15 mx-3" />
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-none">
@@ -209,6 +218,11 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
           const prevItem = index > 0 ? filteredNav[index - 1] : null
           const showSeparator = prevItem && GROUP_SEPARATOR_LABELS.has(prevItem.label)
 
+          // Badge count for this item
+          const badgeCount = item.label === 'Chat' ? unreadChat
+            : item.label === 'I Miei Task' ? pendingTaskCount
+            : 0
+
           const navContent = (
             <Link
               href={item.children ? '#' : item.href}
@@ -219,21 +233,28 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
                 }
               }}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors duration-150 relative group',
+                'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors duration-150 relative group',
                 isActive
-                  ? 'bg-white/[0.08] text-white font-medium'
-                  : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-white/[0.05]'
+                  ? 'bg-white/[0.10] text-white font-semibold'
+                  : 'text-sidebar-foreground/60 hover:text-sidebar-foreground/80 hover:bg-white/[0.07]'
               )}
             >
               {isActive && (
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-active" />
               )}
-              <Icon
-                className={cn(
-                  'flex-shrink-0 h-5 w-5',
-                  isActive && 'text-sidebar-active'
+              <span className="relative flex-shrink-0">
+                <Icon
+                  className={cn(
+                    'h-[18px] w-[18px]',
+                    isActive && 'text-sidebar-active'
+                  )}
+                />
+                {!expanded && badgeCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                    {badgeCount > 99 ? '99+' : badgeCount}
+                  </span>
                 )}
-              />
+              </span>
               <AnimatePresence>
                 {expanded && (
                   <motion.span
@@ -247,6 +268,11 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
                   </motion.span>
                 )}
               </AnimatePresence>
+              {expanded && badgeCount > 0 && !item.children && (
+                <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-[11px] font-bold text-white flex-shrink-0">
+                  {badgeCount > 99 ? '99+' : badgeCount}
+                </span>
+              )}
               {expanded && item.children && (
                 <ChevronRight
                   className={cn(
@@ -261,7 +287,7 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
           return (
             <div key={item.label}>
               {showSeparator && (
-                <div className="h-px bg-white/10 mx-3 my-2" />
+                <div className="h-px bg-white/[0.08] mx-3 my-2.5" />
               )}
               <div className="mb-0.5">
                 {!expanded ? (
@@ -279,7 +305,7 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="ml-8 mt-1 space-y-0.5 pb-1 border-l border-white/10 pl-0">
+                      <div className="ml-9 mt-1 space-y-0.5 pb-1 border-l border-white/10 pl-0">
                         {item.children.map((child) => (
                           <Link
                             key={child.href}
@@ -292,7 +318,7 @@ export function Sidebar({ userRole, sectionAccess }: SidebarProps) {
                             )}
                           >
                             <span className={cn(
-                              'w-1.5 h-1.5 rounded-full flex-shrink-0',
+                              'w-1 h-1 rounded-full flex-shrink-0',
                               pathname === child.href ? 'bg-sidebar-active' : 'bg-sidebar-foreground/20'
                             )} />
                             {child.label}

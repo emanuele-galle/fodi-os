@@ -24,11 +24,14 @@ export function ActivityTimeline({ activities, maxItems = 10, title = 'Attività
   return (
     <Card>
       <CardContent>
-        <div className="flex items-center gap-2.5 mb-5">
+        <div className="flex items-center gap-2.5 mb-6">
           <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            <History className="h-4 w-4" />
+            <History className="h-4.5 w-4.5" />
           </div>
-          <h3 className="text-base font-semibold">{title}</h3>
+          <div>
+            <h3 className="text-[15px] font-semibold">{title}</h3>
+            <p className="text-[11px] text-muted mt-0.5">Ultime azioni del team</p>
+          </div>
         </div>
 
         {items.length === 0 ? (

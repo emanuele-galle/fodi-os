@@ -240,8 +240,8 @@ export default function DashboardPage() {
           statusGroups[inv.status].total += parseFloat(inv.total)
         })
         const STATUS_COLORS: Record<string, string> = {
-          PAID: '#059669', SENT: '#4F46E5',
-          OVERDUE: '#DC2626', DRAFT: '#8C8680',
+          PAID: '#0D9488', SENT: '#2563EB',
+          OVERDUE: '#DC2626', DRAFT: '#94A3B8',
         }
         const STATUS_LABELS: Record<string, string> = {
           PAID: 'Pagate', SENT: 'Inviate', OVERDUE: 'Scadute', DRAFT: 'Bozze',
@@ -340,24 +340,27 @@ export default function DashboardPage() {
 
       {/* STAT CARDS */}
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 md:gap-3 mb-6">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[100px] rounded-xl" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 md:gap-3 mb-6 animate-stagger">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6 animate-stagger">
           {stats.map((stat) => (
             <div
               key={stat.label}
               onClick={() => router.push(stat.href)}
-              className="relative overflow-hidden rounded-xl border border-border/30 bg-card px-3 py-2.5 cursor-pointer hover:border-primary/20 transition-colors group touch-manipulation active:scale-[0.97]"
+              className="relative overflow-hidden rounded-xl border border-border/40 bg-card p-4 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-primary/25 transition-all duration-200 group touch-manipulation active:scale-[0.97]"
             >
-              <div className="flex items-center gap-2.5">
-                <div className={`p-1.5 rounded-lg ${stat.color} flex-shrink-0 transition-all duration-300 group-hover:scale-110`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
-                  <stat.icon className="h-4 w-4" />
+              <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl opacity-80" style={{ background: 'currentColor' }} />
+              <div className={`flex flex-col gap-3 ${stat.color}`}>
+                <div className="flex items-center justify-between">
+                  <div className="p-2 rounded-lg flex-shrink-0 transition-all duration-300 group-hover:scale-110" style={{ background: `color-mix(in srgb, currentColor 8%, transparent)` }}>
+                    <stat.icon className="h-4 w-4" />
+                  </div>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg font-bold tracking-tight truncate tabular-nums leading-tight">{stat.value}</p>
-                  <p className="text-[10px] text-muted font-medium truncate leading-tight">{stat.label}</p>
+                  <p className="text-2xl font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
+                  <p className="text-[11px] text-muted font-medium truncate leading-tight mt-1.5">{stat.label}</p>
                 </div>
               </div>
             </div>
@@ -391,25 +394,35 @@ export default function DashboardPage() {
 
       {/* ROW 1: FATTURATO + CASH FLOW */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card>
+        <Card className="overflow-hidden">
           <CardContent>
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-2 rounded-lg bg-accent/10 text-accent">
-                <BarChart3 className="h-4 w-4" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                  <BarChart3 className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <CardTitle>Fatturato Mensile</CardTitle>
+                  <p className="text-[11px] text-muted mt-0.5">Ultimi 12 mesi</p>
+                </div>
               </div>
-              <CardTitle>Fatturato Mensile</CardTitle>
             </div>
             <RevenueChart />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-hidden">
           <CardContent>
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
-                <Wallet className="h-4 w-4" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
+                  <Wallet className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <CardTitle>Cash Flow</CardTitle>
+                  <p className="text-[11px] text-muted mt-0.5">Entrate vs Uscite</p>
+                </div>
               </div>
-              <CardTitle>Cash Flow</CardTitle>
             </div>
             <CashFlowChart />
           </CardContent>
@@ -428,25 +441,35 @@ export default function DashboardPage() {
 
       {/* ROW 3: TREND + PIPELINE */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card>
+        <Card className="overflow-hidden">
           <CardContent>
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                <Activity className="h-4 w-4" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  <Activity className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <CardTitle>Trend Attività</CardTitle>
+                  <p className="text-[11px] text-muted mt-0.5">Ultime 4 settimane</p>
+                </div>
               </div>
-              <CardTitle>Trend Attività</CardTitle>
             </div>
-            <ActivityTrendChart />
+            <ActivityTrendChart height={260} />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-hidden">
           <CardContent>
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-2 rounded-lg bg-accent/10 text-accent">
-                <TrendingUp className="h-4 w-4" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                  <TrendingUp className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <CardTitle>Pipeline Commerciale</CardTitle>
+                  <p className="text-[11px] text-muted mt-0.5">Distribuzione clienti</p>
+                </div>
               </div>
-              <CardTitle>Pipeline Commerciale</CardTitle>
             </div>
             <PipelineFunnel />
           </CardContent>

@@ -128,6 +128,21 @@ export async function POST(
       data: message,
     })
 
+    // Push notification for offline members (no active SSE connection)
+    const offlineMembers = memberUserIds.filter(
+      (id) => id !== userId && !sseManager.isUserConnected(id)
+    )
+    if (offlineMembers.length > 0) {
+      const authorName = `${message.author.firstName} ${message.author.lastName}`
+      for (const memberId of offlineMembers) {
+        sendPush(memberId, {
+          title: `Nuovo messaggio da ${authorName}`,
+          message: sanitizedContent.length > 100 ? sanitizedContent.slice(0, 100) + '...' : sanitizedContent,
+          link: `/chat?channel=${channelId}`,
+        })
+      }
+    }
+
     // Check for @mentions and create notifications
     const mentionRegex = /@(\w+)/g
     const mentions = [...sanitizedContent.matchAll(mentionRegex)]

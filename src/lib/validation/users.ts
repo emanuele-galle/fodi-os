@@ -5,7 +5,11 @@ const VALID_ROLES = ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 
 export const updateProfileSchema = z.object({
   firstName: z.string().min(1, 'Nome obbligatorio').max(100).optional(),
   lastName: z.string().min(1, 'Cognome obbligatorio').max(100).optional(),
+  username: z.string().min(3, 'Username minimo 3 caratteri').max(30, 'Username massimo 30 caratteri').regex(/^[a-zA-Z0-9._-]+$/, 'Solo lettere, numeri, punti, trattini e underscore').optional(),
   phone: z.string().max(30).optional().nullable(),
+  bio: z.string().max(200).optional().nullable(),
+  timezone: z.string().max(50).optional().nullable(),
+  language: z.string().max(10).optional().nullable(),
 })
 
 export const updateUserSchema = z.object({

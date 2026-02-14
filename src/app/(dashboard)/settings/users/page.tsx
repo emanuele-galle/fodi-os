@@ -33,6 +33,7 @@ import {
   Eye,
   EyeOff,
   RotateCcw,
+  LogIn,
 } from 'lucide-react'
 import {
   SECTIONS,
@@ -156,6 +157,9 @@ export default function UsersAdminPage() {
 
   // Avatar upload state
   const [avatarUploading, setAvatarUploading] = useState(false)
+
+  // Impersonate state
+  const [impersonating, setImpersonating] = useState(false)
 
   // Section access state
   const [sectionOverrideActive, setSectionOverrideActive] = useState(false)
@@ -462,6 +466,28 @@ export default function UsersAdminPage() {
       setEditError('Errore di connessione')
     } finally {
       setSectionsSaving(false)
+    }
+  }
+
+  // Impersonate user
+  async function handleImpersonate(targetUserId: string) {
+    setImpersonating(true)
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId }),
+      })
+      if (res.ok) {
+        window.location.href = '/dashboard'
+      } else {
+        const data = await res.json()
+        setEditError(data.error || 'Errore impersonificazione')
+      }
+    } catch {
+      setEditError('Errore di connessione')
+    } finally {
+      setImpersonating(false)
     }
   }
 
@@ -798,6 +824,16 @@ export default function UsersAdminPage() {
                     <Button onClick={handleEditSave} loading={editSaving} className="flex-1">
                       Salva Modifiche
                     </Button>
+                    {editUser.role !== 'ADMIN' && (
+                      <Button
+                        variant="outline"
+                        onClick={() => handleImpersonate(editUser.id)}
+                        loading={impersonating}
+                      >
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Accedi come
+                      </Button>
+                    )}
                   </div>
 
                   {/* Reset Password Section */}
@@ -1228,6 +1264,17 @@ export default function UsersAdminPage() {
                         </button>
                       )}
                     </div>
+
+                    {/* Impersonate button */}
+                    {u.role !== 'ADMIN' && (
+                      <button
+                        onClick={() => handleImpersonate(u.id)}
+                        className="p-1.5 rounded-md text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="Accedi come questo utente"
+                      >
+                        <LogIn className="h-4 w-4" />
+                      </button>
+                    )}
 
                     {/* Edit button */}
                     <button

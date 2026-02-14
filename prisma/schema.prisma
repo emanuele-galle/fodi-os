@@ -13,12 +13,16 @@ datasource db {
 
 model User {
   id          String    @id @default(uuid())
+  username    String    @unique
   email       String    @unique
   password    String
   firstName   String
   lastName    String
   avatarUrl   String?
   phone       String?
+  bio         String?
+  timezone    String?   @default("Europe/Rome")
+  language    String?   @default("it")
   role          Role      @default(DEVELOPER)
   isActive      Boolean   @default(true)
   sectionAccess Json?
@@ -58,6 +62,7 @@ model User {
   workSessions         WorkSession[]
   projectMemberships   ProjectMember[]
 
+  @@index([username])
   @@index([email])
   @@index([role])
   @@index([isActive])

@@ -13,23 +13,45 @@ export async function PATCH(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { firstName, lastName, phone } = parsed.data
+    const { firstName, lastName, username, phone, bio, timezone, language } = parsed.data
+
+    // Check username uniqueness if changed
+    if (username !== undefined) {
+      const existing = await prisma.user.findFirst({
+        where: { username, id: { not: userId } },
+        select: { id: true },
+      })
+      if (existing) {
+        return NextResponse.json(
+          { success: false, error: 'Username già in uso', field: 'username' },
+          { status: 409 }
+        )
+      }
+    }
 
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
         ...(firstName !== undefined && { firstName }),
         ...(lastName !== undefined && { lastName }),
+        ...(username !== undefined && { username }),
         ...(phone !== undefined && { phone }),
+        ...(bio !== undefined && { bio }),
+        ...(timezone !== undefined && { timezone }),
+        ...(language !== undefined && { language }),
       },
       select: {
         id: true,
+        username: true,
         email: true,
         firstName: true,
         lastName: true,
         phone: true,
         avatarUrl: true,
         role: true,
+        bio: true,
+        timezone: true,
+        language: true,
       },
     })
 

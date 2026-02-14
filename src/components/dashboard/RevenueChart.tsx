@@ -107,34 +107,36 @@ export function RevenueChart() {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={240}>
-      <BarChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: -5, bottom: 5 }} barCategoryGap="20%">
         <defs>
           <linearGradient id="gradPaid" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.9} />
-            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0.6} />
+            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={1} />
+            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0.7} />
           </linearGradient>
           <linearGradient id="gradSent" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-warning)" stopOpacity={0.9} />
-            <stop offset="100%" stopColor="var(--color-warning)" stopOpacity={0.6} />
+            <stop offset="0%" stopColor="var(--color-warning)" stopOpacity={1} />
+            <stop offset="100%" stopColor="var(--color-warning)" stopOpacity={0.7} />
           </linearGradient>
           <linearGradient id="gradOverdue" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-destructive)" stopOpacity={0.9} />
-            <stop offset="100%" stopColor="var(--color-destructive)" stopOpacity={0.6} />
+            <stop offset="0%" stopColor="var(--color-destructive)" stopOpacity={1} />
+            <stop offset="100%" stopColor="var(--color-destructive)" stopOpacity={0.7} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-        <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" />
+        <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="var(--color-border)" strokeOpacity={0.4} />
+        <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
         <YAxis
-          tick={{ fontSize: 12, fill: 'var(--color-muted)' }}
+          tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
           stroke="transparent"
-          tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
         />
-        <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
-        <Legend formatter={(v) => LABELS[v] || v} />
+        <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.04, radius: 4 }} />
+        <Legend formatter={(v) => LABELS[v] || v} iconType="circle" iconSize={8} wrapperStyle={{ paddingTop: 12 }} />
         <Bar dataKey="paid" stackId="a" fill="url(#gradPaid)" />
         <Bar dataKey="sent" stackId="a" fill="url(#gradSent)" />
-        <Bar dataKey="overdue" stackId="a" fill="url(#gradOverdue)" radius={[6, 6, 0, 0]} />
+        <Bar dataKey="overdue" stackId="a" fill="url(#gradOverdue)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )

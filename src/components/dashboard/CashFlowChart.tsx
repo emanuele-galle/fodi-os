@@ -101,36 +101,40 @@ export function CashFlowChart() {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={240}>
-      <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+    <ResponsiveContainer width="100%" height={280}>
+      <AreaChart data={data} margin={{ top: 8, right: 8, left: -5, bottom: 5 }}>
         <defs>
           <linearGradient id="gradEntrate" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.25} />
-            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0.02} />
+            <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.3} />
+            <stop offset="50%" stopColor="var(--color-accent)" stopOpacity={0.08} />
+            <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0.01} />
           </linearGradient>
           <linearGradient id="gradUscite" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-destructive)" stopOpacity={0.2} />
-            <stop offset="100%" stopColor="var(--color-destructive)" stopOpacity={0.02} />
+            <stop offset="0%" stopColor="var(--color-destructive)" stopOpacity={0.25} />
+            <stop offset="50%" stopColor="var(--color-destructive)" stopOpacity={0.06} />
+            <stop offset="100%" stopColor="var(--color-destructive)" stopOpacity={0.01} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-        <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" />
+        <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="var(--color-border)" strokeOpacity={0.4} />
+        <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
         <YAxis
-          tick={{ fontSize: 12, fill: 'var(--color-muted)' }}
+          tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
           stroke="transparent"
-          tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
         />
-        <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--color-primary)', strokeDasharray: '4 4', strokeOpacity: 0.5 }} />
-        <Legend formatter={(v) => v === 'entrate' ? 'Entrate' : 'Uscite'} />
+        <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--color-primary)', strokeDasharray: '4 4', strokeOpacity: 0.3 }} />
+        <Legend formatter={(v) => v === 'entrate' ? 'Entrate' : 'Uscite'} iconType="circle" iconSize={8} wrapperStyle={{ paddingTop: 12 }} />
         <Area
           type="monotone"
           dataKey="entrate"
           stroke="var(--color-accent)"
           fillOpacity={1}
           fill="url(#gradEntrate)"
-          strokeWidth={2}
+          strokeWidth={2.5}
           dot={false}
-          activeDot={{ r: 5, fill: 'var(--color-accent)', stroke: 'white', strokeWidth: 2 }}
+          activeDot={{ r: 6, fill: 'var(--color-accent)', stroke: 'var(--color-card)', strokeWidth: 3 }}
         />
         <Area
           type="monotone"
@@ -138,9 +142,9 @@ export function CashFlowChart() {
           stroke="var(--color-destructive)"
           fillOpacity={1}
           fill="url(#gradUscite)"
-          strokeWidth={2}
+          strokeWidth={2.5}
           dot={false}
-          activeDot={{ r: 5, fill: 'var(--color-destructive)', stroke: 'white', strokeWidth: 2 }}
+          activeDot={{ r: 6, fill: 'var(--color-destructive)', stroke: 'var(--color-card)', strokeWidth: 3 }}
         />
       </AreaChart>
     </ResponsiveContainer>

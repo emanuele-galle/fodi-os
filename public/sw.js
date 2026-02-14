@@ -1,17 +1,12 @@
-const CACHE_NAME = 'fodi-os-v1'
-const SHELL_ASSETS = [
-  '/',
-  '/dashboard',
-  '/tasks',
-  '/chat',
+const CACHE_NAME = 'fodi-os-v2'
+const STATIC_ASSETS = [
   '/manifest.json',
-  '/favicon.svg',
-  '/logo-fodi.png',
+  '/favicon.png',
 ]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   )
   self.skipWaiting()
 })
@@ -29,6 +24,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {}
   const isCall = (data.title || '').includes('Chiamata') || (data.title || '').includes('meeting')
+  const isChatMessage = (data.title || '').startsWith('Nuovo messaggio da')
 
   const options = {
     body: data.message || '',
@@ -37,7 +33,6 @@ self.addEventListener('push', (event) => {
     data: { url: data.link || '/dashboard' },
   }
 
-  // For call notifications: add vibration pattern and require interaction
   if (isCall) {
     options.vibrate = [300, 200, 300, 200, 300, 200, 300]
     options.requireInteraction = true
@@ -47,6 +42,12 @@ self.addEventListener('push', (event) => {
       { action: 'answer', title: 'Rispondi' },
       { action: 'dismiss', title: 'Rifiuta' },
     ]
+  } else if (isChatMessage) {
+    options.vibrate = [100, 50, 100]
+    // Deduplicate by channel (extract channel from link)
+    const channelMatch = (data.link || '').match(/channel=([^&]+)/)
+    options.tag = channelMatch ? `chat-${channelMatch[1]}` : 'chat-message'
+    options.renotify = true
   }
 
   event.waitUntil(
@@ -57,13 +58,11 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
 
-  // Handle call action buttons
   const action = event.action
   const url = action === 'dismiss' ? '/dashboard' : (event.notification.data.url || '/dashboard')
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window' }).then((clients) => {
-      // Focus existing window if available
       for (const client of clients) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           client.navigate(url)
@@ -78,16 +77,27 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 
-  // Network-first for API calls
+  // Never intercept API calls or HTML navigation requests
   if (event.request.url.includes('/api/')) return
+  if (event.request.mode === 'navigate') return
+
+  // Only cache static assets (_next/static, images, fonts)
+  const url = new URL(event.request.url)
+  const isStaticAsset = url.pathname.startsWith('/_next/static/') ||
+    url.pathname.match(/\.(png|jpg|jpeg|svg|gif|ico|woff2?|ttf|css|js)$/)
+
+  if (!isStaticAsset) return
 
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        const clone = response.clone()
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+    caches.match(event.request).then((cached) => {
+      const fetching = fetch(event.request).then((response) => {
+        if (response.ok) {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+        }
         return response
       })
-      .catch(() => caches.match(event.request))
+      return cached || fetching
+    })
   )
 })

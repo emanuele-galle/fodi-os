@@ -44,11 +44,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Un utente con questa email esiste gia' }, { status: 409 })
     }
 
+    // Generate username from firstName (lowercase, no spaces)
+    let baseUsername = firstName.toLowerCase().replace(/[^a-z0-9]/g, '')
+    let username = baseUsername
+    let suffix = 1
+    while (await prisma.user.findUnique({ where: { username }, select: { id: true } })) {
+      username = `${baseUsername}${suffix}`
+      suffix++
+    }
+
     const tempPassword = generateTempPassword()
     const hashedPassword = await hashPassword(tempPassword)
 
     const user = await prisma.user.create({
       data: {
+        username,
         email,
         firstName,
         lastName,
@@ -59,6 +69,7 @@ export async function POST(request: NextRequest) {
       },
       select: {
         id: true,
+        username: true,
         firstName: true,
         lastName: true,
         email: true,

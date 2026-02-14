@@ -151,7 +151,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
   }
 
   return (
-    <header className="h-16 glass-header flex items-center justify-between px-6 relative z-40">
+    <header className="h-14 glass-header flex items-center justify-between px-6 relative z-40 border-b border-border/50">
       {/* Search trigger */}
       <button
         onClick={onOpenCommandPalette}

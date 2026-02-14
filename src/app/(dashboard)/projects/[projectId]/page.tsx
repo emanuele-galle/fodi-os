@@ -409,6 +409,7 @@ export default function ProjectDetailPage() {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
     }
     if (body.estimatedHours) body.estimatedHours = parseFloat(body.estimatedHours as string)
+    if (body.dueDate) body.dueDate = new Date(body.dueDate as string).toISOString()
     if (taskAssigneeIds.length > 0) body.assigneeIds = taskAssigneeIds
     if (selectedFolderId) body.folderId = selectedFolderId
     try {
@@ -422,6 +423,9 @@ export default function ProjectDetailPage() {
         setTaskAssigneeIds([])
         setTaskModalOpen(false)
         fetchProject()
+      } else {
+        const err = await res.json().catch(() => null)
+        console.error('[Task create failed]', res.status, err)
       }
     } finally {
       setSubmitting(false)

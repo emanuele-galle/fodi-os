@@ -35,12 +35,15 @@ export function TeamActivityCard({
   return (
     <Card>
       <CardContent>
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
-              <Users className="h-4 w-4" />
+              <Users className="h-4.5 w-4.5" />
             </div>
-            <h3 className="text-base font-semibold">Attività Team</h3>
+            <div>
+              <h3 className="text-[15px] font-semibold">Attività Team</h3>
+              <p className="text-[11px] text-muted mt-0.5">Questa settimana</p>
+            </div>
           </div>
           {onManageTeam && (
             <button
@@ -56,7 +59,7 @@ export function TeamActivityCard({
         <div className="flex items-center gap-2 mb-5">
           <Clock className="h-4 w-4 text-muted" />
           <span className="text-sm text-muted">Ore questa settimana</span>
-          <span className="text-xl font-bold ml-auto tabular-nums">{totalHours.toFixed(1)}h</span>
+          <span className="text-2xl font-bold ml-auto tabular-nums">{totalHours.toFixed(1)}h</span>
         </div>
 
         {/* Breakdown bars */}
@@ -72,7 +75,7 @@ export function TeamActivityCard({
                 <span className="text-muted font-medium">{item.label}</span>
                 <span className="font-semibold tabular-nums">{item.value}%</span>
               </div>
-              <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+              <div className="h-2 bg-secondary rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${(item.value / maxValue) * 100}%` }}

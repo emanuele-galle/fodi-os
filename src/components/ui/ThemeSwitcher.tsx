@@ -1,21 +1,20 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Sun, Moon, Sparkles } from 'lucide-react'
+import { Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-type Theme = 'light' | 'dark' | 'midnight'
+type Theme = 'light' | 'dark'
 
 const THEMES: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: 'light', label: 'Chiaro', icon: Sun },
   { value: 'dark', label: 'Scuro', icon: Moon },
-  { value: 'midnight', label: 'Mezzanotte', icon: Sparkles },
 ]
 
 function getStoredTheme(): Theme {
   if (typeof window === 'undefined') return 'light'
   const stored = localStorage.getItem('fodi-theme')
-  if (stored === 'light' || stored === 'dark' || stored === 'midnight') return stored
+  if (stored === 'light' || stored === 'dark') return stored
   return 'light'
 }
 

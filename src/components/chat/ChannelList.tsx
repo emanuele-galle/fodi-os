@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Search, Plus, Hash, Lock, Users, FolderKanban, ChevronDown, ChevronRight, MessageCircle } from 'lucide-react'
+import { Search, Plus, Hash, Lock, FolderKanban, ChevronDown, MessageCircle } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { ChatUnreadBadge } from './ChatUnreadBadge'
 
@@ -41,7 +41,6 @@ interface ChannelListProps {
 const TYPE_ICON: Record<string, React.ElementType> = {
   PUBLIC: Hash,
   PRIVATE: Lock,
-  DIRECT: Users,
   PROJECT: FolderKanban,
 }
 
@@ -76,244 +75,306 @@ function isRecentlyActive(lastLoginAt: string | null): boolean {
 export function ChannelList({ channels, selectedId, onSelect, onNewChannel, teamMembers = [], currentUserId, onStartDM }: ChannelListProps) {
   const [search, setSearch] = useState('')
   const [teamExpanded, setTeamExpanded] = useState(true)
+  const [channelsExpanded, setChannelsExpanded] = useState(true)
 
   const filtered = channels.filter((ch) =>
     ch.name.toLowerCase().includes(search.toLowerCase())
   )
 
+  // DM channels mapped by member name for unread badge
   const directChannels = filtered.filter(ch => ch.type === 'DIRECT')
   const regularChannels = filtered.filter(ch => ch.type !== 'DIRECT')
+
+  // Build a map of DM channel by member name for quick lookup
+  const dmByMemberName = new Map<string, ChannelItem>()
+  for (const dm of directChannels) {
+    dmByMemberName.set(dm.name.toLowerCase(), dm)
+  }
+
+  // Find DM for a member
+  function findDmForMember(member: TeamMember): ChannelItem | undefined {
+    const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
+    for (const dm of directChannels) {
+      if (dm.name.toLowerCase().includes(fullName) || fullName.includes(dm.name.toLowerCase())) {
+        return dm
+      }
+    }
+    return undefined
+  }
 
   const onlineMembers = teamMembers.filter((m) => isRecentlyActive(m.lastLoginAt) && m.id !== currentUserId)
   const offlineMembers = teamMembers.filter((m) => !isRecentlyActive(m.lastLoginAt) && m.id !== currentUserId)
   const onlineCount = onlineMembers.length
+
+  // Filter members by search
+  const filterMember = (m: TeamMember) =>
+    !search || `${m.firstName} ${m.lastName}`.toLowerCase().includes(search.toLowerCase())
+
+  const filteredOnline = onlineMembers.filter(filterMember)
+  const filteredOffline = offlineMembers.filter(filterMember)
+
+  function handleMemberClick(member: TeamMember) {
+    // If there's already a DM channel, select it directly
+    const existingDm = findDmForMember(member)
+    if (existingDm) {
+      onSelect(existingDm.id)
+    } else {
+      // Create a new DM
+      onStartDM?.(member.id)
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-4 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-bold tracking-tight">Chat</h2>
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <MessageCircle className="h-4.5 w-4.5 text-primary" />
+            </div>
+            <h2 className="text-[15px] font-bold tracking-tight">Chat</h2>
           </div>
           <button
             onClick={onNewChannel}
             title="Nuovo Canale"
-            className="h-10 w-10 md:h-8 md:w-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-all duration-200 hover:scale-105 touch-manipulation"
+            className="h-8 w-8 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-all duration-200 hover:scale-105 touch-manipulation"
           >
-            <Plus className="h-5 w-5 md:h-4 md:w-4" />
+            <Plus className="h-4 w-4" />
           </button>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted/60" />
           <input
-            placeholder="Cerca..."
+            placeholder="Cerca persone o canali..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2.5 md:py-2 text-base md:text-sm rounded-lg bg-secondary/60 border-0 placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:bg-secondary transition-all duration-200"
+            className="w-full pl-9 pr-3 py-2 text-[13px] rounded-lg bg-secondary/50 border border-border/30 placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 focus:bg-card transition-all duration-200"
           />
         </div>
       </div>
 
-      {/* Team members */}
-      {teamMembers.length > 0 && (
-        <div className="px-2">
-          <button
-            onClick={() => setTeamExpanded(!teamExpanded)}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-left rounded-md hover:bg-secondary/50 transition-colors duration-150"
-          >
-            <span className={cn(
-              'transition-transform duration-200',
-              teamExpanded ? 'rotate-0' : '-rotate-90'
-            )}>
-              <ChevronDown className="h-3 w-3 text-muted-foreground/60" />
-            </span>
-            <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Team</span>
-            {onlineCount > 0 && (
-              <span className="ml-auto flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">{onlineCount}</span>
-              </span>
-            )}
-          </button>
-          {teamExpanded && (
-            <div className="pb-2 space-y-0.5 max-h-48 overflow-y-auto">
-              {onlineMembers.map((member) => (
-                <div
-                  key={member.id}
-                  onClick={() => onStartDM?.(member.id)}
-                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-all duration-150 cursor-pointer group"
-                >
-                  <div className="relative flex-shrink-0">
-                    <Avatar name={`${member.firstName} ${member.lastName}`} src={member.avatarUrl} size="sm" className="!h-7 !w-7 !text-[10px] ring-2 ring-emerald-500/20 group-hover:ring-emerald-500/40 transition-all" />
-                    <span className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-[2px] border-card bg-emerald-500 shadow-sm" />
-                  </div>
-                  <span className="text-[13px] text-foreground truncate font-medium">{member.firstName} {member.lastName}</span>
-                  <span className={cn('text-[10px] font-semibold ml-auto flex-shrink-0 px-1.5 py-0.5 rounded-md', ROLE_COLORS[member.role] || 'bg-gray-500/10 text-gray-500')}>
-                    {ROLE_LABELS[member.role] || member.role}
-                  </span>
-                </div>
-              ))}
-              {offlineMembers.map((member) => (
-                <div
-                  key={member.id}
-                  onClick={() => onStartDM?.(member.id)}
-                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-secondary/60 transition-all duration-150 cursor-pointer group opacity-50 hover:opacity-70"
-                >
-                  <div className="relative flex-shrink-0">
-                    <Avatar name={`${member.firstName} ${member.lastName}`} src={member.avatarUrl} size="sm" className="!h-7 !w-7 !text-[10px] grayscale-[30%]" />
-                    <span className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-[2px] border-card bg-gray-400" />
-                  </div>
-                  <span className="text-[13px] text-foreground truncate">{member.firstName} {member.lastName}</span>
-                  <span className={cn('text-[10px] font-semibold ml-auto flex-shrink-0 px-1.5 py-0.5 rounded-md', ROLE_COLORS[member.role] || 'bg-gray-500/10 text-gray-500')}>
-                    {ROLE_LABELS[member.role] || member.role}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <div className="flex-1 overflow-y-auto scrollbar-none">
+        {/* Team members (clicking opens DM directly) */}
+        {teamMembers.length > 0 && (
+          <div className="px-2 mb-1">
+            <button
+              onClick={() => setTeamExpanded(!teamExpanded)}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left rounded-md hover:bg-secondary/40 transition-colors duration-150"
+            >
+              <ChevronDown className={cn(
+                'h-3 w-3 text-muted/60 transition-transform duration-200',
+                !teamExpanded && '-rotate-90'
+              )} />
+              <span className="text-[11px] font-semibold text-muted/70 uppercase tracking-wider">Persone</span>
+              {onlineCount > 0 && (
+                <span className="ml-auto flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">{onlineCount}</span>
+                </span>
+              )}
+            </button>
+            {teamExpanded && (
+              <div className="pb-1 space-y-px mt-0.5">
+                {filteredOnline.map((member) => {
+                  const dm = findDmForMember(member)
+                  const isSelected = dm ? dm.id === selectedId : false
+                  const hasUnread = dm?.hasUnread && !isSelected
 
-      {/* Direct Messages */}
-      {directChannels.length > 0 && (
-        <>
-          <div className="px-2 pt-1">
-            <div className="flex items-center gap-2 px-2 py-1.5">
-              <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Messaggi Diretti</span>
-              <span className="text-[10px] text-muted-foreground/50 font-medium">{directChannels.length}</span>
-            </div>
-          </div>
-          <div className="px-2 pb-1 space-y-0.5">
-            {directChannels.map((channel) => {
-              const isSelected = channel.id === selectedId
-              return (
-                <button
-                  key={channel.id}
-                  onClick={() => onSelect(channel.id)}
-                  className={cn(
-                    'w-full flex items-start gap-2.5 px-3 py-2.5 text-left rounded-lg transition-all duration-150 relative group',
-                    isSelected
-                      ? 'bg-primary/10 shadow-sm'
-                      : 'hover:bg-secondary/60'
-                  )}
-                >
-                  <div className={cn(
-                    'flex-shrink-0 mt-0.5 h-8 w-8 rounded-lg flex items-center justify-center transition-colors',
-                    isSelected ? 'bg-primary/20 text-primary' : 'bg-secondary/80 text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'
-                  )}>
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={cn(
-                        'text-[13px] truncate leading-tight',
-                        isSelected ? 'text-primary font-semibold' : 'text-foreground font-medium',
-                        channel.hasUnread && !isSelected && 'font-bold text-foreground'
-                      )}>
-                        {channel.name}
-                      </span>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        {channel.lastMessage && (
-                          <span className="text-[10px] text-muted-foreground/60">
-                            {formatTime(channel.lastMessage.createdAt)}
+                  return (
+                    <button
+                      key={member.id}
+                      onClick={() => handleMemberClick(member)}
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 text-left group',
+                        isSelected
+                          ? 'bg-primary/10'
+                          : 'hover:bg-secondary/50'
+                      )}
+                    >
+                      <div className="relative flex-shrink-0">
+                        <Avatar name={`${member.firstName} ${member.lastName}`} src={member.avatarUrl} size="sm" className="!h-8 !w-8 !text-[11px]" />
+                        <span className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-2 border-card bg-emerald-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={cn(
+                            'text-[13px] truncate',
+                            isSelected ? 'text-primary font-semibold' : 'text-foreground font-medium',
+                            hasUnread && 'font-bold'
+                          )}>
+                            {member.firstName} {member.lastName}
+                          </span>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {dm?.lastMessage && (
+                              <span className="text-[10px] text-muted/50">
+                                {formatTime(dm.lastMessage.createdAt)}
+                              </span>
+                            )}
+                            {hasUnread && <ChatUnreadBadge />}
+                          </div>
+                        </div>
+                        {dm?.lastMessage ? (
+                          <p className={cn(
+                            'text-[11px] truncate mt-0.5',
+                            hasUnread ? 'text-muted/70' : 'text-muted/45'
+                          )}>
+                            {dm.lastMessage.content}
+                          </p>
+                        ) : (
+                          <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-md', ROLE_COLORS[member.role] || 'bg-gray-500/10 text-gray-500')}>
+                            {ROLE_LABELS[member.role] || member.role}
                           </span>
                         )}
-                        {channel.hasUnread && !isSelected && (
-                          <ChatUnreadBadge />
+                      </div>
+                    </button>
+                  )
+                })}
+                {filteredOffline.map((member) => {
+                  const dm = findDmForMember(member)
+                  const isSelected = dm ? dm.id === selectedId : false
+                  const hasUnread = dm?.hasUnread && !isSelected
+
+                  return (
+                    <button
+                      key={member.id}
+                      onClick={() => handleMemberClick(member)}
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 text-left group',
+                        isSelected
+                          ? 'bg-primary/10'
+                          : 'hover:bg-secondary/50',
+                        !hasUnread && !isSelected && 'opacity-50 hover:opacity-70'
+                      )}
+                    >
+                      <div className="relative flex-shrink-0">
+                        <Avatar name={`${member.firstName} ${member.lastName}`} src={member.avatarUrl} size="sm" className="!h-8 !w-8 !text-[11px]" />
+                        <span className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full border-2 border-card bg-gray-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={cn(
+                            'text-[13px] truncate',
+                            isSelected ? 'text-primary font-semibold' : 'text-foreground font-medium',
+                            hasUnread && 'font-bold opacity-100'
+                          )}>
+                            {member.firstName} {member.lastName}
+                          </span>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {dm?.lastMessage && (
+                              <span className="text-[10px] text-muted/50">
+                                {formatTime(dm.lastMessage.createdAt)}
+                              </span>
+                            )}
+                            {hasUnread && <ChatUnreadBadge />}
+                          </div>
+                        </div>
+                        {dm?.lastMessage ? (
+                          <p className="text-[11px] truncate mt-0.5 text-muted/45">
+                            {dm.lastMessage.content}
+                          </p>
+                        ) : (
+                          <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-md', ROLE_COLORS[member.role] || 'bg-gray-500/10 text-gray-500')}>
+                            {ROLE_LABELS[member.role] || member.role}
+                          </span>
                         )}
                       </div>
-                    </div>
-                    {channel.lastMessage && (
-                      <p className={cn(
-                        'text-[12px] truncate mt-0.5 leading-tight',
-                        channel.hasUnread && !isSelected ? 'text-muted-foreground/80' : 'text-muted-foreground/50'
-                      )}>
-                        <span className="font-medium">{channel.lastMessage.authorName.split(' ')[0]}:</span>{' '}
-                        {channel.lastMessage.content}
-                      </p>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        </>
-      )}
+        )}
 
-      {/* Channels */}
-      <div className="px-2 pt-1">
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Canali</span>
-          <span className="text-[10px] text-muted-foreground/50 font-medium">{regularChannels.length}</span>
-        </div>
-      </div>
+        {/* Separator */}
+        {teamMembers.length > 0 && regularChannels.length > 0 && (
+          <div className="h-px bg-border/30 mx-4 my-1" />
+        )}
 
-      <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
-        {regularChannels.length === 0 && directChannels.length === 0 ? (
+        {/* Channels */}
+        {regularChannels.length > 0 && (
+          <div className="px-2">
+            <button
+              onClick={() => setChannelsExpanded(!channelsExpanded)}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left rounded-md hover:bg-secondary/40 transition-colors duration-150"
+            >
+              <ChevronDown className={cn(
+                'h-3 w-3 text-muted/60 transition-transform duration-200',
+                !channelsExpanded && '-rotate-90'
+              )} />
+              <span className="text-[11px] font-semibold text-muted/70 uppercase tracking-wider">Canali</span>
+              <span className="text-[10px] text-muted/40 font-medium">{regularChannels.length}</span>
+            </button>
+            {channelsExpanded && (
+              <div className="pb-2 space-y-px mt-0.5">
+                {regularChannels.map((channel) => {
+                  const Icon = TYPE_ICON[channel.type] || Hash
+                  const isSelected = channel.id === selectedId
+
+                  return (
+                    <button
+                      key={channel.id}
+                      onClick={() => onSelect(channel.id)}
+                      className={cn(
+                        'w-full flex items-start gap-2.5 px-2.5 py-2 text-left rounded-lg transition-all duration-150 relative group',
+                        isSelected
+                          ? 'bg-primary/10'
+                          : 'hover:bg-secondary/50'
+                      )}
+                    >
+                      <div className={cn(
+                        'flex-shrink-0 mt-0.5 h-8 w-8 rounded-lg flex items-center justify-center transition-colors',
+                        isSelected ? 'bg-primary/20 text-primary' : 'bg-secondary/60 text-muted group-hover:bg-secondary group-hover:text-foreground'
+                      )}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={cn(
+                            'text-[13px] truncate leading-tight',
+                            isSelected ? 'text-primary font-semibold' : 'text-foreground font-medium',
+                            channel.hasUnread && !isSelected && 'font-bold text-foreground'
+                          )}>
+                            {channel.name}
+                          </span>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {channel.lastMessage && (
+                              <span className="text-[10px] text-muted/50">
+                                {formatTime(channel.lastMessage.createdAt)}
+                              </span>
+                            )}
+                            {channel.hasUnread && !isSelected && (
+                              <ChatUnreadBadge />
+                            )}
+                          </div>
+                        </div>
+                        {channel.lastMessage && (
+                          <p className={cn(
+                            'text-[11px] truncate mt-0.5 leading-tight',
+                            channel.hasUnread && !isSelected ? 'text-muted/70' : 'text-muted/45'
+                          )}>
+                            <span className="font-medium">{channel.lastMessage.authorName.split(' ')[0]}:</span>{' '}
+                            {channel.lastMessage.content}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {regularChannels.length === 0 && teamMembers.length === 0 && (
           <div className="text-center py-10 px-4">
             <div className="h-10 w-10 rounded-xl bg-secondary/80 mx-auto mb-3 flex items-center justify-center">
-              <MessageCircle className="h-5 w-5 text-muted-foreground/50" />
+              <MessageCircle className="h-5 w-5 text-muted/50" />
             </div>
-            <p className="text-sm text-muted-foreground/70 font-medium">Nessun canale</p>
-            <p className="text-xs text-muted-foreground/40 mt-1">Crea il primo canale per iniziare</p>
+            <p className="text-sm text-muted/70 font-medium">Nessun canale</p>
+            <p className="text-xs text-muted/40 mt-1">Crea il primo canale per iniziare</p>
           </div>
-        ) : (
-          regularChannels.map((channel) => {
-            const Icon = TYPE_ICON[channel.type] || Hash
-            const isSelected = channel.id === selectedId
-
-            return (
-              <button
-                key={channel.id}
-                onClick={() => onSelect(channel.id)}
-                className={cn(
-                  'w-full flex items-start gap-2.5 px-3 py-2.5 text-left rounded-lg transition-all duration-150 relative group',
-                  isSelected
-                    ? 'bg-primary/10 shadow-sm'
-                    : 'hover:bg-secondary/60'
-                )}
-              >
-                <div className={cn(
-                  'flex-shrink-0 mt-0.5 h-8 w-8 rounded-lg flex items-center justify-center transition-colors',
-                  isSelected ? 'bg-primary/20 text-primary' : 'bg-secondary/80 text-muted-foreground group-hover:bg-secondary group-hover:text-foreground'
-                )}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={cn(
-                      'text-[13px] truncate leading-tight',
-                      isSelected ? 'text-primary font-semibold' : 'text-foreground font-medium',
-                      channel.hasUnread && !isSelected && 'font-bold text-foreground'
-                    )}>
-                      {channel.name}
-                    </span>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {channel.lastMessage && (
-                        <span className="text-[10px] text-muted-foreground/60">
-                          {formatTime(channel.lastMessage.createdAt)}
-                        </span>
-                      )}
-                      {channel.hasUnread && !isSelected && (
-                        <ChatUnreadBadge />
-                      )}
-                    </div>
-                  </div>
-                  {channel.lastMessage && (
-                    <p className={cn(
-                      'text-[12px] truncate mt-0.5 leading-tight',
-                      channel.hasUnread && !isSelected ? 'text-muted-foreground/80' : 'text-muted-foreground/50'
-                    )}>
-                      <span className="font-medium">{channel.lastMessage.authorName.split(' ')[0]}:</span>{' '}
-                      {channel.lastMessage.content}
-                    </p>
-                  )}
-                </div>
-              </button>
-            )
-          })
         )}
       </div>
     </div>

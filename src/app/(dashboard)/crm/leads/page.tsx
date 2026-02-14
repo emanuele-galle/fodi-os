@@ -2,56 +2,32 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { UserPlus, Search, ChevronLeft, ChevronRight, ArrowRightLeft, AlertCircle } from 'lucide-react'
+import { UserPlus, Search, ChevronLeft, ChevronRight, AlertCircle, ArrowRightLeft, Mail, Phone, Building2, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { formatCurrency } from '@/lib/utils'
 
-interface Lead {
+interface Client {
   id: string
-  name: string
-  email: string
-  company: string | null
-  phone: string | null
-  service: string | null
-  message: string
-  source: string
+  companyName: string
   status: string
-  notes: string | null
-  assignee: { id: string; firstName: string; lastName: string } | null
+  industry: string | null
+  website: string | null
+  totalRevenue: string
+  _count?: { contacts: number; projects: number }
   createdAt: string
-}
-
-const STATUS_OPTIONS = [
-  { value: '', label: 'Tutti gli stati' },
-  { value: 'NEW', label: 'Nuovo' },
-  { value: 'CONTACTED', label: 'Contattato' },
-  { value: 'QUALIFIED', label: 'Qualificato' },
-  { value: 'CONVERTED', label: 'Convertito' },
-  { value: 'LOST', label: 'Perso' },
-]
-
-
-const STATUS_LABELS: Record<string, string> = {
-  NEW: 'Nuovo',
-  CONTACTED: 'Contattato',
-  QUALIFIED: 'Qualificato',
-  CONVERTED: 'Convertito',
-  LOST: 'Perso',
 }
 
 export default function LeadsPage() {
   const router = useRouter()
-  const [leads, setLeads] = useState<Lead[]>([])
+  const [leads, setLeads] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
-  const [converting, setConverting] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const limit = 20
 
@@ -59,10 +35,13 @@ export default function LeadsPage() {
     setLoading(true)
     setFetchError(null)
     try {
-      const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+        status: 'LEAD',
+      })
       if (search) params.set('search', search)
-      if (statusFilter) params.set('status', statusFilter)
-      const res = await fetch(`/api/leads?${params}`)
+      const res = await fetch(`/api/clients?${params}`)
       if (res.ok) {
         const data = await res.json()
         setLeads(data.items || [])
@@ -75,7 +54,7 @@ export default function LeadsPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, statusFilter])
+  }, [page, search])
 
   useEffect(() => {
     fetchLeads()
@@ -83,56 +62,41 @@ export default function LeadsPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [search, statusFilter])
+  }, [search])
 
   const totalPages = Math.ceil(total / limit)
-
-  async function handleConvert(lead: Lead) {
-    setConverting(lead.id)
-    try {
-      const res = await fetch('/api/clients', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          companyName: lead.company || lead.name,
-          status: 'LEAD',
-          source: lead.source,
-          notes: `Convertito da lead: ${lead.name} (${lead.email})\n\nMessaggio originale: ${lead.message}`,
-        }),
-      })
-      if (res.ok) {
-        router.push('/crm')
-      }
-    } finally {
-      setConverting(null)
-    }
-  }
 
   return (
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-semibold">Leads</h1>
-          <p className="text-xs md:text-sm text-muted mt-1">Lead da form e webhook esterni</p>
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
+            <UserPlus className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-semibold">Leads</h1>
+            <p className="text-xs md:text-sm text-muted mt-0.5">Clienti in fase di acquisizione</p>
+          </div>
         </div>
+        <Button onClick={() => router.push('/crm')} variant="outline" size="sm">
+          Tutti i clienti
+        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
           <Input
-            placeholder="Cerca per nome o email..."
+            placeholder="Cerca per nome azienda..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
           />
         </div>
-        <Select
-          options={STATUS_OPTIONS}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-full sm:w-48"
-        />
+        <div className="flex items-center gap-2 text-sm text-muted">
+          <Badge status="LEAD">Lead</Badge>
+          <span>{total} totali</span>
+        </div>
       </div>
 
       {fetchError && (
@@ -148,14 +112,14 @@ export default function LeadsPage() {
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full" />
+            <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
         </div>
       ) : leads.length === 0 ? (
         <EmptyState
           icon={UserPlus}
           title="Nessun lead trovato"
-          description={search || statusFilter ? 'Prova a modificare i filtri di ricerca.' : 'I lead arriveranno da form e webhook esterni.'}
+          description={search ? 'Prova a modificare la ricerca.' : 'Nessun cliente con status Lead al momento.'}
         />
       ) : (
         <>
@@ -164,37 +128,25 @@ export default function LeadsPage() {
             {leads.map((lead) => (
               <div
                 key={lead.id}
-                className="rounded-lg border border-border bg-card p-4 space-y-2 touch-manipulation"
+                onClick={() => router.push(`/crm/${lead.id}`)}
+                className="rounded-xl border border-border/40 bg-card p-4 space-y-2.5 touch-manipulation active:scale-[0.98] cursor-pointer hover:shadow-[var(--shadow-sm)] transition-all"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{lead.name}</p>
-                    <p className="text-xs text-muted truncate">{lead.email}</p>
+                    <p className="font-semibold text-sm truncate">{lead.companyName}</p>
+                    {lead.industry && (
+                      <p className="text-xs text-muted mt-0.5 flex items-center gap-1">
+                        <Building2 className="h-3 w-3" />
+                        {lead.industry}
+                      </p>
+                    )}
                   </div>
-                  <Badge status={lead.status}>
-                    {STATUS_LABELS[lead.status] || lead.status}
-                  </Badge>
+                  <Badge status="LEAD">Lead</Badge>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted">
-                  {lead.company && <span className="truncate">{lead.company}</span>}
-                  {lead.company && lead.service && <span>-</span>}
-                  {lead.service && <span className="truncate">{lead.service}</span>}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted">
-                    {new Date(lead.createdAt).toLocaleDateString('it-IT')}
-                  </span>
-                  {lead.status !== 'CONVERTED' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      loading={converting === lead.id}
-                      onClick={() => handleConvert(lead)}
-                      className="touch-manipulation"
-                    >
-                      <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />
-                      Converti
-                    </Button>
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <span>{new Date(lead.createdAt).toLocaleDateString('it-IT')}</span>
+                  {lead._count && (
+                    <span>{lead._count.contacts} contatti</span>
                   )}
                 </div>
               </div>
@@ -202,55 +154,62 @@ export default function LeadsPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
+          <div className="hidden md:block rounded-xl border border-border/30 overflow-hidden bg-card">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border/30">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Nome</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Azienda</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Servizio</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Stato</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Data</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Azioni</th>
+                <tr className="border-b border-border/30 bg-secondary/30">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider">Azienda</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider">Settore</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider hidden lg:table-cell">Sito Web</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider">Contatti</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider">Data</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-muted/80 uppercase tracking-wider">Azioni</th>
                 </tr>
               </thead>
               <tbody>
                 {leads.map((lead) => (
                   <tr
                     key={lead.id}
-                    className="border-b border-border/10 hover:bg-secondary/8 transition-colors cursor-pointer group even:bg-secondary/[0.03]"
+                    onClick={() => router.push(`/crm/${lead.id}`)}
+                    className="border-b border-border/10 hover:bg-secondary/30 transition-colors cursor-pointer group"
                   >
-                    <td className="px-4 py-3.5 font-medium">{lead.name}</td>
-                    <td className="px-4 py-3.5 text-muted">{lead.email}</td>
-                    <td className="px-4 py-3.5 text-muted">
-                      {lead.company || '—'}
+                    <td className="px-4 py-3 font-medium">{lead.companyName}</td>
+                    <td className="px-4 py-3 text-muted">{lead.industry || '—'}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      {lead.website ? (
+                        <a
+                          href={lead.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-primary hover:underline text-xs flex items-center gap-1"
+                        >
+                          <Globe className="h-3 w-3" />
+                          {lead.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                        </a>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3.5 hidden lg:table-cell text-muted">
-                      {lead.service || '—'}
+                    <td className="px-4 py-3 text-muted tabular-nums">
+                      {lead._count?.contacts ?? 0}
                     </td>
-                    <td className="px-4 py-3.5">
-                      <Badge status={lead.status}>
-                        {STATUS_LABELS[lead.status] || lead.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3.5 text-muted">
+                    <td className="px-4 py-3 text-muted">
                       {new Date(lead.createdAt).toLocaleDateString('it-IT')}
                     </td>
-                    <td className="px-4 py-3.5 text-right">
-                      {lead.status !== 'CONVERTED' && (
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={converting === lead.id}
-                            onClick={() => handleConvert(lead)}
-                          >
-                            <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />
-                            {converting === lead.id ? 'Conversione...' : 'Converti'}
-                          </Button>
-                        </span>
-                      )}
+                    <td className="px-4 py-3 text-right">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/crm/${lead.id}`)
+                          }}
+                        >
+                          Dettagli
+                        </Button>
+                      </span>
                     </td>
                   </tr>
                 ))}

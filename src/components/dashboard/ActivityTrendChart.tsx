@@ -26,7 +26,7 @@ interface ActivityTrendChartProps {
   height?: number
 }
 
-export function ActivityTrendChart({ color = 'var(--color-primary)', height = 220 }: ActivityTrendChartProps) {
+export function ActivityTrendChart({ color = 'var(--color-primary)', height = 260 }: ActivityTrendChartProps) {
   const [data, setData] = useState<TrendDataPoint[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -61,25 +61,26 @@ export function ActivityTrendChart({ color = 'var(--color-primary)', height = 22
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
+      <AreaChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 5 }}>
         <defs>
           <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-            <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+            <stop offset="0%" stopColor={color} stopOpacity={0.28} />
+            <stop offset="50%" stopColor={color} stopOpacity={0.08} />
+            <stop offset="100%" stopColor={color} stopOpacity={0.01} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-        <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" />
-        <YAxis tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" allowDecimals={false} />
-        <Tooltip content={<ChartTooltip />} cursor={{ stroke: color, strokeDasharray: '4 4', strokeOpacity: 0.5 }} />
+        <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="var(--color-border)" strokeOpacity={0.4} />
+        <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} allowDecimals={false} />
+        <Tooltip content={<ChartTooltip />} cursor={{ stroke: color, strokeDasharray: '4 4', strokeOpacity: 0.3 }} />
         <Area
           type="monotone"
           dataKey="value"
           stroke={color}
           fill="url(#trendGradient)"
-          strokeWidth={2}
+          strokeWidth={2.5}
           dot={false}
-          activeDot={{ r: 5, fill: color, stroke: 'white', strokeWidth: 2 }}
+          activeDot={{ r: 6, fill: color, stroke: 'var(--color-card)', strokeWidth: 3 }}
         />
       </AreaChart>
     </ResponsiveContainer>

@@ -27,12 +27,15 @@ export function FinancialSummaryCard({
   return (
     <Card>
       <CardContent>
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
-              <TrendingUp className="h-4 w-4" />
+              <TrendingUp className="h-4.5 w-4.5" />
             </div>
-            <h3 className="text-base font-semibold">Riepilogo Finanziario</h3>
+            <div>
+              <h3 className="text-[15px] font-semibold">Riepilogo Finanziario</h3>
+              <p className="text-[11px] text-muted mt-0.5">Mese corrente</p>
+            </div>
           </div>
           {onViewDetails && (
             <button
@@ -82,7 +85,7 @@ export function FinancialSummaryCard({
             <span className="text-muted">Rapporto uscite/entrate</span>
             <span className="font-medium tabular-nums">{ratio.toFixed(0)}%</span>
           </div>
-          <div className="h-2 bg-secondary rounded-full overflow-hidden">
+          <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${ratio}%` }}
@@ -95,7 +98,7 @@ export function FinancialSummaryCard({
         {/* Net result */}
         <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between">
           <span className="text-sm text-muted">Risultato netto</span>
-          <span className={`text-lg font-bold tabular-nums ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+          <span className={`text-xl font-bold tabular-nums ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
             {isPositive ? '+' : ''}{formatCurrency(net)}
           </span>
         </div>

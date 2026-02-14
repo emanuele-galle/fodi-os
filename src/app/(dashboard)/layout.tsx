@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/layout/BottomNav'
 import { MobileHeader } from '@/components/layout/MobileHeader'
 import { IncomingCallBanner } from '@/components/layout/IncomingCallBanner'
 import { MobileNotificationsPanel } from '@/components/layout/MobileNotificationsPanel'
+import { ImpersonationBanner } from '@/components/layout/ImpersonationBanner'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import dynamic from 'next/dynamic'
 
@@ -24,6 +25,8 @@ interface UserSession {
   role: Role
   avatarUrl?: string | null
   sectionAccess?: SectionAccessMap | null
+  isImpersonating?: boolean
+  realAdmin?: { id: string; name: string } | null
 }
 
 export default function DashboardLayout({
@@ -35,6 +38,7 @@ export default function DashboardLayout({
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [unreadNotifications, setUnreadNotifications] = useState(0)
   const [unreadChat, setUnreadChat] = useState(0)
+  const [pendingTaskCount, setPendingTaskCount] = useState(0)
 
   const [mobileNotificationsOpen, setMobileNotificationsOpen] = useState(false)
   const openCommandPalette = useCallback(() => setCommandPaletteOpen(true), [])
@@ -86,6 +90,13 @@ export default function DashboardLayout({
           setUnreadChat(channels.filter((c: { hasUnread: boolean }) => c.hasUnread).length)
         })
         .catch(() => {})
+
+      fetch('/api/tasks/count')
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (data?.count !== undefined) setPendingTaskCount(data.count)
+        })
+        .catch(() => {})
     }
 
     fetchCounts()
@@ -129,10 +140,18 @@ export default function DashboardLayout({
     <div className="h-screen flex bg-background overflow-hidden">
       {/* Sidebar: hidden on mobile, visible on md+ */}
       <div className="hidden md:block flex-shrink-0">
-        <Sidebar userRole={user.role} sectionAccess={user.sectionAccess} />
+        <Sidebar userRole={user.role} sectionAccess={user.sectionAccess} unreadChat={unreadChat} pendingTaskCount={pendingTaskCount} />
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-x-hidden">
+        {/* Impersonation banner */}
+        {user.isImpersonating && (
+          <ImpersonationBanner
+            userName={`${user.firstName} ${user.lastName}`}
+            onExit={() => setUser(null)}
+          />
+        )}
+
         {/* MobileHeader: visible only on mobile */}
         <MobileHeader
           user={user}
@@ -149,7 +168,7 @@ export default function DashboardLayout({
           />
         </div>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6">
+        <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6 [&>*]:max-w-[1400px] [&>*]:mx-auto">
           <Suspense fallback={
             <div className="animate-fade-in space-y-4">
               <div className="flex items-center gap-3">

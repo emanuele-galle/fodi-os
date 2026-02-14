@@ -36,13 +36,19 @@ function hasValidRefreshToken(request: NextRequest): boolean {
   return !!refreshToken
 }
 
-function setSecurityHeaders(response: NextResponse): NextResponse {
+function setSecurityHeaders(response: NextResponse, isHtmlPage = false): NextResponse {
   response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
   response.headers.set('X-XSS-Protection', '1; mode=block')
-  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+  // Prevent CDN/browser from caching HTML pages (fixes Cloudflare stale cache issues)
+  if (isHtmlPage) {
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    response.headers.set('CDN-Cache-Control', 'no-store')
+    response.headers.set('Cloudflare-CDN-Cache-Control', 'no-store')
+  }
   // CSP: unsafe-eval only in dev (Next.js HMR needs it), strict in production
   const scriptSrc = process.env.NODE_ENV === 'production'
     ? "'self' 'unsafe-inline'"
@@ -59,22 +65,22 @@ export async function middleware(request: NextRequest) {
     return setSecurityHeaders(NextResponse.next())
   }
 
-  // Public paths - always allow
+  // Public paths - always allow (HTML pages, no CDN cache)
   if (isPublic(pathname)) {
-    return setSecurityHeaders(NextResponse.next())
+    return setSecurityHeaders(NextResponse.next(), true)
   }
 
   // Portal paths - check portal cookie
   if (isPortal(pathname)) {
     const portalToken = request.cookies.get('fodi_portal')?.value
     if (!portalToken) {
-      return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)))
+      return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)), true)
     }
     const payload = await verifyToken(portalToken)
     if (!payload) {
-      return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)))
+      return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)), true)
     }
-    return setSecurityHeaders(NextResponse.next())
+    return setSecurityHeaders(NextResponse.next(), true)
   }
 
   // API paths - verify Bearer token or cookie, with auto-refresh
@@ -98,8 +104,25 @@ export async function middleware(request: NextRequest) {
       const payload = await verifyToken(token)
       if (payload) {
         const response = NextResponse.next()
-        response.headers.set('x-user-id', payload.sub)
-        response.headers.set('x-user-role', payload.role)
+        let effectiveUserId = payload.sub
+        let effectiveRole = payload.role
+
+        // Impersonation: if admin has fodi_impersonate cookie, override user context
+        const impersonateId = request.cookies.get('fodi_impersonate')?.value
+        if (impersonateId && payload.role === 'ADMIN') {
+          effectiveUserId = impersonateId
+          // Role will be resolved by the session endpoint; set a marker
+          response.headers.set('x-impersonating', 'true')
+          response.headers.set('x-real-admin-id', payload.sub)
+          // We don't know the target role here (no DB access in middleware),
+          // so we pass the impersonated userId and let API routes handle it
+          response.headers.set('x-user-id', effectiveUserId)
+          response.headers.set('x-user-role', payload.role) // keep admin role for permission checks
+          return setSecurityHeaders(response)
+        }
+
+        response.headers.set('x-user-id', effectiveUserId)
+        response.headers.set('x-user-role', effectiveRole)
         return setSecurityHeaders(response)
       }
     }
@@ -119,7 +142,7 @@ export async function middleware(request: NextRequest) {
   if (accessToken) {
     const payload = await verifyToken(accessToken)
     if (payload) {
-      return setSecurityHeaders(NextResponse.next())
+      return setSecurityHeaders(NextResponse.next(), true)
     }
   }
 
@@ -127,11 +150,11 @@ export async function middleware(request: NextRequest) {
   if (hasValidRefreshToken(request)) {
     const refreshUrl = new URL('/api/auth/refresh-redirect', request.url)
     refreshUrl.searchParams.set('returnTo', pathname)
-    return setSecurityHeaders(NextResponse.redirect(refreshUrl))
+    return setSecurityHeaders(NextResponse.redirect(refreshUrl), true)
   }
 
   // Both tokens invalid - redirect to login
-  return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)))
+  return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)), true)
 }
 
 export const config = {

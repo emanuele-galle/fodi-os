@@ -142,25 +142,6 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Auto-create a PROJECT chat channel
-    try {
-      await prisma.chatChannel.create({
-        data: {
-          name: `${name}`,
-          slug: `project-${slug}`,
-          description: `Chat del progetto ${name}`,
-          type: 'PROJECT',
-          projectId: project.id,
-          createdById: userId,
-          members: {
-            create: [{ userId, role: 'OWNER' }],
-          },
-        },
-      })
-    } catch {
-      // Non-blocking: if chat channel creation fails, project is still created
-    }
-
     logActivity({ userId, action: 'CREATE', entityType: 'PROJECT', entityId: project.id, metadata: { name: project.name } })
 
     return NextResponse.json({ success: true, data: project }, { status: 201 })

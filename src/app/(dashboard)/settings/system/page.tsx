@@ -78,7 +78,7 @@ const CHANGELOG: ChangelogEntry[] = [
         icon: Sparkles,
         items: [
           'Pagina impostazioni ridisegnata con navigazione a sezioni (Profilo, Aspetto, Sicurezza, Notifiche, Integrazioni)',
-          'Selettore tema visuale (Chiaro, Scuro, Mezzanotte)',
+          'Selettore tema visuale (Chiaro, Scuro)',
           'Cambio password con validazione',
           'Campo telefono nel profilo utente',
           'Google Drive: restrizione alla cartella FODI OS',
@@ -259,7 +259,7 @@ const CHANGELOG: ChangelogEntry[] = [
           'Portal clienti (preventivi, progetti, documenti, ticket)',
           'Ricerca globale (Command Palette Cmd+K)',
           'PWA (service worker, manifest, installabile)',
-          'Temi (light, dark, midnight)',
+          'Temi (light, dark)',
         ],
       },
     ],
