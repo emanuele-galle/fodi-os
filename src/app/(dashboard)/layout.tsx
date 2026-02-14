@@ -5,6 +5,7 @@ import { Topbar } from '@/components/layout/Topbar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { MobileHeader } from '@/components/layout/MobileHeader'
 import { IncomingCallBanner } from '@/components/layout/IncomingCallBanner'
+import { MobileNotificationsPanel } from '@/components/layout/MobileNotificationsPanel'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import dynamic from 'next/dynamic'
 
@@ -35,8 +36,9 @@ export default function DashboardLayout({
   const [unreadNotifications, setUnreadNotifications] = useState(0)
   const [unreadChat, setUnreadChat] = useState(0)
 
+  const [mobileNotificationsOpen, setMobileNotificationsOpen] = useState(false)
   const openCommandPalette = useCallback(() => setCommandPaletteOpen(true), [])
-  const noop = useCallback(() => {}, [])
+  const openMobileNotifications = useCallback(() => setMobileNotificationsOpen(true), [])
 
   // Proactive token refresh: prevents auto-logout
   useAuthRefresh()
@@ -136,7 +138,7 @@ export default function DashboardLayout({
           user={user}
           unreadCount={unreadNotifications}
           onOpenSearch={openCommandPalette}
-          onOpenNotifications={noop}
+          onOpenNotifications={openMobileNotifications}
         />
 
         {/* Topbar: hidden on mobile, visible on md+ */}
@@ -179,6 +181,13 @@ export default function DashboardLayout({
         <CommandPalette
           open={commandPaletteOpen}
           onClose={() => setCommandPaletteOpen(false)}
+        />
+      )}
+
+      {/* Mobile Notifications Panel */}
+      {mobileNotificationsOpen && (
+        <MobileNotificationsPanel
+          onClose={() => setMobileNotificationsOpen(false)}
         />
       )}
 
