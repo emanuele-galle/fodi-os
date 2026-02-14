@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         .setIssuedAt()
         .sign(secret)
 
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://fodi-os.fodivps2.cloud'
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://os.fodisrl.it'
       const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`
 
       await triggerWebhook('/password-reset', {
