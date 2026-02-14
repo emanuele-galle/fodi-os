@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       }),
     }
 
-    const [items, total] = await Promise.all([
+    const [rawItems, total] = await Promise.all([
       prisma.project.findMany({
         where,
         skip,
@@ -55,6 +55,18 @@ export async function GET(request: NextRequest) {
       }),
       prisma.project.count({ where }),
     ])
+
+    // Add completedTasks count for each project
+    const projectIds = rawItems.map((p) => p.id)
+    const completedCounts = projectIds.length > 0
+      ? await prisma.task.groupBy({
+          by: ['projectId'],
+          where: { projectId: { in: projectIds }, status: 'DONE' },
+          _count: true,
+        })
+      : []
+    const completedMap = new Map(completedCounts.map((c) => [c.projectId, c._count]))
+    const items = rawItems.map((p) => ({ ...p, completedTasks: completedMap.get(p.id) || 0 }))
 
     return NextResponse.json({ success: true, data: items, items, total, page, limit })
   } catch (e) {
