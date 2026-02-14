@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
-import { generateFatturaPA, validateFatturaPA } from '@/lib/fatturapa'
+import { generateFatturaPA, validateFatturaPA, generateXmlFileName } from '@/lib/fatturapa'
 import type { Role } from '@/generated/prisma/client'
 
 // GET /api/erp/invoices/[invoiceId]/fatturapa - Get electronic invoice data
@@ -59,6 +59,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
+    // Parse optional body for tipoDocumento
+    let tipoDocumento: 'TD01' | 'TD04' | 'TD05' | 'TD24' = 'TD01'
+    try {
+      const body = await request.json()
+      if (body.tipoDocumento) tipoDocumento = body.tipoDocumento
+    } catch {
+      // No body or invalid JSON - use default
+    }
+
     const fatturaPAParams = {
       invoice: {
         number: invoice.number,
@@ -101,6 +110,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         total: String(item.total),
         sortOrder: item.sortOrder,
       })),
+      tipoDocumento,
     }
 
     // Validate
@@ -112,6 +122,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Generate XML
     const xmlContent = generateFatturaPA(fatturaPAParams)
 
+    // Count existing e-invoices for this company to generate progressive filename
+    const eInvoiceCount = await prisma.electronicInvoice.count()
+    const xmlFileName = generateXmlFileName(company.partitaIva, eInvoiceCount + 1)
+
     // Save or update electronic invoice
     const existing = await prisma.electronicInvoice.findFirst({
       where: { invoiceId },
@@ -119,12 +133,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     let eInvoice
-    if (existing && existing.status === 'draft') {
+    if (existing && existing.status === 'DRAFT') {
       eInvoice = await prisma.electronicInvoice.update({
         where: { id: existing.id },
         data: {
           xmlContent,
-          status: 'generated',
+          status: 'GENERATED',
+          tipoDocumento,
+          xmlFileName,
+          generatedAt: new Date(),
           codiceDestinatario: invoice.client.sdi || '0000000',
           pecDestinatario: invoice.client.pec,
         },
@@ -134,12 +151,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         data: {
           invoiceId,
           xmlContent,
-          status: 'generated',
+          status: 'GENERATED',
+          tipoDocumento,
+          xmlFileName,
+          generatedAt: new Date(),
           codiceDestinatario: invoice.client.sdi || '0000000',
           pecDestinatario: invoice.client.pec,
         },
       })
     }
+
+    // Log status transition
+    await prisma.eInvoiceStatusLog.create({
+      data: {
+        electronicInvoiceId: eInvoice.id,
+        fromStatus: existing?.status || 'NEW',
+        toStatus: 'GENERATED',
+        note: `XML generato (${tipoDocumento})`,
+      },
+    })
 
     return NextResponse.json(eInvoice, { status: 201 })
   } catch (e) {

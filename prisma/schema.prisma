@@ -40,6 +40,7 @@ model User {
   createdQuotes    Quote[]         @relation("QuoteCreator")
   approvedQuotes   Quote[]         @relation("QuoteApprover")
   createdInvoices  Invoice[]       @relation("InvoiceCreator")
+  signatureRequests SignatureRequest[] @relation("SignatureRequester")
   ticketsAssigned  Ticket[]        @relation("TicketAssignee")
   ticketsCreated   Ticket[]        @relation("TicketCreator")
   wikiPageEdits    WikiPageVersion[]
@@ -184,13 +185,15 @@ model Client {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  contacts     Contact[]
-  interactions Interaction[]
-  projects     Project[]
-  quotes       Quote[]
-  invoices     Invoice[]
-  tickets      Ticket[]
-  documents    Document[]
+  contacts        Contact[]
+  interactions    Interaction[]
+  projects        Project[]
+  quotes          Quote[]
+  invoices        Invoice[]
+  tickets         Ticket[]
+  documents       Document[]
+  quoteTemplates  QuoteTemplate[]
+  signatureRequests SignatureRequest[] @relation("SignatureClient")
 
   @@index([status])
   @@index([slug])
@@ -524,6 +527,7 @@ model Quote {
   projectId          String?
   creatorId          String
   approverId         String?
+  templateId         String?
   number             String      @unique
   title              String
   content            Json?
@@ -548,12 +552,14 @@ model Quote {
   project   Project?        @relation(fields: [projectId], references: [id])
   creator   User            @relation("QuoteCreator", fields: [creatorId], references: [id])
   approver  User?           @relation("QuoteApprover", fields: [approverId], references: [id])
+  template  QuoteTemplate?  @relation("QuoteFromTemplate", fields: [templateId], references: [id])
   lineItems QuoteLineItem[]
   invoice   Invoice?
 
   @@index([clientId])
   @@index([status])
   @@index([number])
+  @@index([templateId])
   @@map("quotes")
 }
 
@@ -1020,21 +1026,51 @@ enum ChatMessageType {
 // ============================================================
 
 model ElectronicInvoice {
-  id                  String    @id @default(cuid())
-  invoiceId           String
-  invoice             Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  formatoTrasmissione String    @default("FPR12")
-  codiceDestinatario  String?
-  pecDestinatario     String?
-  xmlContent          String?   @db.Text
-  status              String    @default("draft") // draft, generated, sent, delivered, rejected
-  sentAt              DateTime?
-  deliveredAt         DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  invoiceId            String
+  invoice              Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  formatoTrasmissione  String    @default("FPR12")
+  codiceDestinatario   String?
+  pecDestinatario      String?
+  xmlContent           String?   @db.Text
+  status               String    @default("draft") // DRAFT, GENERATED, EXPORTED, UPLOADED_TO_SDI, DELIVERED, ACCEPTED, REJECTED, DECOURSA
+  tipoDocumento        String    @default("TD01") // TD01, TD04, TD05, TD24
+  xmlFileName          String?
+  xmlFileUrl           String?
+  sdiIdentificativo    String?
+  sdiDataRicezione     DateTime?
+  esitoType            String?   // NS (scarto), MC (mancata consegna), RC (ricevuta consegna), NE (esito negativo), DT (decorrenza termini), AT (attestazione)
+  esitoDescription     String?   @db.Text
+  esitoXml             String?   @db.Text
+  originalInvoiceRef   String?   // Riferimento fattura originale per note di credito
+  generatedAt          DateTime?
+  exportedAt           DateTime?
+  uploadedAt           DateTime?
+  sentAt               DateTime?
+  deliveredAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  statusLogs           EInvoiceStatusLog[]
 
   @@index([invoiceId])
+  @@index([status])
   @@map("electronic_invoices")
+}
+
+model EInvoiceStatusLog {
+  id                 String   @id @default(uuid())
+  electronicInvoiceId String
+  fromStatus         String
+  toStatus           String
+  note               String?  @db.Text
+  performedBy        String?
+  createdAt          DateTime @default(now())
+
+  electronicInvoice  ElectronicInvoice @relation(fields: [electronicInvoiceId], references: [id], onDelete: Cascade)
+
+  @@index([electronicInvoiceId])
+  @@map("e_invoice_status_logs")
 }
 
 model CompanyProfile {
@@ -1052,8 +1088,218 @@ model CompanyProfile {
   pec            String?
   telefono       String?
   email          String?
+  logoUrl        String?
+  siteUrl        String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@map("company_profiles")
+}
+
+// ============================================================
+// QUOTE TEMPLATES (FASE 1)
+// ============================================================
+
+model QuoteTemplate {
+  id               String   @id @default(uuid())
+  name             String
+  slug             String   @unique
+  description      String?
+  isGlobal         Boolean  @default(true)
+  clientId         String?
+  creatorId        String
+  logoUrl          String?
+  primaryColor     String   @default("#3B82F6")
+  secondaryColor   String   @default("#1E293B")
+  headerHtml       String?  @db.Text
+  footerHtml       String?  @db.Text
+  sections         Json?    // [{title, content, sortOrder}]
+  numberPrefix     String   @default("Q")
+  numberFormat     String   @default("{PREFIX}-{YYYY}-{NNN}")
+  defaultTaxRate   Decimal  @default(22) @db.Decimal(5, 2)
+  defaultDiscount  Decimal  @default(0) @db.Decimal(12, 2)
+  defaultNotes     String?  @db.Text
+  defaultValidDays Int      @default(30)
+  termsAndConditions String? @db.Text
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  client           Client?  @relation(fields: [clientId], references: [id])
+  lineItems        QuoteTemplateLineItem[]
+  quotes           Quote[]  @relation("QuoteFromTemplate")
+
+  @@index([clientId])
+  @@index([isGlobal])
+  @@map("quote_templates")
+}
+
+model QuoteTemplateLineItem {
+  id          String  @id @default(uuid())
+  templateId  String
+  description String
+  quantity    Float   @default(1)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  sortOrder   Int     @default(0)
+
+  template    QuoteTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@map("quote_template_line_items")
+}
+
+// ============================================================
+// SIGNATURE / OTP (FASE 3)
+// ============================================================
+
+model SignatureRequest {
+  id              String    @id @default(uuid())
+  documentType    String    // "QUOTE" | "CONTRACT" | "CUSTOM"
+  documentId      String?
+  documentTitle   String
+  documentUrl     String    // PDF originale su MinIO
+  signedPdfUrl    String?   // PDF firmato
+  requesterId     String
+  signerName      String
+  signerEmail     String
+  signerPhone     String?
+  signerClientId  String?
+  status          String    @default("PENDING") // PENDING, OTP_SENT, SIGNED, DECLINED, EXPIRED, CANCELLED
+  expiresAt       DateTime
+  signedAt        DateTime?
+  declineReason   String?
+  message         String?   @db.Text
+  accessToken     String    @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  requester       User      @relation("SignatureRequester", fields: [requesterId], references: [id])
+  signerClient    Client?   @relation("SignatureClient", fields: [signerClientId], references: [id])
+  otpAttempts     SignatureOtp[]
+  auditTrail      SignatureAudit[]
+
+  @@index([status])
+  @@index([signerEmail])
+  @@index([accessToken])
+  @@map("signature_requests")
+}
+
+model SignatureOtp {
+  id          String   @id @default(uuid())
+  requestId   String
+  otpHash     String   // bcrypt hash, MAI in chiaro
+  channel     String   @default("email")
+  sentTo      String
+  expiresAt   DateTime
+  isUsed      Boolean  @default(false)
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(5)
+  createdAt   DateTime @default(now())
+
+  request     SignatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@map("signature_otps")
+}
+
+model SignatureAudit {
+  id        String   @id @default(uuid())
+  requestId String
+  action    String   // "created", "otp_sent", "otp_verified", "signed", "declined", "viewed"
+  ipAddress String?
+  userAgent String?  @db.Text
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  request   SignatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@map("signature_audits")
+}
+
+// ============================================================
+// WIZARD COMMERCIALE (FASE 4)
+// ============================================================
+
+model WizardTemplate {
+  id                 String   @id @default(uuid())
+  name               String
+  slug               String   @unique
+  description        String?  @db.Text
+  category           String   @default("general")
+  isSystem           Boolean  @default(false)
+  status             String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  creatorId          String
+  allowSaveProgress  Boolean  @default(true)
+  showProgressBar    Boolean  @default(true)
+  completionMessage  String?  @db.Text
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  steps              WizardStep[]
+  submissions        WizardSubmission[]
+
+  @@index([category])
+  @@index([status])
+  @@map("wizard_templates")
+}
+
+model WizardStep {
+  id          String  @id @default(uuid())
+  templateId  String
+  title       String
+  description String?
+  sortOrder   Int     @default(0)
+  condition   Json?   // {fieldId, operator, value}
+
+  template    WizardTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  fields      WizardField[]
+
+  @@index([templateId])
+  @@map("wizard_steps")
+}
+
+model WizardField {
+  id           String  @id @default(uuid())
+  stepId       String
+  label        String
+  name         String
+  type         String  @default("TEXT") // TEXT, TEXTAREA, EMAIL, PHONE, NUMBER, SELECT, MULTISELECT, RADIO, CHECKBOX, DATE, FILE, RATING, SCALE
+  placeholder  String?
+  helpText     String?
+  isRequired   Boolean @default(false)
+  sortOrder    Int     @default(0)
+  options      Json?   // [{label, value}] per SELECT/RADIO
+  validation   Json?   // {min, max, minLength, maxLength, pattern}
+  defaultValue String?
+  condition    Json?
+  crmMapping   String? // "client.companyName", "contact.email", ecc.
+
+  step         WizardStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId])
+  @@map("wizard_fields")
+}
+
+model WizardSubmission {
+  id             String    @id @default(uuid())
+  templateId     String
+  clientId       String?
+  leadId         String?
+  submitterId    String?
+  submitterName  String?
+  submitterEmail String?
+  status         String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, ABANDONED
+  currentStep    Int       @default(0)
+  answers        Json      @default("{}")
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  template       WizardTemplate @relation(fields: [templateId], references: [id])
+
+  @@index([templateId])
+  @@index([clientId])
+  @@index([leadId])
+  @@map("wizard_submissions")
 }

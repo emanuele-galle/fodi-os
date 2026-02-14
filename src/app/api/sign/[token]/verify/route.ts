@@ -1,0 +1,189 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { verifySignatureToken } from '@/lib/signature-token'
+import { verifyOtp } from '@/lib/otp'
+import { verifyOtpSchema } from '@/lib/validation'
+import { addSignatureStamp } from '@/lib/signature-pdf'
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  try {
+    const { token } = await params
+
+    let requestId: string
+    try {
+      const payload = await verifySignatureToken(token)
+      requestId = payload.requestId
+    } catch {
+      return NextResponse.json({ error: 'Token non valido o scaduto' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const parsed = verifyOtpSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+
+    const { otp } = parsed.data
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+
+    const signatureRequest = await prisma.signatureRequest.findUnique({
+      where: { id: requestId },
+    })
+
+    if (!signatureRequest) {
+      return NextResponse.json({ error: 'Richiesta firma non trovata' }, { status: 404 })
+    }
+
+    if (signatureRequest.status === 'SIGNED') {
+      return NextResponse.json({ error: 'Documento gia firmato' }, { status: 400 })
+    }
+
+    if (signatureRequest.status === 'CANCELLED' || signatureRequest.status === 'DECLINED') {
+      return NextResponse.json({ error: 'Richiesta non piu attiva' }, { status: 400 })
+    }
+
+    if (new Date() > signatureRequest.expiresAt) {
+      await prisma.signatureRequest.update({ where: { id: requestId }, data: { status: 'EXPIRED' } })
+      return NextResponse.json({ error: 'Richiesta scaduta' }, { status: 400 })
+    }
+
+    // Find the latest valid OTP
+    const latestOtp = await prisma.signatureOtp.findFirst({
+      where: {
+        requestId,
+        isUsed: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    if (!latestOtp) {
+      return NextResponse.json({ error: 'Nessun OTP valido. Richiedi un nuovo codice.' }, { status: 400 })
+    }
+
+    // Check max attempts for this OTP
+    if (latestOtp.attempts >= latestOtp.maxAttempts) {
+      await prisma.signatureOtp.update({ where: { id: latestOtp.id }, data: { isUsed: true } })
+      return NextResponse.json({ error: 'Troppi tentativi. Richiedi un nuovo codice.' }, { status: 429 })
+    }
+
+    // Increment attempt counter
+    await prisma.signatureOtp.update({
+      where: { id: latestOtp.id },
+      data: { attempts: { increment: 1 } },
+    })
+
+    // Verify OTP
+    const valid = await verifyOtp(otp, latestOtp.otpHash)
+
+    if (!valid) {
+      await prisma.signatureAudit.create({
+        data: {
+          requestId,
+          action: 'otp_failed',
+          ipAddress: ip,
+          userAgent: request.headers.get('user-agent'),
+          metadata: { remainingAttempts: latestOtp.maxAttempts - latestOtp.attempts - 1 },
+        },
+      })
+      const remaining = latestOtp.maxAttempts - latestOtp.attempts - 1
+      return NextResponse.json(
+        { error: `Codice OTP non valido. ${remaining} tentativi rimasti.` },
+        { status: 400 }
+      )
+    }
+
+    // Mark OTP as used
+    await prisma.signatureOtp.update({ where: { id: latestOtp.id }, data: { isUsed: true } })
+
+    // Sign the PDF
+    const signedAt = new Date()
+    let signedPdfUrl = signatureRequest.documentUrl // fallback
+
+    try {
+      // Fetch original PDF
+      const pdfResponse = await fetch(signatureRequest.documentUrl)
+      if (pdfResponse.ok) {
+        const pdfBytes = new Uint8Array(await pdfResponse.arrayBuffer())
+        const signedPdfBytes = await addSignatureStamp(pdfBytes, signatureRequest.signerName, signedAt, ip)
+
+        // Upload signed PDF to the same storage
+        // Replace the original filename to include -signed
+        const originalUrl = new URL(signatureRequest.documentUrl)
+        const pathParts = originalUrl.pathname.split('/')
+        const filename = pathParts[pathParts.length - 1]
+        const signedFilename = filename.replace('.pdf', '-signed.pdf')
+        pathParts[pathParts.length - 1] = signedFilename
+        originalUrl.pathname = pathParts.join('/')
+
+        // For MinIO/S3, use presigned URL or direct upload
+        // For now, store as base64 data URL as fallback if direct upload not possible
+        signedPdfUrl = originalUrl.toString()
+
+        // Try to upload to MinIO using the S3 client
+        try {
+          const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3')
+          const s3 = new S3Client({
+            region: 'us-east-1',
+            endpoint: process.env.S3_ENDPOINT || 'http://vps-panel-minio:9000',
+            forcePathStyle: true,
+            credentials: {
+              accessKeyId: process.env.S3_ACCESS_KEY || process.env.MINIO_ROOT_USER || '',
+              secretAccessKey: process.env.S3_SECRET_KEY || process.env.MINIO_ROOT_PASSWORD || '',
+            },
+          })
+
+          const bucket = process.env.S3_BUCKET || 'fodi-os'
+          const key = `signatures/${requestId}/${signedFilename}`
+
+          await s3.send(new PutObjectCommand({
+            Bucket: bucket,
+            Key: key,
+            Body: signedPdfBytes,
+            ContentType: 'application/pdf',
+          }))
+
+          signedPdfUrl = `${process.env.S3_PUBLIC_URL || process.env.S3_ENDPOINT || 'http://vps-panel-minio:9000'}/${bucket}/${key}`
+        } catch (uploadErr) {
+          console.error('[SIGNATURE] Errore upload PDF firmato:', uploadErr)
+          // Keep fallback URL
+        }
+      }
+    } catch (pdfErr) {
+      console.error('[SIGNATURE] Errore firma PDF:', pdfErr)
+      // Continue without signed PDF - the signature is still valid
+    }
+
+    // Update signature request
+    await prisma.signatureRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'SIGNED',
+        signedAt,
+        signedPdfUrl,
+      },
+    })
+
+    // Audit
+    await prisma.signatureAudit.create({
+      data: {
+        requestId,
+        action: 'signed',
+        ipAddress: ip,
+        userAgent: request.headers.get('user-agent'),
+        metadata: { signedPdfUrl },
+      },
+    })
+
+    return NextResponse.json({ success: true, signedAt: signedAt.toISOString() })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Errore interno del server'
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
+}

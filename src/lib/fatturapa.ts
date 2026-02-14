@@ -3,6 +3,8 @@
  * Genera XML conforme allo standard SDI per fatturazione elettronica italiana.
  */
 
+import { XMLParser } from 'fast-xml-parser'
+
 interface CompanyData {
   ragioneSociale: string
   partitaIva: string
@@ -71,6 +73,8 @@ export interface GenerateFatturaPAParams {
   client: ClientData
   company: CompanyData
   lineItems: LineItemData[]
+  tipoDocumento?: 'TD01' | 'TD04' | 'TD05' | 'TD24'
+  originalInvoiceRef?: string | null
 }
 
 export interface FatturaPAValidationError {
@@ -98,7 +102,7 @@ export function validateFatturaPA(params: GenerateFatturaPAParams): FatturaPAVal
 }
 
 export function generateFatturaPA(params: GenerateFatturaPAParams): string {
-  const { invoice, client, company, lineItems } = params
+  const { invoice, client, company, lineItems, tipoDocumento = 'TD01', originalInvoiceRef } = params
 
   const codiceDestinatario = client.sdi || '0000000'
   const progressivoInvio = invoice.number.replace(/[^A-Za-z0-9]/g, '').slice(0, 10)
@@ -223,12 +227,16 @@ export function generateFatturaPA(params: GenerateFatturaPAParams): string {
   <FatturaElettronicaBody>
     <DatiGenerali>
       <DatiGeneraliDocumento>
-        <TipoDocumento>TD01</TipoDocumento>
+        <TipoDocumento>${escapeXml(tipoDocumento)}</TipoDocumento>
         <Divisa>EUR</Divisa>
         <Data>${formatDate(invoice.issuedDate)}</Data>
         <Numero>${escapeXml(invoice.number)}</Numero>${scontoMaggiorazione}
         <ImportoTotaleDocumento>${formatAmount(invoice.total)}</ImportoTotaleDocumento>
-      </DatiGeneraliDocumento>
+      </DatiGeneraliDocumento>${
+    originalInvoiceRef
+      ? `\n      <DatiFattureCollegate>\n        <IdDocumento>${escapeXml(originalInvoiceRef)}</IdDocumento>\n      </DatiFattureCollegate>`
+      : ''
+  }
     </DatiGenerali>
     <DatiBeniServizi>
 ${dettaglioLinee}
@@ -244,4 +252,164 @@ ${datiPagamento}
 </p:FatturaElettronica>`
 
   return xml
+}
+
+/**
+ * Genera il nome file standard per SDI: IT{P.IVA}_{progressivo}.xml
+ * Il progressivo e' alfanumerico di 5 caratteri (base36)
+ */
+export function generateXmlFileName(partitaIva: string, progressivo: number): string {
+  const prog = progressivo.toString(36).toUpperCase().padStart(5, '0').slice(-5)
+  return `IT${partitaIva}_${prog}.xml`
+}
+
+/**
+ * Tipo documento labels
+ */
+export const TIPO_DOCUMENTO_LABELS: Record<string, string> = {
+  TD01: 'Fattura',
+  TD04: 'Nota di Credito',
+  TD05: 'Nota di Debito',
+  TD24: 'Fattura Differita',
+}
+
+/**
+ * Status labels e colori per fatturazione elettronica
+ */
+export const EINVOICE_STATUS_CONFIG: Record<string, { label: string; variant: string; color: string }> = {
+  DRAFT: { label: 'Bozza', variant: 'outline', color: '#94a3b8' },
+  GENERATED: { label: 'XML Generato', variant: 'default', color: '#6366f1' },
+  EXPORTED: { label: 'Esportato', variant: 'info', color: '#3b82f6' },
+  UPLOADED_TO_SDI: { label: 'Inviato a SDI', variant: 'warning', color: '#f59e0b' },
+  DELIVERED: { label: 'Consegnato', variant: 'success', color: '#10b981' },
+  ACCEPTED: { label: 'Accettato', variant: 'success', color: '#059669' },
+  REJECTED: { label: 'Rifiutato', variant: 'destructive', color: '#ef4444' },
+  DECOURSA: { label: 'Decorrenza Termini', variant: 'warning', color: '#d97706' },
+}
+
+/**
+ * Esito type labels
+ */
+export const ESITO_TYPE_LABELS: Record<string, string> = {
+  NS: 'Notifica di Scarto',
+  MC: 'Mancata Consegna',
+  RC: 'Ricevuta di Consegna',
+  NE: 'Esito Committente Negativo',
+  DT: 'Decorrenza Termini',
+  AT: 'Attestazione di Avvenuta Trasmissione',
+}
+
+/**
+ * Transizioni di stato valide
+ */
+export const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
+  DRAFT: ['GENERATED'],
+  GENERATED: ['EXPORTED', 'DRAFT'],
+  EXPORTED: ['UPLOADED_TO_SDI', 'GENERATED'],
+  UPLOADED_TO_SDI: ['DELIVERED', 'REJECTED'],
+  DELIVERED: ['ACCEPTED', 'REJECTED', 'DECOURSA'],
+  ACCEPTED: [],
+  REJECTED: ['GENERATED'],
+  DECOURSA: [],
+}
+
+export interface ParsedEsito {
+  esitoType: string
+  description: string
+  sdiIdentificativo?: string
+  dataRicezione?: string
+}
+
+/**
+ * Parsing XML esito SDI con fast-xml-parser.
+ * Supporta i formati: NotificaScarto (NS), RicevutaConsegna (RC),
+ * NotificaMancataConsegna (MC), NotificaEsito (NE),
+ * NotificaDecorrenzaTermini (DT), AttestazioneTrasmissione (AT).
+ */
+export function parseEsitoXml(xml: string): ParsedEsito {
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: '@_',
+    removeNSPrefix: true,
+  })
+
+  const parsed = parser.parse(xml)
+
+  // Prova ogni tipo di notifica SDI
+  if (parsed.NotificaScarto) {
+    const ns = parsed.NotificaScarto
+    return {
+      esitoType: 'NS',
+      description: extractErrorDescription(ns),
+      sdiIdentificativo: ns.IdentificativoSdI?.toString(),
+      dataRicezione: ns.DataOraRicezione,
+    }
+  }
+
+  if (parsed.RicevutaConsegna) {
+    const rc = parsed.RicevutaConsegna
+    return {
+      esitoType: 'RC',
+      description: `Consegnato a ${rc.Destinatario?.Codice || 'destinatario'}`,
+      sdiIdentificativo: rc.IdentificativoSdI?.toString(),
+      dataRicezione: rc.DataOraRicezione || rc.DataOraConsegna,
+    }
+  }
+
+  if (parsed.NotificaMancataConsegna) {
+    const mc = parsed.NotificaMancataConsegna
+    return {
+      esitoType: 'MC',
+      description: mc.Descrizione || 'Mancata consegna al destinatario',
+      sdiIdentificativo: mc.IdentificativoSdI?.toString(),
+      dataRicezione: mc.DataOraRicezione,
+    }
+  }
+
+  if (parsed.NotificaEsito) {
+    const ne = parsed.NotificaEsito
+    const esito = ne.EsitoCommittente?.Esito || 'Negativo'
+    return {
+      esitoType: 'NE',
+      description: `Esito committente: ${esito}${ne.EsitoCommittente?.Descrizione ? ' - ' + ne.EsitoCommittente.Descrizione : ''}`,
+      sdiIdentificativo: ne.IdentificativoSdI?.toString(),
+      dataRicezione: ne.DataOraRicezione,
+    }
+  }
+
+  if (parsed.NotificaDecorrenzaTermini) {
+    const dt = parsed.NotificaDecorrenzaTermini
+    return {
+      esitoType: 'DT',
+      description: dt.Descrizione || 'Decorrenza termini per notifica esito',
+      sdiIdentificativo: dt.IdentificativoSdI?.toString(),
+      dataRicezione: dt.DataOraRicezione || dt.DataOraDecorrenza,
+    }
+  }
+
+  if (parsed.AttestazioneTrasmissioneFattura) {
+    const at = parsed.AttestazioneTrasmissioneFattura
+    return {
+      esitoType: 'AT',
+      description: at.Descrizione || 'Attestazione di avvenuta trasmissione',
+      sdiIdentificativo: at.IdentificativoSdI?.toString(),
+      dataRicezione: at.DataOraRicezione,
+    }
+  }
+
+  throw new Error('Formato XML esito non riconosciuto')
+}
+
+function extractErrorDescription(ns: Record<string, unknown>): string {
+  const errori = ns.ListaErrori
+  if (!errori) return 'Scartato dal SDI'
+
+  // Puo' essere un singolo errore o un array
+  const errorList = Array.isArray((errori as Record<string, unknown>).Errore)
+    ? (errori as Record<string, unknown>).Errore as Record<string, unknown>[]
+    : [(errori as Record<string, unknown>).Errore as Record<string, unknown>]
+
+  return errorList
+    .map((e) => `${e.Codice || ''}: ${e.Descrizione || 'Errore sconosciuto'}`)
+    .join('; ')
 }

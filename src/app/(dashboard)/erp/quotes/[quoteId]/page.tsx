@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft, Send, FileText, ArrowRight } from 'lucide-react'
+import { ChevronLeft, Send, FileText, ArrowRight, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { QuotePdfButton } from '@/components/erp/QuotePdfButton'
+import { PdfPreviewModal } from '@/components/erp/PdfPreviewModal'
 import { formatCurrency } from '@/lib/utils'
 
 interface LineItem {
@@ -49,6 +51,7 @@ export default function QuoteDetailPage() {
 
   const [quote, setQuote] = useState<QuoteDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showPdfPreview, setShowPdfPreview] = useState(false)
 
   const fetchQuote = useCallback(async () => {
     try {
@@ -118,6 +121,11 @@ export default function QuoteDetailPage() {
           <p className="text-muted mt-1 truncate">{quote.title}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setShowPdfPreview(true)} className="touch-manipulation">
+            <Eye className="h-4 w-4" />
+            <span className="hidden sm:inline ml-1">Anteprima</span>
+          </Button>
+          <QuotePdfButton quoteId={quote.id} quoteNumber={quote.number} />
           {quote.status === 'DRAFT' && (
             <Button variant="outline" size="sm" className="touch-manipulation">
               <Send className="h-4 w-4 sm:mr-2" />
@@ -216,6 +224,14 @@ export default function QuoteDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      <PdfPreviewModal
+        open={showPdfPreview}
+        onClose={() => setShowPdfPreview(false)}
+        pdfUrl={`/api/quotes/${quote.id}/pdf`}
+        fileName={`${quote.number}.pdf`}
+        title={`Anteprima - ${quote.number}`}
+      />
     </div>
   )
 }
