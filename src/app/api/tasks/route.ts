@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       prisma.task.count({ where }),
     ])
 
-    return NextResponse.json({ success: true, data: items, total, page, limit })
+    return NextResponse.json({ success: true, data: items, items, total, page, limit })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

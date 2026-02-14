@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       prisma.contact.count({ where: { clientId } }),
     ])
 
-    return NextResponse.json({ success: true, data: contacts, total, page, limit })
+    return NextResponse.json({ success: true, data: contacts, items: contacts, total, page, limit })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

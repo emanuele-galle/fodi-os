@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       prisma.interaction.count({ where }),
     ])
 
-    return NextResponse.json({ success: true, data: interactions, total, page, limit })
+    return NextResponse.json({ success: true, data: interactions, items: interactions, total, page, limit })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })
