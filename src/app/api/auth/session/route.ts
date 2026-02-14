@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
 
@@ -10,13 +9,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ user: null }, { status: 401 })
     }
 
-    const headerStore = await headers()
-    const isImpersonating = headerStore.get('x-impersonating') === 'true'
-    const realAdminId = headerStore.get('x-real-admin-id')
+    // Check impersonation directly from cookie + JWT role (no middleware headers needed)
     const impersonateId = request.cookies.get('fodi_impersonate')?.value
+    const isImpersonating = !!(impersonateId && session.role === 'ADMIN' && impersonateId !== session.sub)
 
-    // If impersonating, fetch the target user instead
-    const targetUserId = (isImpersonating && impersonateId) ? impersonateId : session.sub
+    const targetUserId = isImpersonating ? impersonateId : session.sub
 
     const userSelect = {
       id: true,
@@ -45,17 +42,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Add impersonation info
-    if (isImpersonating && realAdminId) {
-      const admin = await prisma.user.findUnique({
-        where: { id: realAdminId },
-        select: { id: true, firstName: true, lastName: true },
-      })
-
+    if (isImpersonating) {
       return NextResponse.json({
         user: {
           ...user,
           isImpersonating: true,
-          realAdmin: admin ? { id: admin.id, name: `${admin.firstName} ${admin.lastName}` } : null,
+          realAdmin: { id: session.sub, name: session.name },
         },
       })
     }

@@ -50,15 +50,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   try {
-    const headerStore = await (await import('next/headers')).headers()
-    const role = headerStore.get('x-user-role')
-    const isImpersonating = headerStore.get('x-impersonating') === 'true'
+    const role = request.headers.get('x-user-role')
+    const impersonateCookie = request.cookies.get('fodi_impersonate')?.value
 
-    // Allow if currently impersonating (role might be the impersonated user's role)
-    // or if admin
-    if (role !== 'ADMIN' && !isImpersonating) {
+    // Allow if currently impersonating (cookie exists) or if admin
+    if (role !== 'ADMIN' && !impersonateCookie) {
       return NextResponse.json({ error: 'Non autorizzato' }, { status: 403 })
     }
 
