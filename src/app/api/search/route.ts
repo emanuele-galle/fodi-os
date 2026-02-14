@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
       projects: [],
       tasks: [],
       quotes: [],
-      invoices: [],
       tickets: [],
     }
 
@@ -65,18 +64,6 @@ export async function GET(request: NextRequest) {
         }).then(r => { results.quotes = r })
       )
 
-      searches.push(
-        prisma.invoice.findMany({
-          where: {
-            OR: [
-              { number: { contains: q, mode: 'insensitive' } },
-              { title: { contains: q, mode: 'insensitive' } },
-            ],
-          },
-          select: { id: true, number: true, title: true, status: true },
-          take: 5,
-        }).then(r => { results.invoices = r })
-      )
     }
 
     if (hasPermission(role, 'support', 'read')) {

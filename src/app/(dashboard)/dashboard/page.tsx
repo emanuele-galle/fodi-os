@@ -31,10 +31,6 @@ const PipelineFunnel = dynamic(() => import('@/components/dashboard/PipelineFunn
   ssr: false,
   loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
 })
-const InvoiceStatusChart = dynamic(() => import('@/components/dashboard/InvoiceStatusChart').then(m => ({ default: m.InvoiceStatusChart })), {
-  ssr: false,
-  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
-})
 const ActivityTrendChart = dynamic(() => import('@/components/dashboard/ActivityTrendChart').then(m => ({ default: m.ActivityTrendChart })), {
   ssr: false,
   loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
@@ -121,8 +117,6 @@ export default function DashboardPage() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [notes, setNotes] = useState<StickyNoteItem[]>([])
   const [editingNote, setEditingNote] = useState<string | null>(null)
-  const [invoiceDonutData, setInvoiceDonutData] = useState<ChartSegment[]>([])
-  const [invoiceTotal, setInvoiceTotal] = useState(0)
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [weekHours, setWeekHours] = useState(0)
   const [weekBillableHours, setWeekBillableHours] = useState(0)
@@ -183,13 +177,12 @@ export default function DashboardPage() {
         const todayStr = now.toISOString().split('T')[0]
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-        const [clientsRes, projectsRes, quotesRes, timeRes, invoicesRes, allInvoicesRes, teamRes, expensesRes, ticketsRes, tasksRes, activityRes] = await Promise.all([
+        const [clientsRes, projectsRes, quotesRes, timeRes, paidInvoicesRes, teamRes, expensesRes, ticketsRes, tasksRes, activityRes] = await Promise.all([
           fetch('/api/clients?status=ACTIVE&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/projects?status=IN_PROGRESS&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/quotes?status=SENT&limit=1').then((r) => r.ok ? r.json() : null),
           fetch(`/api/time?from=${mondayStr}&to=${todayStr}&limit=200`).then((r) => r.ok ? r.json() : null),
           fetch(`/api/invoices?status=PAID&limit=200`).then((r) => r.ok ? r.json() : null),
-          fetch('/api/invoices?limit=200').then((r) => r.ok ? r.json() : null),
           fetch('/api/team').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/expenses?limit=200').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/tickets?status=OPEN,IN_PROGRESS,WAITING_CLIENT&limit=1').then((r) => r.ok ? r.json() : null).catch(() => null),
@@ -208,7 +201,7 @@ export default function DashboardPage() {
         setWeekHours(hours)
         setWeekBillableHours(billable)
 
-        const revenueMTD = (invoicesRes?.items || [])
+        const revenueMTD = (paidInvoicesRes?.items || [])
           .filter((i: { paidDate: string | null }) => i.paidDate && i.paidDate >= monthStart)
           .reduce((s: number, i: { total: string }) => s + parseFloat(i.total), 0)
         setTotalRevenue(revenueMTD)
@@ -221,8 +214,6 @@ export default function DashboardPage() {
         const members = teamRes?.items || teamRes?.members || []
         setTeamMembers(Array.isArray(members) ? members : [])
 
-        const invoices = allInvoicesRes?.items || []
-
         setStats([
           { label: 'Clienti Attivi', value: String(clientsRes?.total ?? 0), icon: Users, color: 'text-primary', href: '/crm?status=ACTIVE' },
           { label: 'Progetti in Corso', value: String(projectsRes?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
@@ -231,28 +222,6 @@ export default function DashboardPage() {
           { label: 'Fatturato Mese', value: formatCurrency(revenueMTD), icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
           { label: 'Ticket Aperti', value: String(ticketsRes?.total ?? 0), icon: AlertCircle, color: 'text-destructive', href: '/support' },
         ])
-
-        // Donut chart data
-        const statusGroups: Record<string, { count: number; total: number }> = {}
-        invoices.forEach((inv: { status: string; total: string }) => {
-          if (!statusGroups[inv.status]) statusGroups[inv.status] = { count: 0, total: 0 }
-          statusGroups[inv.status].count++
-          statusGroups[inv.status].total += parseFloat(inv.total)
-        })
-        const STATUS_COLORS: Record<string, string> = {
-          PAID: '#0D9488', SENT: '#2563EB',
-          OVERDUE: '#DC2626', DRAFT: '#94A3B8',
-        }
-        const STATUS_LABELS: Record<string, string> = {
-          PAID: 'Pagate', SENT: 'Inviate', OVERDUE: 'Scadute', DRAFT: 'Bozze',
-        }
-        const donutSegments: ChartSegment[] = Object.entries(statusGroups).map(([status, data]) => ({
-          label: STATUS_LABELS[status] || status,
-          value: data.total,
-          color: STATUS_COLORS[status] || '#8C8680',
-        }))
-        setInvoiceDonutData(donutSegments)
-        setInvoiceTotal(invoices.reduce((s: number, i: { total: string }) => s + parseFloat(i.total), 0))
       } catch {
         setFetchError('Errore nel caricamento dei dati della dashboard')
       } finally {
@@ -267,7 +236,6 @@ export default function DashboardPage() {
     project: FolderKanban,
     client: UserPlus,
     quote: FileText,
-    invoice: Receipt,
     task: CheckCircle2,
     ticket: TicketCheck,
   }
@@ -282,7 +250,7 @@ export default function DashboardPage() {
     }
     const ENTITY_LABELS: Record<string, string> = {
       project: 'il progetto', client: 'il cliente', quote: 'il preventivo',
-      invoice: 'la fattura', task: 'il task', ticket: 'il ticket',
+      task: 'il task', ticket: 'il ticket',
       TimeEntry: '', timeEntry: '',
     }
     // Handle special action types that are self-descriptive
@@ -298,7 +266,6 @@ export default function DashboardPage() {
     project: 'text-accent bg-accent/10',
     client: 'text-primary bg-primary/10',
     quote: 'text-[var(--color-warning)] bg-[var(--color-warning)]/10',
-    invoice: 'text-accent bg-accent/10',
     task: 'text-primary bg-primary/10',
     ticket: 'text-destructive bg-destructive/10',
   }
@@ -429,14 +396,13 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ROW 2: FINANCIAL SUMMARY + INVOICE DONUT */}
+      {/* ROW 2: FINANCIAL SUMMARY */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <FinancialSummaryCard
           income={totalRevenue}
           expenses={totalExpenses}
           onViewDetails={() => router.push('/erp/reports')}
         />
-        <InvoiceStatusChart data={invoiceDonutData} total={invoiceTotal} />
       </div>
 
       {/* ROW 3: TREND + PIPELINE */}

@@ -1,17 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { TrendingUp, Receipt, CheckCircle2, AlertCircle } from 'lucide-react'
+import { TrendingUp, CheckCircle2, AlertCircle } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
 
-const InvoiceStatusChart = dynamic(() => import('@/components/dashboard/InvoiceStatusChart').then(m => ({ default: m.InvoiceStatusChart })), {
-  ssr: false,
-  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
-})
 const RevenueBarChart = dynamic(() => import('@/components/erp/ReportsCharts').then(m => ({ default: m.RevenueBarChart })), {
   ssr: false,
   loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
@@ -25,9 +21,7 @@ const MONTH_LABELS = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott
 
 interface Stats {
   revenueMTD: number
-  invoiced: number
   paid: number
-  outstanding: number
 }
 
 interface RevenueDataPoint {
@@ -41,10 +35,9 @@ interface ExpenseDataPoint {
 }
 
 export default function ReportsPage() {
-  const [stats, setStats] = useState<Stats>({ revenueMTD: 0, invoiced: 0, paid: 0, outstanding: 0 })
+  const [stats, setStats] = useState<Stats>({ revenueMTD: 0, paid: 0 })
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([])
   const [expenseData, setExpenseData] = useState<ExpenseDataPoint[]>([])
-  const [invoiceDonut, setInvoiceDonut] = useState<{ label: string; value: number; color: string }[]>([])
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -56,19 +49,13 @@ export default function ReportsPage() {
         const now = new Date()
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-        const [invoicesRes, paidRes, expensesRes] = await Promise.all([
-          fetch('/api/invoices?limit=200'),
+        const [paidRes, expensesRes] = await Promise.all([
           fetch(`/api/invoices?status=PAID&limit=200`),
           fetch('/api/expenses?limit=200'),
         ])
 
-        let allInvoices: { total: string; status: string }[] = []
         let paidInvoices: { total: string; paidDate: string | null }[] = []
 
-        if (invoicesRes.ok) {
-          const data = await invoicesRes.json()
-          allInvoices = data.items || []
-        }
         if (paidRes.ok) {
           const data = await paidRes.json()
           paidInvoices = data.items || []
@@ -116,39 +103,13 @@ export default function ReportsPage() {
           setTotalExpenses(expTotal)
         }
 
-        const invoicedTotal = allInvoices.reduce((s, i) => s + parseFloat(i.total), 0)
-        const paidTotal = allInvoices
-          .filter((i) => i.status === 'PAID')
-          .reduce((s, i) => s + parseFloat(i.total), 0)
-        const outstanding = allInvoices
-          .filter((i) => i.status === 'SENT' || i.status === 'OVERDUE' || i.status === 'PARTIALLY_PAID')
-          .reduce((s, i) => s + parseFloat(i.total), 0)
+        const paidTotal = paidInvoices.reduce((s, i) => s + parseFloat(i.total), 0)
 
         const revenueMTD = paidInvoices
           .filter((i) => i.paidDate && i.paidDate >= monthStart)
           .reduce((s, i) => s + parseFloat(i.total), 0)
 
-        setStats({ revenueMTD, invoiced: invoicedTotal, paid: paidTotal, outstanding })
-
-        // Invoice status donut chart
-        const statusGroups: Record<string, number> = {}
-        allInvoices.forEach((inv) => {
-          statusGroups[inv.status] = (statusGroups[inv.status] || 0) + parseFloat(inv.total)
-        })
-        const STATUS_COLORS: Record<string, string> = {
-          PAID: 'hsl(160, 84%, 39%)', SENT: 'hsl(239, 84%, 67%)',
-          OVERDUE: 'hsl(0, 84%, 60%)', DRAFT: 'hsl(220, 9%, 46%)',
-          PARTIALLY_PAID: 'hsl(38, 92%, 50%)',
-        }
-        const STATUS_LABELS: Record<string, string> = {
-          PAID: 'Pagate', SENT: 'Inviate', OVERDUE: 'Scadute', DRAFT: 'Bozze', PARTIALLY_PAID: 'Parz. Pagate',
-        }
-        setInvoiceDonut(
-          Object.entries(statusGroups).map(([status, value]) => ({
-            label: STATUS_LABELS[status] || status, value,
-            color: STATUS_COLORS[status] || 'hsl(220, 9%, 46%)',
-          }))
-        )
+        setStats({ revenueMTD, paid: paidTotal })
 
       } catch {
         setFetchError('Errore di rete nel caricamento dei report')
@@ -161,9 +122,7 @@ export default function ReportsPage() {
 
   const statCards = [
     { label: 'Fatturato Mese', value: stats.revenueMTD, icon: TrendingUp, color: 'text-primary' },
-    { label: 'Fatturato Totale', value: stats.invoiced, icon: Receipt, color: 'text-primary' },
     { label: 'Incassato', value: stats.paid, icon: CheckCircle2, color: 'text-primary' },
-    { label: 'Da Incassare', value: stats.outstanding, icon: AlertCircle, color: 'text-accent' },
   ]
 
   return (
@@ -210,9 +169,8 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* Donut Chart + Financial Summary */}
+      {/* Financial Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-        <InvoiceStatusChart data={invoiceDonut} total={stats.invoiced} />
         <FinancialSummaryCard
           income={stats.paid}
           expenses={totalExpenses}

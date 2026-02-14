@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Receipt, FileText, CreditCard, BarChart3, ArrowRight, Landmark } from 'lucide-react'
+import { FileText, CreditCard, BarChart3, ArrowRight, Landmark } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -21,19 +21,15 @@ export default function ErpPage() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     draftQuotes: 0,
-    unpaidInvoices: 0,
     monthExpenses: 0,
   })
-  const [recentInvoices, setRecentInvoices] = useState<{ number: string; client: string; total: number; status: string; createdAt: string }[]>([])
 
   useEffect(() => {
     Promise.all([
       fetch('/api/quotes?status=DRAFT&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
-      fetch('/api/invoices?status=SENT&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
       fetch('/api/expenses?limit=100').then((r) => (r.ok ? r.json() : { items: [] })),
-      fetch('/api/invoices?limit=5&sort=createdAt&order=desc').then((r) => (r.ok ? r.json() : { items: [] })),
     ])
-      .then(([quotesData, invoicesData, expensesData, recentInvData]) => {
+      .then(([quotesData, expensesData]) => {
         const now = new Date()
         const thisMonth = expensesData.items?.filter((e: { date: string }) => {
           const d = new Date(e.date)
@@ -46,18 +42,8 @@ export default function ErpPage() {
 
         setStats({
           draftQuotes: quotesData.total || 0,
-          unpaidInvoices: invoicesData.total || 0,
           monthExpenses: monthTotal,
         })
-        setRecentInvoices(
-          (recentInvData.items || []).map((inv: any) => ({
-            number: inv.number || `#${inv.id?.slice(0, 6)}`,
-            client: inv.client?.name || inv.clientName || 'Cliente',
-            total: parseFloat(inv.total),
-            status: inv.status,
-            createdAt: inv.createdAt,
-          }))
-        )
       })
       .finally(() => setLoading(false))
   }, [])
@@ -69,13 +55,6 @@ export default function ErpPage() {
       icon: FileText,
       href: '/erp/quotes',
       stat: loading ? null : `${stats.draftQuotes} bozze`,
-    },
-    {
-      title: 'Fatture',
-      description: 'Emissione e tracking pagamenti',
-      icon: Receipt,
-      href: '/erp/invoices',
-      stat: loading ? null : `${stats.unpaidInvoices} da pagare`,
     },
     {
       title: 'Spese',
@@ -101,7 +80,7 @@ export default function ErpPage() {
         </div>
         <div>
           <h1 className="text-xl md:text-2xl font-bold">ERP</h1>
-          <p className="text-xs md:text-sm text-muted">Gestione preventivi, fatture, spese e report</p>
+          <p className="text-xs md:text-sm text-muted">Gestione preventivi, spese e report</p>
         </div>
       </div>
 
@@ -143,7 +122,6 @@ export default function ErpPage() {
           <QuickActionsGrid
             actions={[
               { icon: FileText, title: 'Preventivo', description: 'Crea nuovo', onClick: () => router.push('/erp/quotes/new') },
-              { icon: Receipt, title: 'Fattura', description: 'Emetti', onClick: () => router.push('/erp/invoices') },
               { icon: CreditCard, title: 'Spesa', description: 'Registra', onClick: () => router.push('/erp/expenses') },
               { icon: BarChart3, title: 'Report', description: 'Visualizza', onClick: () => router.push('/erp/reports') },
             ]}

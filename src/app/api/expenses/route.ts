@@ -36,9 +36,6 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: { date: 'desc' },
-        include: {
-          invoice: { select: { id: true, number: true } },
-        },
       }),
       prisma.expense.count({ where }),
     ])
@@ -66,7 +63,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { category, description, amount, date, invoiceId, receipt } = parsed.data
+    const { category, description, amount, date, receipt } = parsed.data
 
     const expense = await prisma.expense.create({
       data: {
@@ -74,7 +71,6 @@ export async function POST(request: NextRequest) {
         description,
         amount,
         date: new Date(date),
-        invoiceId,
         receipt,
       },
     })

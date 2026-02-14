@@ -78,8 +78,6 @@ const navigation: NavItem[] = [
     children: [
       { label: 'Preventivi', href: '/erp/quotes' },
       { label: 'Template', href: '/erp/templates' },
-      { label: 'Fatture', href: '/erp/invoices' },
-      { label: 'FatturaPA', href: '/erp/fatturapa' },
       { label: 'Firme', href: '/erp/signatures' },
       { label: 'Wizard', href: '/erp/wizards' },
       { label: 'Spese', href: '/erp/expenses' },
