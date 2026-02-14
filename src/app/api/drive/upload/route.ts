@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedClient, getDriveService } from '@/lib/google'
+import { getAuthenticatedClient, getDriveService, getDriveRootFolderId, isInsideAllowedFolder } from '@/lib/google'
 import { Readable } from 'stream'
 
-// POST /api/drive/upload - Upload a file to Google Drive
+// POST /api/drive/upload - Upload a file to Google Drive (restricted to FODI OS)
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
-    const folderId = (formData.get('folderId') as string) || 'root'
+    const requestedFolderId = (formData.get('folderId') as string) || ''
 
     if (!file) {
       return NextResponse.json({ error: 'File obbligatorio' }, { status: 400 })
@@ -39,6 +39,17 @@ export async function POST(request: NextRequest) {
     const safeName = file.name.replace(/[\/\\:*?"<>|]/g, '_')
 
     const drive = getDriveService(auth)
+    const rootFolderId = await getDriveRootFolderId(userId)
+
+    // Validate target folder is inside allowed root
+    const folderId = requestedFolderId || rootFolderId
+    if (rootFolderId !== 'root' && folderId !== rootFolderId) {
+      const allowed = await isInsideAllowedFolder(drive, folderId, rootFolderId)
+      if (!allowed) {
+        return NextResponse.json({ error: 'Non puoi caricare file fuori dalla cartella FODI OS' }, { status: 403 })
+      }
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer())
     const stream = Readable.from(buffer)
 

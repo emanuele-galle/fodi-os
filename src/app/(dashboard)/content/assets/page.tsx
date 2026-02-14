@@ -245,12 +245,13 @@ function GoogleDriveTab() {
   const [loading, setLoading] = useState(true)
   const [connected, setConnected] = useState<boolean | null>(null)
   const [folderStack, setFolderStack] = useState<{ id: string; name: string }[]>([
-    { id: 'root', name: 'Il mio Drive' },
+    { id: '', name: 'FODI OS' },
   ])
   const [search, setSearch] = useState('')
   const [uploading, setUploading] = useState(false)
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
+  const [rootResolved, setRootResolved] = useState(false)
 
   const currentFolderId = folderStack[folderStack.length - 1].id
 
@@ -258,7 +259,7 @@ function GoogleDriveTab() {
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (!search) params.set('folderId', currentFolderId)
+      if (!search && currentFolderId) params.set('folderId', currentFolderId)
       if (search) params.set('search', search)
 
       const res = await fetch(`/api/drive/files?${params}`)
@@ -269,12 +270,18 @@ function GoogleDriveTab() {
       }
       setConnected(true)
       setFiles(data.files || [])
+
+      // Set the root folder ID from the API response on first load
+      if (!rootResolved && data.rootFolderId) {
+        setFolderStack([{ id: data.rootFolderId, name: 'FODI OS' }])
+        setRootResolved(true)
+      }
     } catch {
       setConnected(false)
     } finally {
       setLoading(false)
     }
-  }, [currentFolderId, search])
+  }, [currentFolderId, search, rootResolved])
 
   useEffect(() => { fetchFiles() }, [fetchFiles])
 

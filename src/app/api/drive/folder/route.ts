@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedClient, getDriveService } from '@/lib/google'
+import { getAuthenticatedClient, getDriveService, getDriveRootFolderId, isInsideAllowedFolder } from '@/lib/google'
 
-// POST /api/drive/folder - Create a folder on Google Drive
+// POST /api/drive/folder - Create a folder on Google Drive (restricted to FODI OS)
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
@@ -22,11 +22,22 @@ export async function POST(request: NextRequest) {
 
   try {
     const drive = getDriveService(auth)
+    const rootFolderId = await getDriveRootFolderId(userId)
+
+    // Validate parentId is inside allowed folder
+    const targetParent = parentId || rootFolderId
+    if (rootFolderId !== 'root' && targetParent !== rootFolderId) {
+      const allowed = await isInsideAllowedFolder(drive, targetParent, rootFolderId)
+      if (!allowed) {
+        return NextResponse.json({ error: 'Non puoi creare cartelle fuori dalla cartella FODI OS' }, { status: 403 })
+      }
+    }
+
     const res = await drive.files.create({
       requestBody: {
         name,
         mimeType: 'application/vnd.google-apps.folder',
-        ...(parentId && { parents: [parentId] }),
+        parents: [targetParent],
       },
       fields: 'id, name, mimeType, webViewLink',
     })

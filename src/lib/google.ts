@@ -71,3 +71,72 @@ export function getCalendarService(auth: InstanceType<typeof google.auth.OAuth2>
 export function getDriveService(auth: InstanceType<typeof google.auth.OAuth2>) {
   return google.drive({ version: 'v3', auth })
 }
+
+/**
+ * Get the restricted root folder ID for Drive browsing.
+ * Falls back to resolving the "FODI OS" folder from admin account.
+ */
+let _cachedRootFolderId: string | null = null
+
+export async function getDriveRootFolderId(userId: string): Promise<string> {
+  // 1. From env var (fastest)
+  if (process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID) {
+    return process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID
+  }
+
+  // 2. From cache
+  if (_cachedRootFolderId) return _cachedRootFolderId
+
+  // 3. Find the "FODI OS" folder dynamically
+  const auth = await getAuthenticatedClient(userId)
+  if (!auth) return 'root'
+
+  const drive = getDriveService(auth)
+  try {
+    const res = await drive.files.list({
+      q: "name = 'FODI OS' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and 'root' in parents",
+      fields: 'files(id)',
+      spaces: 'drive',
+    })
+    if (res.data.files && res.data.files.length > 0) {
+      _cachedRootFolderId = res.data.files[0].id!
+      return _cachedRootFolderId
+    }
+  } catch {
+    // Fall through
+  }
+
+  return 'root'
+}
+
+/**
+ * Validate that a folder ID is within the allowed "FODI OS" folder tree.
+ * Walks up parents until it finds the root folder or reaches Drive root.
+ */
+export async function isInsideAllowedFolder(
+  drive: ReturnType<typeof google.drive>,
+  folderId: string,
+  allowedRootId: string
+): Promise<boolean> {
+  if (folderId === allowedRootId) return true
+
+  let currentId = folderId
+  const maxDepth = 10 // Prevent infinite loops
+
+  for (let i = 0; i < maxDepth; i++) {
+    try {
+      const file = await drive.files.get({
+        fileId: currentId,
+        fields: 'parents',
+      })
+      const parents = file.data.parents
+      if (!parents || parents.length === 0) return false
+      if (parents.includes(allowedRootId)) return true
+      currentId = parents[0]
+    } catch {
+      return false
+    }
+  }
+
+  return false
+}
