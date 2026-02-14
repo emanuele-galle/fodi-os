@@ -89,6 +89,7 @@ export default function InternalPage() {
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([])
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null)
 
@@ -124,12 +125,17 @@ export default function InternalPage() {
   async function handleCreateProject(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
+    setFormError('')
     const form = new FormData(e.currentTarget)
     const body: Record<string, unknown> = { isInternal: true }
     form.forEach((v, k) => {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
     })
     if (body.budgetHours) body.budgetHours = parseInt(body.budgetHours as string, 10)
+    // Convert date fields to ISO datetime
+    if (body.startDate) body.startDate = new Date(body.startDate as string).toISOString()
+    if (body.endDate) body.endDate = new Date(body.endDate as string).toISOString()
+    if (body.deadline) body.deadline = new Date(body.deadline as string).toISOString()
     try {
       const res = await fetch('/api/projects', {
         method: 'POST',
@@ -137,10 +143,21 @@ export default function InternalPage() {
         body: JSON.stringify(body),
       })
       if (res.ok) {
+        setFormError('')
         setModalOpen(false)
         setLoading(true)
         fetchData()
+      } else {
+        const data = await res.json().catch(() => null)
+        if (data?.details) {
+          const msgs = Object.values(data.details).flat().filter(Boolean) as string[]
+          setFormError(msgs.join('. ') || data.error || 'Errore nella creazione')
+        } else {
+          setFormError(data?.error || 'Errore nella creazione del progetto')
+        }
       }
+    } catch {
+      setFormError('Errore di rete')
     } finally {
       setSubmitting(false)
     }
@@ -472,6 +489,11 @@ export default function InternalPage() {
             <Input name="endDate" label="Data Fine" type="date" />
           </div>
           <Input name="budgetHours" label="Ore Previste" type="number" />
+          {formError && (
+            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {formError}
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
             <Button type="submit" disabled={submitting}>{submitting ? 'Salvataggio...' : 'Crea Progetto'}</Button>

@@ -28,28 +28,49 @@ self.addEventListener('activate', (event) => {
 // Push notifications
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {}
+  const isCall = (data.title || '').includes('Chiamata') || (data.title || '').includes('meeting')
+
+  const options = {
+    body: data.message || '',
+    icon: '/favicon.png',
+    badge: '/favicon.png',
+    data: { url: data.link || '/dashboard' },
+  }
+
+  // For call notifications: add vibration pattern and require interaction
+  if (isCall) {
+    options.vibrate = [300, 200, 300, 200, 300, 200, 300]
+    options.requireInteraction = true
+    options.tag = 'incoming-call'
+    options.renotify = true
+    options.actions = [
+      { action: 'answer', title: 'Rispondi' },
+      { action: 'dismiss', title: 'Rifiuta' },
+    ]
+  }
+
   event.waitUntil(
-    self.registration.showNotification(data.title || 'FODI OS', {
-      body: data.message || '',
-      icon: '/favicon.png',
-      badge: '/favicon.png',
-      data: { url: data.link || '/dashboard' },
-    })
+    self.registration.showNotification(data.title || 'FODI OS', options)
   )
 })
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
+
+  // Handle call action buttons
+  const action = event.action
+  const url = action === 'dismiss' ? '/dashboard' : (event.notification.data.url || '/dashboard')
+
   event.waitUntil(
     self.clients.matchAll({ type: 'window' }).then((clients) => {
       // Focus existing window if available
       for (const client of clients) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(event.notification.data.url)
+          client.navigate(url)
           return client.focus()
         }
       }
-      return self.clients.openWindow(event.notification.data.url)
+      return self.clients.openWindow(url)
     })
   )
 })

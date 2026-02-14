@@ -5,6 +5,7 @@ import { Topbar } from '@/components/layout/Topbar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { MobileHeader } from '@/components/layout/MobileHeader'
 import { CommandPalette } from '@/components/layout/CommandPalette'
+import { IncomingCallBanner } from '@/components/layout/IncomingCallBanner'
 import { useState, useEffect } from 'react'
 import { useAuthRefresh } from '@/hooks/useAuthRefresh'
 import type { Role } from '@/generated/prisma/client'
@@ -147,6 +148,8 @@ export default function DashboardLayout({
         open={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
       />
+
+      <IncomingCallBanner />
     </div>
   )
 }

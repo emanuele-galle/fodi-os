@@ -81,6 +81,7 @@ export default function ProjectsPage() {
   const [total, setTotal] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
   const [clients, setClients] = useState<ClientOption[]>([])
   const limit = 20
 
@@ -132,12 +133,18 @@ export default function ProjectsPage() {
   async function handleCreateProject(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
+    setFormError('')
     const body: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(projectForm.values)) {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
     }
+    // Convert numeric fields
     if (body.budgetAmount) body.budgetAmount = parseFloat(body.budgetAmount as string)
     if (body.budgetHours) body.budgetHours = parseInt(body.budgetHours as string, 10)
+    // Convert date fields to ISO datetime
+    if (body.startDate) body.startDate = new Date(body.startDate as string).toISOString()
+    if (body.endDate) body.endDate = new Date(body.endDate as string).toISOString()
+    if (body.deadline) body.deadline = new Date(body.deadline as string).toISOString()
     try {
       const res = await fetch('/api/projects', {
         method: 'POST',
@@ -146,9 +153,20 @@ export default function ProjectsPage() {
       })
       if (res.ok) {
         projectForm.reset()
+        setFormError('')
         setModalOpen(false)
         fetchProjects()
+      } else {
+        const data = await res.json().catch(() => null)
+        if (data?.details) {
+          const msgs = Object.values(data.details).flat().filter(Boolean) as string[]
+          setFormError(msgs.join('. ') || data.error || 'Errore nella creazione')
+        } else {
+          setFormError(data?.error || 'Errore nella creazione del progetto')
+        }
       }
+    } catch {
+      setFormError('Errore di rete')
     } finally {
       setSubmitting(false)
     }
@@ -346,6 +364,11 @@ export default function ProjectsPage() {
               className="h-10 w-20 rounded-md border border-border cursor-pointer"
             />
           </div>
+          {formError && (
+            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {formError}
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
             <Button type="submit" loading={submitting}>Crea Progetto</Button>

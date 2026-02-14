@@ -1,14 +1,20 @@
 import { z } from 'zod'
 
+// Accept both ISO datetime ("2024-01-15T00:00:00.000Z") and plain date ("2024-01-15")
+const dateStringSchema = z.string().refine(
+  (val) => !isNaN(Date.parse(val)),
+  { message: 'Data non valida' }
+)
+
 export const createProjectSchema = z.object({
   workspaceId: z.string().uuid('Workspace ID non valido').optional(),
   clientId: z.string().uuid('Client ID non valido').optional(),
   name: z.string().min(1, 'Nome progetto obbligatorio').max(200),
   description: z.string().optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  deadline: z.string().datetime().optional(),
+  startDate: dateStringSchema.optional(),
+  endDate: dateStringSchema.optional(),
+  deadline: dateStringSchema.optional(),
   budgetAmount: z.number().min(0).optional(),
   budgetHours: z.number().int().min(0).optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Colore non valido').default('#6366F1'),

@@ -5,8 +5,6 @@ import { uploadFile } from '@/lib/s3'
 import { sseManager } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
-const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB
-
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -29,10 +27,6 @@ export async function POST(
     const file = formData.get('file') as File | null
     if (!file) {
       return NextResponse.json({ error: 'File obbligatorio' }, { status: 400 })
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File troppo grande (max 25MB)' }, { status: 400 })
     }
 
     // Block dangerous file types

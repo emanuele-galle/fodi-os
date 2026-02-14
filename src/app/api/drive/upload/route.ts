@@ -23,11 +23,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File obbligatorio' }, { status: 400 })
     }
 
-    // Max 100MB for Drive uploads
-    if (file.size > 100 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File troppo grande (max 100 MB)' }, { status: 400 })
-    }
-
     // Block dangerous file types
     const blockedExts = ['exe', 'bat', 'cmd', 'sh', 'php', 'jsp', 'cgi', 'msi', 'dll', 'scr', 'ps1']
     const ext = (file.name.split('.').pop() || '').toLowerCase()

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 import { prisma } from '@/lib/prisma'
 import { sseManager } from '@/lib/sse'
+import { sendPush } from '@/lib/push'
 
 // POST /api/meetings/quick - Create a quick meeting with Google Meet
 export async function POST(request: NextRequest) {
@@ -74,21 +75,26 @@ export async function POST(request: NextRequest) {
           select: { name: true },
         })
 
+        const title = 'Chiamata in arrivo'
+        const message = `${creatorName} ti sta chiamando${channel?.name ? ` da "${channel.name}"` : ''}`
+
+        // DB notifications
         await prisma.notification.createMany({
           data: channelMembers.map((m) => ({
             userId: m.userId,
             type: 'MEETING',
-            title: 'Nuovo meeting avviato',
-            message: `${creatorName} ha avviato un meeting in "${channel?.name || 'Chat'}"`,
+            title,
+            message,
             link: meetLink,
           })),
         })
 
-        // SSE notification to channel members
         const memberIds = channelMembers.map((m) => m.userId)
+
+        // SSE call event (shows in-app call banner)
         for (const memberId of memberIds) {
           sseManager.sendToUser(memberId, {
-            type: 'meeting_started',
+            type: 'incoming_call',
             data: {
               meetLink,
               summary,
@@ -96,6 +102,15 @@ export async function POST(request: NextRequest) {
               channelId,
               channelName: channel?.name,
             },
+          })
+        }
+
+        // Web push so phone rings even if app is closed
+        for (const memberId of memberIds) {
+          sendPush(memberId, {
+            title,
+            message,
+            link: meetLink,
           })
         }
       }

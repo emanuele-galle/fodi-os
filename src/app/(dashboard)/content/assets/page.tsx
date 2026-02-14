@@ -230,7 +230,7 @@ function MinioAssetsTab() {
 
       {/* Upload Modal */}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Carica Asset" size="lg">
-        <FileUpload onUpload={() => { fetchAssets(); setModalOpen(false) }} maxFiles={10} maxSize={500 * 1024 * 1024} />
+        <FileUpload onUpload={() => { fetchAssets(); setModalOpen(false) }} maxFiles={10} maxSize={10 * 1024 * 1024 * 1024} />
       </Modal>
     </>
   )
@@ -244,22 +244,44 @@ function GoogleDriveTab() {
   const [files, setFiles] = useState<DriveFile[]>([])
   const [loading, setLoading] = useState(true)
   const [connected, setConnected] = useState<boolean | null>(null)
-  const [folderStack, setFolderStack] = useState<{ id: string; name: string }[]>([
-    { id: '', name: 'FODI OS' },
-  ])
+  const [folderStack, setFolderStack] = useState<{ id: string; name: string }[]>([])
   const [search, setSearch] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
-  const [rootResolved, setRootResolved] = useState(false)
 
-  const currentFolderId = folderStack[folderStack.length - 1].id
+  const currentFolderId = folderStack.length > 0 ? folderStack[folderStack.length - 1].id : ''
 
+  // Step 1: Resolve the root folder ID on mount
+  useEffect(() => {
+    async function resolveRoot() {
+      try {
+        const res = await fetch('/api/drive/files?pageSize=1')
+        const data = await res.json()
+        if (data.connected === false) {
+          setConnected(false)
+          setLoading(false)
+          return
+        }
+        setConnected(true)
+        const rootId = data.rootFolderId || 'root'
+        setFolderStack([{ id: rootId, name: 'FODI OS' }])
+      } catch {
+        setConnected(false)
+        setLoading(false)
+      }
+    }
+    resolveRoot()
+  }, [])
+
+  // Step 2: Fetch files whenever folder or search changes (only after root resolved)
   const fetchFiles = useCallback(async () => {
+    if (!currentFolderId) return
     setLoading(true)
     try {
       const params = new URLSearchParams()
-      if (!search && currentFolderId) params.set('folderId', currentFolderId)
+      if (!search) params.set('folderId', currentFolderId)
       if (search) params.set('search', search)
 
       const res = await fetch(`/api/drive/files?${params}`)
@@ -270,18 +292,12 @@ function GoogleDriveTab() {
       }
       setConnected(true)
       setFiles(data.files || [])
-
-      // Set the root folder ID from the API response on first load
-      if (!rootResolved && data.rootFolderId) {
-        setFolderStack([{ id: data.rootFolderId, name: 'FODI OS' }])
-        setRootResolved(true)
-      }
     } catch {
       setConnected(false)
     } finally {
       setLoading(false)
     }
-  }, [currentFolderId, search, rootResolved])
+  }, [currentFolderId, search])
 
   useEffect(() => { fetchFiles() }, [fetchFiles])
 
@@ -304,16 +320,30 @@ function GoogleDriveTab() {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('folderId', currentFolderId)
-      const res = await fetch('/api/drive/upload', { method: 'POST', body: formData })
-      if (res.ok) fetchFiles()
-    } finally {
+    setUploadProgress(0)
+
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('folderId', currentFolderId)
+
+    const xhr = new XMLHttpRequest()
+    xhr.upload.addEventListener('progress', (evt) => {
+      if (evt.lengthComputable) {
+        setUploadProgress(Math.round((evt.loaded / evt.total) * 100))
+      }
+    })
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) fetchFiles()
       setUploading(false)
-      e.target.value = ''
-    }
+      setUploadProgress(0)
+    })
+    xhr.addEventListener('error', () => {
+      setUploading(false)
+      setUploadProgress(0)
+    })
+    xhr.open('POST', '/api/drive/upload')
+    xhr.send(formData)
+    e.target.value = ''
   }
 
   const handleCreateFolder = async () => {
@@ -365,13 +395,26 @@ function GoogleDriveTab() {
             <FolderPlus className="h-4 w-4 mr-1" />
             Cartella
           </Button>
-          <Button size="sm" onClick={() => document.getElementById('drive-upload')?.click()}>
+          <Button size="sm" onClick={() => document.getElementById('drive-upload')?.click()} disabled={uploading}>
             <Upload className="h-4 w-4 mr-1" />
-            {uploading ? 'Upload...' : 'Carica'}
+            {uploading ? `${uploadProgress}%` : 'Carica'}
           </Button>
           <input id="drive-upload" type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
         </div>
       </div>
+
+      {/* Upload progress bar */}
+      {uploading && (
+        <div className="mb-4">
+          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-200"
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted mt-1">Upload in corso... {uploadProgress}%</p>
+        </div>
+      )}
 
       {/* Breadcrumb */}
       {!search && (
