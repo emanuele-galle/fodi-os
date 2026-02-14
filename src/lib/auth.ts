@@ -15,7 +15,7 @@ export interface SessionPayload {
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 const REFRESH_SECRET = new TextEncoder().encode(process.env.REFRESH_SECRET!)
 
-const ACCESS_EXPIRES = '15m'
+const ACCESS_EXPIRES = '30m'
 const REFRESH_EXPIRES = '7d'
 
 export async function hashPassword(password: string): Promise<string> {
@@ -61,7 +61,7 @@ export async function setAuthCookies(accessToken: string, refreshToken: string):
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 15 * 60, // 15 minutes
+    maxAge: 30 * 60, // 30 minutes
   })
 
   cookieStore.set('fodi_refresh', refreshToken, {

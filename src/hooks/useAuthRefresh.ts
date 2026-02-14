@@ -5,48 +5,74 @@ import { useRouter } from 'next/navigation'
 
 /**
  * Hook that proactively refreshes the access token before it expires.
- * Runs a silent refresh every 12 minutes (token expires at 15min).
- * Also handles 401 responses by attempting refresh before redirecting to login.
+ * Uses a global lock to prevent concurrent refresh attempts from multiple
+ * components or polling intervals (which would trigger token reuse detection
+ * and revoke ALL tokens, causing unexpected logout).
+ *
+ * Access token: 15min. Proactive refresh: every 12min.
+ * On tab focus: refresh only if >10min since last successful refresh.
  */
+
+// Global state shared across all hook instances (singleton)
+let lastRefreshTime = 0
+let globalRefreshing = false
+
 export function useAuthRefresh() {
   const router = useRouter()
-  const refreshing = useRef(false)
+  const mountedRef = useRef(true)
 
-  const doRefresh = useCallback(async (): Promise<boolean> => {
-    if (refreshing.current) return true
-    refreshing.current = true
+  const doRefresh = useCallback(async (force = false): Promise<boolean> => {
+    // Skip if another refresh is in progress
+    if (globalRefreshing) return true
+
+    // Skip if refreshed recently (< 2 minutes ago) unless forced
+    const elapsed = Date.now() - lastRefreshTime
+    if (!force && elapsed < 2 * 60 * 1000) return true
+
+    globalRefreshing = true
 
     try {
       const res = await fetch('/api/auth/refresh', { method: 'POST' })
       if (res.ok) {
+        lastRefreshTime = Date.now()
         return true
       }
       // Refresh failed - session truly expired
-      router.push('/login')
+      if (mountedRef.current) {
+        router.push('/login')
+      }
       return false
     } catch {
       return false
     } finally {
-      refreshing.current = false
+      globalRefreshing = false
     }
   }, [router])
 
   useEffect(() => {
-    // Proactive refresh: every 12 minutes (token lives 15min)
+    mountedRef.current = true
+
+    // Proactive refresh: every 25 minutes (token lives 30min)
     const interval = setInterval(() => {
       doRefresh()
-    }, 12 * 60 * 1000)
+    }, 25 * 60 * 1000)
 
-    // Also refresh on tab focus (user returns after being away)
+    // On tab focus: refresh only if it's been a while (>20 minutes)
     function onFocus() {
-      doRefresh()
+      const elapsed = Date.now() - lastRefreshTime
+      if (elapsed > 20 * 60 * 1000) {
+        doRefresh()
+      }
     }
     window.addEventListener('focus', onFocus)
 
-    // Initial refresh to ensure token is valid on mount
-    doRefresh()
+    // Initial refresh only if we haven't refreshed recently
+    if (Date.now() - lastRefreshTime > 2 * 60 * 1000) {
+      doRefresh()
+    }
 
     return () => {
+      mountedRef.current = false
       clearInterval(interval)
       window.removeEventListener('focus', onFocus)
     }

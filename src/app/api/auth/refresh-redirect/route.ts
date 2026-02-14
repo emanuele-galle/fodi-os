@@ -30,8 +30,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // If token is already revoked, possible theft - revoke ALL tokens for this user
+    // If token is already revoked, check if this is a concurrent refresh race condition.
+    // Allow a 60s grace period where a recent valid token indicates normal race, not theft.
     if (stored.isRevoked) {
+      const recentToken = await prisma.refreshToken.findFirst({
+        where: { userId: stored.userId, isRevoked: false, expiresAt: { gt: new Date() }, createdAt: { gt: new Date(Date.now() - 60_000) } },
+        orderBy: { createdAt: 'desc' },
+      })
+      if (recentToken) {
+        // Race condition: another request already rotated. Use the new token.
+        const user = await prisma.user.findUnique({
+          where: { id: stored.userId },
+          select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
+        })
+        if (user && user.isActive) {
+          const accessToken = await createAccessToken({
+            sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role,
+          })
+          const response = NextResponse.redirect(new URL(safePath, request.url))
+          response.cookies.set('fodi_access', accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60 })
+          response.cookies.set('fodi_refresh', recentToken.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 })
+          return response
+        }
+      }
+      // Outside grace period or no valid token: genuine reuse
       await prisma.refreshToken.updateMany({
         where: { userId: stored.userId },
         data: { isRevoked: true },
@@ -83,7 +105,7 @@ export async function GET(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 15 * 60,
+      maxAge: 30 * 60,
     })
 
     response.cookies.set('fodi_refresh', newRefreshTokenJwt, {

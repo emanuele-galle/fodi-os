@@ -26,8 +26,43 @@ export async function POST() {
       return NextResponse.json({ error: 'Refresh token scaduto' }, { status: 401 })
     }
 
-    // If token is already revoked, possible theft - revoke ALL tokens for this user
+    // If token is already revoked, check if this is a race condition (concurrent refresh requests).
+    // Multiple browser tabs or simultaneous API calls can race to refresh the same token.
+    // Instead of revoking ALL tokens (which causes unexpected logout), allow a 60s grace window.
     if (stored.isRevoked) {
+      // Check if a newer token was created recently (within 60s) - indicates concurrent rotation
+      const recentToken = await prisma.refreshToken.findFirst({
+        where: { userId: stored.userId, isRevoked: false, expiresAt: { gt: new Date() }, createdAt: { gt: new Date(Date.now() - 60_000) } },
+        orderBy: { createdAt: 'desc' },
+      })
+      if (recentToken) {
+        // Within grace period: find the newest valid token for this user and use it
+        const latestToken = await prisma.refreshToken.findFirst({
+          where: { userId: stored.userId, isRevoked: false, expiresAt: { gt: new Date() } },
+          orderBy: { createdAt: 'desc' },
+        })
+        if (latestToken) {
+          // Another concurrent request already rotated; re-read user and issue new access token only
+          const user = await prisma.user.findUnique({
+            where: { id: stored.userId },
+            select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
+          })
+          if (user && user.isActive) {
+            const accessToken = await createAccessToken({
+              sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role,
+            })
+            cookieStore.set('fodi_access', accessToken, {
+              httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60,
+            })
+            // Also set the latest refresh token cookie so next refresh uses the right one
+            cookieStore.set('fodi_refresh', latestToken.token, {
+              httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60,
+            })
+            return NextResponse.json({ success: true })
+          }
+        }
+      }
+      // Outside grace period or no valid token found: genuine reuse, revoke all
       await prisma.refreshToken.updateMany({
         where: { userId: stored.userId },
         data: { isRevoked: true },
@@ -35,7 +70,7 @@ export async function POST() {
       return NextResponse.json({ error: 'Token riutilizzato - sessioni invalidate' }, { status: 401 })
     }
 
-    // Rotate: invalidate old token and cleanup revoked/expired tokens for this user
+    // Rotate: invalidate old token and cleanup old revoked/expired tokens
     await prisma.$transaction([
       prisma.refreshToken.update({
         where: { id: stored.id },
@@ -91,7 +126,7 @@ export async function POST() {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 15 * 60,
+      maxAge: 30 * 60,
     })
 
     cookieStore.set('fodi_refresh', newRefreshTokenJwt, {

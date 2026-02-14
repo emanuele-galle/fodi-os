@@ -48,16 +48,9 @@ export default function DashboardLayout({
   useAuthRefresh()
 
   useEffect(() => {
+    let retried = false
     async function loadSession() {
-      let res = await fetch('/api/auth/session')
-
-      // If 401, try refresh then retry
-      if (res.status === 401) {
-        const refreshRes = await fetch('/api/auth/refresh', { method: 'POST' })
-        if (refreshRes.ok) {
-          res = await fetch('/api/auth/session')
-        }
-      }
+      const res = await fetch('/api/auth/session')
 
       if (res.ok) {
         const data = await res.json()
@@ -65,6 +58,13 @@ export default function DashboardLayout({
           setUser(data.user)
           return
         }
+      }
+
+      // If 401, wait briefly for useAuthRefresh to complete, then retry once
+      if (res.status === 401 && !retried) {
+        retried = true
+        await new Promise((r) => setTimeout(r, 1500))
+        return loadSession()
       }
 
       window.location.href = '/login'
