@@ -37,6 +37,75 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.4.0',
+    date: '2026-02-14',
+    sections: [
+      {
+        title: 'Commerciale & ERP',
+        icon: Sparkles,
+        items: [
+          'Modifica inline preventivi (titolo, voci, IVA, sconto, note, validita)',
+          'Modifica inline fatture (titolo, voci, IVA, sconto, note, scadenza, metodo pagamento)',
+          'Aggiunta/rimozione dinamica voci con ricalcolo totali in tempo reale',
+          'Sistema PDF professionale unificato con logo, dati societari, footer e numerazione pagine',
+          'Generazione PDF fatture (nuovo endpoint)',
+          'Anteprima PDF in-app per preventivi e fatture',
+        ],
+      },
+      {
+        title: 'Presenze & Time Tracking',
+        icon: Sparkles,
+        items: [
+          'Nuovo sistema Cartellino Presenze basato su sessioni di connessione',
+          'Heartbeat automatico con rilevamento gap (5 min) per clock-in/out',
+          'Riepilogo ore giornaliere, settimanali, utenti online',
+          'Sessioni raggruppate per giorno con orario entrata/uscita',
+          'Clock-out automatico al logout',
+        ],
+      },
+      {
+        title: 'Google Meet & Chiamate',
+        icon: Sparkles,
+        items: [
+          'Notifiche push con vibrazione per chiamate Meet in arrivo',
+          'Banner chiamata in-app con suoneria e pulsanti Rispondi/Rifiuta',
+          'Notifica service worker con azioni "Rispondi" e "Rifiuta"',
+          'Auto-dismiss dopo 30 secondi',
+        ],
+      },
+      {
+        title: 'Impostazioni & UI',
+        icon: Sparkles,
+        items: [
+          'Pagina impostazioni ridisegnata con navigazione a sezioni (Profilo, Aspetto, Sicurezza, Notifiche, Integrazioni)',
+          'Selettore tema visuale (Chiaro, Scuro, Mezzanotte)',
+          'Cambio password con validazione',
+          'Campo telefono nel profilo utente',
+          'Google Drive: restrizione alla cartella FODI OS',
+        ],
+      },
+      {
+        title: 'Upload & File',
+        icon: Sparkles,
+        items: [
+          'Rimosso limite dimensione file su tutti gli upload (progetti, chat, Drive)',
+          'Barra di progresso reale per upload allegati progetto e Google Drive',
+          'Upload basato su XMLHttpRequest con tracking percentuale',
+        ],
+      },
+      {
+        title: 'Bug Fix',
+        icon: Bug,
+        items: [
+          'Fix creazione progetti: validazione date accetta formato YYYY-MM-DD',
+          'Fix errore silenzioso creazione progetti: aggiunto feedback errore nel form',
+          'Fix validazione date preventivi e fatture (stessa issue)',
+          'Fix CSP che bloccava thumbnail Google Drive (lh3.googleusercontent.com)',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.3.0',
     date: '2026-02-11',
     sections: [
@@ -243,7 +312,7 @@ export default function SystemStatsPage() {
   const [stats, setStats] = useState<SystemStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({ '0.3.0': true })
+  const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({ '0.4.0': true })
   const [activeTab, setActiveTab] = useState<'overview' | 'changelog'>('overview')
 
   useEffect(() => {

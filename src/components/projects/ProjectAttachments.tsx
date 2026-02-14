@@ -24,7 +24,8 @@ interface ProjectAttachmentsProps {
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 
 function getFileIcon(mimeType: string) {
@@ -43,7 +44,6 @@ function isPreviewable(mimeType: string): boolean {
 }
 
 function getGDrivePreviewUrl(fileUrl: string): string {
-  // Convert Google Drive view link to preview/embed link
   const match = fileUrl.match(/\/d\/([^/]+)/)
   if (match) {
     return `https://drive.google.com/file/d/${match[1]}/preview`
@@ -54,6 +54,8 @@ function getGDrivePreviewUrl(fileUrl: string): string {
 export function ProjectAttachments({ projectId }: ProjectAttachmentsProps) {
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadFileName, setUploadFileName] = useState('')
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null)
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
@@ -71,27 +73,51 @@ export function ProjectAttachments({ projectId }: ProjectAttachmentsProps) {
     fetchAttachments()
   }, [fetchAttachments])
 
+  function uploadFileWithProgress(file: globalThis.File): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const xhr = new XMLHttpRequest()
+      xhr.upload.addEventListener('progress', (evt) => {
+        if (evt.lengthComputable) {
+          setUploadProgress(Math.round((evt.loaded / evt.total) * 100))
+        }
+      })
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve()
+        } else {
+          reject(new Error(`Upload failed: ${xhr.status}`))
+        }
+      })
+      xhr.addEventListener('error', () => reject(new Error('Upload failed')))
+      xhr.open('POST', `/api/projects/${projectId}/attachments`)
+      xhr.send(formData)
+    })
+  }
+
   const onDrop = useCallback(async (acceptedFiles: globalThis.File[]) => {
     if (acceptedFiles.length === 0) return
     setUploading(true)
     try {
-      for (const file of acceptedFiles) {
-        const formData = new FormData()
-        formData.append('file', file)
-        await fetch(`/api/projects/${projectId}/attachments`, {
-          method: 'POST',
-          body: formData,
-        })
+      for (let i = 0; i < acceptedFiles.length; i++) {
+        const file = acceptedFiles[i]
+        setUploadFileName(file.name)
+        setUploadProgress(0)
+        await uploadFileWithProgress(file)
       }
       fetchAttachments()
     } finally {
       setUploading(false)
+      setUploadProgress(0)
+      setUploadFileName('')
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, fetchAttachments])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    maxSize: 50 * 1024 * 1024,
   })
 
   async function handleDelete(attachmentId: string) {
@@ -139,11 +165,21 @@ export function ProjectAttachments({ projectId }: ProjectAttachmentsProps) {
         <input {...getInputProps()} />
         <Upload className="h-8 w-8 mx-auto mb-2 text-muted" />
         {uploading ? (
-          <p className="text-sm text-muted">Caricamento in corso...</p>
+          <div className="space-y-2">
+            <p className="text-sm text-primary font-medium">
+              Caricamento: {uploadFileName} ({uploadProgress}%)
+            </p>
+            <div className="w-full max-w-xs mx-auto h-2 bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
         ) : isDragActive ? (
           <p className="text-sm text-primary">Rilascia i file qui...</p>
         ) : (
-          <p className="text-sm text-muted">Trascina i file qui o clicca per selezionare (max 50 MB)</p>
+          <p className="text-sm text-muted">Trascina i file qui o clicca per selezionare</p>
         )}
       </div>
 
@@ -160,7 +196,6 @@ export function ProjectAttachments({ projectId }: ProjectAttachmentsProps) {
                 key={att.id}
                 className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-secondary/30 transition-colors"
               >
-                {/* Thumbnail for images */}
                 {att.mimeType.startsWith('image/') ? (
                   <button
                     onClick={() => setPreviewAttachment(att)}
