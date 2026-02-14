@@ -123,6 +123,12 @@ export async function middleware(request: NextRequest) {
 
         response.headers.set('x-user-id', effectiveUserId)
         response.headers.set('x-user-role', effectiveRole)
+        // Pass client IP for tracking (Traefik sets x-forwarded-for)
+        const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+          || request.headers.get('x-real-ip')
+          || request.ip
+          || ''
+        if (clientIp) response.headers.set('x-client-ip', clientIp)
         return setSecurityHeaders(response)
       }
     }

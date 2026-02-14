@@ -63,10 +63,16 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Update last login
+    // Update last login + IP
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip')
+      || ''
     await prisma.user.update({
       where: { id: user.id },
-      data: { lastLoginAt: new Date() },
+      data: {
+        lastLoginAt: new Date(),
+        ...(clientIp && { lastIpAddress: clientIp }),
+      },
     })
 
     await setAuthCookies(accessToken, refreshToken)

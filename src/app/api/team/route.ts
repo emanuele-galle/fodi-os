@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
         phone: !isClient,
         lastLoginAt: !isClient,
         lastActiveAt: !isClient,
+        lastIpAddress: !isClient,
         ...(!isClient && {
           workspaceMembers: {
             select: {

@@ -12,10 +12,16 @@ export async function POST(request: NextRequest) {
 
   const now = new Date()
 
-  // Update lastActiveAt
+  // Update lastActiveAt + IP
+  const clientIp = request.headers.get('x-client-ip')
+    || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || ''
   await prisma.user.update({
     where: { id: userId },
-    data: { lastActiveAt: now },
+    data: {
+      lastActiveAt: now,
+      ...(clientIp && { lastIpAddress: clientIp }),
+    },
   })
 
   // Find active session (no clockOut)

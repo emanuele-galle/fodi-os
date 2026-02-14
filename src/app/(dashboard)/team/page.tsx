@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Users, Search, Mail, Phone, CheckCircle2, Clock, Calendar, Video, ChevronDown, ChevronUp, Plus, ListTodo, AlertCircle } from 'lucide-react'
+import { Users, Search, Mail, Phone, CheckCircle2, Clock, Calendar, Video, ChevronDown, ChevronUp, Plus, ListTodo, AlertCircle, Globe, Wifi } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -39,6 +39,7 @@ interface TeamMember {
   phone: string | null
   lastLoginAt: string | null
   lastActiveAt: string | null
+  lastIpAddress: string | null
   workspaceMembers: WorkspaceMembership[]
   totalTasks: number
   totalTimeEntries: number
@@ -426,6 +427,20 @@ export default function TeamPage() {
                       <div className="flex items-center gap-2 text-sm text-muted">
                         <Phone className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>{member.phone}</span>
+                      </div>
+                    )}
+                    {member.lastLoginAt && (
+                      <div className="flex items-center gap-2 text-sm text-muted">
+                        <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">
+                          Login: {formatDistanceToNow(new Date(member.lastLoginAt), { addSuffix: true, locale: it })}
+                        </span>
+                      </div>
+                    )}
+                    {member.lastIpAddress && (
+                      <div className="flex items-center gap-2 text-sm text-muted">
+                        <Wifi className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="font-mono text-xs">{member.lastIpAddress}</span>
                       </div>
                     )}
                   </div>
