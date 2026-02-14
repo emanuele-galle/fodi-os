@@ -21,14 +21,13 @@ export function formatCurrency(amount: number | string): string {
 }
 
 export function sanitizeHtml(input: string): string {
-  // Strip all HTML tags and escape remaining special characters
+  // Strip all HTML tags and escape angle brackets to prevent injection
+  // React auto-escapes quotes in JSX, so no need to encode " and '
   return input
     .replace(/<[^>]*>?/g, '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
 }
 
 export function timeAgo(date: string): string {

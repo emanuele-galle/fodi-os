@@ -19,6 +19,7 @@ interface Attachment {
 
 interface ProjectAttachmentsProps {
   projectId: string
+  folderId?: string | null
 }
 
 function formatFileSize(bytes: number): string {
@@ -51,7 +52,7 @@ function getGDrivePreviewUrl(fileUrl: string): string {
   return fileUrl
 }
 
-export function ProjectAttachments({ projectId }: ProjectAttachmentsProps) {
+export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsProps) {
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -62,12 +63,15 @@ export function ProjectAttachments({ projectId }: ProjectAttachmentsProps) {
   const [renaming, setRenaming] = useState(false)
 
   const fetchAttachments = useCallback(async () => {
-    const res = await fetch(`/api/projects/${projectId}/attachments`)
+    const url = folderId
+      ? `/api/projects/${projectId}/attachments?folderId=${folderId}`
+      : `/api/projects/${projectId}/attachments`
+    const res = await fetch(url)
     if (res.ok) {
       const data = await res.json()
       setAttachments(data.items || [])
     }
-  }, [projectId])
+  }, [projectId, folderId])
 
   useEffect(() => {
     fetchAttachments()
@@ -77,6 +81,7 @@ export function ProjectAttachments({ projectId }: ProjectAttachmentsProps) {
     return new Promise((resolve, reject) => {
       const formData = new FormData()
       formData.append('file', file)
+      if (folderId) formData.append('folderId', folderId)
 
       const xhr = new XMLHttpRequest()
       xhr.upload.addEventListener('progress', (evt) => {

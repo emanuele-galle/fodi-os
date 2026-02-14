@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { slugify } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   try {
+    const userId = request.headers.get('x-user-id')!
     const role = request.headers.get('x-user-role') as Role
     requirePermission(role, 'pm', 'write')
 
@@ -73,6 +75,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
       include: {
         _count: { select: { tasks: true } },
+      },
+    })
+
+    // Create a dedicated chat channel for this folder
+    await prisma.chatChannel.create({
+      data: {
+        name: `Chat - ${parsed.data.name}`,
+        slug: `folder-${slugify(parsed.data.name)}-${Date.now()}`,
+        description: `Chat della cartella ${parsed.data.name}`,
+        type: 'PROJECT',
+        projectId,
+        folderId: folder.id,
+        createdById: userId,
+        members: {
+          create: [{ userId, role: 'OWNER' }],
+        },
       },
     })
 
@@ -132,10 +150,20 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'ID cartella obbligatorio' }, { status: 400 })
     }
 
-    // Unlink tasks from folder before deleting
+    // Unlink tasks and attachments from folder before deleting
     await prisma.task.updateMany({
       where: { folderId: id },
       data: { folderId: null },
+    })
+    await prisma.projectAttachment.updateMany({
+      where: { folderId: id },
+      data: { folderId: null },
+    })
+
+    // Archive associated chat channels instead of deleting
+    await prisma.chatChannel.updateMany({
+      where: { folderId: id },
+      data: { isArchived: true, folderId: null },
     })
 
     await prisma.folder.delete({

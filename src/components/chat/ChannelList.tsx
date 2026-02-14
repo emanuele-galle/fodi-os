@@ -17,6 +17,7 @@ interface ChannelItem {
     createdAt: string
   } | null
   hasUnread: boolean
+  unreadCount?: number
 }
 
 interface TeamMember {
@@ -179,7 +180,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                 {filteredOnline.map((member) => {
                   const dm = findDmForMember(member)
                   const isSelected = dm ? dm.id === selectedId : false
-                  const hasUnread = dm?.hasUnread && !isSelected
+                  const unread = dm && !isSelected ? (dm.unreadCount || 0) : 0
 
                   return (
                     <button
@@ -201,7 +202,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                           <span className={cn(
                             'text-[13px] truncate',
                             isSelected ? 'text-primary font-semibold' : 'text-foreground font-medium',
-                            hasUnread && 'font-bold'
+                            unread > 0 && 'font-bold'
                           )}>
                             {member.firstName} {member.lastName}
                           </span>
@@ -211,13 +212,13 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                                 {formatTime(dm.lastMessage.createdAt)}
                               </span>
                             )}
-                            {hasUnread && <ChatUnreadBadge />}
+                            {unread > 0 && <ChatUnreadBadge count={unread} />}
                           </div>
                         </div>
                         {dm?.lastMessage ? (
                           <p className={cn(
                             'text-[11px] truncate mt-0.5',
-                            hasUnread ? 'text-muted/70' : 'text-muted/45'
+                            unread > 0 ? 'text-muted/70' : 'text-muted/45'
                           )}>
                             {dm.lastMessage.content}
                           </p>
@@ -233,7 +234,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                 {filteredOffline.map((member) => {
                   const dm = findDmForMember(member)
                   const isSelected = dm ? dm.id === selectedId : false
-                  const hasUnread = dm?.hasUnread && !isSelected
+                  const unread = dm && !isSelected ? (dm.unreadCount || 0) : 0
 
                   return (
                     <button
@@ -244,7 +245,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                         isSelected
                           ? 'bg-primary/10'
                           : 'hover:bg-secondary/50',
-                        !hasUnread && !isSelected && 'opacity-50 hover:opacity-70'
+                        unread === 0 && !isSelected && 'opacity-50 hover:opacity-70'
                       )}
                     >
                       <div className="relative flex-shrink-0">
@@ -256,7 +257,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                           <span className={cn(
                             'text-[13px] truncate',
                             isSelected ? 'text-primary font-semibold' : 'text-foreground font-medium',
-                            hasUnread && 'font-bold opacity-100'
+                            unread > 0 && 'font-bold opacity-100'
                           )}>
                             {member.firstName} {member.lastName}
                           </span>
@@ -266,7 +267,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                                 {formatTime(dm.lastMessage.createdAt)}
                               </span>
                             )}
-                            {hasUnread && <ChatUnreadBadge />}
+                            {unread > 0 && <ChatUnreadBadge count={unread} />}
                           </div>
                         </div>
                         {dm?.lastMessage ? (
@@ -311,6 +312,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                 {regularChannels.map((channel) => {
                   const Icon = TYPE_ICON[channel.type] || Hash
                   const isSelected = channel.id === selectedId
+                  const unread = !isSelected ? (channel.unreadCount || 0) : 0
 
                   return (
                     <button
@@ -334,7 +336,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                           <span className={cn(
                             'text-[13px] truncate leading-tight',
                             isSelected ? 'text-primary font-semibold' : 'text-foreground font-medium',
-                            channel.hasUnread && !isSelected && 'font-bold text-foreground'
+                            unread > 0 && 'font-bold text-foreground'
                           )}>
                             {channel.name}
                           </span>
@@ -344,15 +346,15 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                                 {formatTime(channel.lastMessage.createdAt)}
                               </span>
                             )}
-                            {channel.hasUnread && !isSelected && (
-                              <ChatUnreadBadge />
+                            {unread > 0 && (
+                              <ChatUnreadBadge count={unread} />
                             )}
                           </div>
                         </div>
                         {channel.lastMessage && (
                           <p className={cn(
                             'text-[11px] truncate mt-0.5 leading-tight',
-                            channel.hasUnread && !isSelected ? 'text-muted/70' : 'text-muted/45'
+                            unread > 0 ? 'text-muted/70' : 'text-muted/45'
                           )}>
                             <span className="font-medium">{channel.lastMessage.authorName.split(' ')[0]}:</span>{' '}
                             {channel.lastMessage.content}

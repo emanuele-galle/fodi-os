@@ -14,6 +14,8 @@ export async function GET(
     const role = request.headers.get('x-user-role') as Role
     requirePermission(role, 'pm', 'read')
 
+    const folderId = request.nextUrl.searchParams.get('folderId') || null
+
     // Find project
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -23,10 +25,11 @@ export async function GET(
       return NextResponse.json({ error: 'Progetto non trovato' }, { status: 404 })
     }
 
-    // Find existing PROJECT channel
+    // Find existing PROJECT channel (filtered by folderId)
     let channel = await prisma.chatChannel.findFirst({
       where: {
         projectId,
+        folderId,
         type: 'PROJECT',
         isArchived: false,
       },
@@ -37,13 +40,20 @@ export async function GET(
 
     // Create if not exists
     if (!channel) {
+      const folderName = folderId
+        ? (await prisma.folder.findUnique({ where: { id: folderId }, select: { name: true } }))?.name
+        : null
+      const channelName = folderName ? `Chat - ${folderName}` : project.name
+      const slugSuffix = folderName && folderId ? `folder-${folderId.slice(0, 8)}` : `project-${project.slug}`
+
       channel = await prisma.chatChannel.create({
         data: {
-          name: project.name,
-          slug: `project-${project.slug}-${Date.now()}`,
-          description: `Chat del progetto ${project.name}`,
+          name: channelName,
+          slug: `${slugSuffix}-${Date.now()}`,
+          description: folderName ? `Chat della cartella ${folderName}` : `Chat del progetto ${project.name}`,
           type: 'PROJECT',
           projectId,
+          folderId,
           createdById: userId,
           members: {
             create: [{ userId, role: 'OWNER' }],

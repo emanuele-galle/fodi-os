@@ -707,7 +707,7 @@ export default function ProjectDetailPage() {
           { id: 'list', label: 'Lista', content: listTab },
           { id: 'milestones', label: 'Timeline', content: milestonesTab },
           { id: 'time', label: 'Tempi', content: timeTab },
-          { id: 'files', label: 'File', content: <ProjectAttachments projectId={projectId} /> },
+          { id: 'files', label: 'File', content: <ProjectAttachments projectId={projectId} folderId={selectedFolderId} /> },
           { id: 'team', label: 'Team', content: (
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -764,7 +764,7 @@ export default function ProjectDetailPage() {
               )}
             </div>
           ) },
-          { id: 'chat', label: 'Chat', content: <ProjectChat projectId={projectId} /> },
+          { id: 'chat', label: 'Chat', content: <ProjectChat projectId={projectId} folderId={selectedFolderId} /> },
         ]}
       />
 

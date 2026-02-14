@@ -21,9 +21,10 @@ interface Message {
 
 interface ProjectChatProps {
   projectId: string
+  folderId?: string | null
 }
 
-export function ProjectChat({ projectId }: ProjectChatProps) {
+export function ProjectChat({ projectId, folderId }: ProjectChatProps) {
   const [channelId, setChannelId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState('')
   const [loading, setLoading] = useState(true)
@@ -41,17 +42,21 @@ export function ProjectChat({ projectId }: ProjectChatProps) {
       })
   }, [])
 
-  // Fetch or create project channel
+  // Fetch or create project channel (optionally scoped to folder)
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/projects/${projectId}/chat`)
+    setChannelId(null)
+    const url = folderId
+      ? `/api/projects/${projectId}/chat?folderId=${folderId}`
+      : `/api/projects/${projectId}/chat`
+    fetch(url)
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data?.id) setChannelId(data.id)
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [projectId])
+  }, [projectId, folderId])
 
   // SSE real-time for project chat
   useSSE(useCallback((event) => {

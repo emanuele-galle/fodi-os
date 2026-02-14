@@ -87,7 +87,7 @@ export default function DashboardLayout({
         .then((res) => res.ok ? res.json() : null)
         .then((data) => {
           const channels = data?.items || []
-          setUnreadChat(channels.filter((c: { hasUnread: boolean }) => c.hasUnread).length)
+          setUnreadChat(channels.reduce((sum: number, c: { unreadCount?: number }) => sum + (c.unreadCount || 0), 0))
         })
         .catch(() => {})
 

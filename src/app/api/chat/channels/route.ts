@@ -37,12 +37,25 @@ export async function GET(request: NextRequest) {
       orderBy: { updatedAt: 'desc' },
     })
 
-    const items = channels.map((ch) => {
+    // Count unread messages per channel
+    const unreadCounts = await Promise.all(
+      channels.map(async (ch) => {
+        const lastReadAt = ch.members[0]?.lastReadAt
+        if (!lastReadAt) {
+          // Never read: count all messages
+          return prisma.chatMessage.count({
+            where: { channelId: ch.id, deletedAt: null },
+          })
+        }
+        return prisma.chatMessage.count({
+          where: { channelId: ch.id, deletedAt: null, createdAt: { gt: lastReadAt } },
+        })
+      })
+    )
+
+    const items = channels.map((ch, i) => {
       const lastMessage = ch.messages[0] || null
-      const lastReadAt = ch.members[0]?.lastReadAt
-      const hasUnread = lastMessage && lastReadAt
-        ? new Date(lastMessage.createdAt) > new Date(lastReadAt)
-        : !!lastMessage && !lastReadAt
+      const unreadCount = unreadCounts[i]
 
       return {
         id: ch.id,
@@ -58,7 +71,8 @@ export async function GET(request: NextRequest) {
               createdAt: lastMessage.createdAt,
             }
           : null,
-        hasUnread,
+        hasUnread: unreadCount > 0,
+        unreadCount,
         updatedAt: ch.updatedAt,
       }
     })

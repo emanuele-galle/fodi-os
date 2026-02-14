@@ -11,8 +11,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { projectId } = await params
 
+    const folderId = request.nextUrl.searchParams.get('folderId')
+    const where: Record<string, unknown> = { projectId }
+    if (folderId) {
+      where.folderId = folderId
+    } else if (folderId === null || request.nextUrl.searchParams.has('folderId')) {
+      // If folderId param is present but empty, show only root-level files
+      where.folderId = null
+    }
+
     const attachments = await prisma.projectAttachment.findMany({
-      where: { projectId },
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         uploadedBy: { select: { id: true, firstName: true, lastName: true } },
@@ -39,6 +48,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const formData = await request.formData()
     const file = formData.get('file') as File | null
+    const folderId = formData.get('folderId') as string | null
 
     if (!file) {
       return NextResponse.json({ error: 'File obbligatorio' }, { status: 400 })
@@ -77,6 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       data: {
         projectId,
         uploadedById: userId,
+        folderId: folderId || null,
         fileName: safeFileName,
         fileUrl: webViewLink,
         fileSize: file.size,
