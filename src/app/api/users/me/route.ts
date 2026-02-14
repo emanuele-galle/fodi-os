@@ -33,7 +33,7 @@ export async function PATCH(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ success: true, data: user })
+    return NextResponse.json({ success: true, data: user, ...user })
   } catch (error) {
     console.error('[users/me/PATCH]', error)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })

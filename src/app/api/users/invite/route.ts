@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ success: true, data: { user, tempPassword } }, { status: 201 })
+    return NextResponse.json({ success: true, data: { user, tempPassword }, user, tempPassword }, { status: 201 })
   } catch (error) {
     console.error('[users/invite]', error)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })

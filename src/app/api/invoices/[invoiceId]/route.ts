@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: 'Fattura non trovata' }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, data: invoice })
+    return NextResponse.json({ success: true, data: invoice, ...invoice })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

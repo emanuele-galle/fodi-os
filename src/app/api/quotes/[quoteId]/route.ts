@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: 'Preventivo non trovato' }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, data: quote })
+    return NextResponse.json({ success: true, data: quote, ...quote })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

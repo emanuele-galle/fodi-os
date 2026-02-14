@@ -104,8 +104,8 @@ export default function NewQuotePage() {
         }),
       })
       if (res.ok) {
-        const data = await res.json()
-        router.push(`/erp/quotes/${data.id}`)
+        const json = await res.json()
+        router.push(`/erp/quotes/${json.data?.id || json.id}`)
       }
     } finally {
       setSubmitting(false)

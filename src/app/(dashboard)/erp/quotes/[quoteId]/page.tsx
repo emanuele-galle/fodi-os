@@ -76,7 +76,10 @@ export default function QuoteDetailPage() {
   const fetchQuote = useCallback(async () => {
     try {
       const res = await fetch(`/api/quotes/${quoteId}`)
-      if (res.ok) setQuote(await res.json())
+      if (res.ok) {
+        const json = await res.json()
+        setQuote(json.data || json)
+      }
     } finally {
       setLoading(false)
     }
@@ -215,8 +218,8 @@ export default function QuoteDetailPage() {
         }),
       })
       if (res.ok) {
-        const data = await res.json()
-        router.push(`/erp/invoices/${data.id}`)
+        const json = await res.json()
+        router.push(`/erp/invoices/${json.data?.id || json.id}`)
       }
     } finally {
       setConverting(false)

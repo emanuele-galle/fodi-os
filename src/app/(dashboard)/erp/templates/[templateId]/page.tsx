@@ -63,7 +63,10 @@ export default function TemplateDetailPage() {
   const fetchTemplate = useCallback(async () => {
     try {
       const res = await fetch(`/api/quote-templates/${templateId}`)
-      if (res.ok) setTemplate(await res.json())
+      if (res.ok) {
+        const json = await res.json()
+        setTemplate(json.data || json)
+      }
     } finally {
       setLoading(false)
     }
@@ -106,8 +109,8 @@ export default function TemplateDetailPage() {
   async function handleDuplicate() {
     const res = await fetch(`/api/quote-templates/${templateId}/duplicate`, { method: 'POST' })
     if (res.ok) {
-      const data = await res.json()
-      router.push(`/erp/templates/${data.id}`)
+      const json = await res.json()
+      router.push(`/erp/templates/${json.data?.id || json.id}`)
     }
   }
 

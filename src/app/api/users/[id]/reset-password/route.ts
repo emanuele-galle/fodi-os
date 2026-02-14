@@ -54,7 +54,7 @@ export async function POST(
       }),
     ])
 
-    return NextResponse.json({ success: true, data: { tempPassword } })
+    return NextResponse.json({ success: true, data: { tempPassword }, tempPassword })
   } catch (error) {
     console.error('[users/reset-password]', error)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       orderBy: [{ isActive: 'desc' }, { firstName: 'asc' }],
     })
 
-    return NextResponse.json({ success: true, data: users, items: users, total: users.length })
+    return NextResponse.json({ success: true, data: users, items: users, users, total: users.length })
   } catch (error) {
     console.error('[users/GET]', error)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })

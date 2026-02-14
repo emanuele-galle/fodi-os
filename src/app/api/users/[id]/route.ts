@@ -102,7 +102,7 @@ export async function PATCH(
       select: USER_SELECT,
     })
 
-    return NextResponse.json({ success: true, data: user })
+    return NextResponse.json({ success: true, data: user, ...user })
   } catch (error) {
     console.error('[users/PATCH]', error)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })

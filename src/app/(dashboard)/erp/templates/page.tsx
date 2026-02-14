@@ -66,8 +66,8 @@ export default function TemplatesPage() {
     setActionMenuId(null)
     const res = await fetch(`/api/quote-templates/${templateId}/duplicate`, { method: 'POST' })
     if (res.ok) {
-      const data = await res.json()
-      router.push(`/erp/templates/${data.id}`)
+      const json = await res.json()
+      router.push(`/erp/templates/${json.data?.id || json.id}`)
     }
   }
 

@@ -25,7 +25,7 @@ export async function GET(
       select: { module: true, permission: true },
     })
 
-    return NextResponse.json({ success: true, data: permissions })
+    return NextResponse.json({ success: true, data: permissions, items: permissions, permissions })
   } catch (error) {
     console.error('[users/permissions/GET]', error)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       _count: true,
     })
 
-    return NextResponse.json({ success: true, data: { ...project, tasksByStatus } })
+    return NextResponse.json({ success: true, data: { ...project, tasksByStatus }, ...project, tasksByStatus })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

@@ -90,7 +90,10 @@ export default function InvoiceDetailPage() {
   const fetchInvoice = useCallback(async () => {
     try {
       const res = await fetch(`/api/invoices/${invoiceId}`)
-      if (res.ok) setInvoice(await res.json())
+      if (res.ok) {
+        const json = await res.json()
+        setInvoice(json.data || json)
+      }
     } finally {
       setLoading(false)
     }
