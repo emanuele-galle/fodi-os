@@ -125,16 +125,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (status === 'DONE') data.completedAt = new Date()
       else data.completedAt = null
 
-      // Auto-log: start timer tracking when moving to IN_PROGRESS
+      // Reset timer fields on status change (auto-log disabled)
       if (status === 'IN_PROGRESS') {
         data.timerStartedAt = new Date()
         data.timerUserId = currentUserId
       }
-
-      // Auto-log: stop timer and create TimeEntry when leaving IN_PROGRESS
       if (
         (status === 'DONE' || status === 'IN_REVIEW') &&
-        previousTask?.status === 'IN_PROGRESS' &&
         previousTask?.timerStartedAt
       ) {
         data.timerStartedAt = null
@@ -156,46 +153,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       data,
     })
 
-    // Auto-create TimeEntry when transitioning from IN_PROGRESS to DONE/IN_REVIEW
-    if (
-      status !== undefined &&
-      (status === 'DONE' || status === 'IN_REVIEW') &&
-      previousTask?.status === 'IN_PROGRESS' &&
-      previousTask?.timerStartedAt
-    ) {
-      const startTime = new Date(previousTask.timerStartedAt)
-      const endTime = new Date()
-      const diffMs = endTime.getTime() - startTime.getTime()
-      const hours = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100
-
-      const timeEntry = await prisma.timeEntry.create({
-        data: {
-          userId: previousTask.timerUserId || currentUserId!,
-          taskId,
-          projectId: previousTask.projectId,
-          date: startTime,
-          hours: Math.max(hours, 0.01),
-          description: `Auto-log: cambio stato → ${status === 'DONE' ? 'Completato' : 'In Revisione'} (${previousTask.title})`,
-          billable: true,
-        },
-      })
-
-      await prisma.activityLog.create({
-        data: {
-          userId: previousTask.timerUserId || currentUserId!,
-          action: 'AUTO_TIME_LOG',
-          entityType: 'TimeEntry',
-          entityId: timeEntry.id,
-          metadata: {
-            taskId,
-            taskTitle: previousTask.title,
-            hours: Math.max(hours, 0.01),
-            fromStatus: 'IN_PROGRESS',
-            toStatus: status,
-          },
-        },
-      })
-    }
+    // Auto-log TimeEntry disabled: presenze tracked via WorkSession/heartbeat
 
     // --- Notifications ---
     const currentUser = await prisma.user.findUnique({

@@ -55,6 +55,7 @@ model User {
   taskAttachments      TaskAttachment[]
   projectAttachments   ProjectAttachment[]
   pushSubscriptions    PushSubscription[]
+  workSessions         WorkSession[]
 
   @@index([email])
   @@index([role])
@@ -515,6 +516,23 @@ model TimeEntry {
   @@index([taskId])
   @@index([date])
   @@map("time_entries")
+}
+
+model WorkSession {
+  id            String    @id @default(uuid())
+  userId        String
+  clockIn       DateTime  @default(now())
+  clockOut      DateTime?
+  lastHeartbeat DateTime  @default(now())
+  durationMins  Int?
+  notes         String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([clockIn])
+  @@index([userId, clockIn])
+  @@map("work_sessions")
 }
 
 // ============================================================
