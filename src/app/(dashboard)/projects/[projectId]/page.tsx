@@ -17,12 +17,27 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { MultiUserSelect } from '@/components/ui/MultiUserSelect'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { KanbanBoard } from '@/components/projects/KanbanBoard'
-import { GanttChart } from '@/components/projects/GanttChart'
-import { ProjectChat } from '@/components/chat/ProjectChat'
-import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
-import { ProjectFolders } from '@/components/projects/ProjectFolders'
-import { ProjectAttachments } from '@/components/projects/ProjectAttachments'
+import dynamic from 'next/dynamic'
+
+const KanbanBoard = dynamic(() => import('@/components/projects/KanbanBoard').then(m => ({ default: m.KanbanBoard })), {
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const GanttChart = dynamic(() => import('@/components/projects/GanttChart').then(m => ({ default: m.GanttChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const ProjectChat = dynamic(() => import('@/components/chat/ProjectChat').then(m => ({ default: m.ProjectChat })), {
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
+const TaskDetailModal = dynamic(() => import('@/components/tasks/TaskDetailModal').then(m => ({ default: m.TaskDetailModal })), {
+  ssr: false,
+})
+const ProjectFolders = dynamic(() => import('@/components/projects/ProjectFolders').then(m => ({ default: m.ProjectFolders })), {
+  loading: () => <Skeleton className="h-32 w-full rounded-lg" />,
+})
+const ProjectAttachments = dynamic(() => import('@/components/projects/ProjectAttachments').then(m => ({ default: m.ProjectAttachments })), {
+  loading: () => <Skeleton className="h-32 w-full rounded-lg" />,
+})
 
 interface ClientOption {
   id: string
@@ -217,22 +232,22 @@ export default function ProjectDetailPage() {
   }, [projectId])
 
   useEffect(() => {
-    fetchProject()
-    fetchFolders()
-    fetch(`/api/time?projectId=${projectId}&limit=50`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d?.items) setTimeEntries(d.items) })
-    fetch('/api/clients?limit=200').then((r) => r.ok ? r.json() : null).then((d) => {
-      if (d?.items) setClients(d.items)
-    })
-    fetch('/api/workspaces').then((r) => r.ok ? r.json() : null).then((d) => {
-      if (Array.isArray(d)) setWorkspaces(d)
-      else if (d?.items) setWorkspaces(d.items)
-    })
-    fetch('/api/users?limit=200').then((r) => r.ok ? r.json() : null).then((d) => {
-      if (d?.users) setTeamMembers(d.users)
-      else if (d?.items) setTeamMembers(d.items)
-      else if (Array.isArray(d)) setTeamMembers(d)
+    // Fetch all data in parallel to avoid waterfall
+    Promise.all([
+      fetchProject(),
+      fetchFolders(),
+      fetch(`/api/time?projectId=${projectId}&limit=50`).then((r) => r.ok ? r.json() : null),
+      fetch('/api/clients?limit=200').then((r) => r.ok ? r.json() : null),
+      fetch('/api/workspaces').then((r) => r.ok ? r.json() : null),
+      fetch('/api/users?limit=200').then((r) => r.ok ? r.json() : null),
+    ]).then(([, , timeData, clientsData, workspacesData, usersData]) => {
+      if (timeData?.items) setTimeEntries(timeData.items)
+      if (clientsData?.items) setClients(clientsData.items)
+      if (Array.isArray(workspacesData)) setWorkspaces(workspacesData)
+      else if (workspacesData?.items) setWorkspaces(workspacesData.items)
+      if (usersData?.users) setTeamMembers(usersData.users)
+      else if (usersData?.items) setTeamMembers(usersData.items)
+      else if (Array.isArray(usersData)) setTeamMembers(usersData)
     })
   }, [fetchProject, fetchFolders, projectId])
 
@@ -781,7 +796,7 @@ export default function ProjectDetailPage() {
             label="Assegnatari"
             placeholder="Seleziona assegnatari..."
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Scadenza" type="date" value={taskForm.values.dueDate} onChange={(e) => taskForm.setValue('dueDate', e.target.value)} />
             <Input label="Ore Stimate" type="number" step="0.5" value={taskForm.values.estimatedHours} onChange={(e) => taskForm.setValue('estimatedHours', e.target.value)} />
           </div>

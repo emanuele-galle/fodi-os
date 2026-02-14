@@ -26,7 +26,11 @@ import { Avatar } from '@/components/ui/Avatar'
 import { AvatarStack } from '@/components/ui/AvatarStack'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { QuickTaskInput } from '@/components/tasks/QuickTaskInput'
-import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
+import dynamic from 'next/dynamic'
+
+const TaskDetailModal = dynamic(() => import('@/components/tasks/TaskDetailModal').then(m => ({ default: m.TaskDetailModal })), {
+  ssr: false,
+})
 import { useUserPreferences } from '@/hooks/useUserPreferences'
 
 interface TaskUser {

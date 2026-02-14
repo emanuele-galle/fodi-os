@@ -39,6 +39,7 @@ export function WizardPreview({ name, steps, showProgressBar, completionMessage 
   const [currentStep, setCurrentStep] = useState(0)
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
   const [completed, setCompleted] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Filter visible steps based on conditions
   const visibleSteps = steps.filter((s) =>
@@ -52,9 +53,29 @@ export function WizardPreview({ name, steps, showProgressBar, completionMessage 
 
   const handleFieldChange = (name: string, value: unknown) => {
     setAnswers((prev) => ({ ...prev, [name]: value }))
+    setErrors((prev) => {
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
+  }
+
+  const validateCurrentStep = (): boolean => {
+    const newErrors: Record<string, string> = {}
+    for (const field of visibleFields) {
+      if (field.isRequired) {
+        const val = answers[field.name]
+        if (val === undefined || val === null || val === '') {
+          newErrors[field.name] = 'Campo obbligatorio'
+        }
+      }
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   const goNext = () => {
+    if (!validateCurrentStep()) return
     if (currentStep < visibleSteps.length - 1) {
       setCurrentStep(currentStep + 1)
     } else {
@@ -63,7 +84,10 @@ export function WizardPreview({ name, steps, showProgressBar, completionMessage 
   }
 
   const goPrev = () => {
-    if (currentStep > 0) setCurrentStep(currentStep - 1)
+    if (currentStep > 0) {
+      setErrors({})
+      setCurrentStep(currentStep - 1)
+    }
   }
 
   const reset = () => {
@@ -126,6 +150,7 @@ export function WizardPreview({ name, steps, showProgressBar, completionMessage 
                 field={field}
                 value={answers[field.name]}
                 onChange={handleFieldChange}
+                error={errors[field.name]}
               />
             ))}
           </div>

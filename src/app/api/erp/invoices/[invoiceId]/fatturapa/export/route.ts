@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     try { body = await request.json() } catch { /* empty body ok, schema has defaults */ }
     const parsed = exportFatturapaSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Dati non validi', details: parsed.error.flatten() }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Dati non validi', details: parsed.error.flatten() }, { status: 400 })
     }
 
     const eInvoice = await prisma.electronicInvoice.findFirst({
@@ -25,15 +25,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     if (!eInvoice) {
-      return NextResponse.json({ error: 'Fattura elettronica non trovata. Genera prima l\'XML.' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Fattura elettronica non trovata. Genera prima l\'XML.' }, { status: 404 })
     }
 
     if (!eInvoice.xmlContent) {
-      return NextResponse.json({ error: 'XML non ancora generato' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'XML non ancora generato' }, { status: 400 })
     }
 
     if (eInvoice.status !== 'GENERATED' && eInvoice.status !== 'generated') {
-      return NextResponse.json({ error: `Impossibile esportare: stato attuale ${eInvoice.status}` }, { status: 400 })
+      return NextResponse.json({ success: false, error: `Impossibile esportare: stato attuale ${eInvoice.status}` }, { status: 400 })
     }
 
     // Generate standard filename if not present
@@ -46,28 +46,34 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    const updated = await prisma.electronicInvoice.update({
-      where: { id: eInvoice.id },
-      data: {
-        status: 'EXPORTED',
-        xmlFileName,
-        exportedAt: new Date(),
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.electronicInvoice.update({
+        where: { id: eInvoice.id },
+        data: {
+          status: 'EXPORTED',
+          xmlFileName,
+          exportedAt: new Date(),
+        },
+      })
+
+      await tx.eInvoiceStatusLog.create({
+        data: {
+          electronicInvoiceId: eInvoice.id,
+          fromStatus: eInvoice.status,
+          toStatus: 'EXPORTED',
+          note: `Esportato come ${xmlFileName}`,
+        },
+      })
+
+      return result
     })
 
-    await prisma.eInvoiceStatusLog.create({
-      data: {
-        electronicInvoiceId: eInvoice.id,
-        fromStatus: eInvoice.status,
-        toStatus: 'EXPORTED',
-        note: `Esportato come ${xmlFileName}`,
-      },
-    })
-
-    return NextResponse.json(updated)
+    return NextResponse.json({ success: true, data: updated })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[erp/invoices/:invoiceId/fatturapa/export]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

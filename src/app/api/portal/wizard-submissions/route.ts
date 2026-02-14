@@ -25,10 +25,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Wizard non disponibile' }, { status: 404 })
     }
 
+    // For portal users, enforce that clientId matches their linked client
+    const userRole = request.headers.get('x-user-role')
+    let resolvedClientId = parsed.data.clientId
+    if (userRole === 'CLIENT') {
+      const client = await prisma.client.findUnique({ where: { portalUserId: userId } })
+      if (!client) {
+        return NextResponse.json({ error: 'Nessun cliente collegato a questo utente' }, { status: 404 })
+      }
+      // Override clientId to prevent cross-client access
+      resolvedClientId = client.id
+    }
+
     const submission = await prisma.wizardSubmission.create({
       data: {
         templateId: parsed.data.templateId,
-        clientId: parsed.data.clientId,
+        clientId: resolvedClientId,
         leadId: parsed.data.leadId,
         submitterName: parsed.data.submitterName,
         submitterEmail: parsed.data.submitterEmail,
@@ -41,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(submission, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('[portal/wizard-submissions]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

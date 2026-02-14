@@ -51,11 +51,13 @@ export async function GET(request: NextRequest) {
       prisma.lead.count({ where }),
     ])
 
-    return NextResponse.json({ items, total, page, limit })
+    return NextResponse.json({ success: true, data: items, total, page, limit })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[leads]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -89,9 +91,9 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(lead, { status: 201 })
+    return NextResponse.json({ success: true, data: lead }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('[leads/POST]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

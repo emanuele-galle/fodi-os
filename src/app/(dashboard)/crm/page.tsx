@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
-import { useRouter } from 'next/navigation'
-import { Users, Plus, Search, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Users, Plus, Search, ChevronLeft, ChevronRight, AlertCircle, Download } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -76,6 +76,7 @@ const SOURCE_OPTIONS = [
 
 export default function CrmPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -98,6 +99,14 @@ export default function CrmPage() {
     status: 'LEAD',
     notes: '',
   })
+
+  // Open modal if ?action=new is in URL
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      setModalOpen(true)
+      router.replace('/crm', { scroll: false })
+    }
+  }, [searchParams, router])
 
   const fetchClients = useCallback(async () => {
     setLoading(true)
@@ -130,6 +139,31 @@ export default function CrmPage() {
   }, [search, statusFilter])
 
   const totalPages = Math.ceil(total / limit)
+
+  function exportCSV() {
+    if (clients.length === 0) return
+    const rows = [['Ragione Sociale', 'Stato', 'Settore', 'Sito Web', 'Fatturato', 'Contatti', 'Progetti', 'Creato il']]
+    for (const c of clients) {
+      rows.push([
+        c.companyName,
+        STATUS_LABELS[c.status] || c.status,
+        c.industry || '',
+        c.website || '',
+        c.totalRevenue || '0',
+        String(c._count?.contacts || 0),
+        String(c._count?.projects || 0),
+        new Date(c.createdAt).toLocaleDateString('it-IT'),
+      ])
+    }
+    const csv = rows.map((r) => r.map((v) => `"${v}"`).join(',')).join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `clienti-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   async function handleCreateClient(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -166,7 +200,13 @@ export default function CrmPage() {
             <p className="text-xs md:text-sm text-muted">Gestione clienti e relazioni commerciali</p>
           </div>
         </div>
-        <div className="hidden sm:block">
+        <div className="hidden sm:flex items-center gap-2">
+          {clients.length > 0 && (
+            <Button size="sm" variant="outline" onClick={exportCSV}>
+              <Download className="h-4 w-4" />
+              Esporta CSV
+            </Button>
+          )}
           <Button size="sm" onClick={() => setModalOpen(true)}>
             <Plus className="h-4 w-4" />
             Nuovo Cliente

@@ -351,7 +351,7 @@ export default function SystemStatsPage() {
   if (error || !stats) {
     return (
       <div className="animate-fade-in">
-        <h1 className="text-2xl font-bold mb-2">Sistema</h1>
+        <h1 className="text-xl md:text-2xl font-bold mb-2">Sistema</h1>
         <Card>
           <CardContent>
             <p className="text-sm text-destructive">{error || 'Errore nel caricamento dei dati.'}</p>
@@ -374,8 +374,8 @@ export default function SystemStatsPage() {
               <Server className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Sistema</h1>
-              <p className="text-sm text-muted">Panoramica e informazioni di sistema</p>
+              <h1 className="text-xl md:text-2xl font-bold">Sistema</h1>
+              <p className="text-xs md:text-sm text-muted">Panoramica e informazioni di sistema</p>
             </div>
           </div>
         </div>

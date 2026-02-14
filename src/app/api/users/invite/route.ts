@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword } from '@/lib/auth'
-import { z } from 'zod'
+import { inviteUserSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
 const ADMIN_ROLES: Role[] = ['ADMIN', 'MANAGER']
-const VALID_ROLES: Role[] = ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT']
-
-const inviteUserSchema = z.object({
-  email: z.string().email('Email non valida').max(255),
-  firstName: z.string().min(1, 'Nome obbligatorio').max(100),
-  lastName: z.string().min(1, 'Cognome obbligatorio').max(100),
-  userRole: z.enum(['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT']).optional(),
-  phone: z.string().max(30).optional().nullable(),
-})
 
 function generateTempPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
@@ -27,30 +18,30 @@ export async function POST(request: NextRequest) {
     const role = request.headers.get('x-user-role') as Role
 
     if (!ADMIN_ROLES.includes(role)) {
-      return NextResponse.json({ error: 'Permesso negato' }, { status: 403 })
+      return NextResponse.json({ success: false, error: 'Permesso negato' }, { status: 403 })
     }
 
     const body = await request.json()
     const parsed = inviteUserSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
 
     const { email, firstName, lastName, userRole, phone } = parsed.data
-    const assignedRole: Role = userRole && VALID_ROLES.includes(userRole) ? userRole : 'DEVELOPER'
+    const assignedRole: Role = userRole || 'DEVELOPER'
 
     // Managers cannot create Admin users
     if (role === 'MANAGER' && assignedRole === 'ADMIN') {
-      return NextResponse.json({ error: 'Un Manager non puo creare utenti Admin' }, { status: 403 })
+      return NextResponse.json({ success: false, error: 'Un Manager non puo creare utenti Admin' }, { status: 403 })
     }
 
     // Check if user already exists
-    const existing = await prisma.user.findUnique({ where: { email } })
+    const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } })
     if (existing) {
-      return NextResponse.json({ error: 'Un utente con questa email esiste gia' }, { status: 409 })
+      return NextResponse.json({ success: false, error: 'Un utente con questa email esiste gia' }, { status: 409 })
     }
 
     const tempPassword = generateTempPassword()
@@ -77,9 +68,9 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ user, tempPassword }, { status: 201 })
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ success: true, data: { user, tempPassword } }, { status: 201 })
+  } catch (error) {
+    console.error('[users/invite]', error)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -35,7 +35,7 @@ const COLUMNS = [
   { status: 'CHURNED', label: 'Perso', variant: 'destructive' as const },
 ]
 
-function SortableClientCard({ client, onClick }: { client: Client; onClick: () => void }) {
+const SortableClientCard = memo(function SortableClientCard({ client, onClick }: { client: Client; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: client.id,
     data: { type: 'client', client },
@@ -66,7 +66,7 @@ function SortableClientCard({ client, onClick }: { client: Client; onClick: () =
       </div>
     </div>
   )
-}
+})
 
 function ClientCardOverlay({ client }: { client: Client }) {
   return (

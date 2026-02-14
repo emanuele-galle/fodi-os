@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'motion/react'
@@ -19,7 +19,11 @@ import {
   MessageCircle,
   Settings,
   Building2,
+  CheckSquare,
+  FileText,
+  Loader2,
 } from 'lucide-react'
+import { useDebounce } from '@/hooks/use-debounce'
 
 interface CommandPaletteProps {
   open: boolean
@@ -33,8 +37,17 @@ interface CommandItem {
   icon: React.ElementType
   href?: string
   action?: () => void
-  group: 'navigate' | 'action'
+  group: 'navigate' | 'action' | 'search'
   shortcut?: string
+}
+
+interface SearchResults {
+  clients: { id: string; companyName: string; slug?: string }[]
+  projects: { id: string; name: string; slug?: string }[]
+  tasks: { id: string; title: string; projectId?: string }[]
+  quotes: { id: string; number: string; title: string }[]
+  invoices: { id: string; number: string; title: string }[]
+  tickets: { id: string; number: string; subject: string }[]
 }
 
 const commands: CommandItem[] = [
@@ -59,17 +72,108 @@ const commands: CommandItem[] = [
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [searchResults, setSearchResults] = useState<CommandItem[]>([])
+  const [searching, setSearching] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const debouncedQuery = useDebounce(query, 300)
 
-  const filtered = query
+  const fetchSearchResults = useCallback(async (q: string) => {
+    if (q.length < 2) {
+      setSearchResults([])
+      setSearching(false)
+      return
+    }
+    setSearching(true)
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`)
+      if (!res.ok) return
+      const data: SearchResults = await res.json()
+      const items: CommandItem[] = []
+
+      for (const client of data.clients) {
+        items.push({
+          id: `client-${client.id}`,
+          label: client.companyName,
+          description: 'Cliente',
+          icon: Users,
+          href: `/crm/${client.id}`,
+          group: 'search',
+        })
+      }
+      for (const project of data.projects) {
+        items.push({
+          id: `project-${project.id}`,
+          label: project.name,
+          description: 'Progetto',
+          icon: FolderKanban,
+          href: `/projects/${project.id}`,
+          group: 'search',
+        })
+      }
+      for (const task of data.tasks) {
+        items.push({
+          id: `task-${task.id}`,
+          label: task.title,
+          description: 'Task',
+          icon: CheckSquare,
+          href: `/tasks?taskId=${task.id}`,
+          group: 'search',
+        })
+      }
+      for (const quote of data.quotes) {
+        items.push({
+          id: `quote-${quote.id}`,
+          label: `${quote.number} - ${quote.title}`,
+          description: 'Preventivo',
+          icon: FileText,
+          href: `/erp/quotes/${quote.id}`,
+          group: 'search',
+        })
+      }
+      for (const invoice of data.invoices) {
+        items.push({
+          id: `invoice-${invoice.id}`,
+          label: `${invoice.number} - ${invoice.title}`,
+          description: 'Fattura',
+          icon: Receipt,
+          href: `/erp/invoices/${invoice.id}`,
+          group: 'search',
+        })
+      }
+      for (const ticket of data.tickets) {
+        items.push({
+          id: `ticket-${ticket.id}`,
+          label: `${ticket.number} - ${ticket.subject}`,
+          description: 'Ticket',
+          icon: LifeBuoy,
+          href: `/support/${ticket.id}`,
+          group: 'search',
+        })
+      }
+
+      setSearchResults(items)
+    } catch {
+      setSearchResults([])
+    } finally {
+      setSearching(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchSearchResults(debouncedQuery)
+  }, [debouncedQuery, fetchSearchResults])
+
+  const filteredCommands = query
     ? commands.filter(
         (cmd) =>
           cmd.label.toLowerCase().includes(query.toLowerCase()) ||
           cmd.description?.toLowerCase().includes(query.toLowerCase())
       )
     : commands
+
+  const filtered = [...filteredCommands, ...searchResults]
 
   useEffect(() => {
     if (open) {
@@ -113,6 +217,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   if (!open) return null
 
   const groups = {
+    search: filtered.filter((c) => c.group === 'search'),
     navigate: filtered.filter((c) => c.group === 'navigate'),
     action: filtered.filter((c) => c.group === 'action'),
   }
@@ -178,6 +283,56 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
           {/* Results */}
           <div ref={listRef} className="max-h-[360px] overflow-y-auto py-1.5 scrollbar-none">
+            {searching && (
+              <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Ricerca in corso...
+              </div>
+            )}
+
+            {groups.search.length > 0 && (
+              <div className="px-2">
+                <p className="px-2 py-1.5 text-[11px] font-medium text-muted/70 uppercase tracking-wider">
+                  Risultati
+                </p>
+                {groups.search.map((cmd) => {
+                  const globalIndex = filtered.indexOf(cmd)
+                  return (
+                    <motion.button
+                      key={cmd.id}
+                      data-index={globalIndex}
+                      initial={{ opacity: 0, x: -4 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: Math.min(globalIndex * 0.02, 0.2), duration: 0.15 }}
+                      onClick={() => {
+                        if (cmd.href) router.push(cmd.href)
+                        onClose()
+                      }}
+                      onMouseEnter={() => setSelectedIndex(globalIndex)}
+                      className={cn(
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors',
+                        globalIndex === selectedIndex
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-foreground/80 hover:bg-secondary/50'
+                      )}
+                    >
+                      <cmd.icon className="h-4 w-4 flex-shrink-0 opacity-70" />
+                      <div className="flex-1 text-left truncate">
+                        <span>{cmd.label}</span>
+                        {cmd.description && (
+                          <span className="text-xs text-muted/60 ml-2">{cmd.description}</span>
+                        )}
+                      </div>
+                      <ArrowRight className={cn(
+                        'h-3 w-3 transition-opacity',
+                        globalIndex === selectedIndex ? 'opacity-70' : 'opacity-0'
+                      )} />
+                    </motion.button>
+                  )
+                })}
+              </div>
+            )}
+
             {groups.navigate.length > 0 && (
               <div className="px-2">
                 <p className="px-2 py-1.5 text-[11px] font-medium text-muted/70 uppercase tracking-wider">
@@ -260,7 +415,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               </div>
             )}
 
-            {filtered.length === 0 && (
+            {filtered.length === 0 && !searching && (
               <div className="px-4 py-10 text-center">
                 <p className="text-sm text-muted/60">
                   Nessun risultato per &ldquo;{query}&rdquo;

@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Plus, Search, ChevronLeft, ChevronRight, Copy, Trash2, MoreVertical } from 'lucide-react'
+import { FileText, Plus, Search, ChevronLeft, ChevronRight, Copy, Trash2, MoreVertical, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 
@@ -32,10 +33,14 @@ export default function TemplatesPage() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [actionMenuId, setActionMenuId] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const limit = 20
 
   const fetchTemplates = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(limit), active: 'false' })
       if (search) params.set('search', search)
@@ -44,7 +49,11 @@ export default function TemplatesPage() {
         const data = await res.json()
         setTemplates(data.items || [])
         setTotal(data.total || 0)
+      } else {
+        setFetchError('Errore nel caricamento dei template')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento dei template')
     } finally {
       setLoading(false)
     }
@@ -62,11 +71,18 @@ export default function TemplatesPage() {
     }
   }
 
-  async function handleDelete(templateId: string) {
-    setActionMenuId(null)
-    if (!confirm('Sei sicuro di voler eliminare questo template?')) return
-    const res = await fetch(`/api/quote-templates/${templateId}`, { method: 'DELETE' })
-    if (res.ok) fetchTemplates()
+  async function handleDelete() {
+    if (!confirmDeleteId) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/quote-templates/${confirmDeleteId}`, { method: 'DELETE' })
+      if (res.ok) {
+        setConfirmDeleteId(null)
+        fetchTemplates()
+      }
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const totalPages = Math.ceil(total / limit)
@@ -106,6 +122,16 @@ export default function TemplatesPage() {
           />
         </div>
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchTemplates()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">
@@ -160,7 +186,7 @@ export default function TemplatesPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">
@@ -231,7 +257,7 @@ export default function TemplatesPage() {
                               Duplica
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleDelete(t.id) }}
+                              onClick={(e) => { e.stopPropagation(); setActionMenuId(null); setConfirmDeleteId(t.id) }}
                               className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 flex items-center gap-2 text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -268,6 +294,26 @@ export default function TemplatesPage() {
       {actionMenuId && (
         <div className="fixed inset-0 z-40" onClick={() => setActionMenuId(null)} />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        title="Elimina Template"
+      >
+        <p className="text-sm text-muted mb-4">
+          Sei sicuro di voler eliminare questo template? Questa azione non puo essere annullata.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setConfirmDeleteId(null)}>
+            Annulla
+          </Button>
+          <Button variant="destructive" size="sm" loading={deleting} onClick={handleDelete}>
+            <Trash2 className="h-4 w-4 mr-1" />
+            Elimina
+          </Button>
+        </div>
+      </Modal>
     </div>
   )
 }

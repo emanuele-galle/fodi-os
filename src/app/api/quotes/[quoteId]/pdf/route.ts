@@ -21,12 +21,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     if (!quote) {
-      return NextResponse.json({ error: 'Preventivo non trovato' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Preventivo non trovato' }, { status: 404 })
     }
 
     const company = await prisma.companyProfile.findFirst()
     if (!company) {
-      return NextResponse.json({ error: 'Profilo azienda non configurato' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Profilo azienda non configurato' }, { status: 400 })
     }
 
     // Fetch logo
@@ -94,8 +94,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[quotes/:quoteId/pdf]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

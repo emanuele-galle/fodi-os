@@ -31,7 +31,7 @@ export default function KBActivityPage() {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-semibold mb-6">Attività Recenti</h1>
+      <h1 className="text-xl md:text-2xl font-semibold mb-6">Attivita Recenti</h1>
 
       {loading ? (
         <div className="space-y-3">
@@ -39,7 +39,7 @@ export default function KBActivityPage() {
             <div key={i} className="flex gap-3 p-3">
               <Skeleton className="h-8 w-8 rounded-full shrink-0" />
               <div className="flex-1 space-y-1">
-                <Skeleton className="h-4 w-64" />
+                <Skeleton className="h-4 w-full max-w-[16rem]" />
                 <Skeleton className="h-3 w-48" />
               </div>
             </div>

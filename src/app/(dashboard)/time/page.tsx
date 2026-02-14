@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Clock, LogIn, LogOut, Users, Calendar, Timer, AlertCircle } from 'lucide-react'
+import { Clock, LogIn, LogOut, Users, Calendar, Timer, AlertCircle, Download } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -145,6 +145,29 @@ export default function TimeTrackingPage() {
     .reduce((sum, s) => sum + (s.liveDurationMins || s.durationMins || 0), 0)
   const onlineNow = sessions.filter((s) => s.isActive)
 
+  function exportCSV() {
+    if (sessions.length === 0) return
+    const rows = [['Utente', 'Data', 'Entrata', 'Uscita', 'Durata (min)', 'Stato']]
+    for (const s of sessions) {
+      rows.push([
+        `${s.user.firstName} ${s.user.lastName}`,
+        new Date(s.clockIn).toLocaleDateString('it-IT'),
+        formatTime(s.clockIn),
+        s.clockOut ? formatTime(s.clockOut) : 'In corso',
+        String(s.liveDurationMins || s.durationMins || 0),
+        s.isActive ? 'Online' : 'Offline',
+      ])
+    }
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `presenze-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const handleClockOut = async () => {
     setClockingOut(true)
     try {
@@ -171,12 +194,20 @@ export default function TimeTrackingPage() {
             <p className="text-sm text-muted">Ore di connessione alla piattaforma</p>
           </div>
         </div>
-        {onlineNow.length > 0 && (
-          <Button size="sm" variant="outline" onClick={handleClockOut} loading={clockingOut}>
-            <LogOut className="h-4 w-4" />
-            Disconnettiti
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {sessions.length > 0 && (
+            <Button size="sm" variant="outline" onClick={exportCSV}>
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">Esporta CSV</span>
+            </Button>
+          )}
+          {onlineNow.length > 0 && (
+            <Button size="sm" variant="outline" onClick={handleClockOut} loading={clockingOut}>
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">Disconnettiti</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -292,7 +323,49 @@ export default function TimeTrackingPage() {
                   Totale: {formatDuration(group.totalMins)}
                 </span>
               </div>
-              <div className="overflow-x-auto rounded-lg border border-border/80 shadow-[var(--shadow-sm)]">
+
+              {/* Mobile card view */}
+              <div className="md:hidden space-y-2">
+                {group.sessions.map((s) => (
+                  <div
+                    key={s.id}
+                    className="rounded-lg border border-border/80 bg-card p-3 shadow-[var(--shadow-sm)]"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {s.isActive && <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />}
+                        <span className="font-medium text-sm truncate">{s.user.firstName} {s.user.lastName}</span>
+                      </div>
+                      <Badge variant={s.isActive ? 'success' : 'outline'}>
+                        {s.isActive ? 'Online' : 'Offline'}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 text-emerald-600">
+                          <LogIn className="h-3.5 w-3.5" />
+                          <span>{formatTime(s.clockIn)}</span>
+                        </div>
+                        <span className="text-muted">-</span>
+                        {s.clockOut ? (
+                          <div className="flex items-center gap-1 text-muted">
+                            <LogOut className="h-3.5 w-3.5" />
+                            <span>{formatTime(s.clockOut)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-emerald-600 text-xs font-medium">In corso...</span>
+                        )}
+                      </div>
+                      <span className="font-bold text-sm">
+                        {formatDuration(s.liveDurationMins || s.durationMins || 0)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80 shadow-[var(--shadow-sm)]">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-muted bg-secondary/40">

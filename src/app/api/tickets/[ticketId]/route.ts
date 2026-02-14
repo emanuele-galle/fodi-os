@@ -28,14 +28,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!ticket) {
-      return NextResponse.json({ error: 'Ticket non trovato' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Ticket non trovato' }, { status: 404 })
     }
 
-    return NextResponse.json(ticket)
+    return NextResponse.json({ success: true, data: ticket })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[tickets]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -50,7 +52,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const parsed = updateTicketSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -126,11 +128,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
-    return NextResponse.json(ticket)
+    return NextResponse.json({ success: true, data: ticket })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[tickets]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -139,7 +143,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const role = request.headers.get('x-user-role') as Role
     // Only ADMIN can delete tickets
     if (role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Only ADMIN can delete tickets' }, { status: 403 })
+      return NextResponse.json({ success: false, error: 'Solo gli ADMIN possono eliminare i ticket' }, { status: 403 })
     }
 
     const { ticketId } = await params
@@ -148,7 +152,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('[tickets/DELETE]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

@@ -41,6 +41,9 @@ export async function POST(
       return NextResponse.json({ error: 'Tipo di file non consentito' }, { status: 400 })
     }
 
+    // Sanitize filename
+    const safeName = file.name.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.{2,}/g, '.')
+
     // Upload to S3
     const buffer = Buffer.from(await file.arrayBuffer())
     const key = `chat/${channelId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`
@@ -52,10 +55,10 @@ export async function POST(
       data: {
         channelId,
         authorId: userId,
-        content: file.name,
+        content: safeName,
         type: 'FILE_LINK',
         metadata: {
-          fileName: file.name,
+          fileName: safeName,
           fileUrl,
           fileSize: file.size,
           mimeType: file.type,
@@ -86,8 +89,10 @@ export async function POST(
 
     return NextResponse.json(message, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[chat/channels/:id/upload]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

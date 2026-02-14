@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { logActivity } from '@/lib/activity-log'
 import { slugify } from '@/lib/utils'
 import { createProjectSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
@@ -55,11 +56,13 @@ export async function GET(request: NextRequest) {
       prisma.project.count({ where }),
     ])
 
-    return NextResponse.json({ items, total, page, limit })
+    return NextResponse.json({ success: true, data: items, total, page, limit })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[projects/GET]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -72,7 +75,7 @@ export async function POST(request: NextRequest) {
     const parsed = createProjectSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -80,9 +83,9 @@ export async function POST(request: NextRequest) {
 
     const slug = slugify(name)
 
-    const existing = await prisma.project.findUnique({ where: { slug } })
+    const existing = await prisma.project.findUnique({ where: { slug }, select: { id: true } })
     if (existing) {
-      return NextResponse.json({ error: 'A project with this name already exists' }, { status: 409 })
+      return NextResponse.json({ success: false, error: 'Un progetto con questo nome esiste gia' }, { status: 409 })
     }
 
     const userId = request.headers.get('x-user-id')!
@@ -146,10 +149,13 @@ export async function POST(request: NextRequest) {
       // Non-blocking: if chat channel creation fails, project is still created
     }
 
-    return NextResponse.json(project, { status: 201 })
+    logActivity({ userId, action: 'CREATE', entityType: 'PROJECT', entityId: project.id, metadata: { name: project.name } })
+
+    return NextResponse.json({ success: true, data: project }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

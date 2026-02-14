@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { logActivity } from '@/lib/activity-log'
 import { updateInvoiceSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
@@ -23,20 +24,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!invoice) {
-      return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Fattura non trovata' }, { status: 404 })
     }
 
-    return NextResponse.json(invoice)
+    return NextResponse.json({ success: true, data: invoice })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[invoices]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ invoiceId: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role
+    const userId = request.headers.get('x-user-id')!
     requirePermission(role, 'erp', 'write')
 
     const { invoiceId } = await params
@@ -44,7 +48,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const parsed = updateInvoiceSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -100,7 +104,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         })
       })
 
-      return NextResponse.json(invoice)
+      logActivity({ userId, action: 'UPDATE', entityType: 'INVOICE', entityId: invoiceId, metadata: { changedFields: Object.keys(data).join(',') } })
+      return NextResponse.json({ success: true, data: invoice })
     }
 
     const invoice = await prisma.invoice.update({
@@ -112,11 +117,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     })
 
-    return NextResponse.json(invoice)
+    logActivity({ userId, action: 'UPDATE', entityType: 'INVOICE', entityId: invoiceId, metadata: { changedFields: Object.keys(data).join(',') } })
+
+    return NextResponse.json({ success: true, data: invoice })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[invoices]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -129,18 +138,23 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId }, select: { status: true } })
     if (!invoice) {
-      return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Fattura non trovata' }, { status: 404 })
     }
     if (invoice.status !== 'DRAFT') {
-      return NextResponse.json({ error: 'Solo le fatture in bozza possono essere eliminate' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Solo le fatture in bozza possono essere eliminate' }, { status: 400 })
     }
 
+    const userId = request.headers.get('x-user-id')!
     await prisma.invoice.delete({ where: { id: invoiceId } })
+
+    logActivity({ userId, action: 'DELETE', entityType: 'INVOICE', entityId: invoiceId })
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[invoices]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/Select'
 import { FatturapaStatusBadge } from '@/components/erp/FatturapaStatusBadge'
 import { EINVOICE_STATUS_CONFIG, TIPO_DOCUMENTO_LABELS } from '@/lib/fatturapa'
 import { formatCurrency } from '@/lib/utils'
-import { FileText, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FileText, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 
 interface DashboardItem {
   id: string
@@ -48,9 +48,11 @@ export default function FatturapaDashboardPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [tipoFilter, setTipoFilter] = useState('')
   const [page, setPage] = useState(1)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams()
       if (statusFilter) params.set('status', statusFilter)
@@ -59,7 +61,13 @@ export default function FatturapaDashboardPage() {
       params.set('limit', '20')
 
       const res = await fetch(`/api/erp/fatturapa/dashboard?${params}`)
-      if (res.ok) setData(await res.json())
+      if (res.ok) {
+        setData(await res.json())
+      } else {
+        setFetchError('Errore nel caricamento delle fatture elettroniche')
+      }
+    } catch {
+      setFetchError('Errore di rete nel caricamento delle fatture elettroniche')
     } finally {
       setLoading(false)
     }
@@ -84,7 +92,7 @@ export default function FatturapaDashboardPage() {
   ]
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold">Fatturazione Elettronica</h1>
@@ -136,6 +144,16 @@ export default function FatturapaDashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchData()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {/* List */}
       {loading ? (

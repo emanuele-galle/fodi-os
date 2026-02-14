@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { verifySignatureToken } from '@/lib/signature-token'
 import { generateOtp, hashOtp } from '@/lib/otp'
 import { sendOtpEmail } from '@/lib/signature-email'
+import { rateLimit } from '@/lib/rate-limit'
 
 const MAX_OTP_PER_REQUEST = 3
 
@@ -11,6 +12,11 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> }
 ) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    if (!rateLimit(`otp-request:${ip}`, 5, 60000)) {
+      return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
+    }
+
     const { token } = await params
 
     let requestId: string
@@ -74,7 +80,6 @@ export async function POST(
       })
     }
 
-    const ip = request.headers.get('x-forwarded-for') || 'unknown'
     await prisma.signatureAudit.create({
       data: {
         requestId,
@@ -92,7 +97,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, maskedEmail: masked })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('[sign/:token/request-otp]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

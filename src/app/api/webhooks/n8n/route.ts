@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { timingSafeEqual } from 'crypto'
 
 const webhookSecret = process.env.N8N_WEBHOOK_SECRET
 
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     const secret = request.headers.get('x-n8n-secret')
-    if (secret !== webhookSecret) {
+    if (!secret || !timingSafeCompare(secret, webhookSecret)) {
       return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
     }
 
@@ -103,7 +104,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('[webhooks/n8n]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
+}
+
+function timingSafeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) return false
+  return timingSafeEqual(bufA, bufB)
 }

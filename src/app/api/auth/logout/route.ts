@@ -1,33 +1,39 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
-import { clearAuthCookies } from '@/lib/auth'
+import { clearAuthCookies, getSession } from '@/lib/auth'
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
+    const session = await getSession()
     const cookieStore = await cookies()
     const refreshToken = cookieStore.get('fodi_refresh')?.value
 
-    if (refreshToken) {
+    // Invalidate ALL refresh tokens for this user
+    if (session) {
+      await prisma.refreshToken.deleteMany({
+        where: { userId: session.sub },
+      })
+    } else if (refreshToken) {
+      // Fallback: if no session, delete by token
       await prisma.refreshToken.deleteMany({
         where: { token: refreshToken },
       })
     }
 
     // Close active work session on logout
-    const userId = request.headers.get('x-user-id')
-    if (userId) {
-      const activeSession = await prisma.workSession.findFirst({
-        where: { userId, clockOut: null },
+    if (session) {
+      const activeWorkSession = await prisma.workSession.findFirst({
+        where: { userId: session.sub, clockOut: null },
         orderBy: { clockIn: 'desc' },
       })
-      if (activeSession) {
+      if (activeWorkSession) {
         const now = new Date()
         const durationMins = Math.round(
-          (now.getTime() - new Date(activeSession.clockIn).getTime()) / 60000
+          (now.getTime() - new Date(activeWorkSession.clockIn).getTime()) / 60000
         )
         await prisma.workSession.update({
-          where: { id: activeSession.id },
+          where: { id: activeWorkSession.id },
           data: { clockOut: now, durationMins },
         })
       }
@@ -38,6 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[auth/logout]', error)
+    await clearAuthCookies()
     return NextResponse.json({ success: true })
   }
 }

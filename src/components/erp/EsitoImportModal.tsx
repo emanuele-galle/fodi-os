@@ -48,13 +48,14 @@ export function EsitoImportModal({ open, onClose, invoiceId, onImported }: Esito
         body: JSON.stringify({ esitoXml: xmlContent }),
       })
 
-      const data = await res.json()
+      const json = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Errore nell\'importazione')
+        setError(json.error || 'Errore nell\'importazione')
         return
       }
 
-      setResult(data.parsedEsito)
+      const responseData = json.data ?? json
+      setResult(responseData.parsedEsito)
       onImported()
     } catch {
       setError('Errore di connessione')

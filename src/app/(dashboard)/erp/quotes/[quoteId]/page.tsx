@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
+import { Modal } from '@/components/ui/Modal'
 import { QuotePdfButton } from '@/components/erp/QuotePdfButton'
 import { PdfPreviewModal } from '@/components/erp/PdfPreviewModal'
 import { formatCurrency } from '@/lib/utils'
@@ -60,6 +61,9 @@ export default function QuoteDetailPage() {
   const [quote, setQuote] = useState<QuoteDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [showPdfPreview, setShowPdfPreview] = useState(false)
+  const [confirmConvertOpen, setConfirmConvertOpen] = useState(false)
+  const [converting, setConverting] = useState(false)
+  const [sending, setSending] = useState(false)
 
   // Edit mode state
   const [editing, setEditing] = useState(false)
@@ -183,15 +187,42 @@ export default function QuoteDetailPage() {
     }
   }
 
+  async function handleSendQuote() {
+    if (!quote) return
+    setSending(true)
+    try {
+      const res = await fetch(`/api/quotes/${quoteId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'SENT' }),
+      })
+      if (res.ok) {
+        fetchQuote()
+      }
+    } finally {
+      setSending(false)
+    }
+  }
+
   async function handleConvertToInvoice() {
-    const res = await fetch('/api/invoices', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ quoteId: quote?.id }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      router.push(`/erp/invoices/${data.id}`)
+    if (!quote) return
+    setConverting(true)
+    try {
+      const res = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quoteId: quote.id,
+          clientId: quote.client.id,
+          title: quote.title,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        router.push(`/erp/invoices/${data.id}`)
+      }
+    } finally {
+      setConverting(false)
     }
   }
 
@@ -267,13 +298,13 @@ export default function QuoteDetailPage() {
               </Button>
               <QuotePdfButton quoteId={quote.id} quoteNumber={quote.number} />
               {quote.status === 'DRAFT' && (
-                <Button variant="outline" size="sm" className="touch-manipulation">
+                <Button variant="outline" size="sm" onClick={handleSendQuote} loading={sending} className="touch-manipulation">
                   <Send className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Invia</span>
                 </Button>
               )}
               {(quote.status === 'APPROVED' || quote.status === 'SENT') && (
-                <Button size="sm" onClick={handleConvertToInvoice} className="touch-manipulation">
+                <Button size="sm" onClick={() => setConfirmConvertOpen(true)} className="touch-manipulation">
                   <ArrowRight className="h-4 w-4 mr-2" />
                   <span className="hidden sm:inline">Converti in </span>Fattura
                 </Button>
@@ -505,6 +536,21 @@ export default function QuoteDetailPage() {
         fileName={`${quote.number}.pdf`}
         title={`Anteprima - ${quote.number}`}
       />
+
+      <Modal open={confirmConvertOpen} onClose={() => setConfirmConvertOpen(false)} title="Converti in Fattura" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-muted">
+            Confermi di voler convertire il preventivo <strong>{quote.number}</strong> in fattura? Il preventivo verra segnato come &quot;Fatturato&quot;.
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setConfirmConvertOpen(false)}>Annulla</Button>
+            <Button onClick={handleConvertToInvoice} loading={converting}>
+              <ArrowRight className="h-4 w-4 mr-2" />
+              Conferma Conversione
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

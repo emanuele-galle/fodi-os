@@ -66,7 +66,7 @@ export async function GET(
 
     return NextResponse.json({ ...signatureRequest, company })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('[sign/:token]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

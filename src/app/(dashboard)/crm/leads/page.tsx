@@ -116,11 +116,11 @@ export default function LeadsPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold">Leads</h1>
-          <p className="text-sm text-muted mt-1">Lead da form e webhook esterni</p>
+          <h1 className="text-xl md:text-2xl font-semibold">Leads</h1>
+          <p className="text-xs md:text-sm text-muted mt-1">Lead da form e webhook esterni</p>
         </div>
       </div>
 
@@ -209,7 +209,7 @@ export default function LeadsPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">

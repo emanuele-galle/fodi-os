@@ -42,11 +42,13 @@ export async function GET(request: NextRequest) {
       prisma.quote.count({ where }),
     ])
 
-    return NextResponse.json({ items, total, page, limit })
+    return NextResponse.json({ success: true, data: items, total, page, limit })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[quotes]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -60,20 +62,11 @@ export async function POST(request: NextRequest) {
     const parsed = createQuoteSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
     const { clientId, projectId, title, lineItems, taxRate, discount, notes, validUntil } = parsed.data
-
-    // Generate quote number Q-YYYY-NNN
-    const year = new Date().getFullYear()
-    const lastQuote = await prisma.quote.findFirst({
-      where: { number: { startsWith: `Q-${year}` } },
-      orderBy: { number: 'desc' },
-    })
-    const seq = lastQuote ? parseInt(lastQuote.number.split('-')[2]) + 1 : 1
-    const number = `Q-${year}-${String(seq).padStart(3, '0')}`
 
     // Calculate totals
     const itemsWithTotal = lineItems.map((item: { description: string; quantity: number; unitPrice: number }, i: number) => ({
@@ -91,34 +84,47 @@ export async function POST(request: NextRequest) {
     const taxAmount = taxableAmount * (rate / 100)
     const total = taxableAmount + taxAmount
 
-    const quote = await prisma.quote.create({
-      data: {
-        clientId,
-        projectId,
-        creatorId: userId,
-        number,
-        title,
-        subtotal,
-        taxRate: rate,
-        taxAmount,
-        total,
-        discount: discountAmount,
-        notes,
-        validUntil: validUntil ? new Date(validUntil) : undefined,
-        lineItems: {
-          create: itemsWithTotal,
+    // Use transaction to avoid race condition on quote number generation
+    const quote = await prisma.$transaction(async (tx) => {
+      const year = new Date().getFullYear()
+      const lastQuote = await tx.quote.findFirst({
+        where: { number: { startsWith: `Q-${year}` } },
+        orderBy: { number: 'desc' },
+      })
+      const seq = lastQuote ? parseInt(lastQuote.number.split('-')[2]) + 1 : 1
+      const number = `Q-${year}-${String(seq).padStart(3, '0')}`
+
+      return tx.quote.create({
+        data: {
+          clientId,
+          projectId,
+          creatorId: userId,
+          number,
+          title,
+          subtotal,
+          taxRate: rate,
+          taxAmount,
+          total,
+          discount: discountAmount,
+          notes,
+          validUntil: validUntil ? new Date(validUntil) : undefined,
+          lineItems: {
+            create: itemsWithTotal,
+          },
         },
-      },
-      include: {
-        client: { select: { id: true, companyName: true } },
-        lineItems: { orderBy: { sortOrder: 'asc' } },
-      },
+        include: {
+          client: { select: { id: true, companyName: true } },
+          lineItems: { orderBy: { sortOrder: 'asc' } },
+        },
+      })
     })
 
-    return NextResponse.json(quote, { status: 201 })
+    return NextResponse.json({ success: true, data: quote }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[quotes]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

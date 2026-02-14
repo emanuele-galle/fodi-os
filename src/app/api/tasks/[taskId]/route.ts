@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hasPermission, requirePermission } from '@/lib/permissions'
+import { logActivity } from '@/lib/activity-log'
 import { updateTaskSchema } from '@/lib/validation'
 import { getTaskParticipants, notifyUsers } from '@/lib/notifications'
 import type { Role } from '@/generated/prisma/client'
@@ -59,14 +60,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!task) {
-      return NextResponse.json({ error: 'Task non trovato' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Task non trovato' }, { status: 404 })
     }
 
-    return NextResponse.json(task)
+    return NextResponse.json({ success: true, data: task })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[tasks/GET]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -88,13 +91,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         },
       })
       if (!taskCheck) {
-        return NextResponse.json({ error: 'Task non trovato' }, { status: 404 })
+        return NextResponse.json({ success: false, error: 'Task non trovato' }, { status: 404 })
       }
       const isCreator = taskCheck.creatorId === currentUserId
       const isAssignee = taskCheck.assigneeId === currentUserId
       const isInAssignments = taskCheck.assignments.some((a) => a.userId === currentUserId)
       if (!isCreator && !isAssignee && !isInAssignments) {
-        return NextResponse.json({ error: 'Permission denied: non sei creatore o assegnatario di questa task' }, { status: 403 })
+        return NextResponse.json({ success: false, error: 'Permission denied: non sei creatore o assegnatario di questa task' }, { status: 403 })
       }
     }
 
@@ -102,7 +105,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const parsed = updateTaskSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -281,6 +284,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
+    logActivity({
+      userId: currentUserId!,
+      action: 'UPDATE',
+      entityType: 'TASK',
+      entityId: taskId,
+      metadata: { changedFields: Object.keys(data).join(',') },
+    })
+
     // Re-fetch with full includes
     const fullTask = await prisma.task.findUnique({
       where: { id: taskId },
@@ -295,11 +306,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     })
 
-    return NextResponse.json(fullTask)
+    return NextResponse.json({ success: true, data: fullTask })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[tasks/PATCH]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -310,12 +323,23 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const { taskId } = await params
 
+    // Check task exists
+    const existing = await prisma.task.findUnique({ where: { id: taskId }, select: { id: true } })
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Task non trovato' }, { status: 404 })
+    }
+
+    const userId = request.headers.get('x-user-id')!
+
     await prisma.task.delete({ where: { id: taskId } })
+
+    logActivity({ userId, action: 'DELETE', entityType: 'TASK', entityId: taskId })
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

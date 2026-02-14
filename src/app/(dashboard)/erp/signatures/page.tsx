@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileSignature, Plus, Search, ChevronLeft, ChevronRight, Send } from 'lucide-react'
+import { FileSignature, Plus, Search, ChevronLeft, ChevronRight, Send, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -52,8 +52,11 @@ export default function SignaturesPage() {
   const [showModal, setShowModal] = useState(false)
   const limit = 20
 
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
   const fetchItems = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) })
       if (search) params.set('search', search)
@@ -63,7 +66,11 @@ export default function SignaturesPage() {
         const data = await res.json()
         setItems(data.items || [])
         setTotal(data.total || 0)
+      } else {
+        setFetchError('Errore nel caricamento delle richieste di firma')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento delle richieste di firma')
     } finally {
       setLoading(false)
     }
@@ -116,6 +123,16 @@ export default function SignaturesPage() {
         />
       </div>
 
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchItems()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
@@ -162,7 +179,7 @@ export default function SignaturesPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">

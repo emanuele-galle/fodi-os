@@ -109,11 +109,13 @@ export async function GET(request: NextRequest) {
       prisma.task.count({ where }),
     ])
 
-    return NextResponse.json({ items, total })
+    return NextResponse.json({ success: true, data: items, total, page, limit })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[tasks/GET]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -124,14 +126,14 @@ export async function POST(request: NextRequest) {
 
     const userId = request.headers.get('x-user-id')
     if (!userId) {
-      return NextResponse.json({ error: 'Utente non autenticato' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Utente non autenticato' }, { status: 401 })
     }
 
     const body = await request.json()
     const parsed = createTaskSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -205,10 +207,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(fullTask, { status: 201 })
+    return NextResponse.json({ success: true, data: fullTask }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[tasks/POST]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

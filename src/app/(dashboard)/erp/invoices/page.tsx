@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Receipt, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Receipt, Search, ChevronLeft, ChevronRight, AlertCircle, Download } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -44,6 +44,7 @@ export default function InvoicesPage() {
   const router = useRouter()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -52,6 +53,7 @@ export default function InvoicesPage() {
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) })
       if (search) params.set('search', search)
@@ -61,7 +63,11 @@ export default function InvoicesPage() {
         const data = await res.json()
         setInvoices(data.items || [])
         setTotal(data.total || 0)
+      } else {
+        setFetchError('Errore nel caricamento delle fatture')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento delle fatture')
     } finally {
       setLoading(false)
     }
@@ -71,6 +77,31 @@ export default function InvoicesPage() {
   useEffect(() => { setPage(1) }, [search, statusFilter])
 
   const totalPages = Math.ceil(total / limit)
+
+  function exportCSV() {
+    if (invoices.length === 0) return
+    const rows = [['Numero', 'Titolo', 'Cliente', 'Stato', 'Totale', 'Scadenza', 'Data Pagamento', 'Data Creazione']]
+    for (const inv of invoices) {
+      rows.push([
+        inv.number,
+        inv.title,
+        inv.client.companyName,
+        STATUS_LABELS[inv.status] || inv.status,
+        inv.total || '0',
+        inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('it-IT') : '',
+        inv.paidDate ? new Date(inv.paidDate).toLocaleDateString('it-IT') : '',
+        new Date(inv.createdAt).toLocaleDateString('it-IT'),
+      ])
+    }
+    const csv = rows.map((r) => r.map((v) => `"${v}"`).join(',')).join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `fatture-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="animate-fade-in">
@@ -84,16 +115,12 @@ export default function InvoicesPage() {
             <p className="text-xs md:text-sm text-muted">Emissione e tracking pagamenti</p>
           </div>
         </div>
-        <div className="hidden sm:block flex-shrink-0">
-          <Button size="sm" onClick={() => router.push('/erp/invoices/new')}>
-            <Plus className="h-4 w-4" />
-            Nuova Fattura
+        {invoices.length > 0 && (
+          <Button size="sm" variant="outline" onClick={exportCSV} className="flex-shrink-0">
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline ml-1">Esporta CSV</span>
           </Button>
-        </div>
-        <Button onClick={() => router.push('/erp/invoices/new')} className="sm:hidden flex-shrink-0">
-          <Plus className="h-4 w-4 mr-1" />
-          Nuova
-        </Button>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -114,6 +141,16 @@ export default function InvoicesPage() {
         />
       </div>
 
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchInvoices()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
@@ -122,12 +159,11 @@ export default function InvoicesPage() {
         <EmptyState
           icon={Receipt}
           title="Nessuna fattura trovata"
-          description={search || statusFilter ? 'Prova a modificare i filtri.' : 'Crea la tua prima fattura o converti un preventivo.'}
+          description={search || statusFilter ? 'Prova a modificare i filtri.' : 'Le fatture vengono create convertendo un preventivo approvato.'}
           action={
             !search && !statusFilter ? (
-              <Button onClick={() => router.push('/erp/invoices/new')}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nuova Fattura
+              <Button onClick={() => router.push('/erp/quotes')}>
+                Vai ai Preventivi
               </Button>
             ) : undefined
           }
@@ -161,7 +197,7 @@ export default function InvoicesPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">

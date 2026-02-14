@@ -554,12 +554,12 @@ export default function AssetsPage() {
       </div>
 
       {/* Tab navigation */}
-      <div className="flex border-b border-border mb-6" role="tablist">
+      <div className="flex border-b border-border mb-6 overflow-x-auto scrollbar-none" role="tablist">
         <button
           role="tab"
           aria-selected={activeTab === 'minio'}
           onClick={() => setActiveTab('minio')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${
+          className={`px-4 py-2 min-h-[44px] text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 whitespace-nowrap touch-manipulation ${
             activeTab === 'minio'
               ? 'border-primary text-primary'
               : 'border-transparent text-muted hover:text-foreground'
@@ -572,7 +572,7 @@ export default function AssetsPage() {
           role="tab"
           aria-selected={activeTab === 'drive'}
           onClick={() => setActiveTab('drive')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${
+          className={`px-4 py-2 min-h-[44px] text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 whitespace-nowrap touch-manipulation ${
             activeTab === 'drive'
               ? 'border-primary text-primary'
               : 'border-transparent text-muted hover:text-foreground'

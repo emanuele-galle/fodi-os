@@ -134,8 +134,8 @@ export default function BillingSettingsPage() {
           <Building2 className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Fatturazione</h1>
-          <p className="text-sm text-muted">Profilo azienda e dati fiscali</p>
+          <h1 className="text-xl md:text-2xl font-bold">Fatturazione</h1>
+          <p className="text-xs md:text-sm text-muted">Profilo azienda e dati fiscali</p>
         </div>
       </div>
 

@@ -56,7 +56,7 @@ export async function PATCH(
 
     return NextResponse.json(submission)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('[portal/wizard-submissions/:submissionId]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

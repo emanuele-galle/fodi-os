@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get('dateFrom')
     const dateTo = searchParams.get('dateTo')
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-    const limit = Math.min(999, Math.max(1, parseInt(searchParams.get('limit') || '20')))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
     const skip = (page - 1) * limit
 
     const where = {
@@ -47,11 +47,13 @@ export async function GET(request: NextRequest) {
       prisma.timeEntry.count({ where }),
     ])
 
-    return NextResponse.json({ items, total, page, limit })
+    return NextResponse.json({ success: true, data: items, total, page, limit })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[time-entries]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -104,10 +106,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(entry, { status: 201 })
+    return NextResponse.json({ success: true, data: entry }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[time-entries]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

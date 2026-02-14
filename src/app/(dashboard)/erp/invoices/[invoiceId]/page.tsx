@@ -9,9 +9,19 @@ import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
-import { FatturapaPanel } from '@/components/erp/FatturapaPanel'
-import { InvoicePdfButton } from '@/components/erp/InvoicePdfButton'
-import { PdfPreviewModal } from '@/components/erp/PdfPreviewModal'
+import { Modal } from '@/components/ui/Modal'
+import dynamic from 'next/dynamic'
+
+const FatturapaPanel = dynamic(() => import('@/components/erp/FatturapaPanel').then(m => ({ default: m.FatturapaPanel })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-32 w-full rounded-lg" />,
+})
+const InvoicePdfButton = dynamic(() => import('@/components/erp/InvoicePdfButton').then(m => ({ default: m.InvoicePdfButton })), {
+  ssr: false,
+})
+const PdfPreviewModal = dynamic(() => import('@/components/erp/PdfPreviewModal').then(m => ({ default: m.PdfPreviewModal })), {
+  ssr: false,
+})
 import { formatCurrency } from '@/lib/utils'
 
 interface LineItem {
@@ -67,6 +77,8 @@ export default function InvoiceDetailPage() {
   const [showPdfPreview, setShowPdfPreview] = useState(false)
 
   // Edit mode
+  const [confirmPaidOpen, setConfirmPaidOpen] = useState(false)
+  const [markingPaid, setMarkingPaid] = useState(false)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editTitle, setEditTitle] = useState('')
@@ -191,12 +203,20 @@ export default function InvoiceDetailPage() {
   }
 
   async function handleMarkAsPaid() {
-    const res = await fetch(`/api/invoices/${invoiceId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'PAID', paidDate: new Date().toISOString(), paidAmount: invoice?.total }),
-    })
-    if (res.ok) fetchInvoice()
+    setMarkingPaid(true)
+    try {
+      const res = await fetch(`/api/invoices/${invoiceId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'PAID', paidDate: new Date().toISOString(), paidAmount: invoice?.total }),
+      })
+      if (res.ok) {
+        setConfirmPaidOpen(false)
+        fetchInvoice()
+      }
+    } finally {
+      setMarkingPaid(false)
+    }
   }
 
   if (loading) {
@@ -271,7 +291,7 @@ export default function InvoiceDetailPage() {
               </Button>
               <InvoicePdfButton invoiceId={invoice.id} invoiceNumber={invoice.number} />
               {invoice.status !== 'PAID' && invoice.status !== 'CANCELLED' && (
-                <Button size="sm" onClick={handleMarkAsPaid} className="touch-manipulation">
+                <Button size="sm" onClick={() => setConfirmPaidOpen(true)} className="touch-manipulation">
                   <CheckCircle2 className="h-4 w-4 mr-2" />
                   <span className="hidden sm:inline">Segna come </span>Pagata
                 </Button>
@@ -540,6 +560,21 @@ export default function InvoiceDetailPage() {
         fileName={`${invoice.number.replace(/\//g, '-')}.pdf`}
         title={`Anteprima - ${invoice.number}`}
       />
+
+      <Modal open={confirmPaidOpen} onClose={() => setConfirmPaidOpen(false)} title="Conferma pagamento" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-muted">
+            Confermi di voler segnare la fattura <strong>{invoice.number}</strong> come pagata per un importo di <strong>{formatCurrency(invoice.total)}</strong>?
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setConfirmPaidOpen(false)}>Annulla</Button>
+            <Button onClick={handleMarkAsPaid} loading={markingPaid}>
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Conferma Pagamento
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

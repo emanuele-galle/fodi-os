@@ -259,8 +259,8 @@ export default function InternalPage() {
             <Building2 className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Azienda</h1>
-            <p className="text-sm text-muted">Gestione interna e operazioni FODI</p>
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight">Azienda</h1>
+            <p className="text-xs md:text-sm text-muted">Gestione interna e operazioni FODI</p>
           </div>
         </div>
         <Button onClick={() => setModalOpen(true)}>
@@ -323,7 +323,7 @@ export default function InternalPage() {
           <div className="flex gap-2 mb-4 flex-wrap">
             <button
               onClick={() => setSelectedWorkspace(null)}
-              className={cn('px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+              className={cn('px-3 py-1.5 min-h-[44px] md:min-h-0 rounded-lg text-sm font-medium transition-colors touch-manipulation',
                 !selectedWorkspace ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'
               )}
             >
@@ -333,7 +333,7 @@ export default function InternalPage() {
               <button
                 key={w.id}
                 onClick={() => setSelectedWorkspace(w.id)}
-                className={cn('px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                className={cn('px-3 py-1.5 min-h-[44px] md:min-h-0 rounded-lg text-sm font-medium transition-colors touch-manipulation',
                   selectedWorkspace === w.id ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'
                 )}
               >

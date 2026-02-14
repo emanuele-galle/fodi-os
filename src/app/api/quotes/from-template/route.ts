@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const parsed = createQuoteFromTemplateSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       include: { lineItems: { orderBy: { sortOrder: 'asc' } } },
     })
     if (!template) {
-      return NextResponse.json({ error: 'Template non trovato' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Template non trovato' }, { status: 404 })
     }
 
     // Use override items or template items
@@ -55,59 +55,63 @@ export async function POST(request: NextRequest) {
     const taxAmount = taxableAmount * (rate / 100)
     const total = taxableAmount + taxAmount
 
-    // Generate quote number using template format
-    const year = new Date().getFullYear()
-    const prefix = template.numberPrefix
-    const lastQuote = await prisma.quote.findFirst({
-      where: { number: { startsWith: `${prefix}-${year}` } },
-      orderBy: { number: 'desc' },
-    })
-    const seq = lastQuote ? parseInt(lastQuote.number.split('-')[2]) + 1 : 1
-    const number = template.numberFormat
-      .replace('{PREFIX}', prefix)
-      .replace('{YYYY}', String(year))
-      .replace('{NNN}', String(seq).padStart(3, '0'))
-
     // Determine validUntil
     const validDate = validUntil
       ? new Date(validUntil)
       : new Date(Date.now() + template.defaultValidDays * 24 * 60 * 60 * 1000)
 
-    const quote = await prisma.quote.create({
-      data: {
-        clientId,
-        projectId,
-        creatorId: userId,
-        templateId,
-        number,
-        title,
-        subtotal,
-        taxRate: rate,
-        taxAmount,
-        total,
-        discount: discountAmount,
-        notes: notes ?? template.defaultNotes ?? undefined,
-        validUntil: validDate,
-        lineItems: {
-          create: items.map((item) => ({
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: item.total,
-            sortOrder: item.sortOrder,
-          })),
+    // Use transaction to avoid race condition on quote number generation
+    const quote = await prisma.$transaction(async (tx) => {
+      const year = new Date().getFullYear()
+      const prefix = template.numberPrefix
+      const lastQuote = await tx.quote.findFirst({
+        where: { number: { startsWith: `${prefix}-${year}` } },
+        orderBy: { number: 'desc' },
+      })
+      const seq = lastQuote ? parseInt(lastQuote.number.split('-')[2]) + 1 : 1
+      const number = template.numberFormat
+        .replace('{PREFIX}', prefix)
+        .replace('{YYYY}', String(year))
+        .replace('{NNN}', String(seq).padStart(3, '0'))
+
+      return tx.quote.create({
+        data: {
+          clientId,
+          projectId,
+          creatorId: userId,
+          templateId,
+          number,
+          title,
+          subtotal,
+          taxRate: rate,
+          taxAmount,
+          total,
+          discount: discountAmount,
+          notes: notes ?? template.defaultNotes ?? undefined,
+          validUntil: validDate,
+          lineItems: {
+            create: items.map((item) => ({
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              total: item.total,
+              sortOrder: item.sortOrder,
+            })),
+          },
         },
-      },
-      include: {
-        client: { select: { id: true, companyName: true } },
-        lineItems: { orderBy: { sortOrder: 'asc' } },
-      },
+        include: {
+          client: { select: { id: true, companyName: true } },
+          lineItems: { orderBy: { sortOrder: 'asc' } },
+        },
+      })
     })
 
-    return NextResponse.json(quote, { status: 201 })
+    return NextResponse.json({ success: true, data: quote }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[quotes/from-template]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

@@ -184,7 +184,7 @@ export default function DashboardPage() {
         const todayStr = now.toISOString().split('T')[0]
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-        const [clientsRes, projectsRes, quotesRes, timeRes, invoicesRes, allInvoicesRes, teamRes, expensesRes, ticketsRes] = await Promise.all([
+        const [clientsRes, projectsRes, quotesRes, timeRes, invoicesRes, allInvoicesRes, teamRes, expensesRes, ticketsRes, tasksRes, activityRes] = await Promise.all([
           fetch('/api/clients?status=ACTIVE&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/projects?status=IN_PROGRESS&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/quotes?status=SENT&limit=1').then((r) => r.ok ? r.json() : null),
@@ -194,7 +194,14 @@ export default function DashboardPage() {
           fetch('/api/team').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/expenses?limit=200').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/tickets?status=OPEN,IN_PROGRESS,WAITING_CLIENT&limit=1').then((r) => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/tasks?status=TODO,IN_PROGRESS&sort=dueDate&order=asc&limit=5').then((r) => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/activity?limit=10').then((r) => r.ok ? r.json() : null).catch(() => null),
         ])
+
+        // Tasks + Activities (fetched in parallel with everything else)
+        if (tasksRes?.items) setTasks(tasksRes.items)
+        else if (Array.isArray(tasksRes)) setTasks(tasksRes)
+        if (activityRes?.items) setActivities(activityRes.items)
 
         const timeItems = timeRes?.items || []
         const hours = timeItems.reduce((s: number, e: { hours: number }) => s + e.hours, 0)
@@ -256,21 +263,6 @@ export default function DashboardPage() {
     loadDashboard()
   }, [])
 
-  // Load tasks + activities
-  useEffect(() => {
-    fetch('/api/tasks?status=TODO,IN_PROGRESS&sort=dueDate&order=asc&limit=5')
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => {
-        if (d?.items) setTasks(d.items)
-        else if (Array.isArray(d)) setTasks(d)
-      })
-
-    fetch('/api/activity?limit=10')
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => {
-        if (d?.items) setActivities(d.items)
-      })
-  }, [])
 
   const ACTIVITY_ICONS: Record<string, typeof Activity> = {
     project: FolderKanban,

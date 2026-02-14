@@ -75,7 +75,7 @@ function TreeItem({
           onSelect(page.id)
           if (hasChildren) setExpanded(!expanded)
         }}
-        className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors text-left ${
+        className={`w-full flex items-center gap-2 px-3 py-1.5 min-h-[44px] md:min-h-0 text-sm rounded-md transition-colors text-left touch-manipulation ${
           selectedId === page.id
             ? 'bg-primary/10 text-primary font-medium'
             : 'text-foreground hover:bg-secondary'

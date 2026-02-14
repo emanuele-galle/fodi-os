@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { logActivity } from '@/lib/activity-log'
 import { slugify } from '@/lib/utils'
 import { createClientSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
@@ -41,11 +42,13 @@ export async function GET(request: NextRequest) {
       prisma.client.count({ where }),
     ])
 
-    return NextResponse.json({ items, total, page, limit })
+    return NextResponse.json({ success: true, data: items, total, page, limit })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[clients/GET]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest) {
     const parsed = createClientSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -66,10 +69,12 @@ export async function POST(request: NextRequest) {
 
     const slug = slugify(companyName)
 
-    const existing = await prisma.client.findUnique({ where: { slug } })
+    const existing = await prisma.client.findUnique({ where: { slug }, select: { id: true } })
     if (existing) {
-      return NextResponse.json({ error: 'Un cliente con questo nome esiste gia' }, { status: 409 })
+      return NextResponse.json({ success: false, error: 'Un cliente con questo nome esiste gia' }, { status: 409 })
     }
+
+    const userId = request.headers.get('x-user-id')!
 
     const client = await prisma.client.create({
       data: {
@@ -90,10 +95,14 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(client, { status: 201 })
+    logActivity({ userId, action: 'CREATE', entityType: 'CLIENT', entityId: client.id, metadata: { companyName } })
+
+    return NextResponse.json({ success: true, data: client }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[clients/POST]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

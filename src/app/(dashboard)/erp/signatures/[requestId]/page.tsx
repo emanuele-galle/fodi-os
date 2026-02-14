@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft, Send, FileText, Trash2, Copy, ExternalLink } from 'lucide-react'
+import { ChevronLeft, Send, FileText, Trash2, Copy, ExternalLink, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
+import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { SignatureStatusBadge } from '@/components/erp/SignatureStatusBadge'
 import { SignatureAuditTimeline } from '@/components/erp/SignatureAuditTimeline'
@@ -50,6 +51,8 @@ export default function SignatureDetailPage() {
   const [loading, setLoading] = useState(true)
   const [sendingOtp, setSendingOtp] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   const fetchData = useCallback(async () => {
@@ -68,13 +71,14 @@ export default function SignatureDetailPage() {
 
   const handleSendOtp = async () => {
     setSendingOtp(true)
+    setActionError(null)
     try {
       const res = await fetch(`/api/signatures/${requestId}/send-otp`, { method: 'POST' })
       if (res.ok) {
         fetchData()
       } else {
         const err = await res.json()
-        alert(err.error || 'Errore invio OTP')
+        setActionError(err.error || 'Errore invio OTP')
       }
     } finally {
       setSendingOtp(false)
@@ -82,15 +86,16 @@ export default function SignatureDetailPage() {
   }
 
   const handleCancel = async () => {
-    if (!confirm('Sei sicuro di voler annullare questa richiesta?')) return
     setCancelling(true)
+    setActionError(null)
     try {
       const res = await fetch(`/api/signatures/${requestId}`, { method: 'DELETE' })
       if (res.ok) {
+        setConfirmCancel(false)
         fetchData()
       } else {
         const err = await res.json()
-        alert(err.error || 'Errore annullamento')
+        setActionError(err.error || 'Errore annullamento')
       }
     } finally {
       setCancelling(false)
@@ -223,13 +228,20 @@ export default function SignatureDetailPage() {
           </Card>
 
           {/* Actions */}
+          {actionError && (
+            <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+              <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+              <p className="text-sm text-destructive">{actionError}</p>
+            </div>
+          )}
+
           {isActive && (
             <div className="flex flex-wrap gap-3">
               <Button onClick={handleSendOtp} loading={sendingOtp} size="sm">
                 <Send className="h-4 w-4 mr-1.5" />
                 Invia OTP via Email
               </Button>
-              <Button variant="destructive" onClick={handleCancel} loading={cancelling} size="sm">
+              <Button variant="destructive" onClick={() => setConfirmCancel(true)} size="sm">
                 <Trash2 className="h-4 w-4 mr-1.5" />
                 Annulla Richiesta
               </Button>
@@ -281,6 +293,25 @@ export default function SignatureDetailPage() {
           </Card>
         </div>
       </div>
+
+      <Modal
+        open={confirmCancel}
+        onClose={() => setConfirmCancel(false)}
+        title="Annulla Richiesta di Firma"
+      >
+        <p className="text-sm text-muted mb-4">
+          Sei sicuro di voler annullare questa richiesta di firma? Il firmatario non potra piu accedere al documento.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setConfirmCancel(false)}>
+            Indietro
+          </Button>
+          <Button variant="destructive" size="sm" loading={cancelling} onClick={handleCancel}>
+            <Trash2 className="h-4 w-4 mr-1" />
+            Annulla Richiesta
+          </Button>
+        </div>
+      </Modal>
     </div>
   )
 }

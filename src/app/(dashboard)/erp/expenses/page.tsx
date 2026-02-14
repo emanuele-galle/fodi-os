@@ -217,7 +217,7 @@ export default function ExpensesPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">
@@ -250,7 +250,7 @@ export default function ExpensesPage() {
         <form onSubmit={handleAddExpense} className="space-y-4">
           <Select name="category" label="Categoria *" options={FORM_CATEGORIES} />
           <Input name="description" label="Descrizione *" required />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input name="amount" label="Importo (EUR) *" type="number" step="0.01" min="0" required />
             <Input name="date" label="Data *" type="date" required />
           </div>

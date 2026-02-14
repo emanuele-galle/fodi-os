@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
-import { useRouter } from 'next/navigation'
-import { FolderKanban, Plus, Search, ChevronLeft, ChevronRight, Building2 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { FolderKanban, Plus, Search, ChevronLeft, ChevronRight, Building2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -73,8 +73,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function ProjectsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -97,8 +99,17 @@ export default function ProjectsPage() {
     color: '#6366F1',
   })
 
+  // Open modal if ?action=new is in URL
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      setModalOpen(true)
+      router.replace('/projects', { scroll: false })
+    }
+  }, [searchParams, router])
+
   const fetchProjects = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(limit), isInternal: 'false' })
       if (search) params.set('search', search)
@@ -108,7 +119,11 @@ export default function ProjectsPage() {
         const data = await res.json()
         setProjects(data.items || [])
         setTotal(data.total || 0)
+      } else {
+        setFetchError('Errore nel caricamento dei progetti')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento dei progetti')
     } finally {
       setLoading(false)
     }
@@ -222,6 +237,16 @@ export default function ProjectsPage() {
           className="w-full sm:w-48"
         />
       </div>
+
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchProjects()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -4,12 +4,18 @@ import { verifySignatureToken } from '@/lib/signature-token'
 import { verifyOtp } from '@/lib/otp'
 import { verifyOtpSchema } from '@/lib/validation'
 import { addSignatureStamp } from '@/lib/signature-pdf'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    if (!rateLimit(`otp-verify:${ip}`, 10, 60000)) {
+      return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
+    }
+
     const { token } = await params
 
     let requestId: string
@@ -30,7 +36,6 @@ export async function POST(
     }
 
     const { otp } = parsed.data
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
 
     const signatureRequest = await prisma.signatureRequest.findUnique({
       where: { id: requestId },
@@ -183,7 +188,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, signedAt: signedAt.toISOString() })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    console.error('[sign/:token/verify]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

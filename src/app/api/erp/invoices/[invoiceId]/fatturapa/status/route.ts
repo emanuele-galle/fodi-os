@@ -15,7 +15,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const body = await request.json()
     const parsed = updateStatusSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Dati non validi', details: parsed.error.flatten() }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Dati non validi', details: parsed.error.flatten() }, { status: 400 })
     }
 
     const { status: newStatus, note, sdiIdentificativo } = parsed.data
@@ -26,7 +26,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     })
 
     if (!eInvoice) {
-      return NextResponse.json({ error: 'Fattura elettronica non trovata' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Fattura elettronica non trovata' }, { status: 404 })
     }
 
     // Validate transition
@@ -34,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const validNextStates = VALID_STATUS_TRANSITIONS[currentStatus]
     if (validNextStates && !validNextStates.includes(newStatus)) {
       return NextResponse.json(
-        { error: `Transizione non valida: ${currentStatus} -> ${newStatus}. Transizioni valide: ${validNextStates.join(', ') || 'nessuna'}` },
+        { success: false, error: `Transizione non valida: ${currentStatus} -> ${newStatus}. Transizioni valide: ${validNextStates.join(', ') || 'nessuna'}` },
         { status: 400 }
       )
     }
@@ -45,25 +45,31 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (newStatus === 'UPLOADED_TO_SDI') updateData.uploadedAt = new Date()
     if (newStatus === 'DELIVERED') updateData.deliveredAt = new Date()
 
-    const updated = await prisma.electronicInvoice.update({
-      where: { id: eInvoice.id },
-      data: updateData,
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.electronicInvoice.update({
+        where: { id: eInvoice.id },
+        data: updateData,
+      })
+
+      await tx.eInvoiceStatusLog.create({
+        data: {
+          electronicInvoiceId: eInvoice.id,
+          fromStatus: currentStatus,
+          toStatus: newStatus,
+          note: note || undefined,
+          performedBy: request.headers.get('x-user-id') || undefined,
+        },
+      })
+
+      return result
     })
 
-    await prisma.eInvoiceStatusLog.create({
-      data: {
-        electronicInvoiceId: eInvoice.id,
-        fromStatus: currentStatus,
-        toStatus: newStatus,
-        note: note || undefined,
-        performedBy: request.headers.get('x-user-id') || undefined,
-      },
-    })
-
-    return NextResponse.json(updated)
+    return NextResponse.json({ success: true, data: updated })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[erp/invoices/:invoiceId/fatturapa/status]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

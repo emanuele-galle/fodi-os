@@ -152,7 +152,7 @@ export default function TicketDetailPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="icon" onClick={() => router.push('/support')}>

@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { PipelineKanban } from '@/components/crm/PipelineKanban'
+import dynamic from 'next/dynamic'
+
+const PipelineKanban = dynamic(() => import('@/components/crm/PipelineKanban').then(m => ({ default: m.PipelineKanban })), {
+  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+})
 
 interface Client {
   id: string
@@ -97,11 +101,11 @@ export default function PipelinePage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold">Pipeline Commerciale</h1>
-          <p className="text-sm text-muted mt-1">Gestisci lo stato dei clienti nella pipeline</p>
+          <h1 className="text-xl md:text-2xl font-semibold">Pipeline Commerciale</h1>
+          <p className="text-xs md:text-sm text-muted mt-1">Gestisci lo stato dei clienti nella pipeline</p>
         </div>
       </div>
 

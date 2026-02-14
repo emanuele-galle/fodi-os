@@ -43,14 +43,20 @@ export async function POST(
     const tempPassword = generateTempPassword()
     const hashedPassword = await hashPassword(tempPassword)
 
-    await prisma.user.update({
-      where: { id },
-      data: { password: hashedPassword },
-    })
+    // Update password and invalidate all existing sessions
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id },
+        data: { password: hashedPassword },
+      }),
+      prisma.refreshToken.deleteMany({
+        where: { userId: id },
+      }),
+    ])
 
-    return NextResponse.json({ tempPassword })
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ success: true, data: { tempPassword } })
+  } catch (error) {
+    console.error('[users/reset-password]', error)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

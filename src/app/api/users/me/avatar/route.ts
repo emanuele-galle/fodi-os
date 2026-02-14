@@ -66,10 +66,10 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(user)
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ success: true, data: user })
+  } catch (error) {
+    console.error('[users/me/avatar/POST]', error)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -103,10 +103,10 @@ export async function DELETE(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(user)
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ success: true, data: user })
+  } catch (error) {
+    console.error('[users/me/avatar/DELETE]', error)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 

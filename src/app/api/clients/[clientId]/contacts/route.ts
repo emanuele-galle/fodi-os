@@ -25,11 +25,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       prisma.contact.count({ where: { clientId } }),
     ])
 
-    return NextResponse.json({ items: contacts, total, page, limit })
+    return NextResponse.json({ success: true, data: contacts, total, page, limit })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[clients/contacts/GET]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -39,11 +41,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     requirePermission(role, 'crm', 'write')
 
     const { clientId } = await params
+
+    // Verify client exists
+    const client = await prisma.client.findUnique({ where: { id: clientId }, select: { id: true } })
+    if (!client) {
+      return NextResponse.json({ success: false, error: 'Cliente non trovato' }, { status: 404 })
+    }
+
     const body = await request.json()
     const parsed = createContactSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -69,10 +78,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    return NextResponse.json(contact, { status: 201 })
+    return NextResponse.json({ success: true, data: contact }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[clients/contacts/POST]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

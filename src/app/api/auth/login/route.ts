@@ -8,27 +8,38 @@ export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     if (!rateLimit(`login:${ip}`, 5, 60000)) {
-      return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
+      return NextResponse.json({ success: false, error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
     }
 
     const body = await request.json()
     const parsed = loginSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
     const { email, password } = parsed.data
 
-    const user = await prisma.user.findUnique({ where: { email } })
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        password: true,
+        isActive: true,
+      },
+    })
     if (!user || !user.isActive) {
-      return NextResponse.json({ error: 'Credenziali non valide' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Credenziali non valide' }, { status: 401 })
     }
 
-    const valid = await verifyPassword(password, user.password)
+    const valid = await verifyPassword(password, user.password!)
     if (!valid) {
-      return NextResponse.json({ error: 'Credenziali non valide' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'Credenziali non valide' }, { status: 401 })
     }
 
     const tokenPayload = {
@@ -61,7 +72,8 @@ export async function POST(request: NextRequest) {
     await setAuthCookies(accessToken, refreshToken)
 
     return NextResponse.json({
-      user: {
+      success: true,
+      data: {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
@@ -71,6 +83,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('[auth/login]', error)
-    return NextResponse.json({ error: 'Errore interno del server' }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

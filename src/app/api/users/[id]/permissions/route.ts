@@ -25,10 +25,10 @@ export async function GET(
       select: { module: true, permission: true },
     })
 
-    return NextResponse.json({ permissions })
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ success: true, data: permissions })
+  } catch (error) {
+    console.error('[users/permissions/GET]', error)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -44,6 +44,22 @@ export async function PUT(
     }
 
     const { id } = await params
+    const currentUserId = request.headers.get('x-user-id')!
+
+    // Cannot modify own permissions (privilege escalation prevention)
+    if (id === currentUserId) {
+      return NextResponse.json({ error: 'Non puoi modificare i tuoi permessi' }, { status: 400 })
+    }
+
+    // Managers cannot modify admin permissions
+    const targetUser = await prisma.user.findUnique({ where: { id }, select: { role: true } })
+    if (!targetUser) {
+      return NextResponse.json({ error: 'Utente non trovato' }, { status: 404 })
+    }
+    if (role === 'MANAGER' && targetUser.role === 'ADMIN') {
+      return NextResponse.json({ error: 'Un Manager non puo modificare i permessi di un Admin' }, { status: 403 })
+    }
+
     const body = await request.json()
     const { permissions } = body as { permissions: { module: string; permission: string }[] }
 
@@ -76,9 +92,9 @@ export async function PUT(
       select: { module: true, permission: true },
     })
 
-    return NextResponse.json({ permissions: updated })
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ success: true, data: updated })
+  } catch (error) {
+    console.error('[users/permissions]', error)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

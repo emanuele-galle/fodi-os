@@ -7,7 +7,6 @@ export async function GET(request: NextRequest) {
     const role = request.headers.get('x-user-role') as Role
     const isAdmin = role === 'ADMIN' || role === 'MANAGER'
 
-    // Admins see all users (including inactive), others see only active
     const users = await prisma.user.findMany({
       where: isAdmin ? {} : { isActive: true },
       select: {
@@ -26,9 +25,9 @@ export async function GET(request: NextRequest) {
       orderBy: [{ isActive: 'desc' }, { firstName: 'asc' }],
     })
 
-    return NextResponse.json({ users })
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ success: true, data: users, total: users.length })
+  } catch (error) {
+    console.error('[users/GET]', error)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ChevronLeft, Edit, Plus, Phone, Mail, MessageSquare,
-  Calendar, FileText, Users, Building2, Globe, Hash
+  Calendar, FileText, Users, Building2, Globe, Hash, FolderKanban
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
@@ -15,6 +15,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
 
 interface Contact {
@@ -241,7 +242,17 @@ export default function ClientDetailPage() {
         </Button>
       </div>
       {client.contacts.length === 0 ? (
-        <p className="text-sm text-muted text-center py-8">Nessun contatto registrato.</p>
+        <EmptyState
+          icon={Users}
+          title="Nessun contatto registrato"
+          description="Aggiungi i contatti principali di questa azienda."
+          action={
+            <Button size="sm" onClick={() => setContactModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Aggiungi Contatto
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-3">
           {client.contacts.map((c) => (
@@ -276,7 +287,17 @@ export default function ClientDetailPage() {
         </Button>
       </div>
       {client.interactions.length === 0 ? (
-        <p className="text-sm text-muted text-center py-8">Nessuna interazione registrata.</p>
+        <EmptyState
+          icon={MessageSquare}
+          title="Nessuna interazione registrata"
+          description="Registra chiamate, email e incontri con questo cliente."
+          action={
+            <Button size="sm" onClick={() => setInteractionModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuova Interazione
+            </Button>
+          }
+        />
       ) : (
         <div className="relative border-l-2 border-border ml-4 space-y-4">
           {client.interactions.map((i) => {
@@ -308,7 +329,11 @@ export default function ClientDetailPage() {
   const projectsTab = (
     <div>
       {client.projects.length === 0 ? (
-        <p className="text-sm text-muted text-center py-8">Nessun progetto collegato.</p>
+        <EmptyState
+          icon={FolderKanban}
+          title="Nessun progetto collegato"
+          description="I progetti associati a questo cliente appariranno qui."
+        />
       ) : (
         <div className="space-y-3">
           {client.projects.map((p) => (
@@ -334,7 +359,11 @@ export default function ClientDetailPage() {
   const quotesTab = (
     <div>
       {client.quotes.length === 0 ? (
-        <p className="text-sm text-muted text-center py-8">Nessun preventivo collegato.</p>
+        <EmptyState
+          icon={FileText}
+          title="Nessun preventivo collegato"
+          description="I preventivi di questo cliente appariranno qui."
+        />
       ) : (
         <div className="space-y-3">
           {client.quotes.map((q) => (
@@ -374,7 +403,7 @@ export default function ClientDetailPage() {
         <div className="flex items-center gap-4">
           <Avatar name={client.companyName} size="lg" />
           <div>
-            <h1 className="text-2xl font-semibold">{client.companyName}</h1>
+            <h1 className="text-xl md:text-2xl font-semibold truncate">{client.companyName}</h1>
             <Badge variant={STATUS_BADGE[client.status] || 'default'}>
               {STATUS_LABELS[client.status] || client.status}
             </Badge>

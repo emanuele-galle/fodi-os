@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Film, ClipboardCheck, CalendarDays, ArrowRight, LayoutGrid } from 'lucide-react'
+import { Film, ClipboardCheck, CalendarDays, ArrowRight, LayoutGrid, ImageOff } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 interface AssetPreview {
   id: string
@@ -133,7 +134,17 @@ export default function ContentPage() {
             ))}
           </div>
         ) : recentAssets.length === 0 ? (
-          <p className="text-sm text-muted py-4">Nessun asset ancora. Carica il primo dalla Asset Library.</p>
+          <EmptyState
+            icon={ImageOff}
+            title="Nessun asset"
+            description="Carica il primo file dalla Asset Library."
+            action={
+              <Button variant="outline" size="sm" onClick={() => router.push('/content/assets')}>
+                <ArrowRight className="h-4 w-4 mr-1" />
+                Vai alla Asset Library
+              </Button>
+            }
+          />
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {recentAssets.map((asset) => (

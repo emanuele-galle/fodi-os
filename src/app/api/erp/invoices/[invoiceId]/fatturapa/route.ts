@@ -18,14 +18,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!eInvoice) {
-      return NextResponse.json(null)
+      return NextResponse.json({ success: true, data: null })
     }
 
-    return NextResponse.json(eInvoice)
+    return NextResponse.json({ success: true, data: eInvoice })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[erp/invoices/:invoiceId/fatturapa]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -47,14 +49,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     if (!invoice) {
-      return NextResponse.json({ error: 'Fattura non trovata' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Fattura non trovata' }, { status: 404 })
     }
 
     // Fetch company profile
     const company = await prisma.companyProfile.findFirst()
     if (!company) {
       return NextResponse.json(
-        { error: 'Profilo azienda non configurato. Vai in Impostazioni > Fatturazione.' },
+        { success: false, error: 'Profilo azienda non configurato. Vai in Impostazioni > Fatturazione.' },
         { status: 400 }
       )
     }
@@ -116,7 +118,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Validate
     const errors = validateFatturaPA(fatturaPAParams)
     if (errors.length > 0) {
-      return NextResponse.json({ error: 'Validazione fallita', details: errors }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Validazione fallita', details: errors }, { status: 400 })
     }
 
     // Generate XML
@@ -174,10 +176,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return eInvoice
     })
 
-    return NextResponse.json(eInvoice, { status: 201 })
+    return NextResponse.json({ success: true, data: eInvoice }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[erp/invoices/:invoiceId/fatturapa]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

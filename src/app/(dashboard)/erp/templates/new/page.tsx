@@ -61,7 +61,7 @@ export default function NewTemplatePage() {
         Torna ai template
       </button>
 
-      <h1 className="text-2xl font-semibold mb-6">Nuovo Template</h1>
+      <h1 className="text-xl md:text-2xl font-semibold mb-6">Nuovo Template</h1>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">

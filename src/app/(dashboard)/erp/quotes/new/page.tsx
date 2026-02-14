@@ -174,7 +174,7 @@ export default function NewQuotePage() {
         Torna ai preventivi
       </button>
 
-      <h1 className="text-2xl font-semibold mb-6">Nuovo Preventivo</h1>
+      <h1 className="text-xl md:text-2xl font-semibold mb-6">Nuovo Preventivo</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
@@ -216,7 +216,7 @@ export default function NewQuotePage() {
                 value={validUntil}
                 onChange={(e) => setValidUntil(e.target.value)}
               />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="IVA %"
                   type="number"
@@ -371,7 +371,7 @@ export default function NewQuotePage() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 sticky bottom-0 bg-background/95 backdrop-blur-sm py-4 -mx-4 px-4 md:static md:bg-transparent md:backdrop-blur-none md:py-0 md:mx-0 md:px-0 border-t border-border/50 md:border-0">
           <Button type="button" variant="outline" onClick={() => router.push('/erp/quotes')}>
             Annulla
           </Button>

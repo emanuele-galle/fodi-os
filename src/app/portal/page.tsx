@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FolderKanban } from 'lucide-react'
+import { FolderKanban, FileText } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -16,12 +16,27 @@ interface Project {
   description: string | null
 }
 
+interface PortalQuote {
+  id: string
+  number: string
+  title: string
+  status: string
+  total: string
+  createdAt: string
+  validUntil: string | null
+}
+
 const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
   PLANNING: 'default',
   ACTIVE: 'success',
   ON_HOLD: 'warning',
   COMPLETED: 'outline',
   CANCELLED: 'destructive',
+  SENT: 'default',
+  APPROVED: 'success',
+  REJECTED: 'destructive',
+  EXPIRED: 'outline',
+  INVOICED: 'warning',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -30,17 +45,28 @@ const STATUS_LABELS: Record<string, string> = {
   ON_HOLD: 'In Pausa',
   COMPLETED: 'Completato',
   CANCELLED: 'Annullato',
+  SENT: 'In attesa',
+  APPROVED: 'Approvato',
+  REJECTED: 'Rifiutato',
+  EXPIRED: 'Scaduto',
+  INVOICED: 'Fatturato',
 }
 
 export default function PortalHomePage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
+  const [quotes, setQuotes] = useState<PortalQuote[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/portal/projects')
-      .then((res) => (res.ok ? res.json() : { items: [] }))
-      .then((data) => setProjects(data.items || []))
+    Promise.all([
+      fetch('/api/portal/projects').then((r) => (r.ok ? r.json() : { items: [] })),
+      fetch('/api/portal/quotes').then((r) => (r.ok ? r.json() : { items: [] })),
+    ])
+      .then(([projData, quoteData]) => {
+        setProjects(projData.items || [])
+        setQuotes(quoteData.items || [])
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -61,6 +87,37 @@ export default function PortalHomePage() {
         </button>
       </div>
 
+      {/* Preventivi */}
+      {!loading && quotes.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">Preventivi</h2>
+          <div className="space-y-2">
+            {quotes.map((q) => (
+              <Card
+                key={q.id}
+                className="flex items-center justify-between p-4 cursor-pointer hover:bg-secondary/50 transition-colors"
+                onClick={() => router.push(`/portal/quotes/${q.id}`)}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileText className="h-5 w-5 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{q.title}</p>
+                    <p className="text-xs text-muted">{q.number} - {new Date(q.createdAt).toLocaleDateString('it-IT')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <Badge variant={STATUS_BADGE[q.status] || 'default'}>
+                    {STATUS_LABELS[q.status] || q.status}
+                  </Badge>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Progetti */}
+      <h2 className="text-lg font-semibold mb-3">Progetti</h2>
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Array.from({ length: 2 }).map((_, i) => (

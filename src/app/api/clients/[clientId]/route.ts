@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { logActivity } from '@/lib/activity-log'
 import { updateClientSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
@@ -24,14 +25,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!client) {
-      return NextResponse.json({ error: 'Cliente non trovato' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Cliente non trovato' }, { status: 404 })
     }
 
-    return NextResponse.json(client)
+    return NextResponse.json({ success: true, data: client })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[clients/GET]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -45,10 +48,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const parsed = updateClientSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
+
+    // Check client exists
+    const existing = await prisma.client.findUnique({ where: { id: clientId }, select: { id: true } })
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Cliente non trovato' }, { status: 404 })
+    }
+
     const { companyName, vatNumber, fiscalCode, pec, sdi, website, industry, source, status, notes, tags } = parsed.data
 
     const client = await prisma.client.update({
@@ -66,13 +76,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         ...(notes !== undefined && { notes }),
         ...(tags !== undefined && { tags }),
       },
+      include: {
+        _count: { select: { contacts: true, projects: true, quotes: true } },
+      },
     })
 
-    return NextResponse.json(client)
+    const userId = request.headers.get('x-user-id')!
+    logActivity({ userId, action: 'UPDATE', entityType: 'CLIENT', entityId: clientId, metadata: { companyName: client.companyName } })
+
+    return NextResponse.json({ success: true, data: client })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[clients/PATCH]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -83,12 +101,23 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const { clientId } = await params
 
+    // Check client exists
+    const existing = await prisma.client.findUnique({ where: { id: clientId }, select: { id: true } })
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Cliente non trovato' }, { status: 404 })
+    }
+
     await prisma.client.delete({ where: { id: clientId } })
+
+    const userId = request.headers.get('x-user-id')!
+    logActivity({ userId, action: 'DELETE', entityType: 'CLIENT', entityId: clientId })
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[clients/DELETE]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

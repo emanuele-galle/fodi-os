@@ -21,7 +21,14 @@ export function formatCurrency(amount: number | string): string {
 }
 
 export function sanitizeHtml(input: string): string {
-  return input.replace(/<[^>]*>/g, '')
+  // Strip all HTML tags and escape remaining special characters
+  return input
+    .replace(/<[^>]*>?/g, '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
 }
 
 export function timeAgo(date: string): string {

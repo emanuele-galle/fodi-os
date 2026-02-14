@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!eInvoice) {
-      return NextResponse.json([])
+      return NextResponse.json({ success: true, data: [] })
     }
 
     const logs = await prisma.eInvoiceStatusLog.findMany({
@@ -25,10 +25,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       orderBy: { createdAt: 'desc' },
     })
 
-    return NextResponse.json(logs)
+    return NextResponse.json({ success: true, data: logs })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[erp/invoices/:invoiceId/fatturapa/history]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { logActivity } from '@/lib/activity-log'
 import { updateProjectSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!project) {
-      return NextResponse.json({ error: 'Progetto non trovato' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Progetto non trovato' }, { status: 404 })
     }
 
     // Non-admin users can only see projects they are members of
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!isAdminOrManager) {
       const isMember = project.members.some((m) => m.userId === userId)
       if (!isMember) {
-        return NextResponse.json({ error: 'Non hai accesso a questo progetto' }, { status: 403 })
+        return NextResponse.json({ success: false, error: 'Non hai accesso a questo progetto' }, { status: 403 })
       }
     }
 
@@ -59,11 +60,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       _count: true,
     })
 
-    return NextResponse.json({ ...project, tasksByStatus })
+    return NextResponse.json({ success: true, data: { ...project, tasksByStatus } })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[projects/GET]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -73,11 +76,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     requirePermission(role, 'pm', 'write')
 
     const { projectId } = await params
+
+    // Check project exists
+    const existing = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true } })
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Progetto non trovato' }, { status: 404 })
+    }
+
     const body = await request.json()
     const parsed = updateProjectSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -102,11 +112,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       data: data as any,
     })
 
-    return NextResponse.json(project)
+    const userId = request.headers.get('x-user-id')!
+    logActivity({ userId, action: 'UPDATE', entityType: 'PROJECT', entityId: projectId, metadata: { name: project.name } })
+
+    return NextResponse.json({ success: true, data: project })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[projects/PATCH]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -117,15 +132,26 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const { projectId } = await params
 
+    // Check project exists
+    const existing = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true } })
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Progetto non trovato' }, { status: 404 })
+    }
+
     await prisma.project.update({
       where: { id: projectId },
       data: { isArchived: true },
     })
 
+    const userId = request.headers.get('x-user-id')!
+    logActivity({ userId, action: 'ARCHIVE', entityType: 'PROJECT', entityId: projectId })
+
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[projects/DELETE]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

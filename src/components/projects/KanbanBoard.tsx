@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -62,7 +62,7 @@ const kanbanCollision: CollisionDetection = (args) => {
   return rectCollisions
 }
 
-function SortableTaskCard({ task, onClick }: { task: Task; onClick?: () => void }) {
+const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { task: Task; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'task', task },
@@ -111,7 +111,7 @@ function SortableTaskCard({ task, onClick }: { task: Task; onClick?: () => void 
       </div>
     </div>
   )
-}
+})
 
 function TaskCardOverlay({ task }: { task: Task }) {
   return (

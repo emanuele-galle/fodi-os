@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { logActivity } from '@/lib/activity-log'
 import { createInvoiceSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
@@ -42,11 +43,13 @@ export async function GET(request: NextRequest) {
       prisma.invoice.count({ where }),
     ])
 
-    return NextResponse.json({ items, total, page, limit })
+    return NextResponse.json({ success: true, data: items, total, page, limit })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[invoices]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -60,20 +63,11 @@ export async function POST(request: NextRequest) {
     const parsed = createInvoiceSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
     const { clientId, projectId, quoteId, title, lineItems: bodyLineItems, taxRate, discount, notes, dueDate } = parsed.data
-
-    // Generate invoice number F-YYYY-NNN
-    const year = new Date().getFullYear()
-    const lastInvoice = await prisma.invoice.findFirst({
-      where: { number: { startsWith: `F-${year}` } },
-      orderBy: { number: 'desc' },
-    })
-    const seq = lastInvoice ? parseInt(lastInvoice.number.split('-')[2]) + 1 : 1
-    const number = `F-${year}-${String(seq).padStart(3, '0')}`
 
     // If quoteId, copy line items from quote
     let itemsToCreate: { description: string; quantity: number; unitPrice: number; total: number; sortOrder: number }[]
@@ -84,7 +78,7 @@ export async function POST(request: NextRequest) {
         include: { lineItems: { orderBy: { sortOrder: 'asc' } } },
       })
       if (!quote) {
-        return NextResponse.json({ error: 'Preventivo non trovato' }, { status: 404 })
+        return NextResponse.json({ success: false, error: 'Preventivo non trovato' }, { status: 404 })
       }
       itemsToCreate = quote.lineItems.map((item, i) => ({
         description: item.description,
@@ -102,7 +96,7 @@ export async function POST(request: NextRequest) {
         sortOrder: i,
       }))
     } else {
-      return NextResponse.json({ error: 'lineItems or quoteId is required' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'lineItems o quoteId obbligatorio' }, { status: 400 })
     }
 
     const subtotal = itemsToCreate.reduce((sum, item) => sum + item.total, 0)
@@ -112,44 +106,60 @@ export async function POST(request: NextRequest) {
     const taxAmount = taxableAmount * (rate / 100)
     const total = taxableAmount + taxAmount
 
-    const invoice = await prisma.invoice.create({
-      data: {
-        clientId,
-        projectId,
-        creatorId: userId,
-        quoteId,
-        number,
-        title,
-        subtotal,
-        taxRate: rate,
-        taxAmount,
-        total,
-        discount: discountAmount,
-        notes,
-        dueDate: dueDate ? new Date(dueDate) : undefined,
-        issuedDate: new Date(),
-        lineItems: {
-          create: itemsToCreate,
+    // Use transaction to ensure invoice number generation + creation + quote status update are atomic
+    const invoice = await prisma.$transaction(async (tx) => {
+      const year = new Date().getFullYear()
+      const lastInvoice = await tx.invoice.findFirst({
+        where: { number: { startsWith: `F-${year}` } },
+        orderBy: { number: 'desc' },
+      })
+      const seq = lastInvoice ? parseInt(lastInvoice.number.split('-')[2]) + 1 : 1
+      const number = `F-${year}-${String(seq).padStart(3, '0')}`
+
+      const created = await tx.invoice.create({
+        data: {
+          clientId,
+          projectId,
+          creatorId: userId,
+          quoteId,
+          number,
+          title,
+          subtotal,
+          taxRate: rate,
+          taxAmount,
+          total,
+          discount: discountAmount,
+          notes,
+          dueDate: dueDate ? new Date(dueDate) : undefined,
+          issuedDate: new Date(),
+          lineItems: {
+            create: itemsToCreate,
+          },
         },
-      },
-      include: {
-        client: { select: { id: true, companyName: true } },
-        lineItems: { orderBy: { sortOrder: 'asc' } },
-      },
+        include: {
+          client: { select: { id: true, companyName: true } },
+          lineItems: { orderBy: { sortOrder: 'asc' } },
+        },
+      })
+
+      // Mark quote as INVOICED
+      if (quoteId) {
+        await tx.quote.update({
+          where: { id: quoteId },
+          data: { status: 'INVOICED' },
+        })
+      }
+
+      return created
     })
 
-    // Mark quote as INVOICED
-    if (quoteId) {
-      await prisma.quote.update({
-        where: { id: quoteId },
-        data: { status: 'INVOICED' },
-      })
-    }
+    logActivity({ userId, action: 'CREATE', entityType: 'INVOICE', entityId: invoice.id, metadata: { number: invoice.number } })
 
-    return NextResponse.json(invoice, { status: 201 })
+    return NextResponse.json({ success: true, data: invoice }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

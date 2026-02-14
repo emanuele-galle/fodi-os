@@ -41,21 +41,30 @@ export async function POST() {
       data: { isRevoked: true },
     })
 
-    // Generate new access token
-    const accessToken = await createAccessToken({
-      sub: payload.sub,
-      email: payload.email,
-      name: payload.name,
-      role: payload.role,
+    // Re-read user from DB to get current role/status (not stale JWT data)
+    const user = await prisma.user.findUnique({
+      where: { id: stored.userId },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
     })
 
-    // Generate new refresh token
-    const newRefreshTokenJwt = await createRefreshToken({
-      sub: payload.sub,
-      email: payload.email,
-      name: payload.name,
-      role: payload.role,
-    })
+    if (!user || !user.isActive) {
+      // User deactivated since token was issued - revoke all tokens
+      await prisma.refreshToken.deleteMany({ where: { userId: stored.userId } })
+      return NextResponse.json({ error: 'Account disattivato' }, { status: 401 })
+    }
+
+    const tokenPayload = {
+      sub: user.id,
+      email: user.email,
+      name: `${user.firstName} ${user.lastName}`,
+      role: user.role,
+    }
+
+    // Generate new access token with fresh DB data
+    const accessToken = await createAccessToken(tokenPayload)
+
+    // Generate new refresh token with fresh DB data
+    const newRefreshTokenJwt = await createRefreshToken(tokenPayload)
 
     // Save new refresh token in DB
     await prisma.refreshToken.create({

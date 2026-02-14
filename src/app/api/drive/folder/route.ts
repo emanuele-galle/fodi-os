@@ -14,8 +14,11 @@ export async function POST(request: NextRequest) {
     const role = request.headers.get('x-user-role') as Role
     requirePermission(role, 'pm', 'write')
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Permission denied'
-    return NextResponse.json({ error: msg }, { status: 403 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[drive/folder]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 
   const auth = await getAuthenticatedClient(userId)

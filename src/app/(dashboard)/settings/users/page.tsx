@@ -510,12 +510,23 @@ export default function UsersAdminPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Gestione Utenti</h1>
-          <p className="text-sm text-muted mt-1">{users.length} utenti totali</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/10 text-primary p-2 md:p-2.5 rounded-lg flex-shrink-0">
+            <Users className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">Gestione Utenti</h1>
+            <p className="text-xs md:text-sm text-muted">{users.length} utenti totali</p>
+          </div>
         </div>
-        <Button size="sm" onClick={() => { setShowInviteForm(true); setInviteResult(null) }}>
+        <div className="hidden sm:block flex-shrink-0">
+          <Button size="sm" onClick={() => { setShowInviteForm(true); setInviteResult(null) }}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Invita Utente
+          </Button>
+        </div>
+        <Button onClick={() => { setShowInviteForm(true); setInviteResult(null) }} className="sm:hidden w-full">
           <UserPlus className="h-4 w-4 mr-2" />
           Invita Utente
         </Button>
@@ -568,7 +579,7 @@ export default function UsersAdminPage() {
           </div>
         ) : (
           <form onSubmit={handleInvite} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 label="Nome"
                 value={inviteData.firstName}
@@ -681,7 +692,7 @@ export default function UsersAdminPage() {
                     </Badge>
                   </div>
                 </div>
-                <div className="text-right text-xs text-muted space-y-1 hidden sm:block">
+                <div className="text-right text-xs text-muted space-y-1 hidden md:block">
                   <div className="flex items-center gap-1 justify-end">
                     <Calendar className="h-3 w-3" />
                     Creato: {format(new Date(editUser.createdAt), 'dd MMM yyyy', { locale: it })}
@@ -703,10 +714,10 @@ export default function UsersAdminPage() {
               </div>
 
               {/* Tabs */}
-              <div className="flex gap-1 mb-4 border-b border-border">
+              <div className="flex gap-1 mb-4 border-b border-border overflow-x-auto scrollbar-none">
                 <button
                   onClick={() => handleTabChange('profile')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap touch-manipulation min-h-[44px] ${
                     editTab === 'profile'
                       ? 'border-primary text-primary'
                       : 'border-transparent text-muted hover:text-foreground'
@@ -716,7 +727,7 @@ export default function UsersAdminPage() {
                 </button>
                 <button
                   onClick={() => handleTabChange('permissions')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap touch-manipulation min-h-[44px] ${
                     editTab === 'permissions'
                       ? 'border-primary text-primary'
                       : 'border-transparent text-muted hover:text-foreground'
@@ -726,7 +737,7 @@ export default function UsersAdminPage() {
                 </button>
                 <button
                   onClick={() => handleTabChange('sections')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap touch-manipulation min-h-[44px] ${
                     editTab === 'sections'
                       ? 'border-primary text-primary'
                       : 'border-transparent text-muted hover:text-foreground'
@@ -748,7 +759,7 @@ export default function UsersAdminPage() {
                 <div className="space-y-6">
                   {/* Edit fields */}
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <Input
                         label="Nome"
                         value={editForm.firstName}
@@ -766,7 +777,7 @@ export default function UsersAdminPage() {
                       value={editForm.email}
                       onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
                     />
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <Input
                         label="Telefono"
                         type="tel"
@@ -1115,81 +1126,131 @@ export default function UsersAdminPage() {
               {filtered.map((u) => (
                 <div
                   key={u.id}
-                  className={`flex items-center gap-4 py-3 px-2 -mx-2 rounded-md transition-colors ${
+                  className={`py-3 px-2 -mx-2 rounded-md transition-colors ${
                     u.isActive ? 'hover:bg-secondary/30' : 'opacity-60'
                   }`}
                 >
-                  <Avatar
-                    name={`${u.firstName} ${u.lastName}`}
-                    src={u.avatarUrl}
-                    size="md"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">
-                      {u.firstName} {u.lastName}
-                    </p>
-                    <p className="text-sm text-muted truncate">{u.email}</p>
-                    {u.lastLoginAt && (
-                      <p className="text-xs text-muted">
-                        Ultimo accesso: {formatDistanceToNow(new Date(u.lastLoginAt), { locale: it, addSuffix: true })}
+                  {/* Mobile layout */}
+                  <div className="md:hidden">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Avatar
+                        name={`${u.firstName} ${u.lastName}`}
+                        src={u.avatarUrl}
+                        size="md"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">
+                          {u.firstName} {u.lastName}
+                        </p>
+                        <p className="text-sm text-muted truncate">{u.email}</p>
+                      </div>
+                      <Badge variant={ROLE_BADGE[u.role] || 'default'}>
+                        {ROLE_LABELS[u.role] || u.role}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between pl-12">
+                      {u.lastLoginAt && (
+                        <p className="text-xs text-muted">
+                          {formatDistanceToNow(new Date(u.lastLoginAt), { locale: it, addSuffix: true })}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => openEditModal(u)}
+                          className="min-h-[44px] min-w-[44px] rounded-md text-muted hover:text-foreground hover:bg-secondary transition-colors flex items-center justify-center touch-manipulation"
+                          title="Modifica utente"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(u.id, u.isActive)}
+                          className={`min-h-[44px] min-w-[44px] rounded-md transition-colors flex items-center justify-center touch-manipulation ${
+                            u.isActive
+                              ? 'text-emerald-600 hover:bg-emerald-500/10'
+                              : 'text-muted hover:bg-secondary'
+                          }`}
+                          title={u.isActive ? 'Disattiva utente' : 'Riattiva utente'}
+                        >
+                          <Power className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop layout */}
+                  <div className="hidden md:flex items-center gap-4">
+                    <Avatar
+                      name={`${u.firstName} ${u.lastName}`}
+                      src={u.avatarUrl}
+                      size="md"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">
+                        {u.firstName} {u.lastName}
                       </p>
-                    )}
+                      <p className="text-sm text-muted truncate">{u.email}</p>
+                      {u.lastLoginAt && (
+                        <p className="text-xs text-muted">
+                          Ultimo accesso: {formatDistanceToNow(new Date(u.lastLoginAt), { locale: it, addSuffix: true })}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Role selector */}
+                    <div className="relative">
+                      {editingRole === u.id ? (
+                        <select
+                          className="text-xs border border-border rounded-md bg-background px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          value={u.role}
+                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                          onBlur={() => setEditingRole(null)}
+                          autoFocus
+                        >
+                          {ROLES.map((r) => (
+                            <option key={r.value} value={r.value}>{r.label}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button
+                          onClick={() => setEditingRole(u.id)}
+                          className="flex items-center gap-1 group"
+                          title="Cambia ruolo"
+                        >
+                          <Badge variant={ROLE_BADGE[u.role] || 'default'}>
+                            {u.role === 'ADMIN' || u.role === 'MANAGER' ? (
+                              <ShieldCheck className="h-3 w-3 mr-1" />
+                            ) : (
+                              <Shield className="h-3 w-3 mr-1" />
+                            )}
+                            {ROLE_LABELS[u.role] || u.role}
+                          </Badge>
+                          <ChevronDown className="h-3 w-3 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Edit button */}
+                    <button
+                      onClick={() => openEditModal(u)}
+                      className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-secondary transition-colors"
+                      title="Modifica utente"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+
+                    {/* Active status toggle */}
+                    <button
+                      onClick={() => handleToggleActive(u.id, u.isActive)}
+                      className={`p-1.5 rounded-md transition-colors ${
+                        u.isActive
+                          ? 'text-emerald-600 hover:bg-emerald-500/10'
+                          : 'text-muted hover:bg-secondary'
+                      }`}
+                      title={u.isActive ? 'Disattiva utente' : 'Riattiva utente'}
+                    >
+                      <Power className="h-4 w-4" />
+                    </button>
                   </div>
-
-                  {/* Role selector */}
-                  <div className="relative">
-                    {editingRole === u.id ? (
-                      <select
-                        className="text-xs border border-border rounded-md bg-background px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        value={u.role}
-                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                        onBlur={() => setEditingRole(null)}
-                        autoFocus
-                      >
-                        {ROLES.map((r) => (
-                          <option key={r.value} value={r.value}>{r.label}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <button
-                        onClick={() => setEditingRole(u.id)}
-                        className="flex items-center gap-1 group"
-                        title="Cambia ruolo"
-                      >
-                        <Badge variant={ROLE_BADGE[u.role] || 'default'}>
-                          {u.role === 'ADMIN' || u.role === 'MANAGER' ? (
-                            <ShieldCheck className="h-3 w-3 mr-1" />
-                          ) : (
-                            <Shield className="h-3 w-3 mr-1" />
-                          )}
-                          {ROLE_LABELS[u.role] || u.role}
-                        </Badge>
-                        <ChevronDown className="h-3 w-3 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Edit button */}
-                  <button
-                    onClick={() => openEditModal(u)}
-                    className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-secondary transition-colors"
-                    title="Modifica utente"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-
-                  {/* Active status toggle */}
-                  <button
-                    onClick={() => handleToggleActive(u.id, u.isActive)}
-                    className={`p-1.5 rounded-md transition-colors ${
-                      u.isActive
-                        ? 'text-emerald-600 hover:bg-emerald-500/10'
-                        : 'text-muted hover:bg-secondary'
-                    }`}
-                    title={u.isActive ? 'Disattiva utente' : 'Riattiva utente'}
-                  >
-                    <Power className="h-4 w-4" />
-                  </button>
                 </div>
               ))}
             </div>

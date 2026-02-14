@@ -60,6 +60,8 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([isActive])
+  @@index([lastActiveAt])
   @@map("users")
 }
 
@@ -246,7 +248,9 @@ model Interaction {
   contact Contact? @relation(fields: [contactId], references: [id])
 
   @@index([clientId])
+  @@index([contactId])
   @@index([date])
+  @@index([clientId, date])
   @@map("interactions")
 }
 
@@ -276,7 +280,9 @@ model Lead {
   updatedAt  DateTime @updatedAt
 
   @@index([status])
+  @@index([assigneeId])
   @@index([createdAt])
+  @@index([status, createdAt])
   @@map("leads")
 }
 
@@ -323,6 +329,10 @@ model Project {
   @@index([status])
   @@index([slug])
   @@index([isInternal])
+  @@index([isArchived])
+  @@index([workspaceId, status])
+  @@index([clientId, status])
+  @@index([createdAt])
   @@map("projects")
 }
 
@@ -424,6 +434,12 @@ model Task {
   @@index([boardColumn])
   @@index([folderId])
   @@index([projectId, status])
+  @@index([assigneeId, status])
+  @@index([creatorId, status])
+  @@index([dueDate])
+  @@index([priority])
+  @@index([createdAt])
+  @@index([updatedAt])
   @@map("tasks")
 }
 
@@ -599,6 +615,10 @@ model Quote {
   @@index([status])
   @@index([number])
   @@index([templateId])
+  @@index([creatorId])
+  @@index([projectId])
+  @@index([clientId, status])
+  @@index([createdAt])
   @@map("quotes")
 }
 
@@ -660,6 +680,12 @@ model Invoice {
   @@index([clientId])
   @@index([status])
   @@index([number])
+  @@index([creatorId])
+  @@index([projectId])
+  @@index([clientId, status])
+  @@index([dueDate])
+  @@index([paidDate])
+  @@index([createdAt])
   @@map("invoices")
 }
 
@@ -702,6 +728,7 @@ model Expense {
 
   @@index([date])
   @@index([category])
+  @@index([invoiceId])
   @@map("expenses")
 }
 
@@ -868,6 +895,10 @@ model Ticket {
   @@index([assigneeId])
   @@index([status])
   @@index([number])
+  @@index([creatorId])
+  @@index([projectId])
+  @@index([clientId, status])
+  @@index([createdAt])
   @@map("tickets")
 }
 
@@ -902,6 +933,7 @@ model Comment {
   @@index([ticketId])
   @@index([wikiPageId])
   @@index([authorId])
+  @@index([createdAt])
   @@map("comments")
 }
 
@@ -924,6 +956,7 @@ model Document {
   @@index([clientId])
   @@index([projectId])
   @@index([category])
+  @@index([isClientVisible])
   @@map("documents")
 }
 
@@ -942,6 +975,8 @@ model Notification {
   @@index([userId])
   @@index([isRead])
   @@index([createdAt])
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
   @@map("notifications")
 }
 
@@ -1220,6 +1255,9 @@ model SignatureRequest {
   @@index([status])
   @@index([signerEmail])
   @@index([accessToken])
+  @@index([requesterId])
+  @@index([signerClientId])
+  @@index([createdAt])
   @@map("signature_requests")
 }
 
@@ -1280,6 +1318,7 @@ model WizardTemplate {
 
   @@index([category])
   @@index([status])
+  @@index([slug])
   @@map("wizard_templates")
 }
 
@@ -1340,5 +1379,7 @@ model WizardSubmission {
   @@index([templateId])
   @@index([clientId])
   @@index([leadId])
+  @@index([status])
+  @@index([createdAt])
   @@map("wizard_submissions")
 }

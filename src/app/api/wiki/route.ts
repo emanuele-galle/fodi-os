@@ -34,11 +34,13 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ items, total: items.length })
+    return NextResponse.json({ success: true, data: items, total: items.length })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[wiki]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
     const parsed = createWikiPageSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
       where: { parentId: parentId || null, slug },
     })
     if (existing) {
-      return NextResponse.json({ error: 'Una pagina con questo titolo esiste gia a questo livello' }, { status: 409 })
+      return NextResponse.json({ success: false, error: 'Una pagina con questo titolo esiste gia a questo livello' }, { status: 409 })
     }
 
     const page = await prisma.wikiPage.create({
@@ -92,10 +94,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(page, { status: 201 })
+    return NextResponse.json({ success: true, data: page }, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[wiki]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

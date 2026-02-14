@@ -7,6 +7,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
+import { useSSE } from '@/hooks/useSSE'
 
 interface Notification {
   id: string
@@ -80,9 +81,18 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
 
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 15000)
+    const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [fetchNotifications])
+
+  // Real-time notification updates via SSE
+  useSSE(useCallback((event) => {
+    if (event.type === 'notification') {
+      const notif = event.data as Notification
+      setNotifications((prev) => [notif, ...prev].slice(0, 20))
+      setUnreadCount((c) => c + 1)
+    }
+  }, []))
 
   async function markAllAsRead() {
     try {

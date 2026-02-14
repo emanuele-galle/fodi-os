@@ -193,6 +193,7 @@ html {
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+  will-change: background-position;
 }
 
 /* ===== Enterprise Card Utilities ===== */
@@ -331,7 +332,6 @@ body {
   font-family: var(--font-sans);
   background-color: var(--color-background);
   color: var(--color-foreground);
-  transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -432,14 +432,22 @@ body.modal-open [data-bottom-nav] {
   display: none !important;
 }
 
-/* Smooth color transitions for themed elements */
-*, *::before, *::after {
-  transition-property: background-color, border-color, color, box-shadow;
-  transition-duration: 0s;
+/* Smooth color transitions only for theme-aware containers */
+body,
+.glass-card,
+.glass-header,
+[data-theme] > div {
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
-[data-theme] *, [data-theme] *::before, [data-theme] *::after {
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer base {

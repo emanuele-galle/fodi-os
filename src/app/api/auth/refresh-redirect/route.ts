@@ -45,20 +45,28 @@ export async function GET(request: NextRequest) {
       data: { isRevoked: true },
     })
 
-    // Generate new tokens
-    const accessToken = await createAccessToken({
-      sub: payload.sub,
-      email: payload.email,
-      name: payload.name,
-      role: payload.role,
+    // Re-read user from DB to get current role/status (not stale JWT data)
+    const user = await prisma.user.findUnique({
+      where: { id: stored.userId },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
     })
 
-    const newRefreshTokenJwt = await createRefreshToken({
-      sub: payload.sub,
-      email: payload.email,
-      name: payload.name,
-      role: payload.role,
-    })
+    if (!user || !user.isActive) {
+      await prisma.refreshToken.deleteMany({ where: { userId: stored.userId } })
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    const tokenPayload = {
+      sub: user.id,
+      email: user.email,
+      name: `${user.firstName} ${user.lastName}`,
+      role: user.role,
+    }
+
+    // Generate new tokens with fresh DB data
+    const accessToken = await createAccessToken(tokenPayload)
+
+    const newRefreshTokenJwt = await createRefreshToken(tokenPayload)
 
     await prisma.refreshToken.create({
       data: {

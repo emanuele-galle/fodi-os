@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Wand2, Plus, Search, ChevronLeft, ChevronRight, Copy, Globe, GlobeLock, Trash2 } from 'lucide-react'
+import { Wand2, Plus, Search, ChevronLeft, ChevronRight, Copy, Globe, GlobeLock, Trash2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -50,8 +50,11 @@ export default function WizardsPage() {
   const [total, setTotal] = useState(0)
   const limit = 20
 
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
   const fetchWizards = useCallback(async () => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) })
       if (search) params.set('search', search)
@@ -61,7 +64,11 @@ export default function WizardsPage() {
         const data = await res.json()
         setWizards(data.items || [])
         setTotal(data.total || 0)
+      } else {
+        setFetchError('Errore nel caricamento dei wizard')
       }
+    } catch {
+      setFetchError('Errore di rete nel caricamento dei wizard')
     } finally {
       setLoading(false)
     }
@@ -114,6 +121,16 @@ export default function WizardsPage() {
         />
       </div>
 
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchWizards()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
@@ -158,7 +175,7 @@ export default function WizardsPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">

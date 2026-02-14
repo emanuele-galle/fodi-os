@@ -59,66 +59,72 @@ export async function POST(
       }
     }
 
-    let clientId = submission.clientId
-    let contactId: string | null = null
+    const result = await prisma.$transaction(async (tx) => {
+      let clientId = submission.clientId
+      let contactId: string | null = null
 
-    // Create or update client
-    if (Object.keys(clientData).length > 0) {
-      if (clientId) {
-        await prisma.client.update({
-          where: { id: clientId },
-          data: clientData,
-        })
-      } else if (clientData.companyName) {
-        const slug = slugify(clientData.companyName)
-        const existing = await prisma.client.findUnique({ where: { slug } })
-        if (existing) {
-          clientId = existing.id
-          await prisma.client.update({ where: { id: clientId }, data: clientData })
-        } else {
-          const client = await prisma.client.create({
-            data: { ...clientData, slug, companyName: clientData.companyName },
+      // Create or update client
+      if (Object.keys(clientData).length > 0) {
+        if (clientId) {
+          await tx.client.update({
+            where: { id: clientId },
+            data: clientData,
           })
-          clientId = client.id
+        } else if (clientData.companyName) {
+          const slug = slugify(clientData.companyName)
+          const existing = await tx.client.findUnique({ where: { slug } })
+          if (existing) {
+            clientId = existing.id
+            await tx.client.update({ where: { id: clientId }, data: clientData })
+          } else {
+            const client = await tx.client.create({
+              data: { ...clientData, slug, companyName: clientData.companyName },
+            })
+            clientId = client.id
+          }
+          // Update submission with client reference
+          await tx.wizardSubmission.update({
+            where: { id: submissionId },
+            data: { clientId },
+          })
         }
-        // Update submission with client reference
-        await prisma.wizardSubmission.update({
-          where: { id: submissionId },
-          data: { clientId },
-        })
       }
-    }
 
-    // Create contact if we have data and a client
-    if (Object.keys(contactData).length > 0 && clientId) {
-      if (contactData.firstName || contactData.lastName) {
-        const contact = await prisma.contact.create({
-          data: {
-            clientId,
-            firstName: contactData.firstName || '',
-            lastName: contactData.lastName || '',
-            email: contactData.email,
-            phone: contactData.phone,
-            role: contactData.role,
-            notes: contactData.notes,
-          },
-        })
-        contactId = contact.id
+      // Create contact if we have data and a client
+      if (Object.keys(contactData).length > 0 && clientId) {
+        if (contactData.firstName || contactData.lastName) {
+          const contact = await tx.contact.create({
+            data: {
+              clientId,
+              firstName: contactData.firstName || '',
+              lastName: contactData.lastName || '',
+              email: contactData.email,
+              phone: contactData.phone,
+              role: contactData.role,
+              notes: contactData.notes,
+            },
+          })
+          contactId = contact.id
+        }
       }
-    }
+
+      return { clientId, contactId }
+    })
 
     return NextResponse.json({
       success: true,
-      clientId,
-      contactId,
+      clientId: result.clientId,
+      contactId: result.contactId,
       mappedFields: {
         client: Object.keys(clientData).length,
         contact: Object.keys(contactData).length,
       },
     })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[wizard-submissions/:submissionId/apply-crm]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

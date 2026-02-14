@@ -69,11 +69,12 @@ export function FatturapaPanel({ invoiceId, invoiceNumber }: FatturapaPanelProps
       ])
 
       if (eiRes.ok) {
-        const data = await eiRes.json()
-        setEInvoice(data)
+        const json = await eiRes.json()
+        setEInvoice(json.data ?? json)
       }
       if (histRes.ok) {
-        setLogs(await histRes.json())
+        const json = await histRes.json()
+        setLogs(json.data ?? json)
       }
     } finally {
       setLoading(false)
@@ -87,12 +88,12 @@ export function FatturapaPanel({ invoiceId, invoiceNumber }: FatturapaPanelProps
     setError('')
     try {
       const res = await fetch(`/api/erp/invoices/${invoiceId}/fatturapa`, { method: 'POST' })
-      const data = await res.json()
+      const json = await res.json()
       if (res.ok) {
-        setEInvoice(data)
+        setEInvoice(json.data ?? json)
         fetchData()
       } else {
-        setError(data.error || 'Errore nella generazione')
+        setError(json.error || 'Errore nella generazione')
       }
     } catch {
       setError('Errore di connessione')
@@ -110,12 +111,12 @@ export function FatturapaPanel({ invoiceId, invoiceNumber }: FatturapaPanelProps
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       })
-      const data = await res.json()
+      const json = await res.json()
       if (res.ok) {
-        setEInvoice(data)
+        setEInvoice(json.data ?? json)
         fetchData()
       } else {
-        setError(data.error || 'Errore nell\'esportazione')
+        setError(json.error || 'Errore nell\'esportazione')
       }
     } catch {
       setError('Errore di connessione')
@@ -145,12 +146,12 @@ export function FatturapaPanel({ invoiceId, invoiceNumber }: FatturapaPanelProps
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       })
-      const data = await res.json()
+      const json = await res.json()
       if (res.ok) {
-        setEInvoice(data)
+        setEInvoice(json.data ?? json)
         fetchData()
       } else {
-        setError(data.error || 'Errore nell\'aggiornamento stato')
+        setError(json.error || 'Errore nell\'aggiornamento stato')
       }
     } catch {
       setError('Errore di connessione')

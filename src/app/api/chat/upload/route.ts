@@ -28,20 +28,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Tipo di file non consentito' }, { status: 400 })
     }
 
+    // Sanitize filename (remove path traversal and special characters)
+    const safeName = file.name.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.{2,}/g, '.')
+
     const buffer = Buffer.from(await file.arrayBuffer())
     const key = `chat/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
     const fileUrl = await uploadFile(key, buffer, file.type || 'application/octet-stream')
 
     return NextResponse.json({
-      fileName: file.name,
+      fileName: safeName,
       fileUrl,
       fileSize: file.size,
       mimeType: file.type || 'application/octet-stream',
     })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[chat/upload]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

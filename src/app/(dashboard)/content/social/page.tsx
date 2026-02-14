@@ -140,14 +140,14 @@ export default function SocialPage() {
       )}
 
       {/* Status Tabs */}
-      <div className="flex border-b border-border mb-6" role="tablist">
+      <div className="flex border-b border-border mb-6 overflow-x-auto scrollbar-none" role="tablist">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.value}
             role="tab"
             aria-selected={activeStatus === tab.value}
             onClick={() => setActiveStatus(tab.value)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-4 py-2 min-h-[44px] text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap touch-manipulation ${
               activeStatus === tab.value
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted hover:text-foreground'

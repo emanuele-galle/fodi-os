@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { LifeBuoy, Plus, Search, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -88,6 +88,7 @@ const PRIORITY_CREATE_OPTIONS = [
 
 export default function SupportPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -108,6 +109,14 @@ export default function SupportPage() {
     priority: 'MEDIUM',
     category: 'general',
   })
+
+  // Open modal if ?action=new is in URL
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      setModalOpen(true)
+      router.replace('/support', { scroll: false })
+    }
+  }, [searchParams, router])
 
   const fetchTickets = useCallback(async () => {
     setLoading(true)

@@ -319,8 +319,8 @@ export default function SettingsPage() {
           <Settings className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Impostazioni</h1>
-          <p className="text-sm text-muted">Gestisci profilo, tema, sicurezza e integrazioni</p>
+          <h1 className="text-xl md:text-2xl font-bold">Impostazioni</h1>
+          <p className="text-xs md:text-sm text-muted">Gestisci profilo, tema, sicurezza e integrazioni</p>
         </div>
       </div>
 

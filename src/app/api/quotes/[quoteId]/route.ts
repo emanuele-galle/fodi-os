@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { logActivity } from '@/lib/activity-log'
 import { updateQuoteSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
 
@@ -22,20 +23,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!quote) {
-      return NextResponse.json({ error: 'Preventivo non trovato' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Preventivo non trovato' }, { status: 404 })
     }
 
-    return NextResponse.json(quote)
+    return NextResponse.json({ success: true, data: quote })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[quotes]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ quoteId: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role
+    const userId = request.headers.get('x-user-id')!
     requirePermission(role, 'erp', 'write')
 
     const { quoteId } = await params
@@ -43,7 +47,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const parsed = updateQuoteSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
@@ -95,7 +99,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         })
       })
 
-      return NextResponse.json(quote)
+      logActivity({ userId, action: 'UPDATE', entityType: 'QUOTE', entityId: quoteId, metadata: { changedFields: Object.keys(data).join(',') } })
+      return NextResponse.json({ success: true, data: quote })
     } else if (taxRate !== undefined || discount !== undefined) {
       // Recalculate with existing line items
       const existing = await prisma.quote.findUnique({ where: { id: quoteId }, select: { subtotal: true, taxRate: true, discount: true } })
@@ -120,11 +125,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     })
 
-    return NextResponse.json(quote)
+    logActivity({ userId, action: 'UPDATE', entityType: 'QUOTE', entityId: quoteId, metadata: { changedFields: Object.keys(data).join(',') } })
+
+    return NextResponse.json({ success: true, data: quote })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }
 
@@ -137,18 +145,23 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const quote = await prisma.quote.findUnique({ where: { id: quoteId }, select: { status: true } })
     if (!quote) {
-      return NextResponse.json({ error: 'Preventivo non trovato' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Preventivo non trovato' }, { status: 404 })
     }
     if (quote.status !== 'DRAFT') {
-      return NextResponse.json({ error: 'Solo i preventivi in bozza possono essere eliminati' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Solo i preventivi in bozza possono essere eliminati' }, { status: 400 })
     }
 
+    const userId = request.headers.get('x-user-id')!
     await prisma.quote.delete({ where: { id: quoteId } })
+
+    logActivity({ userId, action: 'DELETE', entityType: 'QUOTE', entityId: quoteId })
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[quotes]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json()
     const parsed = importEsitoSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Dati non validi', details: parsed.error.flatten() }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Dati non validi', details: parsed.error.flatten() }, { status: 400 })
     }
 
     const eInvoice = await prisma.electronicInvoice.findFirst({
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     if (!eInvoice) {
-      return NextResponse.json({ error: 'Fattura elettronica non trovata' }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Fattura elettronica non trovata' }, { status: 404 })
     }
 
     // Parse the esito XML
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       esito = parseEsitoXml(parsed.data.esitoXml)
     } catch (err) {
       return NextResponse.json(
-        { error: err instanceof Error ? err.message : 'Errore nel parsing dell\'XML esito' },
+        { success: false, error: err instanceof Error ? err.message : 'Errore nel parsing dell\'XML esito' },
         { status: 400 }
       )
     }
@@ -51,32 +51,38 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const newStatus = ESITO_STATUS_MAP[esito.esitoType] || eInvoice.status
     const previousStatus = eInvoice.status
 
-    const updated = await prisma.electronicInvoice.update({
-      where: { id: eInvoice.id },
-      data: {
-        status: newStatus,
-        esitoType: esito.esitoType,
-        esitoDescription: esito.description,
-        esitoXml: parsed.data.esitoXml,
-        sdiIdentificativo: esito.sdiIdentificativo || eInvoice.sdiIdentificativo,
-        sdiDataRicezione: esito.dataRicezione ? new Date(esito.dataRicezione) : undefined,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.electronicInvoice.update({
+        where: { id: eInvoice.id },
+        data: {
+          status: newStatus,
+          esitoType: esito.esitoType,
+          esitoDescription: esito.description,
+          esitoXml: parsed.data.esitoXml,
+          sdiIdentificativo: esito.sdiIdentificativo || eInvoice.sdiIdentificativo,
+          sdiDataRicezione: esito.dataRicezione ? new Date(esito.dataRicezione) : undefined,
+        },
+      })
+
+      await tx.eInvoiceStatusLog.create({
+        data: {
+          electronicInvoiceId: eInvoice.id,
+          fromStatus: previousStatus,
+          toStatus: newStatus,
+          note: `Esito ${esito.esitoType}: ${esito.description}`,
+          performedBy: request.headers.get('x-user-id') || undefined,
+        },
+      })
+
+      return result
     })
 
-    await prisma.eInvoiceStatusLog.create({
-      data: {
-        electronicInvoiceId: eInvoice.id,
-        fromStatus: previousStatus,
-        toStatus: newStatus,
-        note: `Esito ${esito.esitoType}: ${esito.description}`,
-        performedBy: request.headers.get('x-user-id') || undefined,
-      },
-    })
-
-    return NextResponse.json({ ...updated, parsedEsito: esito })
+    return NextResponse.json({ success: true, data: { ...updated, parsedEsito: esito } })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Errore interno del server'
-    if (msg.startsWith('Permission denied')) return NextResponse.json({ error: msg }, { status: 403 })
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[erp/invoices/:invoiceId/fatturapa/import-esito]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

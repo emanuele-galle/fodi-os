@@ -3,7 +3,7 @@ import { jwtVerify } from 'jose'
 
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
-const PUBLIC_PATHS = ['/login', '/forgot-password', '/api/auth/', '/api/health']
+const PUBLIC_PATHS = ['/login', '/forgot-password', '/api/auth/', '/api/health', '/sign/']
 const PORTAL_PATHS = ['/portal']
 
 function isPublic(pathname: string): boolean {
@@ -41,7 +41,13 @@ function setSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
-  response.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://apis.google.com https://accounts.google.com https://*.googleusercontent.com https://*.googleapis.com; frame-src 'self' https://meet.google.com https://accounts.google.com https://drive.google.com; worker-src 'self';")
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  // CSP: unsafe-eval only in dev (Next.js HMR needs it), strict in production
+  const scriptSrc = process.env.NODE_ENV === 'production'
+    ? "'self' 'unsafe-inline'"
+    : "'self' 'unsafe-inline' 'unsafe-eval'"
+  response.headers.set('Content-Security-Policy', `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://apis.google.com https://accounts.google.com https://*.googleusercontent.com https://*.googleapis.com; frame-src 'self' https://meet.google.com https://accounts.google.com https://drive.google.com; worker-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`)
   return response
 }
 
