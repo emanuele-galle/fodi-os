@@ -75,57 +75,66 @@ export async function POST(request: NextRequest) {
     })
     const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Qualcuno'
 
-    // Create notifications for channel members if channelId provided
+    // Determine who to notify: channel members or attendees by email
+    let targetUserIds: string[] = []
+    let channelName: string | null = null
+
     if (channelId) {
       const channelMembers = await prisma.chatMember.findMany({
         where: { channelId, userId: { not: userId } },
         select: { userId: true },
       })
+      targetUserIds = channelMembers.map((m) => m.userId)
+      const channel = await prisma.chatChannel.findUnique({
+        where: { id: channelId },
+        select: { name: true },
+      })
+      channelName = channel?.name || null
+    } else if (attendeeEmails.length > 0) {
+      // Find users by email (for calls from Team page without channelId)
+      const attendees = await prisma.user.findMany({
+        where: { email: { in: attendeeEmails }, id: { not: userId } },
+        select: { id: true },
+      })
+      targetUserIds = attendees.map((u) => u.id)
+    }
 
-      if (channelMembers.length > 0) {
-        const channel = await prisma.chatChannel.findUnique({
-          where: { id: channelId },
-          select: { name: true },
+    if (targetUserIds.length > 0) {
+      const title = 'Chiamata in arrivo'
+      const message = `${creatorName} ti sta chiamando${channelName ? ` da "${channelName}"` : ''}`
+
+      // DB notifications
+      await prisma.notification.createMany({
+        data: targetUserIds.map((uid) => ({
+          userId: uid,
+          type: 'MEETING',
+          title,
+          message,
+          link: meetLink,
+        })),
+      })
+
+      // SSE call event (shows in-app call banner with ringtone)
+      for (const uid of targetUserIds) {
+        sseManager.sendToUser(uid, {
+          type: 'incoming_call',
+          data: {
+            meetLink,
+            summary,
+            creatorName,
+            channelId: channelId || undefined,
+            channelName: channelName || undefined,
+          },
         })
+      }
 
-        const title = 'Chiamata in arrivo'
-        const message = `${creatorName} ti sta chiamando${channel?.name ? ` da "${channel.name}"` : ''}`
-
-        // DB notifications
-        await prisma.notification.createMany({
-          data: channelMembers.map((m) => ({
-            userId: m.userId,
-            type: 'MEETING',
-            title,
-            message,
-            link: meetLink,
-          })),
+      // Web push so phone rings even if app is closed
+      for (const uid of targetUserIds) {
+        sendPush(uid, {
+          title,
+          message,
+          link: meetLink,
         })
-
-        const memberIds = channelMembers.map((m) => m.userId)
-
-        // SSE call event (shows in-app call banner)
-        for (const memberId of memberIds) {
-          sseManager.sendToUser(memberId, {
-            type: 'incoming_call',
-            data: {
-              meetLink,
-              summary,
-              creatorName,
-              channelId,
-              channelName: channel?.name,
-            },
-          })
-        }
-
-        // Web push so phone rings even if app is closed
-        for (const memberId of memberIds) {
-          sendPush(memberId, {
-            title,
-            message,
-            link: meetLink,
-          })
-        }
       }
     }
 
