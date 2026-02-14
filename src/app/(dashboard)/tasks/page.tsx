@@ -16,6 +16,22 @@ import {
   User,
   MessageSquare,
 } from 'lucide-react'
+import {
+  DndContext,
+  DragOverlay,
+  pointerWithin,
+  rectIntersection,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  type DragStartEvent,
+  type DragEndEvent,
+  type CollisionDetection,
+} from '@dnd-kit/core'
+import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -297,6 +313,26 @@ export default function TasksPage() {
   ] : []
   const completionPct = activeTotal > 0 ? Math.round((completedCount / activeTotal) * 100) : 0
 
+  // Drag & drop status change (optimistic update + API call)
+  async function handleStatusChange(taskId: string, newStatus: string) {
+    setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: newStatus } : t))
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (!res.ok) {
+        // Revert on failure
+        fetchTasks()
+      } else {
+        fetchTabCounts()
+      }
+    } catch {
+      fetchTasks()
+    }
+  }
+
   const canSeeTeam = ['ADMIN', 'MANAGER'].includes(userRole)
   const visibleTabs = TABS.filter((t) => !t.adminOnly || canSeeTeam)
 
@@ -483,7 +519,7 @@ export default function TasksPage() {
           </div>
         </>
       ) : (
-        <KanbanView tasks={sortedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} />
+        <KanbanView tasks={sortedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} onStatusChange={handleStatusChange} />
       )}
 
       <TaskDetailModal
@@ -673,82 +709,187 @@ function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; ac
   )
 }
 
-function KanbanView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; activeTab: TabKey; userId: string; onTaskClick: (id: string) => void }) {
+// Collision detection: prefer column droppables over task cards
+const kanbanCollision: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args)
+  const columnHit = pointerCollisions.find((c) => String(c.id).startsWith('col-'))
+  if (columnHit) return [columnHit]
+  if (pointerCollisions.length > 0) return pointerCollisions
+  const rectCollisions = rectIntersection(args)
+  const rectColumnHit = rectCollisions.find((c) => String(c.id).startsWith('col-'))
+  if (rectColumnHit) return [rectColumnHit]
+  return rectCollisions
+}
+
+function DroppableKanbanColumn({ columnKey, isOver, children }: { columnKey: string; isOver?: boolean; children: React.ReactNode }) {
+  const { setNodeRef, isOver: over } = useDroppable({
+    id: `col-${columnKey}`,
+    data: { type: 'column', columnKey },
+  })
+  const active = isOver ?? over
+
   return (
-    <div className="kanban-mobile-scroll md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {KANBAN_COLUMNS.map((col) => {
-        const columnTasks = tasks.filter((t) => t.status === col.key)
-        return (
-          <div key={col.key} className="flex flex-col min-w-[280px] md:min-w-0">
-            <div className={`flex items-center justify-between mb-3 px-3 py-2.5 rounded-lg border-b-2 ${col.color} ${col.headerBg}`}>
-              <h3 className={`text-sm font-bold ${col.headerText}`}>{col.label}</h3>
-              <span className={`text-xs font-semibold ${col.headerText} bg-white/60 dark:bg-white/10 rounded-full px-2 py-0.5`}>
-                {columnTasks.length}
-              </span>
-            </div>
-            <div className="space-y-2 flex-1 animate-stagger">
-              {columnTasks.map((task) => {
-                const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE' && task.status !== 'CANCELLED'
-                return (
-                  <Card
-                    key={task.id}
-                    className={cn('!p-3 cursor-pointer', isOverdue && 'border-destructive/40 bg-red-500/5')}
-                    onClick={() => onTaskClick(task.id)}
-                    style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
-                  >
-                    <div className="flex items-center gap-1.5 mb-2">
-                      {task.timerStartedAt && (
-                        <Timer className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
-                      )}
-                      <p className="text-sm font-medium line-clamp-2">{task.title}</p>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <Badge status={task.priority} pulse={task.priority === 'URGENT'}>
-                        {PRIORITY_LABELS[task.priority]}
-                      </Badge>
-                      <TaskBadges task={task} activeTab={activeTab} userId={userId} />
-                      {task.project && (
-                        <span className="text-xs text-muted truncate max-w-[100px]">
-                          {task.project.name}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      {(task.assignments?.length ?? 0) > 0 ? (
-                        <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
-                      ) : task.assignee ? (
-                        <Avatar
-                          name={`${task.assignee.firstName} ${task.assignee.lastName}`}
-                          src={task.assignee.avatarUrl}
-                          size="sm"
-                        />
-                      ) : (
-                        <span />
-                      )}
-                      {task.dueDate && (
-                        <span
-                          className={`text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted'}`}
-                        >
-                          {isOverdue && '⚠ '}
-                          {new Date(task.dueDate).toLocaleDateString('it-IT', {
-                            day: '2-digit',
-                            month: 'short',
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  </Card>
-                )
-              })}
-              {columnTasks.length === 0 && (
-                <div className="text-center py-6 text-sm text-muted">
-                  Nessun task
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })}
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex flex-col min-w-[280px] md:min-w-0 rounded-lg transition-colors',
+        active && 'ring-2 ring-primary/20 bg-primary/5'
+      )}
+    >
+      {children}
     </div>
+  )
+}
+
+function DraggableTaskCard({ task, activeTab, userId, onClick }: { task: Task; activeTab: TabKey; userId: string; onClick: () => void }) {
+  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE' && task.status !== 'CANCELLED'
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    data: { type: 'task', task },
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <Card
+      style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
+      className={cn('!p-3 cursor-grab active:cursor-grabbing', isOverdue && 'border-destructive/40 bg-red-500/5')}
+      onClick={(e) => { if (!isDragging) { e.stopPropagation(); onClick() } }}
+    >
+      <div className="flex items-center gap-1.5 mb-2">
+        {task.timerStartedAt && (
+          <Timer className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
+        )}
+        <p className="text-sm font-medium line-clamp-2">{task.title}</p>
+      </div>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <Badge status={task.priority} pulse={task.priority === 'URGENT'}>
+          {PRIORITY_LABELS[task.priority]}
+        </Badge>
+        <TaskBadges task={task} activeTab={activeTab} userId={userId} />
+        {task.project && (
+          <span className="text-xs text-muted truncate max-w-[100px]">
+            {task.project.name}
+          </span>
+        )}
+      </div>
+      <div className="flex items-center justify-between mt-2">
+        {(task.assignments?.length ?? 0) > 0 ? (
+          <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
+        ) : task.assignee ? (
+          <Avatar
+            name={`${task.assignee.firstName} ${task.assignee.lastName}`}
+            src={task.assignee.avatarUrl}
+            size="sm"
+          />
+        ) : (
+          <span />
+        )}
+        {task.dueDate && (
+          <span className={`text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted'}`}>
+            {isOverdue && '\u26A0 '}
+            {new Date(task.dueDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+          </span>
+        )}
+      </div>
+    </Card>
+    </div>
+  )
+}
+
+function KanbanView({ tasks, activeTab, userId, onTaskClick, onStatusChange }: { tasks: Task[]; activeTab: TabKey; userId: string; onTaskClick: (id: string) => void; onStatusChange?: (taskId: string, newStatus: string) => void }) {
+  const [activeTask, setActiveTask] = useState<Task | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  )
+
+  function handleDragStart(event: DragStartEvent) {
+    const task = event.active.data.current?.task as Task | undefined
+    if (task) setActiveTask(task)
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveTask(null)
+    const { active, over } = event
+    if (!over || !onStatusChange) return
+
+    const taskId = active.id as string
+    const overData = over.data.current
+
+    let targetStatus: string | null = null
+    if (overData?.type === 'column') {
+      targetStatus = overData.columnKey as string
+    } else if (overData?.type === 'task') {
+      targetStatus = (overData.task as Task).status
+    } else {
+      const overId = String(over.id)
+      if (overId.startsWith('col-')) targetStatus = overId.replace('col-', '')
+    }
+
+    if (!targetStatus) return
+    const currentTask = active.data.current?.task as Task | undefined
+    if (!currentTask || currentTask.status === targetStatus) return
+
+    onStatusChange(taskId, targetStatus)
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={kanbanCollision}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="kanban-mobile-scroll md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {KANBAN_COLUMNS.map((col) => {
+          const columnTasks = tasks.filter((t) => t.status === col.key)
+          return (
+            <DroppableKanbanColumn key={col.key} columnKey={col.key}>
+              <div className={`flex items-center justify-between mb-3 px-3 py-2.5 rounded-lg border-b-2 ${col.color} ${col.headerBg}`}>
+                <h3 className={`text-sm font-bold ${col.headerText}`}>{col.label}</h3>
+                <span className={`text-xs font-semibold ${col.headerText} bg-white/60 dark:bg-white/10 rounded-full px-2 py-0.5`}>
+                  {columnTasks.length}
+                </span>
+              </div>
+              <SortableContext items={columnTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2 flex-1 min-h-[60px]">
+                  {columnTasks.map((task) => (
+                    <DraggableTaskCard key={task.id} task={task} activeTab={activeTab} userId={userId} onClick={() => onTaskClick(task.id)} />
+                  ))}
+                  {columnTasks.length === 0 && (
+                    <div className="text-center py-6 text-sm text-muted">
+                      Nessun task
+                    </div>
+                  )}
+                </div>
+              </SortableContext>
+            </DroppableKanbanColumn>
+          )
+        })}
+      </div>
+
+      <DragOverlay>
+        {activeTask && (
+          <Card
+            className="!p-3 shadow-lg border-2 border-primary w-72"
+            style={{ borderLeft: `3px solid ${PRIORITY_COLORS[activeTask.priority] || 'var(--color-primary)'}` }}
+          >
+            <p className="text-sm font-medium line-clamp-2 mb-2">{activeTask.title}</p>
+            <div className="flex items-center gap-1.5">
+              <Badge status={activeTask.priority} pulse={activeTask.priority === 'URGENT'}>
+                {PRIORITY_LABELS[activeTask.priority]}
+              </Badge>
+            </div>
+          </Card>
+        )}
+      </DragOverlay>
+    </DndContext>
   )
 }
