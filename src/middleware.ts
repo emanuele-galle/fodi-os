@@ -57,6 +57,13 @@ function setSecurityHeaders(response: NextResponse, isHtmlPage = false): NextRes
   return response
 }
 
+function buildUrl(request: NextRequest, path: string): URL {
+  const url = request.nextUrl.clone()
+  url.pathname = path
+  url.search = ''
+  return url
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -74,11 +81,11 @@ export async function middleware(request: NextRequest) {
   if (isPortal(pathname)) {
     const portalToken = request.cookies.get('fodi_portal')?.value
     if (!portalToken) {
-      return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)), true)
+      return setSecurityHeaders(NextResponse.redirect(buildUrl(request, '/login')), true)
     }
     const payload = await verifyToken(portalToken)
     if (!payload) {
-      return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)), true)
+      return setSecurityHeaders(NextResponse.redirect(buildUrl(request, '/login')), true)
     }
     return setSecurityHeaders(NextResponse.next(), true)
   }
@@ -153,13 +160,13 @@ export async function middleware(request: NextRequest) {
 
   // Access token expired/missing - redirect to refresh endpoint via client
   if (hasValidRefreshToken(request)) {
-    const refreshUrl = new URL('/api/auth/refresh-redirect', request.url)
+    const refreshUrl = buildUrl(request, '/api/auth/refresh-redirect')
     refreshUrl.searchParams.set('returnTo', pathname)
     return setSecurityHeaders(NextResponse.redirect(refreshUrl), true)
   }
 
   // Both tokens invalid - redirect to login
-  return setSecurityHeaders(NextResponse.redirect(new URL('/login', request.url)), true)
+  return setSecurityHeaders(NextResponse.redirect(buildUrl(request, '/login')), true)
 }
 
 export const config = {

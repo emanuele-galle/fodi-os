@@ -57,6 +57,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       skipDuplicates: true,
     })
 
+    // Auto-add new members to all PROJECT-type chat channels for this project
+    const projectChannels = await prisma.chatChannel.findMany({
+      where: { projectId, type: 'PROJECT', isArchived: false },
+      select: { id: true },
+    })
+
+    if (projectChannels.length > 0) {
+      const chatMemberData = projectChannels.flatMap((channel) =>
+        userIds.map((userId) => ({
+          channelId: channel.id,
+          userId,
+          role: 'MEMBER' as const,
+        }))
+      )
+      await prisma.chatMember.createMany({
+        data: chatMemberData,
+        skipDuplicates: true,
+      })
+    }
+
     return NextResponse.json({ added: created.count }, { status: 201 })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
@@ -83,6 +103,21 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     await prisma.projectMember.deleteMany({
       where: { projectId, userId },
     })
+
+    // Also remove from all PROJECT-type chat channels for this project
+    const projectChannels = await prisma.chatChannel.findMany({
+      where: { projectId, type: 'PROJECT', isArchived: false },
+      select: { id: true },
+    })
+
+    if (projectChannels.length > 0) {
+      await prisma.chatMember.deleteMany({
+        where: {
+          userId,
+          channelId: { in: projectChannels.map((c) => c.id) },
+        },
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (e) {

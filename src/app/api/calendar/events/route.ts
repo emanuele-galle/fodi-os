@@ -6,8 +6,8 @@ import type { Role } from '@/generated/prisma/client'
 
 const createEventSchema = z.object({
   summary: z.string().min(1, 'Titolo obbligatorio'),
-  start: z.string().datetime('Data inizio non valida'),
-  end: z.string().datetime('Data fine non valida'),
+  start: z.string().min(1, 'Data inizio non valida'),
+  end: z.string().min(1, 'Data fine non valida'),
   description: z.string().optional(),
   location: z.string().optional(),
   attendees: z.array(z.string().email()).optional(),

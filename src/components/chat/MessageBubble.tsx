@@ -132,14 +132,16 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState(message.content)
   const [showReactions, setShowReactions] = useState(false)
+  const [mobileActionsOpen, setMobileActionsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const editRef = useRef<HTMLTextAreaElement>(null)
   const reactionRef = useRef<HTMLDivElement>(null)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reactions = parseReactions(message.metadata)
   const meta = message.metadata as Record<string, unknown> | null
 
   useEffect(() => {
-    if (!menuOpen && !showReactions) return
+    if (!menuOpen && !showReactions && !mobileActionsOpen) return
     function handleClick(e: MouseEvent) {
       if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false)
@@ -147,10 +149,26 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
       if (showReactions && reactionRef.current && !reactionRef.current.contains(e.target as Node)) {
         setShowReactions(false)
       }
+      if (mobileActionsOpen) {
+        setMobileActionsOpen(false)
+      }
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [menuOpen, showReactions])
+  }, [menuOpen, showReactions, mobileActionsOpen])
+
+  // Long-press for mobile
+  function handleTouchStart() {
+    longPressTimer.current = setTimeout(() => {
+      setMobileActionsOpen(true)
+    }, 500)
+  }
+  function handleTouchEnd() {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }
 
   useEffect(() => {
     if (editing && editRef.current) {
@@ -197,7 +215,35 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
             {!isOwn && <span className="text-[12px] font-semibold text-foreground/80">{authorName}</span>}
             <span className="text-[10px] text-muted-foreground/40 font-medium">{time}</span>
           </div>
-          <div className="relative">
+          <div
+            className="relative"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchEnd}
+          >
+            {/* Mobile long-press action sheet for file messages */}
+            {mobileActionsOpen && (
+              <div className="md:hidden absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-card border border-border rounded-xl shadow-xl p-1.5 flex items-center gap-1 z-50 min-w-[160px]">
+                {onReact && QUICK_REACTIONS.slice(0, 4).map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => { onReact(message.id, emoji); setMobileActionsOpen(false) }}
+                    className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-secondary/80 text-lg touch-manipulation"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+                <div className="w-px h-6 bg-border/60 mx-0.5" />
+                {onReply && (
+                  <button
+                    onClick={() => { onReply({ id: message.id, content: fileMeta?.fileName || message.content, authorName }); setMobileActionsOpen(false) }}
+                    className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-secondary/80 text-muted-foreground touch-manipulation"
+                  >
+                    <Reply className="h-4.5 w-4.5" />
+                  </button>
+                )}
+              </div>
+            )}
             <div className={cn(
               'rounded-2xl overflow-hidden shadow-sm',
               isOwn ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-card border border-border/60 text-foreground rounded-bl-md'
@@ -317,7 +363,55 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
           </div>
         )}
 
-        <div className="relative">
+        <div
+          className="relative"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchEnd}
+        >
+          {/* Mobile long-press action sheet */}
+          {mobileActionsOpen && !editing && (
+            <div className="md:hidden absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-card border border-border rounded-xl shadow-xl p-1.5 flex items-center gap-1 z-50 min-w-[200px]">
+              {onReact && QUICK_REACTIONS.slice(0, 4).map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => { onReact(message.id, emoji); setMobileActionsOpen(false) }}
+                  className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-secondary/80 text-lg touch-manipulation"
+                >
+                  {emoji}
+                </button>
+              ))}
+              <div className="w-px h-6 bg-border/60 mx-0.5" />
+              {onReply && (
+                <button
+                  onClick={() => { onReply({ id: message.id, content: message.content, authorName }); setMobileActionsOpen(false) }}
+                  className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-secondary/80 text-muted-foreground touch-manipulation"
+                  title="Rispondi"
+                >
+                  <Reply className="h-4.5 w-4.5" />
+                </button>
+              )}
+              {isOwn && onEdit && (
+                <button
+                  onClick={() => { setEditing(true); setEditText(message.content); setMobileActionsOpen(false) }}
+                  className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-secondary/80 text-muted-foreground touch-manipulation"
+                  title="Modifica"
+                >
+                  <Edit2 className="h-4.5 w-4.5" />
+                </button>
+              )}
+              {isOwn && onDelete && (
+                <button
+                  onClick={() => { onDelete(message.id); setMobileActionsOpen(false) }}
+                  className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-destructive touch-manipulation"
+                  title="Elimina"
+                >
+                  <Trash2 className="h-4.5 w-4.5" />
+                </button>
+              )}
+            </div>
+          )}
+
           {editing ? (
             <div className="flex flex-col gap-1">
               <textarea

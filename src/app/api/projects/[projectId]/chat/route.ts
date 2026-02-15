@@ -46,6 +46,22 @@ export async function GET(
       const channelName = folderName ? `Chat - ${folderName}` : project.name
       const slugSuffix = folderName && folderId ? `folder-${folderId.slice(0, 8)}` : `project-${project.slug}`
 
+      // Get all project members to auto-add them to the chat
+      const projectMembers = await prisma.projectMember.findMany({
+        where: { projectId },
+        select: { userId: true },
+      })
+
+      // Build members list: creator as OWNER, rest as MEMBER (skip duplicates)
+      const memberCreateData: { userId: string; role: 'OWNER' | 'MEMBER' }[] = [
+        { userId, role: 'OWNER' },
+      ]
+      for (const pm of projectMembers) {
+        if (pm.userId !== userId) {
+          memberCreateData.push({ userId: pm.userId, role: 'MEMBER' })
+        }
+      }
+
       channel = await prisma.chatChannel.create({
         data: {
           name: channelName,
@@ -56,7 +72,7 @@ export async function GET(
           folderId,
           createdById: userId,
           members: {
-            create: [{ userId, role: 'OWNER' }],
+            create: memberCreateData,
           },
         },
         include: {

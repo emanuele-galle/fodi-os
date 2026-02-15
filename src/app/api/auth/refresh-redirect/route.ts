@@ -3,6 +3,13 @@ import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { verifyRefreshToken, createAccessToken, createRefreshToken } from '@/lib/auth'
 
+function buildUrl(request: NextRequest, path: string): URL {
+  const url = request.nextUrl.clone()
+  url.pathname = path
+  url.search = ''
+  return url
+}
+
 export async function GET(request: NextRequest) {
   const returnTo = request.nextUrl.searchParams.get('returnTo') || '/dashboard'
 
@@ -14,7 +21,7 @@ export async function GET(request: NextRequest) {
     const refreshToken = cookieStore.get('fodi_refresh')?.value
 
     if (!refreshToken) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(buildUrl(request, '/login'))
     }
 
     const payload = await verifyRefreshToken(refreshToken)
@@ -27,7 +34,7 @@ export async function GET(request: NextRequest) {
       if (stored) {
         await prisma.refreshToken.delete({ where: { id: stored.id } })
       }
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(buildUrl(request, '/login'))
     }
 
     // If token is already revoked, check if this is a concurrent refresh race condition.
@@ -47,7 +54,7 @@ export async function GET(request: NextRequest) {
           const accessToken = await createAccessToken({
             sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role,
           })
-          const response = NextResponse.redirect(new URL(safePath, request.url))
+          const response = NextResponse.redirect(buildUrl(request, safePath))
           response.cookies.set('fodi_access', accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60 })
           response.cookies.set('fodi_refresh', recentToken.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 })
           return response
@@ -58,7 +65,7 @@ export async function GET(request: NextRequest) {
         where: { userId: stored.userId },
         data: { isRevoked: true },
       })
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(buildUrl(request, '/login'))
     }
 
     // Rotate: invalidate old token
@@ -75,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     if (!user || !user.isActive) {
       await prisma.refreshToken.deleteMany({ where: { userId: stored.userId } })
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(buildUrl(request, '/login'))
     }
 
     const tokenPayload = {
@@ -98,7 +105,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const response = NextResponse.redirect(new URL(safePath, request.url))
+    const response = NextResponse.redirect(buildUrl(request, safePath))
 
     response.cookies.set('fodi_access', accessToken, {
       httpOnly: true,
@@ -119,6 +126,6 @@ export async function GET(request: NextRequest) {
     return response
   } catch (error) {
     console.error('[auth/refresh-redirect]', error)
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(buildUrl(request, '/login'))
   }
 }
