@@ -42,7 +42,10 @@ export function CourseDetail({ courseId }: { courseId: string }) {
     async function fetchCourse() {
       try {
         const res = await fetch(`/api/training/courses/${courseId}`, { credentials: 'include' })
-        if (res.ok) setCourse(await res.json())
+        if (res.ok) {
+          const json = await res.json()
+          setCourse(json.data ?? json)
+        }
       } catch {
         // silently fail
       } finally {
@@ -161,7 +164,7 @@ export function CourseDetail({ courseId }: { courseId: string }) {
               return (
                 <a
                   key={lesson.id}
-                  href={`/dashboard/training/courses/${courseId}/lessons/${lesson.id}`}
+                  href={`/training/${courseId}/${lesson.id}`}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors group"
                 >
                   <span className="flex items-center justify-center h-7 w-7 rounded-full bg-secondary text-xs font-medium text-muted shrink-0">

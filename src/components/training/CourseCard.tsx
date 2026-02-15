@@ -1,6 +1,6 @@
 'use client'
 
-import { BookOpen, Clock } from 'lucide-react'
+import { BookOpen, Clock, Play } from 'lucide-react'
 import { DifficultyBadge } from './DifficultyBadge'
 
 interface CourseCardProps {
@@ -14,6 +14,7 @@ interface CourseCardProps {
     estimatedMins: number | null
     category: { id: string; name: string; icon: string | null } | null
     _count: { lessons: number }
+    lessons?: { contentType: string }[]
     enrollment?: { progress: number; status: string } | null
   }
   onClick?: () => void
@@ -41,6 +42,7 @@ function getProgressColor(progress: number) {
 
 export function CourseCard({ course, onClick }: CourseCardProps) {
   const progress = course.enrollment?.progress ?? null
+  const hasVideo = course.lessons?.some(l => l.contentType === 'VIDEO') ?? false
 
   return (
     <div
@@ -72,6 +74,12 @@ export function CourseCard({ course, onClick }: CourseCardProps) {
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <DifficultyBadge difficulty={course.difficulty} />
+          {hasVideo && (
+            <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
+              <Play className="h-3 w-3" />
+              Video
+            </span>
+          )}
         </div>
 
         <h3 className="text-[15px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">

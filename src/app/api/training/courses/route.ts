@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get('difficulty')
     const search = searchParams.get('search') || ''
     const isPublished = searchParams.get('isPublished')
+    const type = searchParams.get('type') // INTERNAL or USER
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
     const skip = (page - 1) * limit
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest) {
       ...(isPublished !== null && isPublished !== undefined && {
         isPublished: isPublished === 'true',
       }),
+      ...(type && { category: { type: type as 'INTERNAL' | 'USER' } }),
     }
 
     const [items, total] = await Promise.all([
@@ -39,6 +41,7 @@ export async function GET(request: NextRequest) {
         include: {
           category: true,
           _count: { select: { lessons: true } },
+          lessons: { select: { contentType: true }, where: { isPublished: true } },
           ...(userId ? {
             enrollments: {
               where: { userId },

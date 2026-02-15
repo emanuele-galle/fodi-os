@@ -29,6 +29,7 @@ interface Course {
   estimatedMins: number | null
   category: { id: string; name: string; icon: string | null } | null
   _count: { lessons: number }
+  lessons?: { contentType: string }[]
   enrollment?: { progress: number; status: string } | null
 }
 
@@ -180,7 +181,7 @@ export function TrainingCatalog() {
               key={course.id}
               course={course}
               onClick={() => {
-                window.location.href = `/dashboard/training/courses/${course.id}`
+                window.location.href = `/training/${course.id}`
               }}
             />
           ))}
