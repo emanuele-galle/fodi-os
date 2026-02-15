@@ -32,26 +32,18 @@ interface WikiPage {
 
 const CATEGORY_TABS = [
   { value: '', label: 'Tutti' },
-  { value: 'sop', label: 'SOP' },
-  { value: 'guide', label: 'Guide' },
-  { value: 'academy', label: 'Academy' },
-  { value: 'snippet', label: 'Snippet' },
+  { value: 'procedures', label: 'Procedure' },
+  { value: 'development', label: 'Sviluppo' },
 ]
 
 const CATEGORY_OPTIONS = [
-  { value: 'general', label: 'Generale' },
-  { value: 'sop', label: 'SOP' },
-  { value: 'guide', label: 'Guida' },
-  { value: 'academy', label: 'Academy' },
-  { value: 'snippet', label: 'Snippet' },
+  { value: 'procedures', label: 'Procedure' },
+  { value: 'development', label: 'Sviluppo' },
 ]
 
 const CATEGORY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  general: 'default',
-  sop: 'warning',
-  guide: 'success',
-  academy: 'default',
-  snippet: 'outline',
+  procedures: 'warning',
+  development: 'success',
 }
 
 function TreeItem({

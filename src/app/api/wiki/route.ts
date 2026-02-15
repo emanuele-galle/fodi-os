@@ -12,11 +12,12 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = request.nextUrl
     const parentId = searchParams.get('parentId')
+    const hasParentIdParam = searchParams.has('parentId')
     const category = searchParams.get('category')
     const search = searchParams.get('search') || ''
 
     const where = {
-      ...(parentId === null || parentId === '' ? { parentId: null } : parentId ? { parentId } : {}),
+      ...(hasParentIdParam ? { parentId: parentId || null } : {}),
       ...(category && { category }),
       ...(search && {
         OR: [
