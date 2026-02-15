@@ -64,7 +64,7 @@ export function TrainingCatalog() {
       const res = await fetch(`/api/training/courses?${params}`, { credentials: 'include' })
       if (res.ok) {
         const data = await res.json()
-        setCourses(data.courses ?? data)
+        setCourses(data.data ?? data.courses ?? data)
       }
     } catch {
       // silently fail
@@ -78,7 +78,7 @@ export function TrainingCatalog() {
       const res = await fetch(`/api/training/categories?type=${activeTab}`, { credentials: 'include' })
       if (res.ok) {
         const data = await res.json()
-        setCategories(data.categories ?? data)
+        setCategories(data.data ?? data.categories ?? data)
       }
     } catch {
       // silently fail
