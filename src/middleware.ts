@@ -58,10 +58,9 @@ function setSecurityHeaders(response: NextResponse, isHtmlPage = false): NextRes
 }
 
 function buildUrl(request: NextRequest, path: string): URL {
-  const url = request.nextUrl.clone()
-  url.pathname = path
-  url.search = ''
-  return url
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host
+  const proto = request.headers.get('x-forwarded-proto') || 'https'
+  return new URL(path, `${proto}://${host}`)
 }
 
 export async function middleware(request: NextRequest) {

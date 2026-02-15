@@ -61,6 +61,8 @@ export default function QuoteDetailPage() {
   const [confirmConvertOpen, setConfirmConvertOpen] = useState(false)
   const [converting, setConverting] = useState(false)
   const [sending, setSending] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // Edit mode state
   const [editing, setEditing] = useState(false)
@@ -226,6 +228,22 @@ export default function QuoteDetailPage() {
     }
   }
 
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/quotes/${quoteId}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.push('/erp/quotes')
+      } else {
+        const data = await res.json().catch(() => null)
+        alert(data?.error || 'Errore nella cancellazione')
+      }
+    } finally {
+      setDeleting(false)
+      setConfirmDeleteOpen(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -273,10 +291,18 @@ export default function QuoteDetailPage() {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {!editing && canEdit && (
-            <Button variant="outline" size="sm" onClick={startEditing} className="touch-manipulation">
-              <Pencil className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Modifica</span>
-            </Button>
+            <>
+              <Button variant="outline" size="sm" onClick={startEditing} className="touch-manipulation">
+                <Pencil className="h-4 w-4" />
+                <span className="hidden sm:inline ml-1">Modifica</span>
+              </Button>
+              {quote.status === 'DRAFT' && (
+                <Button variant="destructive" size="sm" onClick={() => setConfirmDeleteOpen(true)} className="touch-manipulation">
+                  <Trash2 className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-1">Elimina</span>
+                </Button>
+              )}
+            </>
           )}
           {editing && (
             <>
@@ -536,6 +562,21 @@ export default function QuoteDetailPage() {
         fileName={`${quote.number}.pdf`}
         title={`Anteprima - ${quote.number}`}
       />
+
+      <Modal open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} title="Elimina Preventivo" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-muted">
+            Confermi di voler eliminare il preventivo <strong>{quote.number}</strong>? Questa azione non puo essere annullata.
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>Annulla</Button>
+            <Button variant="destructive" onClick={handleDelete} loading={deleting}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Elimina
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal open={confirmConvertOpen} onClose={() => setConfirmConvertOpen(false)} title="Converti in Fattura" size="sm">
         <div className="space-y-4">

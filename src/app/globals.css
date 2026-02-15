@@ -442,6 +442,17 @@ body,
   }
 }
 
+/* ===== Training Anti-Screenshot Protection ===== */
+@media print {
+  .training-protected {
+    visibility: hidden !important;
+  }
+}
+.training-protected {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 @layer base {
   * {
     @apply border-border;

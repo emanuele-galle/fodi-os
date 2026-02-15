@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Plus, Trash2, UserPlus } from 'lucide-react'
+import { ChevronLeft, Plus, Trash2, UserPlus, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -28,9 +28,24 @@ interface Client {
   companyName: string
 }
 
+interface QuoteTemplate {
+  id: string
+  name: string
+  description: string | null
+  defaultTaxRate: string
+  defaultDiscount: string
+  defaultNotes: string | null
+  defaultValidDays: number
+  lineItems: { description: string; quantity: number; unitPrice: string; sortOrder: number }[]
+  client: { id: string; companyName: string } | null
+}
+
 export default function NewQuotePage() {
   const router = useRouter()
   const [clients, setClients] = useState<Client[]>([])
+  const [templates, setTemplates] = useState<{ id: string; name: string; description: string | null; _count: { lineItems: number } }[]>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [loadingTemplate, setLoadingTemplate] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [showNewClientModal, setShowNewClientModal] = useState(false)
   const [newClientData, setNewClientData] = useState({
@@ -58,7 +73,45 @@ export default function NewQuotePage() {
       .then((d) => {
         if (d?.items) setClients(d.items)
       })
+    fetch('/api/quote-templates?active=true&limit=50')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.items) setTemplates(d.items)
+      })
   }, [])
+
+  async function loadTemplate(templateId: string) {
+    if (!templateId) return
+    setLoadingTemplate(true)
+    try {
+      const res = await fetch(`/api/quote-templates/${templateId}`)
+      if (!res.ok) return
+      const tpl: QuoteTemplate = await res.json()
+
+      setTitle(tpl.name)
+      setNotes(tpl.defaultNotes || '')
+      setTaxRate(parseFloat(tpl.defaultTaxRate) || 22)
+      setDiscount(parseFloat(tpl.defaultDiscount) || 0)
+      if (tpl.defaultValidDays > 0) {
+        const d = new Date(Date.now() + tpl.defaultValidDays * 86400000)
+        setValidUntil(d.toISOString().split('T')[0])
+      }
+      if (tpl.client) setClientId(tpl.client.id)
+      if (tpl.lineItems.length > 0) {
+        setLineItems(
+          tpl.lineItems
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((item) => ({
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: parseFloat(item.unitPrice),
+            }))
+        )
+      }
+    } finally {
+      setLoadingTemplate(false)
+    }
+  }
 
   function addLineItem() {
     setLineItems([...lineItems, { description: '', quantity: 1, unitPrice: 0 }])
@@ -86,22 +139,25 @@ export default function NewQuotePage() {
 
     setSubmitting(true)
     try {
-      const res = await fetch('/api/quotes', {
+      const payload = {
+        clientId,
+        title,
+        notes: notes || undefined,
+        validUntil: validUntil || undefined,
+        taxRate,
+        discount,
+        lineItems: lineItems.map((item) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+        ...(selectedTemplateId && { templateId: selectedTemplateId }),
+      }
+      const endpoint = selectedTemplateId ? '/api/quotes/from-template' : '/api/quotes'
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId,
-          title,
-          notes: notes || undefined,
-          validUntil: validUntil || undefined,
-          taxRate,
-          discount,
-          lineItems: lineItems.map((item) => ({
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-          })),
-        }),
+        body: JSON.stringify(payload),
       })
       if (res.ok) {
         const json = await res.json()
@@ -175,6 +231,46 @@ export default function NewQuotePage() {
       </button>
 
       <h1 className="text-xl md:text-2xl font-semibold mb-6">Nuovo Preventivo</h1>
+
+      {templates.length > 0 && (
+        <Card className="mb-6">
+          <CardContent>
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="h-4 w-4 text-primary" />
+              <CardTitle>Carica da Template</CardTitle>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+              <div className="flex-1 w-full">
+                <Select
+                  options={[
+                    { value: '', label: 'Seleziona template...' },
+                    ...templates.map((t) => ({
+                      value: t.id,
+                      label: `${t.name}${t._count.lineItems > 0 ? ` (${t._count.lineItems} voci)` : ''}`,
+                    })),
+                  ]}
+                  value={selectedTemplateId}
+                  onChange={(e) => setSelectedTemplateId(e.target.value)}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => loadTemplate(selectedTemplateId)}
+                disabled={!selectedTemplateId || loadingTemplate}
+                className="w-full sm:w-auto"
+              >
+                {loadingTemplate ? 'Caricamento...' : 'Applica Template'}
+              </Button>
+            </div>
+            {selectedTemplateId && templates.find((t) => t.id === selectedTemplateId)?.description && (
+              <p className="text-xs text-muted mt-2">
+                {templates.find((t) => t.id === selectedTemplateId)!.description}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>

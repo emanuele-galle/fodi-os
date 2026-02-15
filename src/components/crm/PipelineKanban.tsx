@@ -50,6 +50,7 @@ const SortableClientCard = memo(function SortableClientCard({ client, onClick }:
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
+    touchAction: 'none' as const,
   }
 
   return (
@@ -102,7 +103,7 @@ export function PipelineKanban({ clientsByStatus, onStatusChange }: PipelineKanb
       activationConstraint: { distance: 8 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
+      activationConstraint: { delay: 120, tolerance: 8 },
     })
   )
 

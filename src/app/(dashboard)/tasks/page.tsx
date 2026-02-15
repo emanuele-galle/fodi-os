@@ -755,7 +755,7 @@ function DraggableTaskCard({ task, activeTab, userId, onClick }: { task: Task; a
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={{ ...style, touchAction: 'none' }} {...attributes} {...listeners}>
     <Card
       style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
       className={cn('!p-3 cursor-grab active:cursor-grabbing', isOverdue && 'border-destructive/40 bg-red-500/5')}
@@ -807,7 +807,7 @@ function KanbanView({ tasks, activeTab, userId, onTaskClick, onStatusChange }: {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } })
   )
 
   function handleDragStart(event: DragStartEvent) {

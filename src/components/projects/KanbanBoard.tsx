@@ -69,6 +69,7 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
+    touchAction: 'none' as const,
   }
 
   return (
@@ -166,7 +167,7 @@ export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskCl
       activationConstraint: { distance: 8 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
+      activationConstraint: { delay: 120, tolerance: 8 },
     })
   )
 
