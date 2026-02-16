@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { Building2, Globe, Mail, Phone } from 'lucide-react'
+import { Building2, ExternalLink } from 'lucide-react'
 
 type CardCompanyProps = {
   company: {
@@ -15,26 +15,28 @@ export default function CardCompany({ company }: CardCompanyProps) {
   if (!company) return null
 
   return (
-    <div className="border rounded-xl p-6 bg-card space-y-4 animate-slide-up" style={{ animationDelay: '300ms' }}>
-      {/* Company header */}
+    <div className="relative overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-800 bg-white/60 dark:bg-gray-800/30 backdrop-blur-sm p-5">
+      {/* Subtle gradient accent */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500" />
+
       <div className="flex items-center gap-4">
         {company.logoUrl ? (
-          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+          <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700">
             <Image
               src={company.logoUrl}
               alt={company.ragioneSociale}
               fill
-              className="object-contain p-1"
+              className="object-contain p-1.5"
             />
           </div>
         ) : (
-          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Building2 className="w-6 h-6 text-primary" />
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-500/20 dark:to-indigo-500/20 flex items-center justify-center flex-shrink-0">
+            <Building2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
         )}
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-base truncate">
+          <h3 className="font-semibold text-sm text-foreground">
             {company.ragioneSociale}
           </h3>
           {company.siteUrl && (
@@ -42,38 +44,14 @@ export default function CardCompany({ company }: CardCompanyProps) {
               href={company.siteUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+              className="text-xs text-muted-foreground hover:text-purple-600 dark:hover:text-purple-400 transition-colors inline-flex items-center gap-1 mt-0.5"
             >
-              <Globe className="w-3 h-3" />
-              <span className="truncate">Sito Web</span>
+              {company.siteUrl.replace(/^https?:\/\//, '')}
+              <ExternalLink className="w-2.5 h-2.5" />
             </a>
           )}
         </div>
       </div>
-
-      {/* Company contact info */}
-      {(company.email || company.telefono) && (
-        <div className="space-y-2 pt-2 border-t">
-          {company.email && (
-            <a
-              href={`mailto:${company.email}`}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Mail className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">{company.email}</span>
-            </a>
-          )}
-          {company.telefono && (
-            <a
-              href={`tel:${company.telefono}`}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Phone className="w-4 h-4 flex-shrink-0" />
-              <span>{company.telefono}</span>
-            </a>
-          )}
-        </div>
-      )}
     </div>
   )
 }

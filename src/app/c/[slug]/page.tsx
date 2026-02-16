@@ -101,7 +101,7 @@ export default async function CardPage({ params }: Props) {
     : []
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8 space-y-6 animate-fade-in">
+    <div className="max-w-md mx-auto px-5 py-10 space-y-7 animate-fade-in">
       <CardHero
         firstName={card.user.firstName}
         lastName={card.user.lastName}

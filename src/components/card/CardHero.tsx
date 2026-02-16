@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import { Badge } from '@/components/ui/Badge'
 
 type CardHeroProps = {
   firstName: string
@@ -22,53 +21,60 @@ export default function CardHero({
   const initials = `${firstName[0]}${lastName[0]}`.toUpperCase()
 
   return (
-    <div className="text-center space-y-4 animate-slide-up">
-      {/* Avatar with gradient ring */}
+    <div className="text-center space-y-5">
+      {/* Avatar with animated gradient ring */}
       <div className="flex justify-center">
-        <div className="relative w-24 h-24 rounded-full ring-2 ring-primary/50 ring-offset-4 ring-offset-background">
-          {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt={fullName}
-              fill
-              className="rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-              {initials}
-            </div>
-          )}
+        <div className="relative">
+          <div className="absolute -inset-1 bg-gradient-to-br from-purple-500 via-violet-500 to-indigo-500 rounded-full blur-sm opacity-60" />
+          <div className="relative w-28 h-28 rounded-full ring-[3px] ring-white dark:ring-gray-900 overflow-hidden">
+            {avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt={fullName}
+                fill
+                className="rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold">
+                {initials}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Name and title */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">{fullName}</h1>
+        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white bg-clip-text text-transparent">
+          {fullName}
+        </h1>
 
         {jobTitle && (
-          <p className="text-lg text-muted-foreground">{jobTitle}</p>
+          <p className="text-base font-medium text-purple-600 dark:text-purple-400">
+            {jobTitle}
+          </p>
         )}
 
         {department && (
-          <div className="flex justify-center">
-            <Badge variant="default" className="text-sm">
-              {department}
-            </Badge>
-          </div>
+          <span className="inline-block text-xs font-medium px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-500/20">
+            {department}
+          </span>
         )}
       </div>
 
       {/* Bio */}
       {cardBio && (
-        <div className="pt-2">
-          <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
-            {cardBio}
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto px-2">
+          {cardBio}
+        </p>
       )}
 
-      {/* Decorative gradient */}
-      <div className="h-1 w-24 mx-auto bg-gradient-to-r from-transparent via-primary to-transparent rounded-full opacity-50" />
+      {/* Decorative divider */}
+      <div className="flex items-center justify-center gap-2 pt-1">
+        <div className="h-px w-12 bg-gradient-to-r from-transparent to-purple-300 dark:to-purple-600" />
+        <div className="h-1.5 w-1.5 rounded-full bg-purple-400 dark:bg-purple-500" />
+        <div className="h-px w-12 bg-gradient-to-l from-transparent to-purple-300 dark:to-purple-600" />
+      </div>
     </div>
   )
 }
