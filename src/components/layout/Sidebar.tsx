@@ -12,7 +12,6 @@ import {
   FolderKanban,
   CalendarDays,
   Euro,
-  BookOpen,
   Film,
   LifeBuoy,
   UsersRound,
@@ -84,17 +83,7 @@ const navigation: NavItem[] = [
       { label: 'Report', href: '/erp/reports' },
     ],
   },
-  {
-    label: 'Knowledge Base',
-    href: '/kb',
-    icon: BookOpen,
-    roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
-    children: [
-      { label: 'Tutte le Pagine', href: '/kb' },
-      { label: 'Attività Recenti', href: '/kb/activity' },
-    ],
-  },
-  {
+{
     label: 'Contenuti',
     href: '/content',
     icon: Film,

@@ -47,8 +47,7 @@ model User {
   signatureRequests SignatureRequest[] @relation("SignatureRequester")
   ticketsAssigned  Ticket[]        @relation("TicketAssignee")
   ticketsCreated   Ticket[]        @relation("TicketCreator")
-  wikiPageEdits    WikiPageVersion[]
-  assetUploads     Asset[]
+assetUploads     Asset[]
   reviewComments   ReviewComment[]
   clientPortal     Client?         @relation("ClientPortalUser")
   assignedLeads    Lead[]          @relation("LeadAssignee")
@@ -61,10 +60,6 @@ model User {
   pushSubscriptions    PushSubscription[]
   workSessions         WorkSession[]
   projectMemberships   ProjectMember[]
-  trainingEnrollments  TrainingEnrollment[]
-  trainingProgress     TrainingProgress[]
-  trainingQuizAnswers  TrainingQuizAnswer[]
-  trainingCertificates TrainingCertificate[]
 
   @@index([username])
   @@index([email])
@@ -673,55 +668,6 @@ model Expense {
 }
 
 // ============================================================
-// KNOWLEDGE BASE
-// ============================================================
-
-model WikiPage {
-  id           String   @id @default(uuid())
-  parentId     String?
-  workspaceId  String?
-  title        String
-  slug         String
-  content      Json?
-  contentText  String?  @db.Text
-  category     String   @default("general")
-  icon         String?
-  coverUrl     String?
-  sortOrder    Int      @default(0)
-  isPublished  Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  parent   WikiPage?         @relation("WikiHierarchy", fields: [parentId], references: [id])
-  children WikiPage[]        @relation("WikiHierarchy")
-  versions WikiPageVersion[]
-  comments Comment[]         @relation("WikiPageComments")
-
-  @@unique([parentId, slug])
-  @@index([parentId])
-  @@index([workspaceId])
-  @@index([category])
-  @@index([slug])
-  @@map("wiki_pages")
-}
-
-model WikiPageVersion {
-  id         String   @id @default(uuid())
-  pageId     String
-  editorId   String
-  content    Json?
-  version    Int
-  changeNote String?
-  createdAt  DateTime @default(now())
-
-  page   WikiPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  editor User     @relation(fields: [editorId], references: [id])
-
-  @@index([pageId])
-  @@map("wiki_page_versions")
-}
-
-// ============================================================
 // CONTENT & CREATIVE
 // ============================================================
 
@@ -859,7 +805,6 @@ model Comment {
   authorId   String
   taskId     String?
   ticketId   String?
-  wikiPageId String?
   content    String   @db.Text
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -867,11 +812,9 @@ model Comment {
   author   User      @relation(fields: [authorId], references: [id])
   task     Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   ticket   Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  wikiPage WikiPage? @relation("WikiPageComments", fields: [wikiPageId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([ticketId])
-  @@index([wikiPageId])
   @@index([authorId])
   @@index([createdAt])
   @@map("comments")
@@ -1275,240 +1218,3 @@ model WizardSubmission {
   @@map("wizard_submissions")
 }
 
-// ============================================================
-// TRAINING & FORMAZIONE
-// ============================================================
-
-enum TrainingType {
-  INTERNAL
-  USER
-}
-
-enum TrainingDifficulty {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-}
-
-enum ProtectionLevel {
-  NONE
-  WATERMARK
-  WATERMARK_DETECT
-}
-
-enum LessonContentType {
-  TEXT
-  VIDEO
-  QUIZ
-  MIXED
-}
-
-enum QuizType {
-  SINGLE_CHOICE
-  MULTIPLE_CHOICE
-  TRUE_FALSE
-}
-
-enum EnrollmentStatus {
-  IN_PROGRESS
-  COMPLETED
-}
-
-model TrainingCategory {
-  id          String       @id @default(uuid())
-  name        String
-  slug        String       @unique
-  description String?
-  icon        String?
-  type        TrainingType @default(USER)
-  sortOrder   Int          @default(0)
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  courses TrainingCourse[]
-
-  @@index([type])
-  @@index([sortOrder])
-  @@map("training_categories")
-}
-
-model TrainingCourse {
-  id              String             @id @default(uuid())
-  categoryId      String
-  title           String
-  slug            String             @unique
-  description     String?            @db.Text
-  coverUrl        String?
-  difficulty      TrainingDifficulty @default(BEGINNER)
-  protectionLevel ProtectionLevel    @default(NONE)
-  allowedRoles    Role[]             @default([])
-  estimatedMins   Int?
-  isPublished     Boolean            @default(false)
-  sortOrder       Int                @default(0)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-
-  category    TrainingCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  lessons     TrainingLesson[]
-  enrollments TrainingEnrollment[]
-
-  @@index([categoryId])
-  @@index([slug])
-  @@index([isPublished])
-  @@index([difficulty])
-  @@map("training_courses")
-}
-
-model TrainingLesson {
-  id          String            @id @default(uuid())
-  courseId     String
-  title       String
-  slug        String
-  content     Json?
-  contentText String?           @db.Text
-  contentType LessonContentType @default(TEXT)
-  videoUrl    String?
-  videoDurationSecs Int?
-  sortOrder   Int               @default(0)
-  isPublished Boolean           @default(false)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-
-  course      TrainingCourse       @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  attachments TrainingAttachment[]
-  quizzes     TrainingQuiz[]
-  progress    TrainingProgress[]
-
-  @@unique([courseId, slug])
-  @@index([courseId])
-  @@index([sortOrder])
-  @@map("training_lessons")
-}
-
-model TrainingAttachment {
-  id        String   @id @default(uuid())
-  lessonId  String
-  fileName  String
-  fileUrl   String
-  fileSize  Int
-  mimeType  String
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-
-  lesson TrainingLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-
-  @@index([lessonId])
-  @@map("training_attachments")
-}
-
-model TrainingQuiz {
-  id            String   @id @default(uuid())
-  lessonId      String
-  question      String   @db.Text
-  type          QuizType @default(SINGLE_CHOICE)
-  options       Json
-  correctAnswer Json
-  explanation   String?  @db.Text
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  lesson  TrainingLesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  answers TrainingQuizAnswer[]
-
-  @@index([lessonId])
-  @@map("training_quizzes")
-}
-
-model TrainingEnrollment {
-  id          String           @id @default(uuid())
-  userId      String
-  courseId     String
-  status      EnrollmentStatus @default(IN_PROGRESS)
-  progress    Float            @default(0)
-  completedAt DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-
-  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course TrainingCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, courseId])
-  @@index([userId])
-  @@index([courseId])
-  @@index([status])
-  @@map("training_enrollments")
-}
-
-model TrainingProgress {
-  id               String   @id @default(uuid())
-  userId           String
-  lessonId         String
-  timeSpentSecs    Int      @default(0)
-  videoProgressPct Float    @default(0)
-  isCompleted      Boolean  @default(false)
-  completedAt      DateTime?
-  lastAccessedAt   DateTime @default(now())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson TrainingLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, lessonId])
-  @@index([userId])
-  @@index([lessonId])
-  @@map("training_progress")
-}
-
-model TrainingQuizAnswer {
-  id        String   @id @default(uuid())
-  userId    String
-  quizId    String
-  answer    Json
-  isCorrect Boolean
-  score     Float    @default(0)
-  attempt   Int      @default(1)
-  createdAt DateTime @default(now())
-
-  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quiz TrainingQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([quizId])
-  @@index([userId, quizId])
-  @@map("training_quiz_answers")
-}
-
-model TrainingCertificate {
-  id          String   @id @default(uuid())
-  userId      String
-  courseId     String
-  certificateUrl String?
-  issuedAt    DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, courseId])
-  @@index([userId])
-  @@map("training_certificates")
-}
-
-model TrainingSecurityLog {
-  id        String   @id @default(uuid())
-  userId    String
-  lessonId  String?
-  courseId   String?
-  event     String
-  metadata  Json?
-  ipAddress String?
-  userAgent String?  @db.Text
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([lessonId])
-  @@index([event])
-  @@index([createdAt])
-  @@map("training_security_logs")
-}

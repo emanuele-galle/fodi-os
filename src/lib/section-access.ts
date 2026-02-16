@@ -8,12 +8,10 @@ import {
   FolderKanban,
   CalendarDays,
   Euro,
-  BookOpen,
   Film,
   LifeBuoy,
   UsersRound,
   Settings,
-  GraduationCap,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────
@@ -27,10 +25,8 @@ export type Section =
   | 'projects'
   | 'calendar'
   | 'erp'
-  | 'kb'
   | 'content'
   | 'support'
-  | 'training'
   | 'team'
   | 'settings'
 
@@ -52,10 +48,8 @@ export const SECTIONS: Section[] = [
   'projects',
   'calendar',
   'erp',
-  'kb',
   'content',
   'support',
-  'training',
   'team',
   'settings',
 ]
@@ -69,10 +63,8 @@ export const SECTION_LABELS: Record<Section, string> = {
   projects: 'Progetti',
   calendar: 'Calendario',
   erp: 'Contabilità',
-  kb: 'Knowledge Base',
   content: 'Contenuti',
   support: 'Supporto',
-  training: 'Formazione',
   team: 'Team',
   settings: 'Impostazioni',
 }
@@ -86,10 +78,8 @@ export const SECTION_ICONS: Record<Section, typeof LayoutDashboard> = {
   projects: FolderKanban,
   calendar: CalendarDays,
   erp: Euro,
-  kb: BookOpen,
   content: Film,
   support: LifeBuoy,
-  training: GraduationCap,
   team: UsersRound,
   settings: Settings,
 }
@@ -103,10 +93,8 @@ export const HREF_TO_SECTION: Record<string, Section> = {
   '/projects': 'projects',
   '/calendar': 'calendar',
   '/erp': 'erp',
-  '/kb': 'kb',
   '/content': 'content',
   '/support': 'support',
-  '/training': 'training',
   '/team': 'team',
   '/settings': 'settings',
 }
@@ -115,12 +103,12 @@ export const HREF_TO_SECTION: Record<string, Section> = {
 const ROLE_SECTION_VIEW: Record<Role, Section[]> = {
   ADMIN: SECTIONS,
   MANAGER: SECTIONS,
-  SALES: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'erp', 'kb', 'support', 'training', 'team', 'settings'],
-  PM: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'kb', 'support', 'training', 'team', 'settings'],
-  DEVELOPER: ['dashboard', 'tasks', 'chat', 'internal', 'projects', 'calendar', 'kb', 'support', 'training', 'team', 'settings'],
-  CONTENT: ['dashboard', 'tasks', 'chat', 'internal', 'projects', 'calendar', 'kb', 'content', 'training', 'team', 'settings'],
-  SUPPORT: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'calendar', 'kb', 'support', 'training', 'team', 'settings'],
-  CLIENT: ['dashboard', 'tasks', 'chat', 'calendar', 'training', 'team', 'settings'],
+  SALES: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'erp', 'support', 'team', 'settings'],
+  PM: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'support', 'team', 'settings'],
+  DEVELOPER: ['dashboard', 'tasks', 'chat', 'internal', 'projects', 'calendar', 'support', 'team', 'settings'],
+  CONTENT: ['dashboard', 'tasks', 'chat', 'internal', 'projects', 'calendar', 'content', 'team', 'settings'],
+  SUPPORT: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'calendar', 'support', 'team', 'settings'],
+  CLIENT: ['dashboard', 'tasks', 'chat', 'calendar', 'team', 'settings'],
 }
 
 // Roles that have edit by default (ADMIN, MANAGER always edit; others view-only on some sections)
