@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Modal } from '@/components/ui/Modal'
 
 interface WizardTemplate {
   id: string
@@ -43,6 +44,8 @@ export default function WizardsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [deleteConfirm, setDeleteConfirm] = useState<WizardTemplate | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
   const limit = 20
 
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -73,6 +76,37 @@ export default function WizardsPage() {
   useEffect(() => { setPage(1) }, [search, statusFilter])
 
   const totalPages = Math.ceil(total / limit)
+
+  async function handleDelete() {
+    if (!deleteConfirm) return
+    setActionLoading(true)
+    try {
+      const res = await fetch(`/api/wizards/${deleteConfirm.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setDeleteConfirm(null)
+        fetchWizards()
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  async function handleDuplicate(id: string) {
+    setActionLoading(true)
+    try {
+      const res = await fetch(`/api/wizards/${id}/duplicate`, { method: 'POST' })
+      if (res.ok) {
+        const data = await res.json()
+        router.push(`/erp/wizards/${data.id}`)
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setActionLoading(false)
+    }
+  }
 
   return (
     <div className="animate-fade-in">
@@ -162,8 +196,25 @@ export default function WizardsPage() {
                 </div>
                 {w.description && <p className="text-xs text-muted truncate mb-2">{w.description}</p>}
                 <div className="flex items-center justify-between text-xs text-muted">
-                  <span>{w._count.steps} step</span>
-                  <span>{w._count.submissions} compilazioni</span>
+                  <span>{w._count.steps} step &middot; {w._count.submissions} compilazioni</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDuplicate(w.id) }}
+                      className="p-1.5 rounded-md text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                      title="Duplica wizard"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    {!w.isSystem && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(w) }}
+                        className="p-1.5 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Elimina wizard"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -180,6 +231,7 @@ export default function WizardsPage() {
                   <th className="py-3 pr-4 font-medium text-center">Compilazioni</th>
                   <th className="py-3 pr-4 font-medium hidden lg:table-cell">Categoria</th>
                   <th className="py-3 font-medium hidden lg:table-cell">Creato</th>
+                  <th className="py-3 pr-3 font-medium text-right w-20">Azioni</th>
                 </tr>
               </thead>
               <tbody>
@@ -187,7 +239,7 @@ export default function WizardsPage() {
                   <tr
                     key={w.id}
                     onClick={() => router.push(`/erp/wizards/${w.id}`)}
-                    className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 cursor-pointer transition-colors"
+                    className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 cursor-pointer transition-colors group"
                   >
                     <td className="py-3 pr-4 pl-3">
                       <span className="font-medium">{w.name}</span>
@@ -204,6 +256,26 @@ export default function WizardsPage() {
                     <td className="py-3 pr-4 text-muted capitalize hidden lg:table-cell">{w.category}</td>
                     <td className="py-3 text-muted hidden lg:table-cell">
                       {new Date(w.createdAt).toLocaleDateString('it-IT')}
+                    </td>
+                    <td className="py-3 pr-3 text-right">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDuplicate(w.id) }}
+                          className="p-1.5 rounded-md text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                          title="Duplica wizard"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
+                        {!w.isSystem && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteConfirm(w) }}
+                            className="p-1.5 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            title="Elimina wizard"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -227,6 +299,23 @@ export default function WizardsPage() {
           )}
         </>
       )}
+      {/* Modal Conferma Eliminazione */}
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Elimina Wizard" size="sm">
+        <p className="text-sm text-muted mb-2">Sei sicuro di voler eliminare questo wizard?</p>
+        {deleteConfirm && (
+          <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
+            <p className="font-medium text-sm">{deleteConfirm.name}</p>
+            <p className="text-xs text-muted mt-1">
+              {deleteConfirm._count.steps} step &middot; {deleteConfirm._count.submissions} compilazioni
+            </p>
+          </div>
+        )}
+        <p className="text-xs text-destructive mb-4">Questa azione non può essere annullata. Tutte le compilazioni associate verranno eliminate.</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Annulla</Button>
+          <Button variant="destructive" onClick={handleDelete} loading={actionLoading}>Elimina</Button>
+        </div>
+      </Modal>
     </div>
   )
 }

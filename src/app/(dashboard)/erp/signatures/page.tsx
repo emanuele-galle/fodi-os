@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileSignature, Plus, Search, ChevronLeft, ChevronRight, Send, AlertCircle } from 'lucide-react'
+import { FileSignature, Plus, Search, ChevronLeft, ChevronRight, Send, AlertCircle, X, RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Modal } from '@/components/ui/Modal'
 import { SignatureStatusBadge } from '@/components/erp/SignatureStatusBadge'
 import { NewSignatureModal } from '@/components/erp/NewSignatureModal'
 
@@ -50,6 +51,8 @@ export default function SignaturesPage() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [showModal, setShowModal] = useState(false)
+  const [cancelConfirm, setCancelConfirm] = useState<SignatureRequest | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
   const limit = 20
 
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -80,6 +83,37 @@ export default function SignaturesPage() {
   useEffect(() => { setPage(1) }, [search, statusFilter])
 
   const totalPages = Math.ceil(total / limit)
+
+  async function handleCancel() {
+    if (!cancelConfirm) return
+    setActionLoading(true)
+    try {
+      const res = await fetch(`/api/signatures/${cancelConfirm.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setCancelConfirm(null)
+        fetchItems()
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  async function handleResendOtp(id: string) {
+    setActionLoading(true)
+    try {
+      await fetch(`/api/signatures/${id}/send-otp`, { method: 'POST' })
+      fetchItems()
+    } catch {
+      // silently fail
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const canCancel = (status: string) => !['SIGNED', 'CANCELLED'].includes(status)
+  const canResend = (status: string) => ['PENDING', 'OTP_SENT'].includes(status)
 
   return (
     <div className="animate-fade-in">
@@ -172,7 +206,26 @@ export default function SignaturesPage() {
                 </p>
                 <div className="flex items-center justify-between text-xs text-muted">
                   <span>Scade: {new Date(req.expiresAt).toLocaleDateString('it-IT')}</span>
-                  <span>{new Date(req.createdAt).toLocaleDateString('it-IT')}</span>
+                  <div className="flex items-center gap-1">
+                    {canResend(req.status) && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleResendOtp(req.id) }}
+                        className="p-1.5 rounded-md text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="Re-invia OTP"
+                      >
+                        <RotateCw className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {canCancel(req.status) && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setCancelConfirm(req) }}
+                        className="p-1.5 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Annulla richiesta"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -189,6 +242,7 @@ export default function SignaturesPage() {
                   <th className="py-3 pr-4 font-medium">Stato</th>
                   <th className="py-3 pr-4 font-medium hidden lg:table-cell">Scadenza</th>
                   <th className="py-3 font-medium hidden lg:table-cell">Creato</th>
+                  <th className="py-3 pr-3 font-medium text-right w-20">Azioni</th>
                 </tr>
               </thead>
               <tbody>
@@ -196,7 +250,7 @@ export default function SignaturesPage() {
                   <tr
                     key={req.id}
                     onClick={() => router.push(`/erp/signatures/${req.id}`)}
-                    className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 cursor-pointer transition-colors"
+                    className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 cursor-pointer transition-colors group"
                   >
                     <td className="py-3 pr-4 pl-3">
                       <p className="font-medium truncate max-w-[250px]">{req.documentTitle}</p>
@@ -217,6 +271,28 @@ export default function SignaturesPage() {
                     </td>
                     <td className="py-3 text-muted hidden lg:table-cell">
                       {new Date(req.createdAt).toLocaleDateString('it-IT')}
+                    </td>
+                    <td className="py-3 pr-3 text-right">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {canResend(req.status) && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleResendOtp(req.id) }}
+                            className="p-1.5 rounded-md text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                            title="Re-invia OTP"
+                          >
+                            <RotateCw className="h-4 w-4" />
+                          </button>
+                        )}
+                        {canCancel(req.status) && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setCancelConfirm(req) }}
+                            className="p-1.5 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            title="Annulla richiesta"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -246,6 +322,24 @@ export default function SignaturesPage() {
         onClose={() => setShowModal(false)}
         onCreated={() => fetchItems()}
       />
+
+      {/* Modal Conferma Annullamento */}
+      <Modal open={!!cancelConfirm} onClose={() => setCancelConfirm(null)} title="Annulla Richiesta Firma" size="sm">
+        <p className="text-sm text-muted mb-2">Sei sicuro di voler annullare questa richiesta di firma?</p>
+        {cancelConfirm && (
+          <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
+            <p className="font-medium text-sm">{cancelConfirm.documentTitle}</p>
+            <p className="text-xs text-muted mt-1">
+              {cancelConfirm.signerName} ({cancelConfirm.signerEmail})
+            </p>
+          </div>
+        )}
+        <p className="text-xs text-destructive mb-4">La richiesta verrà annullata e il firmatario non potrà più firmare.</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setCancelConfirm(null)}>Indietro</Button>
+          <Button variant="destructive" onClick={handleCancel} loading={actionLoading}>Annulla Richiesta</Button>
+        </div>
+      </Modal>
     </div>
   )
 }

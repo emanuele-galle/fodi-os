@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, CreditCard, BarChart3, ArrowRight, Landmark, RefreshCw } from 'lucide-react'
+import { FileText, CreditCard, BarChart3, ArrowRight, Landmark, RefreshCw, FileSignature, FileCode, Wand2 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -24,6 +24,9 @@ export default function ErpPage() {
     monthExpenses: 0,
     activeSubscriptions: 0,
     monthlySubCost: 0,
+    pendingSignatures: 0,
+    templateCount: 0,
+    publishedWizards: 0,
   })
 
   useEffect(() => {
@@ -31,8 +34,11 @@ export default function ErpPage() {
       fetch('/api/quotes?status=DRAFT&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
       fetch('/api/expenses?limit=100').then((r) => (r.ok ? r.json() : { items: [] })),
       fetch('/api/expenses/subscriptions?status=active&limit=100').then((r) => (r.ok ? r.json() : { items: [] })),
+      fetch('/api/signatures?status=PENDING&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
+      fetch('/api/quote-templates?limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
+      fetch('/api/wizards?status=PUBLISHED&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
     ])
-      .then(([quotesData, expensesData, subsData]) => {
+      .then(([quotesData, expensesData, subsData, sigData, templData, wizData]) => {
         const now = new Date()
         const thisMonth = expensesData.items?.filter((e: { date: string }) => {
           const d = new Date(e.date)
@@ -56,6 +62,9 @@ export default function ErpPage() {
           monthExpenses: monthTotal,
           activeSubscriptions: subs.length,
           monthlySubCost,
+          pendingSignatures: sigData.total || 0,
+          templateCount: templData.total || 0,
+          publishedWizards: wizData.total || 0,
         })
       })
       .finally(() => setLoading(false))
@@ -82,6 +91,27 @@ export default function ErpPage() {
       icon: RefreshCw,
       href: '/erp/expenses/subscriptions',
       stat: loading ? null : `${stats.activeSubscriptions} attivi · ${formatCurrency(stats.monthlySubCost)}/mese`,
+    },
+    {
+      title: 'Firme Digitali',
+      description: 'Richieste di firma documenti',
+      icon: FileSignature,
+      href: '/erp/signatures',
+      stat: loading ? null : `${stats.pendingSignatures} in attesa`,
+    },
+    {
+      title: 'Template',
+      description: 'Modelli preventivo riutilizzabili',
+      icon: FileCode,
+      href: '/erp/templates',
+      stat: loading ? null : `${stats.templateCount} template`,
+    },
+    {
+      title: 'Wizard',
+      description: 'Questionari e moduli interattivi',
+      icon: Wand2,
+      href: '/erp/wizards',
+      stat: loading ? null : `${stats.publishedWizards} pubblicati`,
     },
     {
       title: 'Report',
@@ -143,6 +173,8 @@ export default function ErpPage() {
             actions={[
               { icon: FileText, title: 'Preventivo', description: 'Crea nuovo', onClick: () => router.push('/erp/quotes/new') },
               { icon: CreditCard, title: 'Spesa', description: 'Registra', onClick: () => router.push('/erp/expenses') },
+              { icon: FileSignature, title: 'Firma', description: 'Nuova richiesta', onClick: () => router.push('/erp/signatures') },
+              { icon: Wand2, title: 'Wizard', description: 'Crea nuovo', onClick: () => router.push('/erp/wizards/new') },
               { icon: BarChart3, title: 'Report', description: 'Visualizza', onClick: () => router.push('/erp/reports') },
             ]}
           />

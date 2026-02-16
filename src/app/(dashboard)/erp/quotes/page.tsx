@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Receipt, Plus, Search, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
+import { Receipt, Plus, Search, ChevronLeft, ChevronRight, AlertCircle, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Modal } from '@/components/ui/Modal'
 import { formatCurrency } from '@/lib/utils'
 
 interface Quote {
@@ -45,6 +46,8 @@ export default function QuotesPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [deleteConfirm, setDeleteConfirm] = useState<Quote | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
   const limit = 20
 
   const fetchQuotes = useCallback(async () => {
@@ -73,6 +76,22 @@ export default function QuotesPage() {
   useEffect(() => { setPage(1) }, [search, statusFilter])
 
   const totalPages = Math.ceil(total / limit)
+
+  async function handleDelete() {
+    if (!deleteConfirm) return
+    setActionLoading(true)
+    try {
+      const res = await fetch(`/api/quotes/${deleteConfirm.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setDeleteConfirm(null)
+        fetchQuotes()
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setActionLoading(false)
+    }
+  }
 
   return (
     <div className="animate-fade-in">
@@ -166,7 +185,18 @@ export default function QuotesPage() {
                   <span className="text-muted">
                     {q.validUntil ? `Val. ${new Date(q.validUntil).toLocaleDateString('it-IT')}` : 'Nessuna scadenza'}
                   </span>
-                  <span className="font-bold text-sm">{formatCurrency(q.total)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm">{formatCurrency(q.total)}</span>
+                    {q.status === 'DRAFT' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(q) }}
+                        className="p-1.5 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Elimina bozza"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -184,6 +214,7 @@ export default function QuotesPage() {
                   <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Totale</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Valido fino a</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Creato</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider w-16">Azioni</th>
                 </tr>
               </thead>
               <tbody>
@@ -208,6 +239,17 @@ export default function QuotesPage() {
                     <td className="px-4 py-3.5 text-muted hidden lg:table-cell">
                       {new Date(q.createdAt).toLocaleDateString('it-IT')}
                     </td>
+                    <td className="px-4 py-3.5 text-right">
+                      {q.status === 'DRAFT' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteConfirm(q) }}
+                          className="p-1.5 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                          title="Elimina bozza"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -230,6 +272,23 @@ export default function QuotesPage() {
           )}
         </>
       )}
+      {/* Modal Conferma Eliminazione */}
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Elimina Preventivo" size="sm">
+        <p className="text-sm text-muted mb-2">Sei sicuro di voler eliminare questo preventivo?</p>
+        {deleteConfirm && (
+          <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
+            <p className="font-medium text-sm">{deleteConfirm.number} — {deleteConfirm.title}</p>
+            <p className="text-xs text-muted mt-1">
+              {deleteConfirm.client.companyName} &middot; {formatCurrency(deleteConfirm.total)}
+            </p>
+          </div>
+        )}
+        <p className="text-xs text-destructive mb-4">Questa azione non può essere annullata.</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Annulla</Button>
+          <Button variant="destructive" onClick={handleDelete} loading={actionLoading}>Elimina</Button>
+        </div>
+      </Modal>
     </div>
   )
 }
