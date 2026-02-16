@@ -101,35 +101,52 @@ export default async function CardPage({ params }: Props) {
     : []
 
   return (
-    <div className="max-w-md mx-auto px-5 py-10 space-y-7 animate-fade-in">
-      <CardHero
-        firstName={card.user.firstName}
-        lastName={card.user.lastName}
-        avatarUrl={card.user.avatarUrl}
-        jobTitle={card.jobTitle}
-        cardBio={card.cardBio}
-        department={card.department}
-      />
+    <div className="max-w-md mx-auto px-5 py-12">
+      {/* Hero - immediate */}
+      <div className="animate-card-entrance animate-card-entrance-1">
+        <CardHero
+          firstName={card.user.firstName}
+          lastName={card.user.lastName}
+          avatarUrl={card.user.avatarUrl}
+          jobTitle={card.jobTitle}
+          cardBio={card.cardBio}
+          department={card.department}
+        />
+      </div>
 
-      <CardActions
-        phone={card.user.phone}
-        email={card.user.email}
-        whatsappNumber={card.whatsappNumber}
-        slug={slug}
-      />
+      {/* Actions - stagger 2 */}
+      <div className="mt-8 animate-card-entrance animate-card-entrance-2">
+        <CardActions
+          phone={card.user.phone}
+          email={card.user.email}
+          whatsappNumber={card.whatsappNumber}
+          slug={slug}
+        />
+      </div>
 
-      <CardSocials
-        linkedinUrl={card.linkedinUrl}
-        instagramUrl={card.instagramUrl}
-        twitterUrl={card.twitterUrl}
-        githubUrl={card.githubUrl}
-        websiteUrl={card.websiteUrl}
-      />
+      {/* Socials - stagger 3 */}
+      <div className="mt-6 animate-card-entrance animate-card-entrance-3">
+        <CardSocials
+          linkedinUrl={card.linkedinUrl}
+          instagramUrl={card.instagramUrl}
+          twitterUrl={card.twitterUrl}
+          githubUrl={card.githubUrl}
+          websiteUrl={card.websiteUrl}
+        />
+      </div>
 
-      {company && <CardCompany company={company} />}
+      {/* Company - stagger 4 */}
+      {company && (
+        <div className="mt-6 animate-card-entrance animate-card-entrance-4">
+          <CardCompany company={company} />
+        </div>
+      )}
 
+      {/* Wizards - stagger 5 */}
       {card.showWizards && wizards.length > 0 && (
-        <CardWizardLinks wizards={wizards} cardSlug={slug} />
+        <div className="mt-6 animate-card-entrance animate-card-entrance-5">
+          <CardWizardLinks wizards={wizards} cardSlug={slug} />
+        </div>
       )}
 
       <CardViewTracker slug={slug} />

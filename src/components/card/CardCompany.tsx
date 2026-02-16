@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { Building2, ExternalLink } from 'lucide-react'
+import { Building2, ArrowUpRight } from 'lucide-react'
 
 type CardCompanyProps = {
   company: {
@@ -14,14 +14,14 @@ type CardCompanyProps = {
 export default function CardCompany({ company }: CardCompanyProps) {
   if (!company) return null
 
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-gray-200/60 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-sm p-5">
-      {/* Gradient accent line */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500" />
+  const content = (
+    <div className="relative overflow-hidden rounded-2xl border border-gray-200/50 dark:border-white/[0.06] bg-white/80 dark:bg-white/[0.04] backdrop-blur-sm p-4">
+      {/* Top accent */}
+      <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-purple-500/40 to-transparent" />
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3.5">
         {company.logoUrl ? (
-          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-white dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-white dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700/50">
             <Image
               src={company.logoUrl}
               alt={company.ragioneSociale}
@@ -30,28 +30,41 @@ export default function CardCompany({ company }: CardCompanyProps) {
             />
           </div>
         ) : (
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-500/20 dark:to-indigo-500/20 flex items-center justify-center flex-shrink-0">
-            <Building2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <div className="w-10 h-10 rounded-xl bg-purple-500/8 dark:bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+            <Building2 className="w-4.5 h-4.5 text-purple-500" />
           </div>
         )}
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm text-gray-900 dark:text-white">
+          <h3 className="font-semibold text-[13px] text-gray-900 dark:text-white">
             {company.ragioneSociale}
           </h3>
           {company.siteUrl && (
-            <a
-              href={company.siteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors inline-flex items-center gap-1 mt-0.5"
-            >
-              {company.siteUrl.replace(/^https?:\/\//, '')}
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
+            <span className="text-[11px] text-gray-400 dark:text-gray-500">
+              {company.siteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+            </span>
           )}
         </div>
+
+        {company.siteUrl && (
+          <ArrowUpRight className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+        )}
       </div>
     </div>
   )
+
+  if (company.siteUrl) {
+    return (
+      <a
+        href={company.siteUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block hover:scale-[1.01] transition-transform duration-200"
+      >
+        {content}
+      </a>
+    )
+  }
+
+  return content
 }

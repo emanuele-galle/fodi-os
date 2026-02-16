@@ -47,32 +47,32 @@ export default function CardActions({
       href: `tel:${phone}`,
       icon: Phone,
       label: 'Chiama',
-      gradient: 'from-emerald-500 to-green-600',
-      shadow: 'shadow-emerald-500/25',
+      iconBg: 'bg-emerald-500',
+      shadow: 'shadow-emerald-500/20',
       external: false,
     }] : []),
     ...(email ? [{
       href: `mailto:${email}`,
       icon: Mail,
       label: 'Email',
-      gradient: 'from-blue-500 to-indigo-600',
-      shadow: 'shadow-blue-500/25',
+      iconBg: 'bg-blue-500',
+      shadow: 'shadow-blue-500/20',
       external: false,
     }] : []),
     ...(whatsappNumber ? [{
       href: `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`,
       icon: MessageCircle,
       label: 'WhatsApp',
-      gradient: 'from-green-500 to-emerald-600',
-      shadow: 'shadow-green-500/25',
+      iconBg: 'bg-green-500',
+      shadow: 'shadow-green-500/20',
       external: true,
     }] : []),
   ]
 
   return (
     <div className="space-y-3">
-      {/* Contact buttons */}
-      <div className={`grid gap-2.5 ${actions.length >= 3 ? 'grid-cols-3' : actions.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+      {/* Contact action grid */}
+      <div className={`grid gap-2 ${actions.length >= 3 ? 'grid-cols-3' : actions.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {actions.map((action, index) => {
           const Icon = action.icon
           return (
@@ -81,12 +81,12 @@ export default function CardActions({
               href={action.href}
               target={action.external ? '_blank' : undefined}
               rel={action.external ? 'noopener noreferrer' : undefined}
-              className="group flex flex-col items-center gap-2 py-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 backdrop-blur-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
+              className="group flex flex-col items-center gap-2.5 py-4 rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-gray-200/50 dark:border-white/[0.06] backdrop-blur-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.03] active:scale-[0.97]"
             >
-              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow-lg ${action.shadow} group-hover:shadow-xl transition-shadow`}>
-                <Icon className="w-5 h-5 text-white" strokeWidth={2.2} />
+              <div className={`w-11 h-11 rounded-2xl ${action.iconBg} flex items-center justify-center shadow-lg ${action.shadow} group-hover:shadow-xl transition-shadow duration-200`}>
+                <Icon className="w-5 h-5 text-white" strokeWidth={2} />
               </div>
-              <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">{action.label}</span>
+              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 tracking-wide">{action.label}</span>
             </a>
           )
         })}
@@ -96,11 +96,11 @@ export default function CardActions({
       <button
         onClick={handleSaveContact}
         disabled={downloading}
-        className="relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-semibold text-sm shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/35 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-semibold text-[13px] shadow-lg shadow-purple-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {/* Shine effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700" />
-        <UserPlus className="w-[18px] h-[18px] relative" strokeWidth={2.2} />
+        {/* Animated shine */}
+        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+        <UserPlus className="w-[18px] h-[18px] relative" strokeWidth={2} />
         <span className="relative">{downloading ? 'Download in corso...' : 'Salva Contatto'}</span>
       </button>
     </div>
