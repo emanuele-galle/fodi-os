@@ -99,13 +99,21 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: 'Abbonamento non trovato' }, { status: 404 })
     }
 
-    await prisma.expense.update({
-      where: { id },
-      data: { status: 'cancelled' },
-    })
+    const { searchParams } = request.nextUrl
+    const permanent = searchParams.get('permanent') === 'true'
+
+    if (permanent) {
+      await prisma.expense.deleteMany({ where: { parentExpenseId: id } })
+      await prisma.expense.delete({ where: { id } })
+    } else {
+      await prisma.expense.update({
+        where: { id },
+        data: { status: 'cancelled' },
+      })
+    }
 
     const userId = request.headers.get('x-user-id')!
-    logActivity({ userId, action: 'DELETE', entityType: 'SUBSCRIPTION', entityId: id, metadata: { softDelete: true } })
+    logActivity({ userId, action: 'DELETE', entityType: 'SUBSCRIPTION', entityId: id, metadata: { permanent: permanent ? 'true' : 'false' } })
 
     return NextResponse.json({ success: true })
   } catch (e) {

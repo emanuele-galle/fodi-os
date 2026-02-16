@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, Plus, AlertCircle, Pause, Play, X, Pencil } from 'lucide-react'
+import { RefreshCw, Plus, AlertCircle, Pause, Play, X, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -69,6 +69,7 @@ export default function SubscriptionsPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editItem, setEditItem] = useState<Subscription | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<Subscription | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -171,6 +172,22 @@ export default function SubscriptionsPage() {
     setEditItem(sub)
     setFormError(null)
     setModalOpen(true)
+  }
+
+  async function handleDelete() {
+    if (!deleteConfirm) return
+    setSubmitting(true)
+    try {
+      const res = await fetch(`/api/expenses/subscriptions/${deleteConfirm.id}?permanent=true`, { method: 'DELETE' })
+      if (res.ok) {
+        setDeleteConfirm(null)
+        fetchData()
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function openCreate() {
@@ -301,8 +318,9 @@ export default function SubscriptionsPage() {
                       <button onClick={() => updateStatus(sub.id, 'active')} className="p-1 rounded hover:bg-secondary/20"><Play className="h-3.5 w-3.5 text-green-500" /></button>
                     )}
                     {sub.status !== 'cancelled' && (
-                      <button onClick={() => updateStatus(sub.id, 'cancelled')} className="p-1 rounded hover:bg-secondary/20"><X className="h-3.5 w-3.5 text-destructive" /></button>
+                      <button onClick={() => updateStatus(sub.id, 'cancelled')} className="p-1 rounded hover:bg-secondary/20"><X className="h-3.5 w-3.5 text-amber-600" /></button>
                     )}
+                    <button onClick={() => setDeleteConfirm(sub)} className="p-1 rounded hover:bg-secondary/20"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
                   </div>
                 </div>
               </div>
@@ -353,8 +371,9 @@ export default function SubscriptionsPage() {
                           <button onClick={() => updateStatus(sub.id, 'active')} className="p-1.5 rounded hover:bg-secondary/20" title="Riattiva"><Play className="h-3.5 w-3.5 text-green-500" /></button>
                         )}
                         {sub.status !== 'cancelled' && (
-                          <button onClick={() => updateStatus(sub.id, 'cancelled')} className="p-1.5 rounded hover:bg-secondary/20" title="Cancella"><X className="h-3.5 w-3.5 text-destructive" /></button>
+                          <button onClick={() => updateStatus(sub.id, 'cancelled')} className="p-1.5 rounded hover:bg-secondary/20" title="Disdici"><X className="h-3.5 w-3.5 text-amber-600" /></button>
                         )}
+                        <button onClick={() => setDeleteConfirm(sub)} className="p-1.5 rounded hover:bg-secondary/20" title="Elimina"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
                       </div>
                     </td>
                   </tr>
@@ -388,6 +407,24 @@ export default function SubscriptionsPage() {
             <Button type="submit" loading={submitting}>{editItem ? 'Salva' : 'Crea Abbonamento'}</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Conferma Eliminazione */}
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Elimina Abbonamento" size="sm">
+        <p className="text-sm text-muted mb-2">Sei sicuro di voler eliminare definitivamente questo abbonamento?</p>
+        {deleteConfirm && (
+          <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
+            <p className="font-medium text-sm">{deleteConfirm.provider || deleteConfirm.description}</p>
+            <p className="text-xs text-muted mt-1">
+              {CATEGORY_LABEL[deleteConfirm.category] || deleteConfirm.category} &middot; {formatCurrency(deleteConfirm.amount)} &middot; {FREQUENCY_LABEL[deleteConfirm.frequency] || deleteConfirm.frequency}
+            </p>
+          </div>
+        )}
+        <p className="text-xs text-destructive mb-4">Questa azione non può essere annullata. L&apos;abbonamento e tutto lo storico verranno eliminati.</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Annulla</Button>
+          <Button variant="destructive" onClick={handleDelete} loading={submitting}>Elimina</Button>
+        </div>
       </Modal>
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Receipt, Plus, AlertCircle, RefreshCw } from 'lucide-react'
+import { Receipt, Plus, AlertCircle, RefreshCw, Pencil, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -48,6 +48,8 @@ export default function ExpensesPage() {
   const [toDate, setToDate] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [editItem, setEditItem] = useState<Expense | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<Expense | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
@@ -78,7 +80,7 @@ export default function ExpensesPage() {
 
   const totalAmount = expenses.reduce((s, e) => s + parseFloat(e.amount), 0)
 
-  async function handleAddExpense(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
     setFormError(null)
@@ -88,24 +90,56 @@ export default function ExpensesPage() {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
     })
     if (body.amount) body.amount = parseFloat(body.amount as string)
+
     try {
-      const res = await fetch('/api/expenses', {
-        method: 'POST',
+      const url = editItem ? `/api/expenses/${editItem.id}` : '/api/expenses'
+      const method = editItem ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
       if (res.ok) {
         setFormError(null)
         setModalOpen(false)
+        setEditItem(null)
         fetchExpenses()
       } else {
-        setFormError('Errore nella creazione della spesa')
+        setFormError(editItem ? 'Errore nella modifica della spesa' : 'Errore nella creazione della spesa')
       }
     } catch {
       setFormError('Errore di rete')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  async function handleDelete() {
+    if (!deleteConfirm) return
+    setSubmitting(true)
+    try {
+      const res = await fetch(`/api/expenses/${deleteConfirm.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setDeleteConfirm(null)
+        fetchExpenses()
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function openEdit(exp: Expense) {
+    setEditItem(exp)
+    setFormError(null)
+    setModalOpen(true)
+  }
+
+  function openCreate() {
+    setEditItem(null)
+    setFormError(null)
+    setModalOpen(true)
   }
 
   return (
@@ -121,12 +155,12 @@ export default function ExpensesPage() {
           </div>
         </div>
         <div className="hidden sm:block flex-shrink-0">
-          <Button size="sm" onClick={() => setModalOpen(true)}>
+          <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4" />
             Nuova Spesa
           </Button>
         </div>
-        <Button onClick={() => setModalOpen(true)} className="sm:hidden flex-shrink-0">
+        <Button onClick={openCreate} className="sm:hidden flex-shrink-0">
           <Plus className="h-4 w-4 mr-1" />
           Nuova
         </Button>
@@ -196,7 +230,7 @@ export default function ExpensesPage() {
           title="Nessuna spesa trovata"
           description="Registra le spese per tenere traccia dei costi."
           action={
-            <Button onClick={() => setModalOpen(true)}>
+            <Button onClick={openCreate}>
               <Plus className="h-4 w-4 mr-2" />
               Nuova Spesa
             </Button>
@@ -218,9 +252,15 @@ export default function ExpensesPage() {
                   <span className="font-bold text-sm">{formatCurrency(exp.amount)}</span>
                 </div>
                 <p className="text-sm truncate">{exp.description}</p>
-                <p className="text-xs text-muted mt-1">
-                  {new Date(exp.date).toLocaleDateString('it-IT')}
-                </p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted">
+                    {new Date(exp.date).toLocaleDateString('it-IT')}
+                  </p>
+                  <div className="flex gap-1">
+                    <button onClick={() => openEdit(exp)} className="p-1 rounded hover:bg-secondary/20"><Pencil className="h-3.5 w-3.5 text-muted" /></button>
+                    <button onClick={() => setDeleteConfirm(exp)} className="p-1 rounded hover:bg-secondary/20"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -234,6 +274,7 @@ export default function ExpensesPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Categoria</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Descrizione</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Importo</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Azioni</th>
                 </tr>
               </thead>
               <tbody>
@@ -247,6 +288,12 @@ export default function ExpensesPage() {
                     </td>
                     <td className="px-4 py-3.5">{exp.description}</td>
                     <td className="px-4 py-3.5 font-medium text-right tabular-nums">{formatCurrency(exp.amount)}</td>
+                    <td className="px-4 py-3.5 text-right">
+                      <div className="flex justify-end gap-1">
+                        <button onClick={() => openEdit(exp)} className="p-1.5 rounded hover:bg-secondary/20" title="Modifica"><Pencil className="h-3.5 w-3.5 text-muted" /></button>
+                        <button onClick={() => setDeleteConfirm(exp)} className="p-1.5 rounded hover:bg-secondary/20" title="Elimina"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -255,23 +302,42 @@ export default function ExpensesPage() {
         </>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuova Spesa" size="md">
-        <form onSubmit={handleAddExpense} className="space-y-4">
-          <Select name="category" label="Categoria *" options={FORM_CATEGORIES} />
-          <Input name="description" label="Descrizione *" required />
+      {/* Modal Crea/Modifica */}
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditItem(null) }} title={editItem ? 'Modifica Spesa' : 'Nuova Spesa'} size="md">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Select name="category" label="Categoria *" options={FORM_CATEGORIES} defaultValue={editItem?.category || ''} />
+          <Input name="description" label="Descrizione *" required defaultValue={editItem?.description || ''} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input name="amount" label="Importo (EUR) *" type="number" step="0.01" min="0" required />
-            <Input name="date" label="Data *" type="date" required />
+            <Input name="amount" label="Importo (EUR) *" type="number" step="0.01" min="0" required defaultValue={editItem?.amount || ''} />
+            <Input name="date" label="Data *" type="date" required defaultValue={editItem?.date?.split('T')[0] || ''} />
           </div>
-          <Input name="receipt" label="URL Ricevuta" placeholder="https://..." />
+          <Input name="receipt" label="URL Ricevuta" placeholder="https://..." defaultValue={editItem?.receipt || ''} />
           {formError && (
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</div>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
-            <Button type="submit" loading={submitting}>Aggiungi Spesa</Button>
+            <Button type="button" variant="outline" onClick={() => { setModalOpen(false); setEditItem(null) }}>Annulla</Button>
+            <Button type="submit" loading={submitting}>{editItem ? 'Salva Modifiche' : 'Aggiungi Spesa'}</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Conferma Eliminazione */}
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Elimina Spesa" size="sm">
+        <p className="text-sm text-muted mb-2">Sei sicuro di voler eliminare questa spesa?</p>
+        {deleteConfirm && (
+          <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
+            <p className="font-medium text-sm">{deleteConfirm.description}</p>
+            <p className="text-xs text-muted mt-1">
+              {CATEGORY_LABEL[deleteConfirm.category] || deleteConfirm.category} &middot; {formatCurrency(deleteConfirm.amount)} &middot; {new Date(deleteConfirm.date).toLocaleDateString('it-IT')}
+            </p>
+          </div>
+        )}
+        <p className="text-xs text-destructive mb-4">Questa azione non può essere annullata.</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Annulla</Button>
+          <Button variant="destructive" onClick={handleDelete} loading={submitting}>Elimina</Button>
+        </div>
       </Modal>
     </div>
   )
