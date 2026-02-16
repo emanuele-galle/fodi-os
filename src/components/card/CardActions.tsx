@@ -1,6 +1,6 @@
 'use client'
 
-import { Phone, Mail, MessageCircle, Download } from 'lucide-react'
+import { Phone, Mail, MessageCircle, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 
 type CardActionsProps = {
@@ -42,41 +42,38 @@ export default function CardActions({
     }
   }
 
-  const linkActions = [
+  const actions = [
     ...(phone ? [{
       href: `tel:${phone}`,
       icon: Phone,
       label: 'Chiama',
-      color: 'from-emerald-500 to-green-600',
-      bgLight: 'bg-emerald-50 dark:bg-emerald-500/10',
-      textColor: 'text-emerald-600 dark:text-emerald-400',
+      gradient: 'from-emerald-500 to-green-600',
+      shadow: 'shadow-emerald-500/25',
       external: false,
     }] : []),
     ...(email ? [{
       href: `mailto:${email}`,
       icon: Mail,
       label: 'Email',
-      color: 'from-blue-500 to-indigo-600',
-      bgLight: 'bg-blue-50 dark:bg-blue-500/10',
-      textColor: 'text-blue-600 dark:text-blue-400',
+      gradient: 'from-blue-500 to-indigo-600',
+      shadow: 'shadow-blue-500/25',
       external: false,
     }] : []),
     ...(whatsappNumber ? [{
       href: `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`,
       icon: MessageCircle,
       label: 'WhatsApp',
-      color: 'from-green-500 to-emerald-600',
-      bgLight: 'bg-green-50 dark:bg-green-500/10',
-      textColor: 'text-green-600 dark:text-green-400',
+      gradient: 'from-green-500 to-emerald-600',
+      shadow: 'shadow-green-500/25',
       external: true,
     }] : []),
   ]
 
   return (
     <div className="space-y-3">
-      {/* Contact buttons row */}
-      <div className={`grid gap-3 ${linkActions.length >= 3 ? 'grid-cols-3' : linkActions.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        {linkActions.map((action, index) => {
+      {/* Contact buttons */}
+      <div className={`grid gap-2.5 ${actions.length >= 3 ? 'grid-cols-3' : actions.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        {actions.map((action, index) => {
           const Icon = action.icon
           return (
             <a
@@ -84,25 +81,27 @@ export default function CardActions({
               href={action.href}
               target={action.external ? '_blank' : undefined}
               rel={action.external ? 'noopener noreferrer' : undefined}
-              className={`flex flex-col items-center justify-center gap-2 py-4 px-3 rounded-2xl ${action.bgLight} border border-transparent hover:border-current/10 transition-all hover:scale-[1.02] active:scale-[0.98]`}
+              className="group flex flex-col items-center gap-2 py-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 backdrop-blur-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
             >
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-lg shadow-current/20`}>
-                <Icon className="w-5 h-5 text-white" />
+              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow-lg ${action.shadow} group-hover:shadow-xl transition-shadow`}>
+                <Icon className="w-5 h-5 text-white" strokeWidth={2.2} />
               </div>
-              <span className={`text-xs font-semibold ${action.textColor}`}>{action.label}</span>
+              <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">{action.label}</span>
             </a>
           )
         })}
       </div>
 
-      {/* Save contact - full width CTA */}
+      {/* Save contact CTA */}
       <button
         onClick={handleSaveContact}
         disabled={downloading}
-        className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold text-sm shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-semibold text-sm shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/35 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <Download className="w-4.5 h-4.5" />
-        {downloading ? 'Download in corso...' : 'Salva Contatto'}
+        {/* Shine effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700" />
+        <UserPlus className="w-[18px] h-[18px] relative" strokeWidth={2.2} />
+        <span className="relative">{downloading ? 'Download in corso...' : 'Salva Contatto'}</span>
       </button>
     </div>
   )
