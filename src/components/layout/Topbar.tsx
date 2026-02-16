@@ -17,6 +17,7 @@ interface Notification {
   link: string | null
   isRead: boolean
   createdAt: string
+  metadata?: Record<string, unknown> | null
 }
 
 const NOTIF_ICONS: Record<string, typeof Bell> = {
@@ -236,6 +237,25 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                             {notif.message && (
                               <p className="text-xs text-muted mt-0.5 line-clamp-2">{notif.message}</p>
                             )}
+                            {notif.metadata && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {!!notif.metadata.projectName && (
+                                  <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                    {String(notif.metadata.projectName)}
+                                  </span>
+                                )}
+                                {!!notif.metadata.clientName && (
+                                  <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded">
+                                    {String(notif.metadata.clientName)}
+                                  </span>
+                                )}
+                                {!!notif.metadata.ticketNumber && (
+                                  <span className="text-[10px] bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded">
+                                    #{String(notif.metadata.ticketNumber)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             <p className="text-xs text-muted mt-1">
                               {formatDistanceToNow(new Date(notif.createdAt), { locale: it, addSuffix: true })}
                             </p>
@@ -246,16 +266,22 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                   })
                 )}
               </div>
-              {unreadCount > 0 && (
-                <div className="px-4 py-2 border-t border-border/30">
+              <div className="px-4 py-2 border-t border-border/30 flex items-center justify-between">
+                {unreadCount > 0 ? (
                   <button
                     onClick={markAllAsRead}
-                    className="text-xs text-primary hover:underline w-full text-center"
+                    className="text-xs text-primary hover:underline"
                   >
                     Segna tutte come lette
                   </button>
-                </div>
-              )}
+                ) : <span />}
+                <button
+                  onClick={() => { setShowNotifications(false); router.push('/team/activity') }}
+                  className="text-xs text-muted hover:text-foreground transition-colors"
+                >
+                  Vedi tutte →
+                </button>
+              </div>
             </div>
           )}
         </div>

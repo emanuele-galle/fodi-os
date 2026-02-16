@@ -93,6 +93,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           : `Preventivo ${quote.number} rifiutato`,
         message: `Il cliente ${client.companyName} ha ${action === 'approve' ? 'approvato' : 'rifiutato'} il preventivo ${quote.number}.`,
         link: `/erp/quotes/${quoteId}`,
+        metadata: { clientName: client.companyName, quoteNumber: quote.number, total: quote.total?.toString() },
       })
     }
 

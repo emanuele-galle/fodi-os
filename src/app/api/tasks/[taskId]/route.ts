@@ -112,11 +112,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, folderId, milestoneId, dueDate, estimatedHours, sortOrder, tags } = parsed.data
 
     // Fetch previous state for auto-logging on status change
-    let previousTask: { status: string; title: string; projectId: string | null; timerStartedAt: Date | null; timerUserId: string | null } | null = null
+    let previousTask: { status: string; title: string; projectId: string | null; timerStartedAt: Date | null; timerUserId: string | null; project: { name: string } | null; priority: string } | null = null
     if (status !== undefined) {
       previousTask = await prisma.task.findUnique({
         where: { id: taskId },
-        select: { status: true, title: true, projectId: true, timerStartedAt: true, timerUserId: true },
+        select: { status: true, title: true, projectId: true, timerStartedAt: true, timerUserId: true, project: { select: { name: true } }, priority: true },
       })
     }
 
@@ -166,6 +166,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const actorName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Qualcuno'
     const taskLink = `/tasks?taskId=${taskId}`
 
+    // Fetch project name for metadata (use previousTask if available, otherwise fetch)
+    let taskProjectName: string | undefined
+    if (previousTask?.project?.name) {
+      taskProjectName = previousTask.project.name
+    } else if (task.projectId) {
+      const proj = await prisma.project.findUnique({ where: { id: task.projectId as string }, select: { name: true } })
+      taskProjectName = proj?.name ?? undefined
+    }
+    const notifMetadata = { projectName: taskProjectName, taskStatus: status || (previousTask?.status ?? undefined), priority: previousTask?.priority ?? task.priority }
+
     // Status change notification
     if (status !== undefined && previousTask && status !== previousTask.status) {
       const statusLabels: Record<string, string> = {
@@ -200,6 +210,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             title: 'Task completata',
             message: `${actorName} ha completato "${task.title}"`,
             link: taskLink,
+            metadata: notifMetadata,
           }
         )
 
@@ -213,6 +224,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               title: 'Task completata',
               message: `${actorName} ha completato "${task.title}"`,
               link: taskLink,
+              metadata: notifMetadata,
             }
           )
         }
@@ -229,6 +241,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               title: 'Stato task cambiato',
               message: `${actorName} ha completato "${task.title}"`,
               link: taskLink,
+              metadata: notifMetadata,
             }
           )
         }
@@ -241,6 +254,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             title: 'Stato task cambiato',
             message: `${actorName} ha cambiato lo stato di "${task.title}" in "${newLabel}"`,
             link: taskLink,
+            metadata: notifMetadata,
           }
         )
       }
@@ -263,6 +277,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             title: 'Task modificata',
             message: `${actorName} ha modificato ${changes.join(', ')} di "${task.title}"`,
             link: taskLink,
+            metadata: notifMetadata,
           }
         )
       }

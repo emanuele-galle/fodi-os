@@ -6,6 +6,8 @@ export const createExpenseSchema = z.object({
   amount: z.number().min(0, 'Importo non valido'),
   date: z.string().date('Data non valida'),
   receipt: z.string().optional(),
+  clientId: z.string().uuid().optional().nullable(),
+  projectId: z.string().uuid().optional().nullable(),
 })
 
 export const updateExpenseSchema = z.object({
@@ -14,6 +16,8 @@ export const updateExpenseSchema = z.object({
   amount: z.number().min(0, 'Importo non valido').optional(),
   date: z.string().date('Data non valida').optional(),
   receipt: z.string().optional().nullable(),
+  clientId: z.string().uuid().optional().nullable(),
+  projectId: z.string().uuid().optional().nullable(),
 })
 
 export const createSubscriptionSchema = createExpenseSchema.extend({

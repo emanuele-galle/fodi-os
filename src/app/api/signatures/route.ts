@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = request.nextUrl
     const status = searchParams.get('status')
+    const clientId = searchParams.get('clientId')
     const search = searchParams.get('search') || ''
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
 
     const where = {
       ...(status && { status }),
+      ...(clientId && { signerClientId: clientId }),
       ...(search && {
         OR: [
           { documentTitle: { contains: search, mode: 'insensitive' as const } },

@@ -77,6 +77,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           },
           orderBy: { assignedAt: 'asc' },
         },
+        project: { select: { name: true } },
       },
     })
 
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           title: 'Task assegnato',
           message: `Ti è stato assegnato il task "${task.title}"`,
           link: `/tasks?taskId=${taskId}`,
+          metadata: { projectName: task.project?.name },
         }
       )
     }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, Plus, Trash2, UserPlus, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -42,6 +42,8 @@ interface QuoteTemplate {
 
 export default function NewQuotePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const preselectedClientId = searchParams.get('clientId') || ''
   const [clients, setClients] = useState<Client[]>([])
   const [templates, setTemplates] = useState<{ id: string; name: string; description: string | null; _count: { lineItems: number } }[]>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState('')
@@ -57,7 +59,7 @@ export default function NewQuotePage() {
   const [newClientError, setNewClientError] = useState('')
   const [creatingClient, setCreatingClient] = useState(false)
 
-  const [clientId, setClientId] = useState('')
+  const [clientId, setClientId] = useState(preselectedClientId)
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
   const [validUntil, setValidUntil] = useState('')

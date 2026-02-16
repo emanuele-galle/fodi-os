@@ -184,6 +184,12 @@ export async function POST(request: NextRequest) {
         skipDuplicates: true,
       })
 
+      let projectName: string | undefined
+      if (task.projectId) {
+        const proj = await prisma.project.findUnique({ where: { id: task.projectId }, select: { name: true } })
+        projectName = proj?.name ?? undefined
+      }
+
       await notifyUsers(
         Array.from(allAssigneeIds),
         userId,
@@ -192,6 +198,7 @@ export async function POST(request: NextRequest) {
           title: 'Task assegnato',
           message: `Ti è stato assegnato il task "${title}"`,
           link: `/tasks?taskId=${task.id}`,
+          metadata: { projectName, priority: priority || 'MEDIUM' },
         }
       )
     }

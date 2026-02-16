@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Activity, FileText, Filter, ChevronLeft, ChevronRight,
   Plus, Pencil, Trash2, Archive, LogIn, LogOut,
@@ -48,6 +49,23 @@ const ENTITY_TYPE_LABELS: Record<string, string> = {
   CHAT: 'Chat',
 }
 
+function getEntityLink(entityType: string, entityId: string): string | null {
+  switch (entityType) {
+    case 'CLIENT': return `/crm/${entityId}`
+    case 'PROJECT': return `/projects/${entityId}`
+    case 'TASK': return `/tasks?taskId=${entityId}`
+    case 'INVOICE':
+    case 'QUOTE': return `/erp/quotes/${entityId}`
+    case 'EXPENSE': return `/erp/expenses`
+    case 'TICKET': return `/support/${entityId}`
+    case 'WIKI': return `/internal/wiki/${entityId}`
+    case 'MEETING': return `/team/meetings/${entityId}`
+    case 'USER': return `/team`
+    case 'CHAT': return `/chat`
+    default: return null
+  }
+}
+
 export default function TeamActivityPage() {
   const [items, setItems] = useState<ActivityItem[]>([])
   const [page, setPage] = useState(1)
@@ -55,6 +73,7 @@ export default function TeamActivityPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<{ entityType: string; action: string }>({ entityType: '', action: '' })
+  const router = useRouter()
 
   const fetchActivity = useCallback(async (p: number, f: { entityType: string; action: string }) => {
     setLoading(true)
@@ -143,8 +162,13 @@ export default function TeamActivityPage() {
               {items.map((item) => {
                 const config = ACTION_CONFIG[item.action] || { label: item.action, icon: Activity, color: 'text-muted' }
                 const ActionIcon = config.icon
+                const link = getEntityLink(item.entityType, item.entityId)
                 return (
-                  <div key={item.id} className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors">
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors ${link ? 'cursor-pointer' : ''}`}
+                    onClick={() => link && router.push(link)}
+                  >
                     <div className={`p-1.5 rounded-lg bg-secondary/80 ${config.color} flex-shrink-0`}>
                       <ActionIcon className="h-3.5 w-3.5" />
                     </div>
@@ -179,6 +203,7 @@ export default function TeamActivityPage() {
                     <span className="text-[11px] text-muted whitespace-nowrap flex-shrink-0">
                       {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true, locale: it })}
                     </span>
+                    {link && <ChevronRight className="h-4 w-4 text-muted flex-shrink-0" />}
                   </div>
                 )
               })}

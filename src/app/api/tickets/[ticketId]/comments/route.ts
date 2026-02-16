@@ -84,6 +84,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         title: 'Nuovo commento su ticket',
         message: `${authorName} ha commentato il ticket "${ticket.subject}"`,
         link: `/support/${ticketId}?commentId=${comment.id}`,
+        metadata: { ticketNumber: ticket.number },
       }
     )
 

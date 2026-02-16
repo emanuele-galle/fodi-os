@@ -118,6 +118,7 @@ export async function POST(request: NextRequest) {
         title: 'Nuovo ticket',
         message: `Nuovo ticket "${subject}" (${number})`,
         link: `/support/${ticket.id}`,
+        metadata: { clientName: ticket.client?.companyName, ticketNumber: ticket.number },
       }
     )
 

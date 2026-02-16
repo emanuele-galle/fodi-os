@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = request.nextUrl
     const category = searchParams.get('category')
+    const clientId = searchParams.get('clientId')
+    const projectId = searchParams.get('projectId')
     const from = searchParams.get('from')
     const to = searchParams.get('to')
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
@@ -22,6 +24,8 @@ export async function GET(request: NextRequest) {
 
     const where = {
       ...(category && { category }),
+      ...(clientId && { clientId }),
+      ...(projectId && { projectId }),
       ...(recurring === null ? { isRecurring: false } : recurring === 'true' ? { isRecurring: true } : {}),
       ...(from || to
         ? {
@@ -39,6 +43,10 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: { date: 'desc' },
+        include: {
+          client: { select: { id: true, companyName: true } },
+          project: { select: { id: true, name: true } },
+        },
       }),
       prisma.expense.count({ where }),
     ])
@@ -66,7 +74,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { category, description, amount, date, receipt } = parsed.data
+    const { category, description, amount, date, receipt, clientId, projectId } = parsed.data
 
     const expense = await prisma.expense.create({
       data: {
@@ -75,6 +83,8 @@ export async function POST(request: NextRequest) {
         amount,
         date: new Date(date),
         receipt,
+        clientId: clientId || null,
+        projectId: projectId || null,
       },
     })
 

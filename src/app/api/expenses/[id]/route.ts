@@ -35,6 +35,8 @@ export async function PUT(
     if (d.amount !== undefined) data.amount = d.amount
     if (d.date !== undefined) data.date = new Date(d.date)
     if (d.receipt !== undefined) data.receipt = d.receipt
+    if (d.clientId !== undefined) data.clientId = d.clientId || null
+    if (d.projectId !== undefined) data.projectId = d.projectId || null
 
     const updated = await prisma.expense.update({ where: { id }, data })
 

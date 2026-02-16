@@ -14,6 +14,7 @@ interface Notification {
   link: string | null
   isRead: boolean
   createdAt: string
+  metadata?: Record<string, unknown> | null
 }
 
 const NOTIF_ICONS: Record<string, typeof Bell> = {
@@ -182,6 +183,25 @@ export function MobileNotificationsPanel({ onClose }: MobileNotificationsPanelPr
                       </div>
                       {notif.message && (
                         <p className="text-xs text-muted mt-0.5 line-clamp-2">{notif.message}</p>
+                      )}
+                      {notif.metadata && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {!!notif.metadata.projectName && (
+                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                              {String(notif.metadata.projectName)}
+                            </span>
+                          )}
+                          {!!notif.metadata.clientName && (
+                            <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded">
+                              {String(notif.metadata.clientName)}
+                            </span>
+                          )}
+                          {!!notif.metadata.ticketNumber && (
+                            <span className="text-[10px] bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded">
+                              #{String(notif.metadata.ticketNumber)}
+                            </span>
+                          )}
+                        </div>
                       )}
                       <p className="text-xs text-muted/70 mt-1">
                         {formatDistanceToNow(new Date(notif.createdAt), { locale: it, addSuffix: true })}

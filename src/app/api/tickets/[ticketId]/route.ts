@@ -61,7 +61,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Fetch previous ticket state for notification comparison
     const previousTicket = await prisma.ticket.findUnique({
       where: { id: ticketId },
-      select: { status: true, assigneeId: true, creatorId: true, subject: true },
+      select: { status: true, assigneeId: true, creatorId: true, subject: true, number: true, client: { select: { companyName: true } } },
     })
 
     const data: Record<string, unknown> = {}
@@ -109,6 +109,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             title: 'Stato ticket cambiato',
             message: `Ticket "${previousTicket.subject}" cambiato in "${statusLabels[status] || status}"`,
             link: ticketLink,
+            metadata: { clientName: previousTicket.client?.companyName, ticketNumber: previousTicket.number, ticketStatus: status },
           }
         )
       }
@@ -123,6 +124,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             title: 'Ticket assegnato',
             message: `Ti è stato assegnato il ticket "${previousTicket.subject}"`,
             link: ticketLink,
+            metadata: { clientName: previousTicket.client?.companyName, ticketNumber: previousTicket.number },
           }
         )
       }

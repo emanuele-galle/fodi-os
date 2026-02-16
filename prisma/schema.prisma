@@ -205,6 +205,7 @@ model Client {
   signatureRequests SignatureRequest[] @relation("SignatureClient")
   tasks           Task[]
   deals           Deal[]
+  expenses        Expense[]
 
   @@index([status])
   @@index([slug])
@@ -364,6 +365,7 @@ model Project {
   folders      Folder[]
   attachments  ProjectAttachment[]
   members      ProjectMember[]
+  expenses     Expense[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -702,6 +704,8 @@ model Expense {
   amount      Decimal  @db.Decimal(10, 2)
   date        DateTime @db.Date
   receipt     String?
+  clientId    String?
+  projectId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -717,12 +721,16 @@ model Expense {
   parentExpenseId String?
   parentExpense   Expense?  @relation("ExpenseChildren", fields: [parentExpenseId], references: [id])
   childExpenses   Expense[] @relation("ExpenseChildren")
+  client          Client?   @relation(fields: [clientId], references: [id])
+  project         Project?  @relation(fields: [projectId], references: [id])
 
   @@index([date])
   @@index([category])
   @@index([isRecurring])
   @@index([nextDueDate])
   @@index([status])
+  @@index([clientId])
+  @@index([projectId])
   @@map("expenses")
 }
 
@@ -910,6 +918,7 @@ model Notification {
   message   String
   link      String?
   isRead    Boolean  @default(false)
+  metadata  Json?
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

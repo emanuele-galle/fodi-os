@@ -20,6 +20,10 @@ interface Expense {
   amount: string
   date: string
   receipt: string | null
+  clientId: string | null
+  projectId: string | null
+  client: { id: string; companyName: string } | null
+  project: { id: string; name: string } | null
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -43,6 +47,8 @@ const FORM_CATEGORIES = CATEGORY_OPTIONS.filter((o) => o.value !== '')
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [clients, setClients] = useState<{ id: string; companyName: string }[]>([])
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
@@ -78,6 +84,11 @@ export default function ExpensesPage() {
 
   useEffect(() => { fetchExpenses() }, [fetchExpenses])
 
+  useEffect(() => {
+    fetch('/api/clients?limit=200').then(r => r.json()).then(d => setClients(d.items || []))
+    fetch('/api/projects?limit=200').then(r => r.json()).then(d => setProjects(d.items || []))
+  }, [])
+
   const totalAmount = expenses.reduce((s, e) => s + parseFloat(e.amount), 0)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -90,6 +101,8 @@ export default function ExpensesPage() {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
     })
     if (body.amount) body.amount = parseFloat(body.amount as string)
+    if (!body.clientId) body.clientId = null
+    if (!body.projectId) body.projectId = null
 
     try {
       const url = editItem ? `/api/expenses/${editItem.id}` : '/api/expenses'
@@ -246,9 +259,12 @@ export default function ExpensesPage() {
                 className="rounded-lg border border-border bg-card p-3"
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <Badge variant={CATEGORY_BADGE[exp.category] || 'default'}>
-                    {CATEGORY_LABEL[exp.category] || exp.category}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={CATEGORY_BADGE[exp.category] || 'default'}>
+                      {CATEGORY_LABEL[exp.category] || exp.category}
+                    </Badge>
+                    {exp.client && <span className="text-xs text-muted">{exp.client.companyName}</span>}
+                  </div>
                   <span className="font-bold text-sm">{formatCurrency(exp.amount)}</span>
                 </div>
                 <p className="text-sm truncate">{exp.description}</p>
@@ -272,6 +288,7 @@ export default function ExpensesPage() {
                 <tr className="border-b border-border/30">
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Data</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Categoria</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Cliente</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Descrizione</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Importo</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Azioni</th>
@@ -286,6 +303,7 @@ export default function ExpensesPage() {
                         {CATEGORY_LABEL[exp.category] || exp.category}
                       </Badge>
                     </td>
+                    <td className="px-4 py-3.5 text-muted">{exp.client?.companyName || '\u2014'}</td>
                     <td className="px-4 py-3.5">{exp.description}</td>
                     <td className="px-4 py-3.5 font-medium text-right tabular-nums">{formatCurrency(exp.amount)}</td>
                     <td className="px-4 py-3.5 text-right">
@@ -312,6 +330,8 @@ export default function ExpensesPage() {
             <Input name="date" label="Data *" type="date" required defaultValue={editItem?.date?.split('T')[0] || ''} />
           </div>
           <Input name="receipt" label="URL Ricevuta" placeholder="https://..." defaultValue={editItem?.receipt || ''} />
+          <Select name="clientId" label="Cliente" options={[{ value: '', label: 'Nessun cliente' }, ...clients.map(c => ({ value: c.id, label: c.companyName }))]} defaultValue={editItem?.clientId || ''} />
+          <Select name="projectId" label="Progetto" options={[{ value: '', label: 'Nessun progetto' }, ...projects.map(p => ({ value: p.id, label: p.name }))]} defaultValue={editItem?.projectId || ''} />
           {formError && (
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</div>
           )}
