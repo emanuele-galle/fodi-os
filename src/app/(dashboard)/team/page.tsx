@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Users, Search, Mail, Phone, CheckCircle2, Clock, Calendar, Video, ChevronDown, ChevronUp, Plus, ListTodo, AlertCircle, Globe, Wifi } from 'lucide-react'
+import { Users, Search, Mail, Phone, CheckCircle2, Clock, Calendar, Video, ChevronDown, ChevronUp, Plus, ListTodo, AlertCircle, Globe, Wifi, CreditCard } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -46,6 +46,7 @@ interface TeamMember {
   weeklyHours: number
   completedThisWeek: number
   activeTasks: ActiveTask[]
+  digitalCardSlug: string | null
 }
 
 interface SearchTask {
@@ -412,6 +413,9 @@ export default function TeamPage() {
                     <Badge variant={ROLE_BADGE[member.role] || 'default'} className="mt-1.5">
                       {ROLE_LABELS[member.role] || member.role}
                     </Badge>
+                    {member.digitalCardSlug && (
+                      <Badge variant="outline" className="mt-1 text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/20">NFC</Badge>
+                    )}
                     <span className="mt-1.5 text-xs text-muted flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: activity.color }} />
                       {activity.label}
@@ -480,6 +484,18 @@ export default function TeamPage() {
                       <Video className="h-3.5 w-3.5" />
                       Meet
                     </button>
+                    {member.digitalCardSlug && (
+                      <a
+                        href={`/c/${member.digitalCardSlug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 transition-colors touch-manipulation min-h-[44px] md:min-h-0"
+                        title={`Card NFC di ${member.firstName}`}
+                      >
+                        <CreditCard className="h-3.5 w-3.5" />
+                        Card
+                      </a>
+                    )}
                     {member.activeTasks.length > 0 && (
                       <button
                         onClick={() => setExpandedMember(isExpanded ? null : member.id)}

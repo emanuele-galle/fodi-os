@@ -61,6 +61,7 @@ assetUploads     Asset[]
   pushSubscriptions    PushSubscription[]
   workSessions         WorkSession[]
   projectMemberships   ProjectMember[]
+  digitalCard          DigitalCard?
 
   @@index([username])
   @@index([email])
@@ -1284,5 +1285,45 @@ model WizardSubmission {
   @@index([status])
   @@index([createdAt])
   @@map("wizard_submissions")
+}
+
+// ============================================================
+// DIGITAL BUSINESS CARD (NFC)
+// ============================================================
+
+model DigitalCard {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  slug            String    @unique
+  isEnabled       Boolean   @default(true)
+
+  // Info professionale
+  jobTitle        String?
+  department      String?
+
+  // Social links
+  linkedinUrl     String?
+  instagramUrl    String?
+  twitterUrl      String?
+  githubUrl       String?
+  websiteUrl      String?
+  whatsappNumber  String?
+
+  // Card content
+  cardBio         String?   @db.Text
+  showWizards     Boolean   @default(false)
+
+  // Analytics
+  viewCount       Int       @default(0)
+  lastViewedAt    DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+  @@index([isEnabled])
+  @@map("digital_cards")
 }
 

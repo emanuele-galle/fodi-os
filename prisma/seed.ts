@@ -234,6 +234,30 @@ async function main() {
   })
   console.log('  Wiki pages created (5)\n')
 
+  // ============================================================
+  // DIGITAL CARDS (NFC business cards)
+  // ============================================================
+  const digitalCardsData = [
+    { userId: users[0].id, slug: 'emanuele-galle', jobTitle: 'CEO & Founder', department: 'Management', showWizards: false },
+    { userId: users[1].id, slug: 'riccardo-tirinato', jobTitle: 'Sales Manager', department: 'Commerciale', showWizards: true },
+    { userId: users[2].id, slug: 'stefano-coletta', jobTitle: 'Project Manager', department: 'Delivery', showWizards: false },
+    { userId: users[3].id, slug: 'raffaele-dev', jobTitle: 'Full Stack Developer', department: 'Delivery', showWizards: false },
+    { userId: users[4].id, slug: 'matar-dev', jobTitle: 'Full Stack Developer', department: 'Delivery', showWizards: false },
+    { userId: users[5].id, slug: 'angelo-dev', jobTitle: 'Full Stack Developer', department: 'Delivery', showWizards: false },
+    { userId: users[6].id, slug: 'raffo-aversa', jobTitle: 'Content Creator', department: 'Creative', showWizards: false },
+    { userId: users[7].id, slug: 'chiara-support', jobTitle: 'Customer Support', department: 'Support', showWizards: false },
+  ]
+
+  for (const dc of digitalCardsData) {
+    await prisma.digitalCard.upsert({
+      where: { slug: dc.slug },
+      update: {},
+      create: dc,
+    })
+    console.log(`  Digital Card: ${dc.slug} (${dc.jobTitle})`)
+  }
+  console.log('Digital cards created\n')
+
   console.log('Seed completed!')
   console.log(`  Default password: ${DEFAULT_PASSWORD}`)
   console.log(`  Users: ${usersData.length}, Clients: ${clientsData.length}, Projects: ${projectsData.length}`)

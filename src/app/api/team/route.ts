@@ -43,6 +43,9 @@ export async function GET(request: NextRequest) {
             },
           },
         }),
+        digitalCard: {
+          select: { slug: true, isEnabled: true },
+        },
         _count: {
           select: {
             assignedTasks: { where: { status: { in: ['TODO', 'IN_PROGRESS'] } } },
@@ -109,6 +112,7 @@ export async function GET(request: NextRequest) {
       weeklyHours: Math.round((weeklyHoursMap.get(u.id) || 0) * 100) / 100,
       completedThisWeek: weeklyCompletedMap.get(u.id) || 0,
       activeTasks: (u as Record<string, unknown>).assignedTasks || [],
+      digitalCardSlug: u.digitalCard?.isEnabled ? u.digitalCard.slug : null,
     }))
 
     return NextResponse.json({ items, total: items.length })
