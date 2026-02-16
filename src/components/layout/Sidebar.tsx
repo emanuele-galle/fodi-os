@@ -84,6 +84,7 @@ const navigation: NavItem[] = [
       { label: 'Firme', href: '/erp/signatures' },
       { label: 'Wizard', href: '/erp/wizards' },
       { label: 'Spese', href: '/erp/expenses' },
+      { label: 'Abbonamenti', href: '/erp/expenses/subscriptions' },
       { label: 'Report', href: '/erp/reports' },
     ],
   },

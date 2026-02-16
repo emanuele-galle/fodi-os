@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Receipt, Plus, AlertCircle } from 'lucide-react'
+import { Receipt, Plus, AlertCircle, RefreshCw } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -130,6 +131,14 @@ export default function ExpensesPage() {
           Nuova
         </Button>
       </div>
+
+      <Link
+        href="/erp/expenses/subscriptions"
+        className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 text-sm font-medium rounded-lg border border-border/30 hover:bg-secondary/10 transition-colors"
+      >
+        <RefreshCw className="h-3.5 w-3.5" />
+        Vai agli Abbonamenti
+      </Link>
 
       <Card className="mb-6">
         <CardContent className="flex items-center gap-4">

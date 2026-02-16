@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, CreditCard, BarChart3, ArrowRight, Landmark } from 'lucide-react'
+import { FileText, CreditCard, BarChart3, ArrowRight, Landmark, RefreshCw } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -22,14 +22,17 @@ export default function ErpPage() {
   const [stats, setStats] = useState({
     draftQuotes: 0,
     monthExpenses: 0,
+    activeSubscriptions: 0,
+    monthlySubCost: 0,
   })
 
   useEffect(() => {
     Promise.all([
       fetch('/api/quotes?status=DRAFT&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
       fetch('/api/expenses?limit=100').then((r) => (r.ok ? r.json() : { items: [] })),
+      fetch('/api/expenses/subscriptions?status=active&limit=100').then((r) => (r.ok ? r.json() : { items: [] })),
     ])
-      .then(([quotesData, expensesData]) => {
+      .then(([quotesData, expensesData, subsData]) => {
         const now = new Date()
         const thisMonth = expensesData.items?.filter((e: { date: string }) => {
           const d = new Date(e.date)
@@ -40,9 +43,19 @@ export default function ErpPage() {
           0
         )
 
+        const subs = subsData.items || []
+        const monthlySubCost = subs.reduce((s: number, sub: { amount: string; frequency: string }) => {
+          const amt = parseFloat(sub.amount)
+          if (sub.frequency === 'quarterly') return s + amt / 3
+          if (sub.frequency === 'yearly') return s + amt / 12
+          return s + amt
+        }, 0)
+
         setStats({
           draftQuotes: quotesData.total || 0,
           monthExpenses: monthTotal,
+          activeSubscriptions: subs.length,
+          monthlySubCost,
         })
       })
       .finally(() => setLoading(false))
@@ -62,6 +75,13 @@ export default function ErpPage() {
       icon: CreditCard,
       href: '/erp/expenses',
       stat: loading ? null : `${formatCurrency(stats.monthExpenses)} questo mese`,
+    },
+    {
+      title: 'Abbonamenti',
+      description: 'Spese ricorrenti e sottoscrizioni',
+      icon: RefreshCw,
+      href: '/erp/expenses/subscriptions',
+      stat: loading ? null : `${stats.activeSubscriptions} attivi · ${formatCurrency(stats.monthlySubCost)}/mese`,
     },
     {
       title: 'Report',

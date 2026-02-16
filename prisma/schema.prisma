@@ -705,8 +705,24 @@ model Expense {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Abbonamento / Ricorrenza
+  isRecurring     Boolean   @default(false)
+  frequency       String?   // monthly, quarterly, yearly, custom
+  nextDueDate     DateTime? @db.Date
+  endDate         DateTime? @db.Date
+  autoRenew       Boolean   @default(true)
+  status          String    @default("active") // active, paused, cancelled, expired
+  provider        String?
+  notes           String?
+  parentExpenseId String?
+  parentExpense   Expense?  @relation("ExpenseChildren", fields: [parentExpenseId], references: [id])
+  childExpenses   Expense[] @relation("ExpenseChildren")
+
   @@index([date])
   @@index([category])
+  @@index([isRecurring])
+  @@index([nextDueDate])
+  @@index([status])
   @@map("expenses")
 }
 
