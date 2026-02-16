@@ -454,7 +454,7 @@ export default function DashboardPage() {
                 <CardTitle>Task in Scadenza</CardTitle>
               </div>
               <button
-                onClick={() => router.push('/projects')}
+                onClick={() => router.push('/tasks')}
                 className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-md bg-primary/5 hover:bg-primary/10 transition-all"
               >
                 Vedi tutti
@@ -465,7 +465,7 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-1">
                 {tasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg border-b border-border/30 last:border-0 hover:bg-secondary/50 transition-colors">
+                  <div key={task.id} onClick={() => router.push(`/tasks?taskId=${task.id}`)} className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg border-b border-border/30 last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer">
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{task.title}</p>
                       {task.project && (
