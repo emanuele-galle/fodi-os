@@ -32,7 +32,7 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
   SALES: {
     crm: ['read', 'write'],
     erp: ['read', 'write'],
-    pm: ['read'],
+    pm: ['read', 'write'],
     kb: ['read'],
     chat: ['read', 'write'],
     training: ['read'],
@@ -54,7 +54,7 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
   },
   CONTENT: {
     content: ['read', 'write'],
-    pm: ['read'],
+    pm: ['read', 'write'],
     kb: ['read', 'write'],
     chat: ['read', 'write'],
     training: ['read'],
@@ -62,6 +62,7 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
   SUPPORT: {
     support: ['read', 'write'],
     crm: ['read'],
+    pm: ['read', 'write'],
     kb: ['read'],
     chat: ['read', 'write'],
     training: ['read'],
