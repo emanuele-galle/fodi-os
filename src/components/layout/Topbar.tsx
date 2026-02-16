@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search, LogOut, Video, MessageSquare, UserCheck, CheckCircle, FileText, AlarmClock } from 'lucide-react'
+import { Bell, Search, LogOut, Video, MessageSquare, UserCheck, CheckCircle, FileText, AlarmClock, Clock, AlertTriangle } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -29,6 +29,9 @@ const NOTIF_ICONS: Record<string, typeof Bell> = {
   file_uploaded: FileText,
   reminder: AlarmClock,
   reminder_manual: AlarmClock,
+  task_overdue: AlertTriangle,
+  task_due_today: Clock,
+  task_due_tomorrow: AlarmClock,
 }
 
 function getNotifIcon(type: string) {

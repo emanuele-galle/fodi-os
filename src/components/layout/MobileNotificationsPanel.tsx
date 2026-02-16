@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, X, MessageSquare, UserCheck, CheckCircle, FileText, Video } from 'lucide-react'
+import { Bell, X, MessageSquare, UserCheck, CheckCircle, FileText, Video, AlarmClock, Clock, AlertTriangle } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
@@ -24,6 +24,9 @@ const NOTIF_ICONS: Record<string, typeof Bell> = {
   task_status_changed: CheckCircle,
   MEETING: Video,
   file_uploaded: FileText,
+  task_overdue: AlertTriangle,
+  task_due_today: Clock,
+  task_due_tomorrow: AlarmClock,
 }
 
 interface MobileNotificationsPanelProps {

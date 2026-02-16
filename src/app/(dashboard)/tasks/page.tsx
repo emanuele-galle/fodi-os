@@ -15,6 +15,9 @@ import {
   Send,
   User,
   MessageSquare,
+  ChevronDown,
+  ChevronRight,
+  Flame,
 } from 'lucide-react'
 import {
   DndContext,
@@ -33,6 +36,7 @@ import {
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
+import { getDueUrgency, URGENCY_STYLES, type DueUrgency } from '@/lib/task-utils'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -281,6 +285,21 @@ export default function TasksPage() {
 
   const sortedTasks = useMemo(() => sortTasks(tasks), [tasks])
 
+  const activeTasks = useMemo(() => sortedTasks.filter(t => t.status !== 'DONE' && t.status !== 'CANCELLED'), [sortedTasks])
+  const completedTasks = useMemo(() => sortedTasks.filter(t => t.status === 'DONE' || t.status === 'CANCELLED'), [sortedTasks])
+
+  const focusTasks = useMemo(() => {
+    return activeTasks
+      .filter(t => {
+        const urgency = getDueUrgency(t.dueDate, t.status)
+        return urgency === 'overdue' || urgency === 'today'
+      })
+      .slice(0, 5)
+  }, [activeTasks])
+
+  const [showCompleted, setShowCompleted] = useState(false)
+  const [kanbanDoneCollapsed, setKanbanDoneCollapsed] = useState(true)
+
   const totalTasks = tasks.length
   const todoCount = tasks.filter((t) => t.status === 'TODO').length
   const inProgressCount = tasks.filter((t) => t.status === 'IN_PROGRESS').length
@@ -414,6 +433,42 @@ export default function TasksPage() {
         </div>
       )}
 
+      {/* Focus del Giorno */}
+      {focusTasks.length > 0 && (
+        <div className="mb-4 rounded-xl border border-amber-400/40 bg-amber-500/5 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 rounded-lg bg-amber-500/10">
+              <Flame className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h3 className="text-sm font-bold text-amber-700 dark:text-amber-300">Focus del Giorno</h3>
+            <span className="text-xs bg-amber-200/60 dark:bg-amber-800/40 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 rounded-full font-medium">
+              {focusTasks.length}
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            {focusTasks.map(task => {
+              const urgency = getDueUrgency(task.dueDate, task.status)
+              const styles = URGENCY_STYLES[urgency]
+              return (
+                <div
+                  key={task.id}
+                  onClick={() => openTask(task.id)}
+                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-card/80 border border-border/30 cursor-pointer hover:bg-secondary/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <AlertTriangle className={cn('h-3.5 w-3.5 flex-shrink-0', styles.text)} />
+                    <span className="text-sm font-medium truncate">{task.title}</span>
+                  </div>
+                  <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0', styles.badgeBg)}>
+                    {styles.label}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Tab bar */}
       <div className="flex bg-secondary/60 rounded-lg p-1 mb-4 overflow-x-auto scrollbar-none">
         {visibleTabs.map((tab) => {
@@ -501,25 +556,61 @@ export default function TasksPage() {
         />
       ) : view === 'list' ? (
         <>
-          {/* Mobile card view */}
-          <div className="md:hidden space-y-3">
-            {sortedTasks.map((task) => (
-              <MobileTaskCard
-                key={task.id}
-                task={task}
-                activeTab={activeTab}
-                userId={userId}
-                onClick={() => openTask(task.id)}
-              />
-            ))}
-          </div>
-          {/* Desktop table view */}
-          <div className="hidden md:block">
-            <ListView tasks={sortedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} />
-          </div>
+          {/* Active tasks */}
+          {activeTasks.length > 0 && (
+            <>
+              {/* Mobile card view */}
+              <div className="md:hidden space-y-3">
+                {activeTasks.map((task) => (
+                  <MobileTaskCard
+                    key={task.id}
+                    task={task}
+                    activeTab={activeTab}
+                    userId={userId}
+                    onClick={() => openTask(task.id)}
+                  />
+                ))}
+              </div>
+              {/* Desktop table view */}
+              <div className="hidden md:block">
+                <ListView tasks={activeTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} />
+              </div>
+            </>
+          )}
+
+          {/* Completed tasks - collapsible */}
+          {completedTasks.length > 0 && (
+            <div className="mt-6">
+              <button
+                onClick={() => setShowCompleted(!showCompleted)}
+                className="flex items-center gap-2 text-sm font-medium text-muted hover:text-foreground transition-colors mb-3"
+              >
+                {showCompleted ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                Completate ({completedTasks.length})
+              </button>
+              {showCompleted && (
+                <div className="opacity-60">
+                  <div className="md:hidden space-y-3">
+                    {completedTasks.map((task) => (
+                      <MobileTaskCard
+                        key={task.id}
+                        task={task}
+                        activeTab={activeTab}
+                        userId={userId}
+                        onClick={() => openTask(task.id)}
+                      />
+                    ))}
+                  </div>
+                  <div className="hidden md:block">
+                    <ListView tasks={completedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </>
       ) : (
-        <KanbanView tasks={sortedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} onStatusChange={handleStatusChange} />
+        <KanbanView tasks={sortedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} onStatusChange={handleStatusChange} kanbanDoneCollapsed={kanbanDoneCollapsed} onToggleDoneCollapsed={() => setKanbanDoneCollapsed(!kanbanDoneCollapsed)} />
       )}
 
       <TaskDetailModal
@@ -564,15 +655,26 @@ function TaskBadges({ task, activeTab, userId }: { task: Task; activeTab: TabKey
   )
 }
 
+function UrgencyBadge({ urgency }: { urgency: DueUrgency }) {
+  const styles = URGENCY_STYLES[urgency]
+  if (!styles.label) return null
+  return (
+    <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full', styles.badgeBg)}>
+      {styles.label}
+    </span>
+  )
+}
+
 function MobileTaskCard({ task, activeTab, userId, onClick }: { task: Task; activeTab: TabKey; userId: string; onClick: () => void }) {
-  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE' && task.status !== 'CANCELLED'
+  const urgency = getDueUrgency(task.dueDate, task.status)
+  const urgencyStyles = URGENCY_STYLES[urgency]
 
   return (
     <div
       onClick={onClick}
       className={cn(
         'p-4 space-y-2.5 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)] rounded-lg border bg-card',
-        isOverdue ? 'border-destructive/40 bg-red-500/5' : 'border-border/80'
+        urgency === 'overdue' || urgency === 'today' ? `${urgencyStyles.border} ${urgencyStyles.bg}` : 'border-border/80'
       )}
       style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
     >
@@ -591,6 +693,7 @@ function MobileTaskCard({ task, activeTab, userId, onClick }: { task: Task; acti
         <Badge status={task.status}>
           {STATUS_LABELS[task.status] || task.status}
         </Badge>
+        <UrgencyBadge urgency={urgency} />
         <TaskBadges task={task} activeTab={activeTab} userId={userId} />
         {task.project && (
           <span className="text-xs text-muted truncate max-w-[120px]">{task.project.name}</span>
@@ -612,8 +715,7 @@ function MobileTaskCard({ task, activeTab, userId, onClick }: { task: Task; acti
           ) : null}
         </div>
         {task.dueDate && (
-          <span className={isOverdue ? 'text-destructive font-medium' : ''}>
-            {isOverdue && '⚠ '}
+          <span className={cn('text-xs', urgencyStyles.text, (urgency === 'overdue' || urgency === 'today') && 'font-medium')}>
             {new Date(task.dueDate).toLocaleDateString('it-IT')}
           </span>
         )}
@@ -638,14 +740,15 @@ function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; ac
         </thead>
         <tbody>
           {tasks.map((task) => {
-            const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE' && task.status !== 'CANCELLED'
+            const urgency = getDueUrgency(task.dueDate, task.status)
+            const urgencyStyles = URGENCY_STYLES[urgency]
             return (
               <tr
                 key={task.id}
                 onClick={() => onTaskClick(task.id)}
                 className={cn(
                   'border-b border-border/10 hover:bg-secondary/8 cursor-pointer transition-colors group even:bg-secondary/[0.03]',
-                  isOverdue && 'bg-red-500/5 hover:bg-red-500/10'
+                  (urgency === 'overdue' || urgency === 'today') && `${urgencyStyles.bg}`
                 )}
               >
                 <td className="px-4 py-3.5">
@@ -654,6 +757,7 @@ function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; ac
                       <Timer className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
                     )}
                     <span className="text-sm font-medium">{task.title}</span>
+                    <UrgencyBadge urgency={urgency} />
                     <TaskBadges task={task} activeTab={activeTab} userId={userId} />
                   </div>
                 </td>
@@ -687,10 +791,11 @@ function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; ac
                 </td>
                 <td className="px-4 py-3.5 hidden lg:table-cell">
                   {task.dueDate ? (
-                    <span className={`text-sm ${isOverdue ? 'text-destructive font-medium' : 'text-muted'}`}>
-                      {isOverdue && '\u26A0 '}
-                      {new Date(task.dueDate).toLocaleDateString('it-IT')}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn('text-sm', urgencyStyles.text, (urgency === 'overdue' || urgency === 'today') && 'font-medium')}>
+                        {new Date(task.dueDate).toLocaleDateString('it-IT')}
+                      </span>
+                    </div>
                   ) : (
                     <span className="text-sm text-muted">-</span>
                   )}
@@ -742,7 +847,8 @@ function DroppableKanbanColumn({ columnKey, isOver, children }: { columnKey: str
 }
 
 function DraggableTaskCard({ task, activeTab, userId, onClick }: { task: Task; activeTab: TabKey; userId: string; onClick: () => void }) {
-  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE' && task.status !== 'CANCELLED'
+  const urgency = getDueUrgency(task.dueDate, task.status)
+  const urgencyStyles = URGENCY_STYLES[urgency]
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'task', task },
@@ -758,7 +864,7 @@ function DraggableTaskCard({ task, activeTab, userId, onClick }: { task: Task; a
     <div ref={setNodeRef} style={{ ...style, touchAction: 'none' }} {...attributes} {...listeners}>
     <Card
       style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
-      className={cn('!p-3 cursor-grab active:cursor-grabbing', isOverdue && 'border-destructive/40 bg-red-500/5')}
+      className={cn('!p-3 cursor-grab active:cursor-grabbing', (urgency === 'overdue' || urgency === 'today') && `${urgencyStyles.border} ${urgencyStyles.bg}`)}
       onClick={(e) => { if (!isDragging) { e.stopPropagation(); onClick() } }}
     >
       <div className="flex items-center gap-1.5 mb-2">
@@ -771,6 +877,7 @@ function DraggableTaskCard({ task, activeTab, userId, onClick }: { task: Task; a
         <Badge status={task.priority} pulse={task.priority === 'URGENT'}>
           {PRIORITY_LABELS[task.priority]}
         </Badge>
+        <UrgencyBadge urgency={urgency} />
         <TaskBadges task={task} activeTab={activeTab} userId={userId} />
         {task.project && (
           <span className="text-xs text-muted truncate max-w-[100px]">
@@ -791,8 +898,7 @@ function DraggableTaskCard({ task, activeTab, userId, onClick }: { task: Task; a
           <span />
         )}
         {task.dueDate && (
-          <span className={`text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted'}`}>
-            {isOverdue && '\u26A0 '}
+          <span className={cn('text-xs', urgencyStyles.text, (urgency === 'overdue' || urgency === 'today') && 'font-medium')}>
             {new Date(task.dueDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
           </span>
         )}
@@ -802,7 +908,7 @@ function DraggableTaskCard({ task, activeTab, userId, onClick }: { task: Task; a
   )
 }
 
-function KanbanView({ tasks, activeTab, userId, onTaskClick, onStatusChange }: { tasks: Task[]; activeTab: TabKey; userId: string; onTaskClick: (id: string) => void; onStatusChange?: (taskId: string, newStatus: string) => void }) {
+function KanbanView({ tasks, activeTab, userId, onTaskClick, onStatusChange, kanbanDoneCollapsed, onToggleDoneCollapsed }: { tasks: Task[]; activeTab: TabKey; userId: string; onTaskClick: (id: string) => void; onStatusChange?: (taskId: string, newStatus: string) => void; kanbanDoneCollapsed?: boolean; onToggleDoneCollapsed?: () => void }) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
   const sensors = useSensors(
@@ -850,26 +956,50 @@ function KanbanView({ tasks, activeTab, userId, onTaskClick, onStatusChange }: {
       <div className="kanban-mobile-scroll md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         {KANBAN_COLUMNS.map((col) => {
           const columnTasks = tasks.filter((t) => t.status === col.key)
+          const isDoneCol = col.key === 'DONE'
+          const isCollapsed = isDoneCol && kanbanDoneCollapsed
+
           return (
             <DroppableKanbanColumn key={col.key} columnKey={col.key}>
               <div className={`flex items-center justify-between mb-3 px-3 py-2.5 rounded-lg border-b-2 ${col.color} ${col.headerBg}`}>
                 <h3 className={`text-sm font-bold ${col.headerText}`}>{col.label}</h3>
-                <span className={`text-xs font-semibold ${col.headerText} bg-white/60 dark:bg-white/10 rounded-full px-2 py-0.5`}>
-                  {columnTasks.length}
-                </span>
-              </div>
-              <SortableContext items={columnTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-2 flex-1 min-h-[60px]">
-                  {columnTasks.map((task) => (
-                    <DraggableTaskCard key={task.id} task={task} activeTab={activeTab} userId={userId} onClick={() => onTaskClick(task.id)} />
-                  ))}
-                  {columnTasks.length === 0 && (
-                    <div className="text-center py-6 text-sm text-muted">
-                      Nessun task
-                    </div>
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-xs font-semibold ${col.headerText} bg-white/60 dark:bg-white/10 rounded-full px-2 py-0.5`}>
+                    {columnTasks.length}
+                  </span>
+                  {isDoneCol && columnTasks.length > 0 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onToggleDoneCollapsed?.() }}
+                      className={`p-0.5 rounded ${col.headerText} hover:bg-white/20 transition-colors`}
+                    >
+                      {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
                   )}
                 </div>
-              </SortableContext>
+              </div>
+              {isCollapsed ? (
+                <div className="min-h-[60px] flex items-center justify-center">
+                  <button
+                    onClick={() => onToggleDoneCollapsed?.()}
+                    className="text-xs text-muted hover:text-foreground transition-colors"
+                  >
+                    Mostra {columnTasks.length} task
+                  </button>
+                </div>
+              ) : (
+                <SortableContext items={columnTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                  <div className={cn('space-y-2 flex-1 min-h-[60px]', isDoneCol && 'opacity-60')}>
+                    {columnTasks.map((task) => (
+                      <DraggableTaskCard key={task.id} task={task} activeTab={activeTab} userId={userId} onClick={() => onTaskClick(task.id)} />
+                    ))}
+                    {columnTasks.length === 0 && (
+                      <div className="text-center py-6 text-sm text-muted">
+                        Nessun task
+                      </div>
+                    )}
+                  </div>
+                </SortableContext>
+              )}
             </DroppableKanbanColumn>
           )
         })}

@@ -7,6 +7,7 @@ import {
   Activity, UserPlus, FileText, CheckCircle2, TicketCheck,
   Plus, TicketPlus, FilePlus2, ClockPlus, X, Pencil,
   LayoutDashboard, CalendarCheck, BarChart3, Wallet, StickyNote,
+  AlertTriangle, Flame, PlayCircle,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
+import { getDueUrgency, URGENCY_STYLES } from '@/lib/task-utils'
 import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
 import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard'
 import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
@@ -58,7 +60,8 @@ interface StatCard {
 interface TaskItem {
   id: string
   title: string
-  dueDate: string
+  dueDate: string | null
+  status: string
   priority: string
   project?: { name: string } | null
 }
@@ -122,6 +125,10 @@ export default function DashboardPage() {
   const [weekBillableHours, setWeekBillableHours] = useState(0)
   const [totalRevenue, setTotalRevenue] = useState(0)
   const [totalExpenses, setTotalExpenses] = useState(0)
+  const [overdueTaskCount, setOverdueTaskCount] = useState(0)
+  const [todayTaskCount, setTodayTaskCount] = useState(0)
+  const [inProgressTaskCount, setInProgressTaskCount] = useState(0)
+  const [completedMonthCount, setCompletedMonthCount] = useState(0)
 
   // Sticky notes - localStorage
   useEffect(() => {
@@ -177,7 +184,7 @@ export default function DashboardPage() {
         const todayStr = now.toISOString().split('T')[0]
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-        const [clientsRes, projectsRes, quotesRes, timeRes, paidInvoicesRes, teamRes, expensesRes, ticketsRes, tasksRes, activityRes] = await Promise.all([
+        const [clientsRes, projectsRes, quotesRes, timeRes, paidInvoicesRes, teamRes, expensesRes, ticketsRes, tasksRes, activityRes, doneMonthRes, inProgressRes] = await Promise.all([
           fetch('/api/clients?status=ACTIVE&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/projects?status=IN_PROGRESS&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/quotes?status=SENT&limit=1').then((r) => r.ok ? r.json() : null),
@@ -186,14 +193,28 @@ export default function DashboardPage() {
           fetch('/api/team').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/expenses?limit=200').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/tickets?status=OPEN,IN_PROGRESS,WAITING_CLIENT&limit=1').then((r) => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/tasks?status=TODO,IN_PROGRESS&sort=dueDate&order=asc&limit=5').then((r) => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/tasks?status=TODO,IN_PROGRESS,IN_REVIEW&sort=dueDate&order=asc&limit=10&mine=true&scope=assigned').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/activity?limit=10').then((r) => r.ok ? r.json() : null).catch(() => null),
+          fetch(`/api/tasks?status=DONE&from=${monthStart}&limit=1`).then((r) => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/tasks?status=IN_PROGRESS&limit=1').then((r) => r.ok ? r.json() : null).catch(() => null),
         ])
 
         // Tasks + Activities (fetched in parallel with everything else)
-        if (tasksRes?.items) setTasks(tasksRes.items)
-        else if (Array.isArray(tasksRes)) setTasks(tasksRes)
+        const taskItems: TaskItem[] = tasksRes?.items || (Array.isArray(tasksRes) ? tasksRes : [])
+        setTasks(taskItems)
         if (activityRes?.items) setActivities(activityRes.items)
+
+        // Operational summary metrics
+        let overdue = 0, dueToday = 0
+        for (const t of taskItems) {
+          const u = getDueUrgency(t.dueDate, t.status)
+          if (u === 'overdue') overdue++
+          if (u === 'today') dueToday++
+        }
+        setOverdueTaskCount(overdue)
+        setTodayTaskCount(dueToday)
+        setInProgressTaskCount(inProgressRes?.total ?? 0)
+        setCompletedMonthCount(doneMonthRes?.total ?? 0)
 
         const timeItems = timeRes?.items || []
         const hours = timeItems.reduce((s: number, e: { hours: number }) => s + e.hours, 0)
@@ -359,7 +380,113 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ROW 1: FATTURATO + CASH FLOW */}
+      {/* ROW 1: TASK IN SCADENZA (2 col) + RIEPILOGO OPERATIVO (1 col) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <Card className="lg:col-span-2">
+          <CardContent>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  <CalendarCheck className="h-4 w-4" />
+                </div>
+                <div>
+                  <CardTitle>Task in Scadenza</CardTitle>
+                  <p className="text-[11px] text-muted mt-0.5">Le tue task ordinate per scadenza</p>
+                </div>
+              </div>
+              <button
+                onClick={() => router.push('/tasks')}
+                className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-md bg-primary/5 hover:bg-primary/10 transition-all"
+              >
+                Vedi tutti
+              </button>
+            </div>
+            {tasks.length === 0 ? (
+              <EmptyState icon={CheckCircle2} title="Nessun task in scadenza" description="Ottimo lavoro! Non ci sono task con scadenza imminente." />
+            ) : (
+              <div className="space-y-1">
+                {(() => {
+                  const overdueTasks = tasks.filter(t => getDueUrgency(t.dueDate, t.status) === 'overdue')
+                  const todayTasks = tasks.filter(t => getDueUrgency(t.dueDate, t.status) === 'today')
+                  const otherTasks = tasks.filter(t => {
+                    const u = getDueUrgency(t.dueDate, t.status)
+                    return u !== 'overdue' && u !== 'today'
+                  })
+
+                  const sections = [
+                    { label: 'Scadute', tasks: overdueTasks, color: 'text-red-600 dark:text-red-400', dotColor: 'bg-red-500' },
+                    { label: 'Oggi', tasks: todayTasks, color: 'text-amber-600 dark:text-amber-400', dotColor: 'bg-amber-500' },
+                    { label: 'Prossime', tasks: otherTasks, color: 'text-muted', dotColor: 'bg-blue-400' },
+                  ].filter(s => s.tasks.length > 0)
+
+                  return sections.map(section => (
+                    <div key={section.label}>
+                      <div className="flex items-center gap-2 py-1.5 px-1">
+                        <span className={`h-2 w-2 rounded-full ${section.dotColor}`} />
+                        <span className={`text-xs font-semibold uppercase tracking-wider ${section.color}`}>{section.label}</span>
+                      </div>
+                      {section.tasks.map(task => {
+                        const urgency = getDueUrgency(task.dueDate, task.status)
+                        const styles = URGENCY_STYLES[urgency]
+                        return (
+                          <div key={task.id} onClick={() => router.push(`/tasks?taskId=${task.id}`)} className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{task.title}</p>
+                              {task.project && (
+                                <p className="text-xs text-muted mt-0.5">{task.project.name}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                              <StatusBadge
+                                leftLabel={task.priority === 'URGENT' ? 'Urgente' : task.priority === 'HIGH' ? 'Alta' : task.priority === 'MEDIUM' ? 'Media' : 'Bassa'}
+                                rightLabel={task.dueDate ? new Date(task.dueDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }) : '\u2014'}
+                                variant={task.priority === 'URGENT' ? 'error' : task.priority === 'HIGH' ? 'warning' : task.priority === 'MEDIUM' ? 'info' : 'default'}
+                                pulse={task.priority === 'URGENT'}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ))
+                })()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Riepilogo Operativo */}
+        <Card>
+          <CardContent>
+            <div className="flex items-center gap-2.5 mb-5">
+              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Flame className="h-4 w-4" />
+              </div>
+              <CardTitle>Riepilogo Operativo</CardTitle>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 rounded-lg bg-red-500/5 border border-red-200/30 dark:border-red-800/30">
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{overdueTaskCount}</p>
+                <p className="text-xs text-muted mt-1">Scadute</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-amber-500/5 border border-amber-200/30 dark:border-amber-800/30">
+                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{todayTaskCount}</p>
+                <p className="text-xs text-muted mt-1">Oggi</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-blue-500/5 border border-blue-200/30 dark:border-blue-800/30">
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{inProgressTaskCount}</p>
+                <p className="text-xs text-muted mt-1">In Corso</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-emerald-500/5 border border-emerald-200/30 dark:border-emerald-800/30">
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{completedMonthCount}</p>
+                <p className="text-xs text-muted mt-1">Completate (mese)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ROW 2: FATTURATO + CASH FLOW */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <Card className="overflow-hidden">
           <CardContent>
@@ -396,33 +523,13 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ROW 2: FINANCIAL SUMMARY */}
+      {/* ROW 3: FINANCIAL SUMMARY + PIPELINE */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <FinancialSummaryCard
           income={totalRevenue}
           expenses={totalExpenses}
           onViewDetails={() => router.push('/erp/reports')}
         />
-      </div>
-
-      {/* ROW 3: TREND + PIPELINE */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card className="overflow-hidden">
-          <CardContent>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                  <Activity className="h-4.5 w-4.5" />
-                </div>
-                <div>
-                  <CardTitle>Trend Attività</CardTitle>
-                  <p className="text-[11px] text-muted mt-0.5">Ultime 4 settimane</p>
-                </div>
-              </div>
-            </div>
-            <ActivityTrendChart height={260} />
-          </CardContent>
-        </Card>
 
         <Card className="overflow-hidden">
           <CardContent>
@@ -442,48 +549,22 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ROW 4: TASK IN SCADENZA + TEAM ACTIVITY */}
+      {/* ROW 4: TREND + TEAM ACTIVITY */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card>
+        <Card className="overflow-hidden">
           <CardContent>
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                  <CalendarCheck className="h-4 w-4" />
+                  <Activity className="h-4.5 w-4.5" />
                 </div>
-                <CardTitle>Task in Scadenza</CardTitle>
+                <div>
+                  <CardTitle>Trend Attività</CardTitle>
+                  <p className="text-[11px] text-muted mt-0.5">Ultime 4 settimane</p>
+                </div>
               </div>
-              <button
-                onClick={() => router.push('/tasks')}
-                className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-md bg-primary/5 hover:bg-primary/10 transition-all"
-              >
-                Vedi tutti
-              </button>
             </div>
-            {tasks.length === 0 ? (
-              <EmptyState icon={CheckCircle2} title="Nessun task in scadenza" description="Ottimo lavoro! Non ci sono task con scadenza imminente." />
-            ) : (
-              <div className="space-y-1">
-                {tasks.map((task) => (
-                  <div key={task.id} onClick={() => router.push(`/tasks?taskId=${task.id}`)} className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg border-b border-border/30 last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{task.title}</p>
-                      {task.project && (
-                        <p className="text-xs text-muted mt-0.5">{task.project.name}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                      <StatusBadge
-                        leftLabel={task.priority === 'URGENT' ? 'Urgente' : task.priority === 'HIGH' ? 'Alta' : task.priority === 'MEDIUM' ? 'Media' : 'Bassa'}
-                        rightLabel={task.dueDate ? new Date(task.dueDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }) : '\u2014'}
-                        variant={task.priority === 'URGENT' ? 'error' : task.priority === 'HIGH' ? 'warning' : task.priority === 'MEDIUM' ? 'info' : 'default'}
-                        pulse={task.priority === 'URGENT'}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <ActivityTrendChart height={260} />
           </CardContent>
         </Card>
 
@@ -508,7 +589,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* ROW 5: ACTIVITY TIMELINE */}
+      {/* ROW 5: ACTIVITY TIMELINE + STICKY NOTES */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <ActivityTimeline
           activities={activities.map((activity) => {
@@ -606,8 +687,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-
 
     </div>
   )
