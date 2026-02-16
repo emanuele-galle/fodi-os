@@ -32,6 +32,17 @@ const DEAL_STAGES = [
   { value: 'CLOSED_LOST', label: 'Chiusa - Persa' },
 ]
 
+const INITIAL_FORM = {
+  title: '',
+  description: '',
+  value: '',
+  stage: 'QUALIFICATION',
+  probability: '50',
+  expectedCloseDate: '',
+  clientId: '',
+  contactId: '',
+}
+
 export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,16 +50,9 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loadingContacts, setLoadingContacts] = useState(false)
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    value: '',
-    stage: 'QUALIFICATION',
-    probability: '50',
-    expectedCloseDate: '',
-    clientId: '',
-    contactId: '',
-  })
+  const [formData, setFormData] = useState(INITIAL_FORM)
+
+  const isDirty = formData.title !== '' || formData.description !== '' || formData.value !== '' || formData.clientId !== ''
 
   // Load clients
   useEffect(() => {
@@ -124,16 +128,7 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
         onSuccess()
         onOpenChange(false)
         // Reset form
-        setFormData({
-          title: '',
-          description: '',
-          value: '',
-          stage: 'QUALIFICATION',
-          probability: '50',
-          expectedCloseDate: '',
-          clientId: '',
-          contactId: '',
-        })
+        setFormData(INITIAL_FORM)
       } else {
         const data = await res.json().catch(() => ({}))
         setError(data.error || 'Errore nella creazione dell\'opportunità')
@@ -146,7 +141,7 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
   }
 
   return (
-    <Modal open={open} onClose={() => onOpenChange(false)} title="Nuova Opportunità" size="xl">
+    <Modal open={open} onClose={() => onOpenChange(false)} title="Nuova Opportunità" size="xl" preventAccidentalClose={isDirty}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">

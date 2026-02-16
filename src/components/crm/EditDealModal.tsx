@@ -69,6 +69,13 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
     contactId: deal.contact?.id || '',
   })
 
+  const isDirty = formData.title !== deal.title ||
+    formData.description !== (deal.description || '') ||
+    formData.value !== deal.value ||
+    formData.stage !== deal.stage ||
+    formData.probability !== String(deal.probability) ||
+    formData.clientId !== deal.clientId
+
   // Load clients
   useEffect(() => {
     if (open) {
@@ -183,7 +190,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
   }
 
   return (
-    <Modal open={open} onClose={() => onOpenChange(false)} title="Modifica Opportunità" size="xl">
+    <Modal open={open} onClose={() => onOpenChange(false)} title="Modifica Opportunità" size="xl" preventAccidentalClose={isDirty}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">

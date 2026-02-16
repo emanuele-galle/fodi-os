@@ -189,7 +189,7 @@ export function MultiUserSelect({
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder="Cerca..."
-                className="flex-1 text-sm bg-transparent outline-none placeholder:text-muted"
+                className="flex-1 text-base md:text-sm bg-transparent outline-none placeholder:text-muted"
               />
             </div>
 

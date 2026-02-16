@@ -540,7 +540,7 @@ export default function CrmPage() {
                       value={bulkTagInput}
                       onChange={e => setBulkTagInput(e.target.value)}
                       placeholder="Tag da aggiungere..."
-                      className="h-8 text-xs border border-border rounded-md px-2 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/50 w-36"
+                      className="h-8 text-base md:text-xs border border-border rounded-md px-2 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/50 w-36"
                       onKeyDown={e => {
                         if (e.key === 'Enter' && bulkTagInput.trim()) {
                           e.preventDefault()

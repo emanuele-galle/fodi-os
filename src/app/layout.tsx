@@ -53,7 +53,7 @@ export default function RootLayout({
     <html lang="it">
       <head>
         <meta name="theme-color" content="#27272A" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
       </head>
       <body className="antialiased">
         {children}

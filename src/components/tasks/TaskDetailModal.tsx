@@ -312,7 +312,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Dettaglio Task" size="xl">
+    <Modal open={open} onClose={onClose} title="Dettaglio Task" size="xl" preventAccidentalClose={editForm.isDirty}>
       {loading || !task ? (
         <div className="flex items-center justify-center py-12">
           <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
