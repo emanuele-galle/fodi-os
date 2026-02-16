@@ -19,7 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         interactions: { orderBy: { date: 'desc' }, take: 10, include: { contact: true } },
         projects: { orderBy: { createdAt: 'desc' }, select: { id: true, name: true, status: true } },
         quotes: { orderBy: { createdAt: 'desc' }, select: { id: true, number: true, title: true, status: true, total: true } },
-        _count: { select: { contacts: true, projects: true, quotes: true } },
+        _count: { select: { contacts: true, interactions: true, projects: true, quotes: true, tickets: true, documents: true, quoteTemplates: true, signatureRequests: true, tasks: true, deals: true } },
       },
     })
 

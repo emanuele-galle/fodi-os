@@ -42,6 +42,9 @@ export async function GET(request: NextRequest) {
     }
     if (projectId) where.projectId = projectId
 
+    const clientId = searchParams.get('clientId')
+    if (clientId) where.clientId = clientId
+
     if (mine === 'true' && userId) {
       if (scope === 'assigned') {
         where.OR = [
@@ -101,6 +104,9 @@ export async function GET(request: NextRequest) {
           project: {
             select: { id: true, name: true },
           },
+          client: {
+            select: { id: true, companyName: true },
+          },
           _count: {
             select: { comments: true },
           },
@@ -138,7 +144,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { title, description, projectId, milestoneId, assigneeId, assigneeIds, priority, boardColumn, dueDate, estimatedHours, tags, isPersonal } = parsed.data
+    const { title, description, projectId, milestoneId, assigneeId, assigneeIds, priority, boardColumn, dueDate, estimatedHours, tags, isPersonal, clientId, taskType } = parsed.data
 
     // Default: se nessun assegnatario specificato, assegna al creatore
     const effectiveAssigneeId = assigneeId || (assigneeIds.length > 0 ? assigneeIds[0] : userId)
@@ -149,10 +155,12 @@ export async function POST(request: NextRequest) {
         description,
         projectId: projectId || null,
         milestoneId: milestoneId || null,
+        clientId: clientId || null,
         assigneeId: effectiveAssigneeId,
         creatorId: userId,
         priority,
         boardColumn,
+        taskType: taskType || 'GENERAL',
         dueDate: dueDate ? new Date(dueDate) : null,
         estimatedHours,
         tags,

@@ -38,12 +38,30 @@ export const createContactSchema = z.object({
   notes: z.string().optional(),
 })
 
+export const updateContactSchema = z.object({
+  firstName: z.string().min(1, 'Nome obbligatorio').max(100).optional(),
+  lastName: z.string().min(1, 'Cognome obbligatorio').max(100).optional(),
+  email: z.string().email('Email non valida').optional().nullable().or(z.literal('')),
+  phone: z.string().max(30).optional().nullable(),
+  role: z.string().max(100).optional().nullable(),
+  isPrimary: z.boolean().optional(),
+  notes: z.string().optional().nullable(),
+})
+
 export const createInteractionSchema = z.object({
   type: z.enum(['CALL', 'EMAIL', 'MEETING', 'NOTE', 'WHATSAPP', 'SOCIAL'], {
     error: 'Tipo interazione obbligatorio',
   }),
   subject: z.string().min(1, 'Oggetto obbligatorio').max(300),
   content: z.string().optional(),
-  contactId: z.string().uuid('ID contatto non valido').optional(),
+  contactId: z.string().uuid('ID contatto non valido').optional().nullable(),
+  date: z.string().datetime().optional(),
+})
+
+export const updateInteractionSchema = z.object({
+  type: z.enum(['CALL', 'EMAIL', 'MEETING', 'NOTE', 'WHATSAPP', 'SOCIAL']).optional(),
+  subject: z.string().min(1, 'Oggetto obbligatorio').max(300).optional(),
+  content: z.string().optional().nullable(),
+  contactId: z.string().uuid('ID contatto non valido').optional().nullable(),
   date: z.string().datetime().optional(),
 })

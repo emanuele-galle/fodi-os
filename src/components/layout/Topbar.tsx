@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search, LogOut, Video, MessageSquare, UserCheck, CheckCircle, FileText } from 'lucide-react'
+import { Bell, Search, LogOut, Video, MessageSquare, UserCheck, CheckCircle, FileText, AlarmClock } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -27,6 +27,8 @@ const NOTIF_ICONS: Record<string, typeof Bell> = {
   task_status_changed: CheckCircle,
   MEETING: Video,
   file_uploaded: FileText,
+  reminder: AlarmClock,
+  reminder_manual: AlarmClock,
 }
 
 function getNotifIcon(type: string) {
@@ -214,11 +216,11 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                         key={notif.id}
                         onClick={() => handleNotificationClick(notif)}
                         className={`w-full text-left px-4 py-3 border-b border-border/20 last:border-b-0 hover:bg-secondary/40 transition-colors ${
-                          !notif.isRead ? 'bg-primary/[0.03]' : ''
+                          notif.type.startsWith('reminder') ? 'bg-amber-500/5' : !notif.isRead ? 'bg-primary/[0.03]' : ''
                         }`}
                       >
                         <div className="flex items-start gap-2.5">
-                          <div className="mt-0.5 p-1.5 rounded-md bg-secondary/60 shrink-0">
+                          <div className={`mt-0.5 p-1.5 rounded-md shrink-0 ${notif.type.startsWith('reminder') ? 'bg-amber-500/10' : 'bg-secondary/60'}`}>
                             <NotifIcon className="h-3.5 w-3.5 text-muted" />
                           </div>
                           <div className="flex-1 min-w-0">

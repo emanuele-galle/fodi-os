@@ -14,20 +14,55 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status')
+    const industry = searchParams.get('industry')
+    const source = searchParams.get('source')
+    const tags = searchParams.get('tags')
+    const revenueMin = searchParams.get('revenueMin')
+    const revenueMax = searchParams.get('revenueMax')
+    const createdAfter = searchParams.get('createdAfter')
+    const createdBefore = searchParams.get('createdBefore')
+    const neglected = searchParams.get('neglected')
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
     const skip = (page - 1) * limit
 
-    const where = {
-      ...(search && {
+    const AND: Record<string, unknown>[] = []
+
+    if (search) {
+      AND.push({
         OR: [
           { companyName: { contains: search, mode: 'insensitive' as const } },
           { vatNumber: { contains: search, mode: 'insensitive' as const } },
           { pec: { contains: search, mode: 'insensitive' as const } },
+          { contacts: { some: { email: { contains: search, mode: 'insensitive' as const } } } },
+          { contacts: { some: { firstName: { contains: search, mode: 'insensitive' as const } } } },
+          { contacts: { some: { lastName: { contains: search, mode: 'insensitive' as const } } } },
+          { contacts: { some: { phone: { contains: search, mode: 'insensitive' as const } } } },
         ],
-      }),
-      ...(status && { status: status as never }),
+      })
     }
+
+    if (status) AND.push({ status: status as never })
+    if (industry) AND.push({ industry: { in: industry.split(',') } })
+    if (source) AND.push({ source: { in: source.split(',') } })
+    if (tags) AND.push({ tags: { hasSome: tags.split(',') } })
+    if (revenueMin) AND.push({ totalRevenue: { gte: parseFloat(revenueMin) } })
+    if (revenueMax) AND.push({ totalRevenue: { lte: parseFloat(revenueMax) } })
+    if (createdAfter) AND.push({ createdAt: { gte: new Date(createdAfter) } })
+    if (createdBefore) AND.push({ createdAt: { lte: new Date(createdBefore) } })
+    if (neglected === 'true') {
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      AND.push({ status: 'ACTIVE' as never })
+      AND.push({
+        OR: [
+          { interactions: { none: {} } },
+          { interactions: { every: { date: { lt: thirtyDaysAgo } } } },
+        ],
+      })
+    }
+
+    const where = AND.length > 0 ? { AND } : {}
 
     const [items, total] = await Promise.all([
       prisma.client.findMany({
@@ -37,6 +72,7 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         include: {
           _count: { select: { contacts: true, projects: true, quotes: true } },
+          interactions: { take: 1, orderBy: { date: 'desc' }, select: { date: true, type: true } },
         },
       }),
       prisma.client.count({ where }),

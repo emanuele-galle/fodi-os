@@ -44,6 +44,13 @@ export const STATUS_COLORS: Record<string, string> = {
   HIGH: 'bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/20',
   URGENT: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20',
 
+  // Lead Status
+  NEW: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 border-cyan-500/20',
+  CONTACTED: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20',
+  QUALIFIED: 'bg-violet-500/15 text-violet-700 dark:text-violet-400 border-violet-500/20',
+  PROPOSAL_SENT: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20',
+  CONVERTED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+
   // Support Ticket Status
   OPEN: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20',
   WAITING: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20',

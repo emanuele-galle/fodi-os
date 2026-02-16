@@ -53,9 +53,13 @@ const navigation: NavItem[] = [
     icon: Users,
     roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'SUPPORT'],
     children: [
+      { label: 'Dashboard', href: '/crm/dashboard' },
       { label: 'Clienti', href: '/crm' },
+      { label: 'Opportunità', href: '/crm/deals' },
       { label: 'Pipeline', href: '/crm/pipeline' },
+      { label: 'Attività', href: '/crm/tasks' },
       { label: 'Leads', href: '/crm/leads' },
+      { label: 'Gestione Tag', href: '/crm/settings/tags' },
     ],
   },
   {
