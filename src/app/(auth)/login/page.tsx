@@ -28,6 +28,13 @@ export default function LoginPage() {
 
       const data = await res.json()
 
+      if (res.status === 403 && data.requiresIpVerification) {
+        sessionStorage.setItem('ipVerify_userId', data.userId)
+        sessionStorage.setItem('ipVerify_maskedEmail', data.maskedEmail)
+        router.push('/verify-ip')
+        return
+      }
+
       if (!res.ok) {
         setError(data.error || 'Credenziali non valide')
         return

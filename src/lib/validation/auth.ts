@@ -13,3 +13,8 @@ export const passwordSchema = z.string()
 export const forgotPasswordSchema = z.object({
   email: z.string().email('Email non valida'),
 })
+
+export const verifyIpOtpSchema = z.object({
+  userId: z.string().uuid('ID utente non valido'),
+  otp: z.string().length(6, 'Il codice deve essere di 6 cifre').regex(/^\d{6}$/, 'Il codice deve contenere solo numeri'),
+})

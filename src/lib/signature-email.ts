@@ -1,40 +1,4 @@
-const SMTP_HOST = process.env.SMTP_HOST
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587')
-const SMTP_USER = process.env.SMTP_USER
-const SMTP_PASS = process.env.SMTP_PASS
-const SMTP_FROM = process.env.SMTP_FROM || 'noreply@fodisrl.it'
-
-async function sendViaSMTP(to: string, subject: string, html: string): Promise<boolean> {
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-    console.log('[SIGNATURE-EMAIL] SMTP non configurato, email simulata:')
-    console.log(`  To: ${to}`)
-    console.log(`  Subject: ${subject}`)
-    console.log(`  Body: ${html.substring(0, 200)}...`)
-    return true
-  }
-
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const nodemailer = require('nodemailer') as { createTransport: (opts: Record<string, unknown>) => { sendMail: (opts: Record<string, string>) => Promise<void> } }
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_PORT === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-    })
-
-    await transporter.sendMail({
-      from: SMTP_FROM,
-      to,
-      subject,
-      html,
-    })
-    return true
-  } catch (err) {
-    console.error('[SIGNATURE-EMAIL] Errore invio email:', err)
-    return false
-  }
-}
+import { sendViaSMTP } from '@/lib/email'
 
 interface CompanyData {
   ragioneSociale: string

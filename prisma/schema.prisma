@@ -62,6 +62,8 @@ assetUploads     Asset[]
   workSessions         WorkSession[]
   projectMemberships   ProjectMember[]
   digitalCard          DigitalCard?
+  trustedIps           TrustedIp[]
+  loginOtps            LoginOtp[]
 
   @@index([username])
   @@index([email])
@@ -1341,5 +1343,43 @@ model DigitalCard {
   @@index([slug])
   @@index([isEnabled])
   @@map("digital_cards")
+}
+
+// ============================================================
+// LOGIN IP VERIFICATION (OTP)
+// ============================================================
+
+model TrustedIp {
+  id         String   @id @default(uuid())
+  userId     String
+  ipAddress  String
+  userAgent  String?  @db.Text
+  label      String?
+  lastUsedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ipAddress])
+  @@index([userId])
+  @@map("trusted_ips")
+}
+
+model LoginOtp {
+  id          String   @id @default(uuid())
+  userId      String
+  otpHash     String
+  ipAddress   String
+  userAgent   String?  @db.Text
+  expiresAt   DateTime
+  isUsed      Boolean  @default(false)
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(5)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, ipAddress])
+  @@map("login_otps")
 }
 
