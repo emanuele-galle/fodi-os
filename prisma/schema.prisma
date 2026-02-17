@@ -750,6 +750,7 @@ model Asset {
   category     String   @default("general")
   tags         String[] @default([])
   description  String?
+  driveFileId  String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

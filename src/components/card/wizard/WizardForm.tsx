@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
 import { WizardField } from './WizardField'
 import { WizardSuccess } from './WizardSuccess'
 
@@ -39,14 +38,18 @@ interface Template {
 interface WizardFormProps {
   template: Template
   cardSlug: string
+  logoUrl?: string | null
+  companyName?: string
+  phone?: string | null
 }
 
-export function WizardForm({ template, cardSlug }: WizardFormProps) {
+export function WizardForm({ template, cardSlug, logoUrl, companyName, phone }: WizardFormProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const currentStep = template.steps[currentStepIndex]
   const isLastStep = currentStepIndex === template.steps.length - 1
@@ -54,7 +57,6 @@ export function WizardForm({ template, cardSlug }: WizardFormProps) {
 
   const handleFieldChange = (fieldName: string, value: string) => {
     setAnswers(prev => ({ ...prev, [fieldName]: value }))
-    // Clear error when user types
     if (errors[fieldName]) {
       setErrors(prev => {
         const newErrors = { ...prev }
@@ -62,6 +64,7 @@ export function WizardForm({ template, cardSlug }: WizardFormProps) {
         return newErrors
       })
     }
+    if (submitError) setSubmitError(null)
   }
 
   const validateCurrentStep = (): boolean => {
@@ -93,15 +96,14 @@ export function WizardForm({ template, cardSlug }: WizardFormProps) {
     if (!validateCurrentStep()) return
 
     setIsSubmitting(true)
+    setSubmitError(null)
 
     try {
-      // Map answers to lead fields
       const name = answers.name || answers.nome || answers.full_name || ''
       const email = answers.email || ''
-      const phone = answers.phone || answers.telefono || ''
+      const userPhone = answers.phone || answers.telefono || ''
       const company = answers.company || answers.azienda || ''
 
-      // Combine all answers into message
       const messageLines = Object.entries(answers).map(([key, value]) => {
         const field = template.steps.flatMap(s => s.fields).find(f => f.name === key)
         const label = field?.label || key
@@ -109,14 +111,13 @@ export function WizardForm({ template, cardSlug }: WizardFormProps) {
       })
       const message = messageLines.join('\n')
 
-      // Submit lead
       const leadResponse = await fetch(`/api/c/${cardSlug}/lead`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           email,
-          phone,
+          phone: userPhone,
           company,
           message,
           source: `wizard:${template.slug}`
@@ -130,28 +131,36 @@ export function WizardForm({ template, cardSlug }: WizardFormProps) {
       setIsSuccess(true)
     } catch (error) {
       console.error('Submit error:', error)
-      alert('Si è verificato un errore. Riprova.')
+      setSubmitError('Si è verificato un errore. Riprova.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   if (isSuccess) {
-    return <WizardSuccess message={template.completionMessage} />
+    return (
+      <WizardSuccess
+        message={template.completionMessage}
+        logoUrl={logoUrl}
+        companyName={companyName}
+        cardSlug={cardSlug}
+        phone={phone}
+      />
+    )
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Progress bar */}
       {template.showProgressBar && (
         <div className="space-y-2">
-          <div className="flex justify-between items-center text-sm text-muted">
+          <div className="flex justify-between items-center text-sm text-muted-foreground">
             <span>Passo {currentStepIndex + 1} di {template.steps.length}</span>
             <span>{Math.round(((currentStepIndex + 1) / template.steps.length) * 100)}%</span>
           </div>
-          <div className="h-2 bg-secondary/30 rounded-full overflow-hidden">
+          <div className="h-2 bg-purple-500/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-primary transition-all duration-300 ease-out"
+              className="h-full bg-gradient-to-r from-purple-600 to-indigo-600 transition-all duration-500 ease-out rounded-full"
               style={{ width: `${((currentStepIndex + 1) / template.steps.length) * 100}%` }}
             />
           </div>
@@ -160,13 +169,12 @@ export function WizardForm({ template, cardSlug }: WizardFormProps) {
 
       {/* Step content */}
       <div>
-        <h2 className="text-xl font-semibold text-foreground mb-2">{currentStep.title}</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-1">{currentStep.title}</h2>
         {currentStep.description && (
-          <p className="text-sm text-muted mb-6">{currentStep.description}</p>
+          <p className="text-sm text-muted-foreground mb-6">{currentStep.description}</p>
         )}
 
-        {/* Fields */}
-        <div className="space-y-5">
+        <div className="space-y-6">
           {currentStep.fields.map(field => (
             <WizardField
               key={field.id}
@@ -179,40 +187,63 @@ export function WizardForm({ template, cardSlug }: WizardFormProps) {
         </div>
       </div>
 
-      {/* Navigation buttons */}
-      <div className="flex items-center justify-between pt-4 border-t border-border/30">
-        <div>
-          {!isFirstStep && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleBack}
-              disabled={isSubmitting}
-            >
-              Indietro
-            </Button>
-          )}
+      {/* Inline error */}
+      {submitError && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {submitError}
         </div>
+      )}
 
-        <div>
+      {/* Navigation buttons */}
+      <div className="flex items-center gap-3 pt-2">
+        {!isFirstStep && (
+          <button
+            type="button"
+            onClick={handleBack}
+            disabled={isSubmitting}
+            className="px-5 py-3 rounded-xl text-sm font-medium text-muted-foreground bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-border/30 hover:text-foreground transition-colors disabled:opacity-50"
+          >
+            Indietro
+          </button>
+        )}
+
+        <div className={isFirstStep ? 'w-full' : 'flex-1'}>
           {isLastStep ? (
-            <Button
+            <button
               type="button"
-              variant="primary"
               onClick={handleSubmit}
-              loading={isSubmitting}
               disabled={isSubmitting}
+              className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-semibold text-sm shadow-lg shadow-purple-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Invia
-            </Button>
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+              {isSubmitting ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin relative" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span className="relative">Invio in corso...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-[18px] h-[18px] relative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  <span className="relative">Invia</span>
+                </>
+              )}
+            </button>
           ) : (
-            <Button
+            <button
               type="button"
-              variant="primary"
               onClick={handleNext}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-semibold text-sm shadow-lg shadow-purple-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.99]"
             >
               Avanti
-            </Button>
+            </button>
           )}
         </div>
       </div>

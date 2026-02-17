@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Film, Plus, Search, Image, FileText, FileVideo, FileAudio, File,
   FolderOpen, ArrowLeft, ExternalLink, Upload, FolderPlus, Link2Off, Star,
-  HardDrive, AlertCircle, LayoutGrid, List,
+  HardDrive, AlertCircle, LayoutGrid, List, Cloud, CloudOff,
 } from 'lucide-react'
 import NextImage from 'next/image'
 import { Button } from '@/components/ui/Button'
@@ -32,7 +32,15 @@ interface Asset {
   tags: string[]
   description: string | null
   uploadedBy: { firstName: string; lastName: string } | null
+  project: { id: string; name: string } | null
+  driveFileId: string | null
+  projectId: string | null
   createdAt: string
+}
+
+interface ProjectOption {
+  id: string
+  name: string
 }
 
 interface DriveFile {
@@ -98,6 +106,8 @@ function MinioAssetsTab() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [projectFilter, setProjectFilter] = useState('')
+  const [projects, setProjects] = useState<ProjectOption[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [detailAsset, setDetailAsset] = useState<Asset | null>(null)
   // Pagination
@@ -114,6 +124,21 @@ function MinioAssetsTab() {
   // Drag & drop
   const [isDragging, setIsDragging] = useState(false)
 
+  // Fetch projects for filter dropdown
+  useEffect(() => {
+    async function loadProjects() {
+      try {
+        const res = await fetch('/api/projects?limit=100')
+        if (res.ok) {
+          const data = await res.json()
+          const items = data.items || data.projects || data || []
+          setProjects(Array.isArray(items) ? items.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })) : [])
+        }
+      } catch { /* ignore */ }
+    }
+    loadProjects()
+  }, [])
+
   const fetchAssets = useCallback(async () => {
     setLoading(true)
     setFetchError(null)
@@ -121,6 +146,7 @@ function MinioAssetsTab() {
       const params = new URLSearchParams()
       if (search) params.set('search', search)
       if (categoryFilter) params.set('category', categoryFilter)
+      if (projectFilter) params.set('projectId', projectFilter)
       params.set('page', String(page))
       params.set('limit', String(PAGE_LIMIT))
       const res = await fetch(`/api/assets?${params}`)
@@ -136,12 +162,12 @@ function MinioAssetsTab() {
     } finally {
       setLoading(false)
     }
-  }, [search, categoryFilter, page])
+  }, [search, categoryFilter, projectFilter, page])
 
   useEffect(() => { fetchAssets() }, [fetchAssets])
 
   // Reset page when filters change
-  useEffect(() => { setPage(1) }, [search, categoryFilter])
+  useEffect(() => { setPage(1) }, [search, categoryFilter, projectFilter])
 
   // Populate edit fields when detail modal opens
   useEffect(() => {
@@ -259,6 +285,15 @@ function MinioAssetsTab() {
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="w-full sm:w-48"
         />
+        <Select
+          options={[
+            { value: '', label: 'Tutti i progetti' },
+            ...projects.map((p) => ({ value: p.id, label: p.name })),
+          ]}
+          value={projectFilter}
+          onChange={(e) => setProjectFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
         {/* View mode toggle */}
         <div className="hidden sm:flex items-center border border-border rounded-md overflow-hidden flex-shrink-0">
           <button
@@ -340,12 +375,19 @@ function MinioAssetsTab() {
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-1">
                     <p className="font-medium text-sm truncate flex-1 mr-2">{asset.fileName}</p>
-                    <Badge variant={CATEGORY_BADGE[asset.category] || 'default'}>{asset.category}</Badge>
+                    <div className="flex items-center gap-1.5">
+                      {asset.driveFileId ? (
+                        <span title="Sincronizzato su Google Drive"><Cloud className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" /></span>
+                      ) : (
+                        <span title="Solo MinIO"><CloudOff className="h-3.5 w-3.5 text-muted/40 flex-shrink-0" /></span>
+                      )}
+                      <Badge variant={CATEGORY_BADGE[asset.category] || 'default'}>{asset.category}</Badge>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted mt-2">
                     <span>{formatFileSize(asset.fileSize)}</span>
-                    <span>
-                      {asset.uploadedBy ? `${asset.uploadedBy.firstName} ${asset.uploadedBy.lastName}` : '—'}
+                    <span className="truncate ml-2">
+                      {asset.project?.name || (asset.uploadedBy ? `${asset.uploadedBy.firstName} ${asset.uploadedBy.lastName}` : '—')}
                     </span>
                   </div>
                 </div>
@@ -374,11 +416,16 @@ function MinioAssetsTab() {
                   )}
                 </div>
                 <p className="flex-1 text-sm font-medium truncate min-w-0">{asset.fileName}</p>
+                {asset.driveFileId ? (
+                  <span title="Google Drive"><Cloud className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" /></span>
+                ) : (
+                  <span title="Solo MinIO"><CloudOff className="h-3.5 w-3.5 text-muted/40 flex-shrink-0" /></span>
+                )}
                 <Badge variant={CATEGORY_BADGE[asset.category] || 'default'} className="flex-shrink-0">{asset.category}</Badge>
                 <span className="text-xs text-muted w-20 text-right flex-shrink-0 hidden md:block">{formatFileSize(asset.fileSize)}</span>
                 <span className="text-xs text-muted w-24 text-right flex-shrink-0 hidden lg:block">{new Date(asset.createdAt).toLocaleDateString('it-IT')}</span>
                 <span className="text-xs text-muted w-28 text-right flex-shrink-0 hidden xl:block truncate">
-                  {asset.uploadedBy ? `${asset.uploadedBy.firstName} ${asset.uploadedBy.lastName}` : '—'}
+                  {asset.project?.name || (asset.uploadedBy ? `${asset.uploadedBy.firstName} ${asset.uploadedBy.lastName}` : '—')}
                 </span>
               </div>
             )
@@ -432,6 +479,19 @@ function MinioAssetsTab() {
               {!editing && (
                 <div><p className="text-muted">Categoria</p><Badge variant={CATEGORY_BADGE[detailAsset.category] || 'default'}>{detailAsset.category}</Badge></div>
               )}
+              {detailAsset.project && (
+                <div><p className="text-muted">Progetto</p><p className="font-medium">{detailAsset.project.name}</p></div>
+              )}
+              <div>
+                <p className="text-muted">Google Drive</p>
+                <p className="font-medium flex items-center gap-1.5">
+                  {detailAsset.driveFileId ? (
+                    <><Cloud className="h-4 w-4 text-blue-500" /> Sincronizzato</>
+                  ) : (
+                    <><CloudOff className="h-4 w-4 text-muted/50" /> Non sincronizzato</>
+                  )}
+                </p>
+              </div>
             </div>
 
             {editing ? (

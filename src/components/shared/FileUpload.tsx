@@ -18,6 +18,7 @@ interface FileUploadProps {
   maxFiles?: number
   maxSize?: number
   className?: string
+  projectId?: string
 }
 
 interface FileEntry {
@@ -51,6 +52,7 @@ export function FileUpload({
   maxFiles = 10,
   maxSize = 500 * 1024 * 1024,
   className,
+  projectId,
 }: FileUploadProps) {
   const [entries, setEntries] = useState<FileEntry[]>([])
   const [dragging, setDragging] = useState(false)
@@ -90,72 +92,77 @@ export function FileUpload({
     }
   }, [entries.length, maxFiles, maxSize])
 
-  async function uploadFile(entry: FileEntry) {
+  function uploadFile(entry: FileEntry) {
     setEntries((prev) =>
-      prev.map((e) => (e.id === entry.id ? { ...e, status: 'uploading' as const, progress: 10 } : e))
+      prev.map((e) => (e.id === entry.id ? { ...e, status: 'uploading' as const, progress: 0 } : e))
     )
 
-    try {
-      const formData = new FormData()
-      formData.append('file', entry.file)
+    const formData = new FormData()
+    formData.append('file', entry.file)
+    if (projectId) formData.append('projectId', projectId)
 
-      const progressInterval = setInterval(() => {
+    const xhr = new XMLHttpRequest()
+
+    xhr.upload.addEventListener('progress', (evt) => {
+      if (evt.lengthComputable) {
+        const pct = Math.round((evt.loaded / evt.total) * 100)
         setEntries((prev) =>
           prev.map((e) =>
             e.id === entry.id && e.status === 'uploading'
-              ? { ...e, progress: Math.min(e.progress + 15, 85) }
-              : e
-          )
-        )
-      }, 200)
-
-      const res = await fetch('/api/assets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName: entry.file.name,
-          fileUrl: URL.createObjectURL(entry.file),
-          fileSize: entry.file.size,
-          mimeType: entry.file.type || 'application/octet-stream',
-          category: getCategoryFromMime(entry.file.type),
-        }),
-      })
-
-      clearInterval(progressInterval)
-
-      if (res.ok) {
-        const data = await res.json()
-        const result: UploadedFile = {
-          fileName: data.fileName,
-          fileUrl: data.fileUrl,
-          fileSize: data.fileSize,
-          mimeType: data.mimeType,
-        }
-
-        setEntries((prev) =>
-          prev.map((e) =>
-            e.id === entry.id ? { ...e, status: 'done' as const, progress: 100, result } : e
-          )
-        )
-
-        setEntries((prev) => {
-          const completed = prev
-            .filter((e) => e.status === 'done' && e.result)
-            .map((e) => e.result!)
-          if (completed.length > 0) onUpload(completed)
-          return prev
-        })
-      } else {
-        const errData = await res.json().catch(() => null)
-        setEntries((prev) =>
-          prev.map((e) =>
-            e.id === entry.id
-              ? { ...e, status: 'error' as const, progress: 0, error: errData?.error || 'Errore durante il caricamento' }
+              ? { ...e, progress: pct }
               : e
           )
         )
       }
-    } catch {
+    })
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText)
+          const result: UploadedFile = {
+            fileName: data.fileName,
+            fileUrl: data.fileUrl,
+            fileSize: data.fileSize,
+            mimeType: data.mimeType,
+          }
+
+          setEntries((prev) => {
+            const updated = prev.map((e) =>
+              e.id === entry.id ? { ...e, status: 'done' as const, progress: 100, result } : e
+            )
+            const completed = updated
+              .filter((e) => e.status === 'done' && e.result)
+              .map((e) => e.result!)
+            if (completed.length > 0) onUpload(completed)
+            return updated
+          })
+        } catch {
+          setEntries((prev) =>
+            prev.map((e) =>
+              e.id === entry.id
+                ? { ...e, status: 'error' as const, progress: 0, error: 'Risposta non valida dal server' }
+                : e
+            )
+          )
+        }
+      } else {
+        let errorMsg = 'Errore durante il caricamento'
+        try {
+          const data = JSON.parse(xhr.responseText)
+          if (data.error) errorMsg = data.error
+        } catch { /* use default */ }
+        setEntries((prev) =>
+          prev.map((e) =>
+            e.id === entry.id
+              ? { ...e, status: 'error' as const, progress: 0, error: errorMsg }
+              : e
+          )
+        )
+      }
+    })
+
+    xhr.addEventListener('error', () => {
       setEntries((prev) =>
         prev.map((e) =>
           e.id === entry.id
@@ -163,15 +170,10 @@ export function FileUpload({
             : e
         )
       )
-    }
-  }
+    })
 
-  function getCategoryFromMime(mime: string): string {
-    if (mime.startsWith('image/')) return 'image'
-    if (mime.startsWith('video/')) return 'video'
-    if (mime.startsWith('audio/')) return 'audio'
-    if (mime.includes('pdf') || mime.includes('document') || mime.includes('text')) return 'document'
-    return 'other'
+    xhr.open('POST', '/api/assets')
+    xhr.send(formData)
   }
 
   function removeEntry(id: string) {
