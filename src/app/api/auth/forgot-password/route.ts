@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { forgotPasswordSchema } from '@/lib/validation'
 import { rateLimit } from '@/lib/rate-limit'
-import { triggerWebhook } from '@/lib/n8n-webhook'
+import { sendViaSMTP } from '@/lib/email'
 import { SignJWT } from 'jose'
 
 export async function POST(request: NextRequest) {
@@ -38,16 +38,35 @@ export async function POST(request: NextRequest) {
         .setIssuedAt()
         .sign(secret)
 
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://os.fodisrl.it'
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://os.fodisrl.it'
       const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`
 
-      await triggerWebhook('/password-reset', {
-        email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        resetUrl,
-        expiresIn: '1 ora',
-      })
+      await sendViaSMTP(email, 'Reset password - FODI OS', `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px;">
+  <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <h2 style="color: #1e293b; margin: 0 0 8px;">Reset Password</h2>
+    <p style="color: #64748b; margin: 0 0 24px; font-size: 14px;">
+      Ciao <strong>${user.firstName}</strong>, hai richiesto il reset della password del tuo account FODI OS.
+    </p>
+    <div style="text-align: center; margin-bottom: 24px;">
+      <a href="${resetUrl}" style="display: inline-block; background: #3B82F6; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+        Reimposta Password
+      </a>
+    </div>
+    <p style="color: #94a3b8; font-size: 12px; margin: 0 0 16px;">
+      Il link scade tra <strong>1 ora</strong>. Se non hai richiesto il reset, ignora questa email.
+    </p>
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+    <p style="color: #94a3b8; font-size: 11px; margin: 0;">
+      FODI S.r.l. - Sistema Gestionale<br/>
+      Questa è un'email automatica, non rispondere.
+    </p>
+  </div>
+</body>
+</html>`)
     }
 
     // Risposta sempre uguale per non rivelare se l'email esiste

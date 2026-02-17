@@ -95,10 +95,6 @@ export async function middleware(request: NextRequest) {
     if (pathname === '/api/leads' && request.method === 'POST') {
       return setSecurityHeaders(NextResponse.next())
     }
-    // Allow N8N webhooks without auth (specific path only)
-    if (pathname === '/api/webhooks/n8n') {
-      return setSecurityHeaders(NextResponse.next())
-    }
 
     const authHeader = request.headers.get('authorization')
     const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null

@@ -1,25 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { timingSafeEqual } from 'crypto'
-
-const webhookSecret = process.env.N8N_WEBHOOK_SECRET
-
-function timingSafeCompare(a: string, b: string): boolean {
-  const bufA = Buffer.from(a)
-  const bufB = Buffer.from(b)
-  if (bufA.length !== bufB.length) return false
-  return timingSafeEqual(bufA, bufB)
-}
 
 export async function POST(request: NextRequest) {
   try {
-    if (!webhookSecret) {
-      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
-    }
-
-    const secret = request.headers.get('x-n8n-secret')
-    if (!secret || !timingSafeCompare(secret, webhookSecret)) {
-      return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+    // Protetto dal middleware JWT - solo utenti autenticati
+    const userRole = request.headers.get('x-user-role')
+    if (userRole !== 'ADMIN') {
+      return NextResponse.json({ error: 'Non autorizzato' }, { status: 403 })
     }
 
     const now = new Date()
