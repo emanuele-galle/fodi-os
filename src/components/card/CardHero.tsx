@@ -25,36 +25,35 @@ export default function CardHero({
       {/* Avatar with animated ring */}
       <div className="relative mb-8">
         {/* Outer glow */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 blur-2xl scale-150 animate-pulse-slow" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500/25 to-blue-500/15 blur-3xl scale-[1.6] animate-pulse-slow" />
 
         {/* Spinning gradient border */}
-        <div className="relative w-36 h-36">
+        <div className="relative w-40 h-40">
           <div
-            className="absolute inset-0 rounded-full animate-spin-slow"
+            className="absolute inset-0 rounded-full animate-spin-slow p-[3px]"
             style={{
-              background: 'conic-gradient(from 0deg, transparent, rgba(139,92,246,0.5), transparent, rgba(99,102,241,0.5), transparent)',
-              padding: '2px',
+              background: 'conic-gradient(from 0deg, transparent 10%, rgba(139,92,246,0.6), transparent 40%, rgba(99,102,241,0.5), transparent 70%, rgba(168,85,247,0.4), transparent 90%)',
             }}
           >
             <div className="w-full h-full rounded-full bg-[#0a0a0f]" />
           </div>
 
-          {/* Static inner ring */}
-          <div className="absolute inset-[2px] rounded-full border border-white/10" />
+          {/* Static inner ring for definition */}
+          <div className="absolute inset-[3px] rounded-full border border-white/[0.08]" />
 
           {/* Avatar */}
-          <div className="absolute inset-[6px] rounded-full overflow-hidden bg-[#12121a]">
+          <div className="absolute inset-[6px] rounded-full overflow-hidden bg-[#12121a] ring-1 ring-white/[0.04]">
             {avatarUrl ? (
               <Image
                 src={avatarUrl}
                 alt={fullName}
-                width={140}
-                height={140}
+                width={160}
+                height={160}
                 className="w-full h-full object-cover"
                 priority
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-purple-600/30 to-indigo-600/30 flex items-center justify-center text-white/80 text-3xl font-light tracking-wide">
+              <div className="w-full h-full bg-gradient-to-br from-purple-600/30 to-indigo-600/30 flex items-center justify-center text-white/70 text-4xl font-light tracking-wide">
                 {initials}
               </div>
             )}
@@ -63,20 +62,20 @@ export default function CardHero({
       </div>
 
       {/* Name */}
-      <h1 className="text-[28px] font-semibold tracking-tight text-white leading-tight">
+      <h1 className="text-[30px] font-bold tracking-tight text-white leading-tight">
         {fullName}
       </h1>
 
       {/* Job title */}
       {jobTitle && (
-        <p className="mt-2 text-[15px] font-medium text-purple-400/90">
+        <p className="mt-2.5 text-[16px] font-medium bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
           {jobTitle}
         </p>
       )}
 
       {/* Department badge */}
       {department && (
-        <div className="mt-3 inline-flex items-center gap-2 text-[11px] font-medium px-3.5 py-1.5 rounded-full bg-white/[0.04] text-white/50 border border-white/[0.06] tracking-wide uppercase">
+        <div className="mt-3.5 inline-flex items-center gap-2 text-[11px] font-medium px-4 py-1.5 rounded-full bg-white/[0.04] text-white/45 border border-white/[0.06] tracking-widest uppercase">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           {department}
         </div>
@@ -84,7 +83,7 @@ export default function CardHero({
 
       {/* Bio */}
       {cardBio && (
-        <p className="mt-5 text-[14px] leading-[1.8] text-white/40 max-w-[320px]">
+        <p className="mt-6 text-[14px] leading-[1.8] text-white/35 max-w-[320px]">
           {cardBio}
         </p>
       )}

@@ -20,14 +20,14 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
   if (wizards.length === 0) return null
 
   return (
-    <div className="space-y-5 pt-6 animate-slide-up" style={{ animationDelay: '400ms' }}>
+    <div className="space-y-5">
       {/* Section header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-semibold">I nostri servizi</h2>
+          <Sparkles className="w-4 h-4 text-purple-400/70" strokeWidth={1.8} />
+          <h2 className="text-[15px] font-medium text-white/60 tracking-wide">I nostri servizi</h2>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[12px] text-white/25">
           Scopri cosa possiamo fare per te
         </p>
       </div>
@@ -39,30 +39,31 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
             key={wizard.id}
             href={`/c/${cardSlug}/wizard/${wizard.slug}`}
             className="block group"
-            style={{ animationDelay: `${500 + index * 50}ms` }}
+            style={{ animationDelay: `${index * 60}ms` }}
           >
-            <div className="relative overflow-hidden rounded-xl border bg-gradient-to-br from-primary/5 to-purple-500/5 p-5 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/10">
+            <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm p-5 transition-all duration-300 hover:bg-white/[0.05] hover:border-white/[0.1]">
+              {/* Top accent */}
+              <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
+
               {/* Content */}
-              <div className="relative space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex-1 space-y-1">
-                    <h3 className="font-semibold text-base group-hover:text-primary transition-colors">
-                      {wizard.name}
-                    </h3>
-                    {wizard.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {wizard.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-purple-600/10 to-indigo-600/10 group-hover:from-purple-600/20 group-hover:to-indigo-600/20 flex items-center justify-center transition-all">
-                    <Send className="w-4 h-4 text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </div>
+              <div className="relative flex items-center justify-between gap-4">
+                <div className="flex-1 space-y-1.5">
+                  <h3 className="font-medium text-[14px] text-white/80 group-hover:text-white transition-colors">
+                    {wizard.name}
+                  </h3>
+                  {wizard.description && (
+                    <p className="text-[12px] leading-relaxed text-white/30 line-clamp-2 group-hover:text-white/40 transition-colors">
+                      {wizard.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-purple-500/8 border border-purple-500/10 flex items-center justify-center transition-all duration-300 group-hover:bg-purple-500/15 group-hover:border-purple-500/20">
+                  <Send className="w-4 h-4 text-purple-400/60 group-hover:text-purple-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" strokeWidth={1.6} />
                 </div>
               </div>
 
-              {/* Gradient accent */}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              {/* Hover glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/[0.02] to-indigo-500/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl" />
             </div>
           </Link>
         ))}
