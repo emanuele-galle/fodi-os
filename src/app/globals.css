@@ -135,6 +135,8 @@ html {
 .animate-card-entrance-3 { animation-delay: 240ms; }
 .animate-card-entrance-4 { animation-delay: 360ms; }
 .animate-card-entrance-5 { animation-delay: 480ms; }
+.animate-card-entrance-6 { animation-delay: 600ms; }
+.animate-card-entrance-7 { animation-delay: 720ms; }
 
 .animate-gradient-rotate {
   animation: gradientRotate 4s linear infinite;

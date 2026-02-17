@@ -7,6 +7,7 @@ import CardSocials from '@/components/card/CardSocials'
 import CardCompany from '@/components/card/CardCompany'
 import CardWizardLinks from '@/components/card/CardWizardLinks'
 import CardViewTracker from '@/components/card/CardViewTracker'
+import CardBooking from '@/components/card/CardBooking'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -73,6 +74,7 @@ export default async function CardPage({ params }: Props) {
           phone: true,
           avatarUrl: true,
           role: true,
+          googleToken: { select: { id: true } },
         }
       }
     }
@@ -100,6 +102,8 @@ export default async function CardPage({ params }: Props) {
       })
     : []
 
+  const hasBooking = card.showBooking && !!card.user.googleToken
+
   return (
     <div className="max-w-md mx-auto px-5 py-12">
       {/* Hero - immediate */}
@@ -111,6 +115,7 @@ export default async function CardPage({ params }: Props) {
           jobTitle={card.jobTitle}
           cardBio={card.cardBio}
           department={card.department}
+          logoUrl={company?.logoUrl}
         />
       </div>
 
@@ -142,9 +147,16 @@ export default async function CardPage({ params }: Props) {
         </div>
       )}
 
-      {/* Wizards - stagger 5 */}
-      {card.showWizards && wizards.length > 0 && (
+      {/* Booking - stagger 5 */}
+      {hasBooking && (
         <div className="mt-6 animate-card-entrance animate-card-entrance-5">
+          <CardBooking slug={slug} duration={card.bookingDuration} />
+        </div>
+      )}
+
+      {/* Wizards - stagger 6 */}
+      {card.showWizards && wizards.length > 0 && (
+        <div className="mt-6 animate-card-entrance animate-card-entrance-6">
           <CardWizardLinks wizards={wizards} cardSlug={slug} />
         </div>
       )}

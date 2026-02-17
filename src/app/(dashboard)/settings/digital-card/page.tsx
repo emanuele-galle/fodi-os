@@ -21,6 +21,11 @@ interface CardData {
   whatsappNumber: string | null
   showWizards: boolean
   isEnabled: boolean
+  showBooking: boolean
+  bookingDuration: number
+  bookingDaysAhead: number
+  bookingStartHour: number
+  bookingEndHour: number
   user: {
     id: string
     firstName: string

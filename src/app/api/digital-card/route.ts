@@ -14,6 +14,11 @@ const updateSchema = z.object({
   whatsappNumber: z.string().optional(),
   showWizards: z.boolean().optional(),
   isEnabled: z.boolean().optional(),
+  showBooking: z.boolean().optional(),
+  bookingDuration: z.number().min(15).max(120).optional(),
+  bookingDaysAhead: z.number().min(1).max(60).optional(),
+  bookingStartHour: z.number().min(0).max(23).optional(),
+  bookingEndHour: z.number().min(1).max(24).optional(),
 })
 
 function generateSlug(firstName: string, lastName: string): string {

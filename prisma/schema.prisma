@@ -1313,6 +1313,13 @@ model DigitalCard {
   cardBio         String?   @db.Text
   showWizards     Boolean   @default(false)
 
+  // Booking
+  showBooking      Boolean   @default(false)
+  bookingDuration  Int       @default(30)
+  bookingDaysAhead Int       @default(14)
+  bookingStartHour Int       @default(9)
+  bookingEndHour   Int       @default(18)
+
   // Analytics
   viewCount       Int       @default(0)
   lastViewedAt    DateTime?

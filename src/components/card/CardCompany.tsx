@@ -21,17 +21,17 @@ export default function CardCompany({ company }: CardCompanyProps) {
 
       <div className="flex items-center gap-3.5">
         {company.logoUrl ? (
-          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-white dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700/50">
+          <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-white dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700/50">
             <Image
               src={company.logoUrl}
               alt={company.ragioneSociale}
               fill
-              className="object-contain p-1.5"
+              className="object-contain p-1"
             />
           </div>
         ) : (
-          <div className="w-10 h-10 rounded-xl bg-purple-500/8 dark:bg-purple-500/15 flex items-center justify-center flex-shrink-0">
-            <Building2 className="w-4.5 h-4.5 text-purple-500" />
+          <div className="w-8 h-8 rounded-lg bg-purple-500/8 dark:bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+            <Building2 className="w-4 h-4 text-purple-500" />
           </div>
         )}
 

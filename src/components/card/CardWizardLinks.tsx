@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, Sparkles } from 'lucide-react'
-import { Badge } from '@/components/ui/Badge'
+import { Sparkles, Send } from 'lucide-react'
 
 type Wizard = {
   id: string
@@ -21,7 +20,7 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
   if (wizards.length === 0) return null
 
   return (
-    <div className="space-y-4 pt-4 animate-slide-up" style={{ animationDelay: '400ms' }}>
+    <div className="space-y-5 pt-6 animate-slide-up" style={{ animationDelay: '400ms' }}>
       {/* Section header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2">
@@ -45,7 +44,7 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
             <div className="relative overflow-hidden rounded-xl border bg-gradient-to-br from-primary/5 to-purple-500/5 p-5 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/10">
               {/* Content */}
               <div className="relative space-y-2">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 space-y-1">
                     <h3 className="font-semibold text-base group-hover:text-primary transition-colors">
                       {wizard.name}
@@ -56,12 +55,10 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
                       </p>
                     )}
                   </div>
-                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0 mt-0.5" />
+                  <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-purple-600/10 to-indigo-600/10 group-hover:from-purple-600/20 group-hover:to-indigo-600/20 flex items-center justify-center transition-all">
+                    <Send className="w-4 h-4 text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </div>
                 </div>
-
-                <Badge variant="default" className="text-xs">
-                  {wizard.category}
-                </Badge>
               </div>
 
               {/* Gradient accent */}

@@ -1,0 +1,298 @@
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { Calendar, Clock, Check, ChevronLeft, ChevronRight } from 'lucide-react'
+
+type BookingStep = 'loading' | 'date' | 'time' | 'form' | 'success'
+
+type AvailabilityData = {
+  slots: Record<string, string[]>
+  duration: number
+  timezone: string
+}
+
+type CardBookingProps = {
+  slug: string
+  duration: number
+}
+
+export default function CardBooking({ slug, duration }: CardBookingProps) {
+  const [step, setStep] = useState<BookingStep>('loading')
+  const [availability, setAvailability] = useState<AvailabilityData | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [form, setForm] = useState({ name: '', email: '', phone: '', notes: '' })
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetchAvailability()
+  }, [slug])
+
+  async function fetchAvailability() {
+    try {
+      const res = await fetch(`/api/c/${slug}/availability`)
+      if (!res.ok) {
+        setError('Prenotazioni non disponibili al momento')
+        setStep('date')
+        return
+      }
+      const data: AvailabilityData = await res.json()
+      setAvailability(data)
+      setStep('date')
+    } catch {
+      setError('Errore nel caricamento disponibilità')
+      setStep('date')
+    }
+  }
+
+  function handleDateSelect(dateStr: string) {
+    setSelectedDate(dateStr)
+    setSelectedTime(null)
+    setStep('time')
+  }
+
+  function handleTimeSelect(time: string) {
+    setSelectedTime(time)
+    setStep('form')
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedDate || !selectedTime || submitting) return
+
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/c/${slug}/book`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone || undefined,
+          date: selectedDate,
+          timeSlot: selectedTime,
+          notes: form.notes || undefined,
+        })
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || 'Errore nella prenotazione')
+        return
+      }
+
+      setStep('success')
+    } catch {
+      setError('Errore di rete. Riprova.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const dates = availability ? Object.keys(availability.slots).sort() : []
+
+  function scrollDates(direction: 'left' | 'right') {
+    scrollRef.current?.scrollBy({ left: direction === 'left' ? -200 : 200, behavior: 'smooth' })
+  }
+
+  function formatDate(dateStr: string) {
+    const date = new Date(dateStr + 'T00:00:00')
+    const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+    const months = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic']
+    return {
+      day: days[date.getDay()],
+      num: date.getDate(),
+      month: months[date.getMonth()],
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Section header */}
+      <div className="flex items-center gap-2 justify-center">
+        <Calendar className="w-5 h-5 text-purple-500" />
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Prenota un appuntamento</h2>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200/50 dark:border-white/[0.06] bg-white/80 dark:bg-white/[0.04] backdrop-blur-sm p-4 overflow-hidden">
+        {error && step !== 'success' && (
+          <div className="mb-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm text-center">
+            {error}
+          </div>
+        )}
+
+        {/* LOADING */}
+        {step === 'loading' && (
+          <div className="flex items-center justify-center py-8">
+            <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {/* DATE SELECTION */}
+        {step === 'date' && dates.length > 0 && (
+          <div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 text-center">Scegli una data</p>
+            <div className="relative">
+              {dates.length > 4 && (
+                <>
+                  <button onClick={() => scrollDates('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-800 shadow-md flex items-center justify-center">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => scrollDates('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white dark:bg-gray-800 shadow-md flex items-center justify-center">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+              <div ref={scrollRef} className="flex gap-2 overflow-x-auto scrollbar-none px-1 py-1">
+                {dates.map((dateStr) => {
+                  const { day, num, month } = formatDate(dateStr)
+                  const slotCount = availability!.slots[dateStr].length
+                  return (
+                    <button
+                      key={dateStr}
+                      onClick={() => handleDateSelect(dateStr)}
+                      className={`flex-shrink-0 flex flex-col items-center gap-0.5 px-4 py-3 rounded-xl border transition-all duration-200 ${
+                        selectedDate === dateStr
+                          ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-500/20'
+                          : 'bg-white/60 dark:bg-white/[0.04] border-gray-200/50 dark:border-white/[0.08] hover:border-purple-300 dark:hover:border-purple-500/30'
+                      }`}
+                    >
+                      <span className="text-[11px] font-medium opacity-70">{day}</span>
+                      <span className="text-lg font-bold leading-none">{num}</span>
+                      <span className="text-[10px] font-medium opacity-60">{month}</span>
+                      <span className={`text-[10px] mt-0.5 ${selectedDate === dateStr ? 'text-purple-200' : 'text-purple-500'}`}>
+                        {slotCount} slot
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 'date' && dates.length === 0 && !error && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-6">
+            Nessuna disponibilità al momento
+          </p>
+        )}
+
+        {/* TIME SELECTION */}
+        {step === 'time' && selectedDate && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <button onClick={() => setStep('date')} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                <ChevronLeft className="w-4 h-4 text-gray-500" />
+              </button>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                <Clock className="w-4 h-4 inline mr-1" />
+                {formatDate(selectedDate).num} {formatDate(selectedDate).month} — Scegli l&apos;orario
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {availability!.slots[selectedDate].map((time) => (
+                <button
+                  key={time}
+                  onClick={() => handleTimeSelect(time)}
+                  className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all duration-200 ${
+                    selectedTime === time
+                      ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-500/20'
+                      : 'bg-white/60 dark:bg-white/[0.04] border-gray-200/50 dark:border-white/[0.08] hover:border-purple-300 dark:hover:border-purple-500/30 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  {time}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* FORM */}
+        {step === 'form' && (
+          <form onSubmit={handleSubmit}>
+            <div className="flex items-center gap-2 mb-3">
+              <button type="button" onClick={() => setStep('time')} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                <ChevronLeft className="w-4 h-4 text-gray-500" />
+              </button>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {formatDate(selectedDate!).num} {formatDate(selectedDate!).month} alle {selectedTime} — {duration} min
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <input
+                type="text"
+                required
+                placeholder="Nome e cognome *"
+                value={form.name}
+                onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+                className="w-full h-12 px-4 rounded-xl bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-gray-200/50 dark:border-white/[0.08] text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/40 transition-all"
+              />
+              <input
+                type="email"
+                required
+                placeholder="Email *"
+                value={form.email}
+                onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+                className="w-full h-12 px-4 rounded-xl bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-gray-200/50 dark:border-white/[0.08] text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/40 transition-all"
+              />
+              <input
+                type="tel"
+                placeholder="Telefono (opzionale)"
+                value={form.phone}
+                onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
+                className="w-full h-12 px-4 rounded-xl bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-gray-200/50 dark:border-white/[0.08] text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/40 transition-all"
+              />
+              <textarea
+                placeholder="Note (opzionale)"
+                rows={2}
+                value={form.notes}
+                onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
+                className="w-full px-4 py-3 rounded-xl bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-gray-200/50 dark:border-white/[0.08] text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500/40 transition-all resize-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 mt-4 py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-bold text-[14px] shadow-lg shadow-purple-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+              <Calendar className="w-[18px] h-[18px] relative" />
+              <span className="relative">{submitting ? 'Prenotazione in corso...' : 'Conferma Prenotazione'}</span>
+            </button>
+          </form>
+        )}
+
+        {/* SUCCESS */}
+        {step === 'success' && (
+          <div className="flex flex-col items-center py-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4 animate-scale-in">
+              <Check className="w-8 h-8 text-green-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Prenotato!</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-[260px]">
+              Appuntamento confermato per il {formatDate(selectedDate!).num} {formatDate(selectedDate!).month} alle {selectedTime}. Riceverai una conferma via email.
+            </p>
+            <button
+              onClick={() => {
+                setStep('date')
+                setSelectedDate(null)
+                setSelectedTime(null)
+                setForm({ name: '', email: '', phone: '', notes: '' })
+                setError(null)
+              }}
+              className="mt-4 text-sm text-purple-600 dark:text-purple-400 font-medium hover:underline"
+            >
+              Torna al profilo
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

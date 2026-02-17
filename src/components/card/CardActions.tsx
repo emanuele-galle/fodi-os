@@ -81,12 +81,12 @@ export default function CardActions({
               href={action.href}
               target={action.external ? '_blank' : undefined}
               rel={action.external ? 'noopener noreferrer' : undefined}
-              className="group flex flex-col items-center gap-2.5 py-4 rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-gray-200/50 dark:border-white/[0.06] backdrop-blur-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.03] active:scale-[0.97]"
+              className="group flex flex-col items-center gap-2.5 py-5 rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-gray-200/50 dark:border-white/[0.06] backdrop-blur-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.03] active:scale-[0.97]"
             >
-              <div className={`w-11 h-11 rounded-2xl ${action.iconBg} flex items-center justify-center shadow-lg ${action.shadow} group-hover:shadow-xl transition-shadow duration-200`}>
-                <Icon className="w-5 h-5 text-white" strokeWidth={2} />
+              <div className={`w-12 h-12 rounded-2xl ${action.iconBg} flex items-center justify-center shadow-lg ${action.shadow} group-hover:shadow-xl transition-shadow duration-200`}>
+                <Icon className="w-[22px] h-[22px] text-white" strokeWidth={2} />
               </div>
-              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 tracking-wide">{action.label}</span>
+              <span className="text-[12px] font-semibold text-gray-500 dark:text-gray-400 tracking-wide">{action.label}</span>
             </a>
           )
         })}
@@ -96,7 +96,7 @@ export default function CardActions({
       <button
         onClick={handleSaveContact}
         disabled={downloading}
-        className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-semibold text-[13px] shadow-lg shadow-purple-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-bold text-[14px] shadow-lg shadow-purple-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {/* Animated shine */}
         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />

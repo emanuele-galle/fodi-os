@@ -35,7 +35,7 @@ export default function CardSocials({
 
   return (
     <div className="flex justify-center">
-      <div className="inline-flex items-center gap-1 p-1.5 rounded-2xl bg-white/60 dark:bg-white/[0.03] border border-gray-200/40 dark:border-white/[0.06] backdrop-blur-sm">
+      <div className="inline-flex items-center gap-1.5 p-2 rounded-2xl bg-white/60 dark:bg-white/[0.03] border border-gray-200/40 dark:border-white/[0.06] backdrop-blur-sm">
         {socials.map((social, index) => {
           const Icon = social.icon
           return (
@@ -44,10 +44,10 @@ export default function CardSocials({
               href={social.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`w-10 h-10 rounded-xl ${social.hoverBg} ${social.hoverBorder} border border-transparent text-gray-400 dark:text-gray-500 ${social.color} transition-all duration-200 flex items-center justify-center hover:scale-110 active:scale-95`}
+              className={`w-12 h-12 rounded-xl ${social.hoverBg} ${social.hoverBorder} border border-transparent text-gray-400 dark:text-gray-500 ${social.color} transition-all duration-200 flex items-center justify-center hover:scale-110 active:scale-95`}
               aria-label={social.label}
             >
-              <Icon className="w-[17px] h-[17px]" strokeWidth={1.8} />
+              <Icon className="w-[20px] h-[20px]" strokeWidth={1.8} />
             </a>
           )
         })}
