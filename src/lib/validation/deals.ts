@@ -7,8 +7,12 @@ export const createDealSchema = z.object({
   stage: z.enum(['QUALIFICATION', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST']).default('QUALIFICATION'),
   probability: z.number().min(0).max(100).default(50),
   expectedCloseDate: z.string().datetime().optional(),
-  clientId: z.string().uuid('Client ID non valido'),
+  clientId: z.string().uuid('Client ID non valido').optional().nullable(),
+  leadId: z.string().optional().nullable(),
   contactId: z.string().uuid('Contact ID non valido').optional().nullable(),
+}).refine((data) => data.clientId || data.leadId, {
+  message: 'Seleziona almeno un cliente o un lead',
+  path: ['clientId'],
 })
 
 export const updateDealSchema = z.object({

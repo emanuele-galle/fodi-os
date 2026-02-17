@@ -30,8 +30,10 @@ interface Deal {
   expectedCloseDate: string | null
   actualCloseDate: string | null
   lostReason: string | null
-  clientId: string
-  client: { id: string; companyName: string }
+  clientId: string | null
+  leadId: string | null
+  client: { id: string; companyName: string } | null
+  lead: { id: string; name: string; company: string | null } | null
   contact: { id: string; firstName: string; lastName: string } | null
   owner: { id: string; firstName: string; lastName: string; avatarUrl: string | null }
   createdAt: string
@@ -76,7 +78,7 @@ const SortableDealCard = memo(function SortableDealCard({ deal, onClick }: { dea
       <h3 className="font-medium text-sm truncate mb-2">{deal.title}</h3>
 
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted truncate flex-1">{deal.client.companyName}</span>
+        <span className="text-xs text-muted truncate flex-1">{deal.client?.companyName || deal.lead?.name || deal.lead?.company || '—'}</span>
         <span className="text-sm font-bold ml-2 flex-shrink-0">{formatCurrency(deal.value)}</span>
       </div>
 
@@ -110,7 +112,7 @@ function DealCardOverlay({ deal }: { deal: Deal }) {
     <div className="bg-card rounded-lg border-2 border-primary p-3 shadow-lg w-72">
       <h3 className="font-medium text-sm truncate mb-2">{deal.title}</h3>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted truncate">{deal.client.companyName}</span>
+        <span className="text-xs text-muted truncate">{deal.client?.companyName || deal.lead?.name || deal.lead?.company || '—'}</span>
         <span className="text-sm font-bold">{formatCurrency(deal.value)}</span>
       </div>
       <div className="flex items-center gap-2">

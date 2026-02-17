@@ -376,17 +376,28 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role
-    requirePermission(role, 'pm', 'delete')
-
+    const userId = request.headers.get('x-user-id')!
     const { taskId } = await params
 
     // Check task exists
-    const existing = await prisma.task.findUnique({ where: { id: taskId }, select: { id: true } })
+    const existing = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: { id: true, creatorId: true, assigneeId: true, assignments: { select: { userId: true } } },
+    })
     if (!existing) {
       return NextResponse.json({ success: false, error: 'Task non trovato' }, { status: 404 })
     }
 
-    const userId = request.headers.get('x-user-id')!
+    // Allow delete if user has pm:delete OR is creator/assignee of this task
+    if (!hasPermission(role, 'pm', 'delete')) {
+      requirePermission(role, 'pm', 'write')
+      const isCreator = existing.creatorId === userId
+      const isAssignee = existing.assigneeId === userId
+      const isInAssignments = existing.assignments.some((a) => a.userId === userId)
+      if (!isCreator && !isAssignee && !isInAssignments) {
+        return NextResponse.json({ success: false, error: 'Puoi eliminare solo le task che hai creato o che ti sono assegnate' }, { status: 403 })
+      }
+    }
 
     await prisma.task.delete({ where: { id: taskId } })
 

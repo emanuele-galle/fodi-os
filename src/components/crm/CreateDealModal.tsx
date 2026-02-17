@@ -18,6 +18,12 @@ interface Client {
   companyName: string
 }
 
+interface Lead {
+  id: string
+  name: string
+  company: string | null
+}
+
 interface Contact {
   id: string
   firstName: string
@@ -40,6 +46,7 @@ const INITIAL_FORM = {
   probability: '50',
   expectedCloseDate: '',
   clientId: '',
+  leadId: '',
   contactId: '',
 }
 
@@ -47,20 +54,27 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [clients, setClients] = useState<Client[]>([])
+  const [leads, setLeads] = useState<Lead[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loadingContacts, setLoadingContacts] = useState(false)
+  const [sourceType, setSourceType] = useState<'client' | 'lead'>('client')
 
   const [formData, setFormData] = useState(INITIAL_FORM)
 
-  const isDirty = formData.title !== '' || formData.description !== '' || formData.value !== '' || formData.clientId !== ''
+  const isDirty = formData.title !== '' || formData.description !== '' || formData.value !== '' || formData.clientId !== '' || formData.leadId !== ''
 
-  // Load clients
+  // Load clients and leads
   useEffect(() => {
     if (open) {
       fetch('/api/clients?limit=100')
         .then((res) => res.json())
         .then((data) => setClients(data.items || []))
         .catch(() => setError('Errore nel caricamento dei clienti'))
+
+      fetch('/api/leads?limit=100')
+        .then((res) => res.ok ? res.json() : { items: [] })
+        .then((data) => setLeads(data.items || []))
+        .catch(() => {})
     }
   }, [open])
 
@@ -85,6 +99,13 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
     }
   }, [formData.clientId])
 
+  // Reset source fields when switching type
+  function handleSourceTypeChange(type: 'client' | 'lead') {
+    setSourceType(type)
+    setFormData((prev) => ({ ...prev, clientId: '', leadId: '', contactId: '' }))
+    setContacts([])
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -94,8 +115,13 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
       return
     }
 
-    if (!formData.clientId) {
+    if (sourceType === 'client' && !formData.clientId) {
       setError('Seleziona un cliente')
+      return
+    }
+
+    if (sourceType === 'lead' && !formData.leadId) {
+      setError('Seleziona un lead')
       return
     }
 
@@ -107,14 +133,15 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
     setLoading(true)
 
     try {
-      const body: any = {
+      const body: Record<string, unknown> = {
         title: formData.title.trim(),
         description: formData.description.trim() || null,
         value: parseFloat(formData.value),
         stage: formData.stage,
         probability: parseInt(formData.probability),
         expectedCloseDate: formData.expectedCloseDate || null,
-        clientId: formData.clientId,
+        clientId: sourceType === 'client' ? formData.clientId : null,
+        leadId: sourceType === 'lead' ? formData.leadId : null,
         contactId: formData.contactId || null,
       }
 
@@ -127,8 +154,8 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
       if (res.ok) {
         onSuccess()
         onOpenChange(false)
-        // Reset form
         setFormData(INITIAL_FORM)
+        setSourceType('client')
       } else {
         const data = await res.json().catch(() => ({}))
         setError(data.error || 'Errore nella creazione dell\'opportunità')
@@ -139,6 +166,8 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
       setLoading(false)
     }
   }
+
+  const selectClass = "flex h-11 md:h-10 w-full rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-base md:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40"
 
   return (
     <Modal open={open} onClose={() => onOpenChange(false)} title="Nuova Opportunità" size="xl" preventAccidentalClose={isDirty}>
@@ -205,7 +234,7 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
                 <select
                   value={formData.stage}
                   onChange={(e) => setFormData((prev) => ({ ...prev, stage: e.target.value }))}
-                  className="flex h-11 md:h-10 w-full rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-base md:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40"
+                  className={selectClass}
                 >
                   {DEAL_STAGES.map((stage) => (
                     <option key={stage.value} value={stage.value}>
@@ -224,43 +253,95 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
                 />
               </div>
 
-              <div>
+              {/* Source type toggle */}
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1.5">
-                  Cliente <span className="text-destructive">*</span>
+                  Collega a <span className="text-destructive">*</span>
                 </label>
-                <select
-                  value={formData.clientId}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, clientId: e.target.value }))}
-                  required
-                  className="flex h-11 md:h-10 w-full rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-base md:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40"
-                >
-                  <option value="">Seleziona cliente</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.companyName}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => handleSourceTypeChange('client')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all border ${
+                      sourceType === 'client'
+                        ? 'bg-primary/10 border-primary/30 text-primary'
+                        : 'bg-card/50 border-border/50 text-muted hover:text-foreground'
+                    }`}
+                  >
+                    Cliente
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSourceTypeChange('lead')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all border ${
+                      sourceType === 'lead'
+                        ? 'bg-primary/10 border-primary/30 text-primary'
+                        : 'bg-card/50 border-border/50 text-muted hover:text-foreground'
+                    }`}
+                  >
+                    Lead
+                  </button>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Contatto</label>
-                <select
-                  value={formData.contactId}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, contactId: e.target.value }))}
-                  disabled={!formData.clientId || loadingContacts}
-                  className="flex h-11 md:h-10 w-full rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-base md:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option value="">
-                    {loadingContacts ? 'Caricamento...' : 'Seleziona contatto'}
-                  </option>
-                  {contacts.map((contact) => (
-                    <option key={contact.id} value={contact.id}>
-                      {contact.firstName} {contact.lastName}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {sourceType === 'client' ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Cliente <span className="text-destructive">*</span>
+                    </label>
+                    <select
+                      value={formData.clientId}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, clientId: e.target.value }))}
+                      className={selectClass}
+                    >
+                      <option value="">Seleziona cliente</option>
+                      {clients.map((client) => (
+                        <option key={client.id} value={client.id}>
+                          {client.companyName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Contatto</label>
+                    <select
+                      value={formData.contactId}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, contactId: e.target.value }))}
+                      disabled={!formData.clientId || loadingContacts}
+                      className={`${selectClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <option value="">
+                        {loadingContacts ? 'Caricamento...' : 'Seleziona contatto'}
+                      </option>
+                      {contacts.map((contact) => (
+                        <option key={contact.id} value={contact.id}>
+                          {contact.firstName} {contact.lastName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1.5">
+                    Lead <span className="text-destructive">*</span>
+                  </label>
+                  <select
+                    value={formData.leadId}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, leadId: e.target.value }))}
+                    className={selectClass}
+                  >
+                    <option value="">Seleziona lead</option>
+                    {leads.map((lead) => (
+                      <option key={lead.id} value={lead.id}>
+                        {lead.name}{lead.company ? ` — ${lead.company}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
         <div className="flex justify-end gap-3 pt-4">

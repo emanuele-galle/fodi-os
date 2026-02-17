@@ -41,12 +41,12 @@ export function CashFlowChart() {
   useEffect(() => {
     async function load() {
       try {
-        const [invoicesRes, expensesRes] = await Promise.all([
-          fetch('/api/invoices?status=PAID&limit=200').then((r) => r.ok ? r.json() : { items: [] }),
+        const [expensesRes] = await Promise.all([
           fetch('/api/expenses?limit=200').then((r) => r.ok ? r.json() : { items: [] }),
         ])
 
-        const invoices = invoicesRes.items || []
+        // Invoices module removed
+        const invoices: { paidDate: string | null; total: string }[] = []
         const expenses = expensesRes.items || []
 
         const now = new Date()

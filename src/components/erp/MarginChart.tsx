@@ -36,15 +36,15 @@ export function MarginChart() {
   useEffect(() => {
     async function load() {
       try {
-        const [projectsRes, invoicesRes, timeRes, expensesRes] = await Promise.all([
+        const [projectsRes, timeRes, expensesRes] = await Promise.all([
           fetch('/api/projects?limit=50').then((r) => r.ok ? r.json() : { items: [] }),
-          fetch('/api/invoices?status=PAID&limit=200').then((r) => r.ok ? r.json() : { items: [] }),
           fetch('/api/time?limit=500').then((r) => r.ok ? r.json() : { items: [] }),
           fetch('/api/expenses?limit=200').then((r) => r.ok ? r.json() : { items: [] }),
         ])
 
         const projects: { id: string; name: string }[] = projectsRes.items || []
-        const invoices: { projectId: string | null; total: string }[] = invoicesRes.items || []
+        // Invoices module removed
+        const invoices: { projectId: string | null; total: string }[] = []
         const timeEntries: { projectId: string | null; hours: number; billable: boolean }[] = timeRes.items || []
         const expenses: { projectId: string | null; amount: string }[] = expensesRes.items || []
 

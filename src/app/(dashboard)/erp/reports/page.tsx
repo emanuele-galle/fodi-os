@@ -49,17 +49,12 @@ export default function ReportsPage() {
         const now = new Date()
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-        const [paidRes, expensesRes] = await Promise.all([
-          fetch(`/api/invoices?status=PAID&limit=200`),
+        const [expensesRes] = await Promise.all([
           fetch('/api/expenses?limit=200'),
         ])
 
-        let paidInvoices: { total: string; paidDate: string | null }[] = []
-
-        if (paidRes.ok) {
-          const data = await paidRes.json()
-          paidInvoices = data.items || []
-        }
+        // Invoices module removed
+        const paidInvoices: { total: string; paidDate: string | null }[] = []
 
         // Build revenue chart data from paid invoices (last 6 months)
         const revenueByMonth: Record<string, number> = {}

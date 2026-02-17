@@ -17,8 +17,10 @@ interface Deal {
   expectedCloseDate: string | null
   actualCloseDate: string | null
   lostReason: string | null
-  clientId: string
-  client: { id: string; companyName: string }
+  clientId: string | null
+  leadId: string | null
+  client: { id: string; companyName: string } | null
+  lead: { id: string; name: string; company: string | null } | null
   contact: { id: string; firstName: string; lastName: string } | null
   owner: { id: string; firstName: string; lastName: string; avatarUrl: string | null }
 }
@@ -65,7 +67,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
     probability: String(deal.probability),
     expectedCloseDate: deal.expectedCloseDate ? deal.expectedCloseDate.split('T')[0] : '',
     lostReason: deal.lostReason || '',
-    clientId: deal.clientId,
+    clientId: deal.clientId || '',
     contactId: deal.contact?.id || '',
   })
 
@@ -74,7 +76,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
     formData.value !== deal.value ||
     formData.stage !== deal.stage ||
     formData.probability !== String(deal.probability) ||
-    formData.clientId !== deal.clientId
+    formData.clientId !== (deal.clientId || '')
 
   // Load clients
   useEffect(() => {
@@ -114,11 +116,6 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
       return
     }
 
-    if (!formData.clientId) {
-      setError('Seleziona un cliente')
-      return
-    }
-
     if (!formData.value || parseFloat(formData.value) <= 0) {
       setError('Il valore deve essere maggiore di 0')
       return
@@ -139,7 +136,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
         stage: formData.stage,
         probability: parseInt(formData.probability),
         expectedCloseDate: formData.expectedCloseDate || null,
-        clientId: formData.clientId,
+        clientId: formData.clientId || null,
         contactId: formData.contactId || null,
         lostReason: formData.stage === 'CLOSED_LOST' ? formData.lostReason.trim() : null,
       }

@@ -30,10 +30,11 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     training: ['read', 'write'],
   },
   SALES: {
-    crm: ['read', 'write'],
+    crm: ['read', 'write', 'delete', 'approve'],
     erp: ['read', 'write'],
-    pm: ['read', 'write'],
+    pm: ['read', 'write', 'delete'],
     kb: ['read'],
+    support: ['read'],
     chat: ['read', 'write'],
     training: ['read'],
   },

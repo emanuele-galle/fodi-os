@@ -184,12 +184,11 @@ export default function DashboardPage() {
         const todayStr = now.toISOString().split('T')[0]
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-        const [clientsRes, projectsRes, quotesRes, timeRes, paidInvoicesRes, teamRes, expensesRes, ticketsRes, tasksRes, activityRes, doneMonthRes, inProgressRes] = await Promise.all([
+        const [clientsRes, projectsRes, quotesRes, timeRes, teamRes, expensesRes, ticketsRes, tasksRes, activityRes, doneMonthRes, inProgressRes] = await Promise.all([
           fetch('/api/clients?status=ACTIVE&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/projects?status=IN_PROGRESS&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/quotes?status=SENT&limit=1').then((r) => r.ok ? r.json() : null),
           fetch(`/api/time?from=${mondayStr}&to=${todayStr}&limit=200`).then((r) => r.ok ? r.json() : null),
-          fetch(`/api/invoices?status=PAID&limit=200`).then((r) => r.ok ? r.json() : null),
           fetch('/api/team').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/expenses?limit=200').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/tickets?status=OPEN,IN_PROGRESS,WAITING_CLIENT&limit=1').then((r) => r.ok ? r.json() : null).catch(() => null),
@@ -222,10 +221,7 @@ export default function DashboardPage() {
         setWeekHours(hours)
         setWeekBillableHours(billable)
 
-        const revenueMTD = (paidInvoicesRes?.items || [])
-          .filter((i: { paidDate: string | null }) => i.paidDate && i.paidDate >= monthStart)
-          .reduce((s: number, i: { total: string }) => s + parseFloat(i.total), 0)
-        setTotalRevenue(revenueMTD)
+        setTotalRevenue(0)
 
         const expenses = (expensesRes?.items || [])
           .filter((e: { date: string }) => e.date >= monthStart)
@@ -240,7 +236,7 @@ export default function DashboardPage() {
           { label: 'Progetti in Corso', value: String(projectsRes?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
           { label: 'Preventivi Aperti', value: String(quotesRes?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
           { label: 'Ore Questa Settimana', value: hours.toFixed(1) + 'h', icon: Clock, color: 'text-muted', href: '/time' },
-          { label: 'Fatturato Mese', value: formatCurrency(revenueMTD), icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
+          { label: 'Fatturato Mese', value: formatCurrency(0), icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
           { label: 'Ticket Aperti', value: String(ticketsRes?.total ?? 0), icon: AlertCircle, color: 'text-destructive', href: '/support' },
         ])
       } catch {

@@ -52,11 +52,8 @@ export function RevenueChart() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch('/api/invoices?limit=200')
-        if (!res.ok) return
-
-        const json = await res.json()
-        const invoices: Invoice[] = json.items || []
+        // Invoices module removed - revenue data not available
+        const invoices: Invoice[] = []
 
         const now = new Date()
         const months: MonthData[] = []

@@ -285,6 +285,7 @@ model Lead {
   notes      String?  @db.Text
   assigneeId String?
   assignee   User?    @relation("LeadAssignee", fields: [assigneeId], references: [id])
+  deals      Deal[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -305,17 +306,20 @@ model Deal {
   expectedCloseDate DateTime?
   actualCloseDate   DateTime?
   lostReason        String?
-  clientId          String
+  clientId          String?
+  leadId            String?
   contactId         String?
   ownerId           String
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  client  Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client  Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  lead    Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
   contact Contact? @relation(fields: [contactId], references: [id])
   owner   User     @relation("DealOwner", fields: [ownerId], references: [id])
 
   @@index([clientId])
+  @@index([leadId])
   @@index([ownerId])
   @@index([stage])
   @@index([stage, expectedCloseDate])

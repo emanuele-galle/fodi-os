@@ -22,8 +22,10 @@ interface Deal {
   expectedCloseDate: string | null
   actualCloseDate: string | null
   lostReason: string | null
-  clientId: string
-  client: { id: string; companyName: string }
+  clientId: string | null
+  leadId: string | null
+  client: { id: string; companyName: string } | null
+  lead: { id: string; name: string; company: string | null } | null
   contact: { id: string; firstName: string; lastName: string } | null
   owner: { id: string; firstName: string; lastName: string; avatarUrl: string | null }
   createdAt: string

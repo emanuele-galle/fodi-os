@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
         orderBy: { updatedAt: 'desc' },
         include: {
           client: { select: { id: true, companyName: true } },
+          lead: { select: { id: true, name: true, company: true } },
           contact: { select: { id: true, firstName: true, lastName: true } },
           owner: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
         },
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { title, description, value, stage, probability, expectedCloseDate, clientId, contactId } = parsed.data
+    const { title, description, value, stage, probability, expectedCloseDate, clientId, leadId, contactId } = parsed.data
 
     const deal = await prisma.deal.create({
       data: {
@@ -73,18 +74,20 @@ export async function POST(request: NextRequest) {
         stage,
         probability,
         expectedCloseDate: expectedCloseDate ? new Date(expectedCloseDate) : null,
-        clientId,
+        clientId: clientId || null,
+        leadId: leadId || null,
         contactId: contactId || null,
         ownerId: userId,
       },
       include: {
         client: { select: { id: true, companyName: true } },
+        lead: { select: { id: true, name: true, company: true } },
         contact: { select: { id: true, firstName: true, lastName: true } },
         owner: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
       },
     })
 
-    logActivity({ userId, action: 'CREATE', entityType: 'DEAL', entityId: deal.id, metadata: { title, clientId } })
+    logActivity({ userId, action: 'CREATE', entityType: 'DEAL', entityId: deal.id, metadata: { title, clientId: clientId || null, leadId: leadId || null } })
 
     return NextResponse.json({ success: true, data: deal }, { status: 201 })
   } catch (e) {
