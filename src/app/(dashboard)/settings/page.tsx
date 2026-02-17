@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardTitle, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { AvatarUpload } from '@/components/ui/AvatarUpload'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { Settings, Bell, Lock, Sun, Moon, User, Palette, Shield, Globe, Languages, Calendar, Info } from 'lucide-react'
+import { Settings, Bell, Lock, Sun, Moon, User, Palette, Shield, Globe, Languages, Calendar, Info, CreditCard, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Theme = 'light' | 'dark'
@@ -331,8 +331,11 @@ export default function SettingsPage() {
     </div>
   )
 
+  const router = useRouter()
+
   const sections = [
     { id: 'profile', label: 'Profilo', icon: User },
+    { id: 'digital-card', label: 'Card Digitale', icon: CreditCard, href: '/settings/digital-card' },
     { id: 'appearance', label: 'Aspetto', icon: Palette },
     { id: 'security', label: 'Sicurezza', icon: Lock },
     { id: 'notifications', label: 'Notifiche', icon: Bell },
@@ -372,16 +375,17 @@ export default function SettingsPage() {
               return (
                 <button
                   key={section.id}
-                  onClick={() => setActiveSection(section.id)}
+                  onClick={() => section.href ? router.push(section.href) : setActiveSection(section.id)}
                   className={cn(
                     'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap touch-manipulation min-h-[44px] md:min-h-0',
-                    activeSection === section.id
+                    activeSection === section.id && !section.href
                       ? 'bg-primary/10 text-primary border-l-2 border-primary lg:border-l-2'
                       : 'text-muted hover:text-foreground hover:bg-secondary/60'
                   )}
                 >
                   <Icon className="h-4.5 w-4.5 flex-shrink-0" />
-                  {section.label}
+                  <span className="flex-1 text-left">{section.label}</span>
+                  {section.href && <ArrowRight className="h-3.5 w-3.5 opacity-40" />}
                 </button>
               )
             })}
