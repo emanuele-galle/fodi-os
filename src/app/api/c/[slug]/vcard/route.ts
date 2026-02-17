@@ -40,6 +40,7 @@ export async function GET(
       lastName: card.user.lastName,
       email: card.user.email,
       phone: card.user.phone,
+      avatarUrl: card.user.avatarUrl,
       jobTitle: card.jobTitle,
       company: company?.ragioneSociale || 'Fodi SRL',
       bio: card.cardBio,

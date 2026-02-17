@@ -87,7 +87,15 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    const body = await request.json()
+    const rawBody = await request.json()
+
+    // Convert null values to undefined for zod compatibility (Prisma returns null, zod expects undefined)
+    const body: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(rawBody)) {
+      if (value === null) continue // skip nulls, zod treats missing keys as undefined
+      body[key] = value
+    }
+
     const data = updateSchema.parse(body)
 
     // Convert empty strings to null for URLs

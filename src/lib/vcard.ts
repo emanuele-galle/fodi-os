@@ -6,6 +6,7 @@ interface VCardData {
   jobTitle?: string | null
   company?: string | null
   bio?: string | null
+  avatarUrl?: string | null
   linkedinUrl?: string | null
   instagramUrl?: string | null
   twitterUrl?: string | null
@@ -35,6 +36,9 @@ export function generateVCard(data: VCardData): string {
   }
   if (data.jobTitle) {
     lines.push(`TITLE:${escapeVCard(data.jobTitle)}`)
+  }
+  if (data.avatarUrl) {
+    lines.push(`PHOTO;VALUE=URI:${data.avatarUrl}`)
   }
   if (data.email) {
     lines.push(`EMAIL;TYPE=INTERNET;TYPE=WORK:${data.email}`)
