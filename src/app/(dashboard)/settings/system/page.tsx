@@ -37,6 +37,46 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.6.0',
+    date: '2026-02-17',
+    sections: [
+      {
+        title: 'Card Digitale NFC',
+        icon: Sparkles,
+        items: [
+          'Nuovi campi social: Facebook, TikTok, YouTube, Telegram',
+          'Redesign dark premium completo: sfondo #0a0a0f, gradient ring avatar, glassmorphism',
+          'Anteprima card nelle impostazioni riscritta con stile dark realistico',
+          'vCard: aggiunto campo PHOTO per salvare immagine profilo nel contatto',
+          'Sezione Prenotazione Appuntamenti: grafica sincronizzata con tema dark',
+          'Leggibilità migliorata: testi più grandi (min 12-13px) e contrasti più alti (min 40-55% opacity)',
+          'Link diretto "Card Digitale" nella sidebar Impostazioni',
+        ],
+      },
+      {
+        title: 'CRM & Opportunità',
+        icon: Sparkles,
+        items: [
+          'Opportunità collegabili a Lead (non solo Clienti) con toggle Cliente/Lead',
+          'Campo clientId reso opzionale — richiesto almeno un cliente o un lead',
+          'Permessi SALES ampliati: accesso completo CRM (lettura, scrittura, eliminazione, approvazione)',
+          'Permessi SALES: accesso PM completo e lettura Support',
+        ],
+      },
+      {
+        title: 'Bug Fix',
+        icon: Bug,
+        items: [
+          'Fix salvataggio card digitale: conversione null→undefined per compatibilità zod',
+          'Fix eliminazione task: creator e assignee possono eliminare le proprie task',
+          'Fix numero WhatsApp errato su card Riccardo (era numero di Emanuele)',
+          'Rimossi tutti i riferimenti a /api/invoices (modulo rimosso) da dashboard, grafici e report',
+          'Fix errore 404 /api/invoices e 403 su /api/tickets e /api/tasks per ruolo SALES',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.5.0',
     date: '2026-02-14',
     sections: [
@@ -331,7 +371,7 @@ export default function SystemStatsPage() {
   const [stats, setStats] = useState<SystemStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({ '0.4.0': true })
+  const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({ '0.6.0': true })
   const [activeTab, setActiveTab] = useState<'overview' | 'changelog'>('overview')
 
   useEffect(() => {
