@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { MultiUserSelect } from '@/components/ui/MultiUserSelect'
-import { Trash2, Send, Paperclip, FileText, Image, Download, X } from 'lucide-react'
+import { Trash2, Send, Paperclip, FileText, Image, Download, X, UserCheck } from 'lucide-react'
 import { TaskTimer } from '@/components/tasks/TaskTimer'
 
 interface TaskUser {
@@ -40,6 +40,9 @@ interface TaskAssignment {
   id: string
   role: string
   user: TaskUser
+  assignedBy: string | null
+  assignedByUser: TaskUser | null
+  assignedAt: string
 }
 
 interface TaskDetail {
@@ -365,6 +368,37 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             label="Assegnati a"
             placeholder="Seleziona assegnatari..."
           />
+
+          {/* Assegnato da */}
+          {task.assignments && task.assignments.some((a: TaskAssignment) => a.assignedByUser) && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted flex items-center gap-1.5">
+                <UserCheck className="h-3.5 w-3.5" />
+                Assegnato da
+              </label>
+              <div className="space-y-1">
+                {task.assignments
+                  .filter((a: TaskAssignment) => a.assignedByUser)
+                  .map((a: TaskAssignment) => (
+                    <div key={a.id} className="flex items-center gap-2 text-xs text-muted">
+                      <Avatar
+                        name={`${a.assignedByUser!.firstName} ${a.assignedByUser!.lastName}`}
+                        src={a.assignedByUser!.avatarUrl || undefined}
+                        size="xs"
+                      />
+                      <span>
+                        <span className="font-medium text-foreground">{a.assignedByUser!.firstName} {a.assignedByUser!.lastName}</span>
+                        {' → '}
+                        {a.user.firstName} {a.user.lastName}
+                      </span>
+                      <span className="text-muted/50">
+                        {new Date(a.assignedAt).toLocaleDateString('it-IT')}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
 
           <Input
             label="Scadenza"

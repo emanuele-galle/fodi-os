@@ -63,7 +63,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: 'Task non trovato' }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, data: task, ...task })
+    // Resolve assignedBy user names
+    const assignedByIds = [...new Set(
+      task.assignments.map((a) => a.assignedBy).filter((id): id is string => id != null)
+    )]
+    const assignedByUsers = assignedByIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: assignedByIds } },
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+        })
+      : []
+    const assignedByMap = Object.fromEntries(assignedByUsers.map((u) => [u.id, u]))
+
+    const enrichedTask = {
+      ...task,
+      assignments: task.assignments.map((a) => ({
+        ...a,
+        assignedByUser: a.assignedBy ? assignedByMap[a.assignedBy] || null : null,
+      })),
+    }
+
+    return NextResponse.json({ success: true, data: enrichedTask, ...enrichedTask })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })
@@ -320,6 +340,28 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         },
       },
     })
+
+    // Resolve assignedBy user names for PATCH response
+    if (fullTask) {
+      const patchAssignedByIds = [...new Set(
+        fullTask.assignments.map((a) => a.assignedBy).filter((id): id is string => id != null)
+      )]
+      if (patchAssignedByIds.length > 0) {
+        const patchAssignedByUsers = await prisma.user.findMany({
+          where: { id: { in: patchAssignedByIds } },
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+        })
+        const patchMap = Object.fromEntries(patchAssignedByUsers.map((u) => [u.id, u]))
+        const enriched = {
+          ...fullTask,
+          assignments: fullTask.assignments.map((a) => ({
+            ...a,
+            assignedByUser: a.assignedBy ? patchMap[a.assignedBy] || null : null,
+          })),
+        }
+        return NextResponse.json({ success: true, data: enriched })
+      }
+    }
 
     return NextResponse.json({ success: true, data: fullTask })
   } catch (e) {
