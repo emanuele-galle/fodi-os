@@ -50,7 +50,7 @@ export function FileUpload({
   onUpload,
   accept,
   maxFiles = 10,
-  maxSize = 500 * 1024 * 1024,
+  maxSize = 0,
   className,
   projectId,
 }: FileUploadProps) {
@@ -71,7 +71,7 @@ export function FileUpload({
         status: 'pending',
       }
 
-      if (file.size > maxSize) {
+      if (maxSize > 0 && file.size > maxSize) {
         entry.status = 'error'
         entry.error = `File troppo grande (max ${formatFileSize(maxSize)})`
       }
@@ -230,7 +230,7 @@ export function FileUpload({
             {dragging ? 'Rilascia i file qui' : 'Trascina i file o clicca per selezionare'}
           </p>
           <p className="text-xs text-muted/60 mt-1">
-            Max {maxFiles} file, {formatFileSize(maxSize)} ciascuno
+            Max {maxFiles} file{maxSize > 0 ? `, ${formatFileSize(maxSize)} ciascuno` : ''}
           </p>
         </div>
         <input

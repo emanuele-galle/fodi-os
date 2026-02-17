@@ -16,11 +16,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File obbligatorio' }, { status: 400 })
     }
 
-    const MAX_FILE_SIZE = 500 * 1024 * 1024 // 500MB
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File troppo grande (max 500MB)' }, { status: 400 })
-    }
-
     // Sanitize filename (remove path traversal and special characters)
     const safeName = file.name.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.{2,}/g, '.')
     const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
