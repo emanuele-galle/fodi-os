@@ -84,12 +84,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File troppo grande (max 500MB)' }, { status: 400 })
     }
 
-    // Block dangerous file types
-    const blockedExts = ['exe', 'bat', 'cmd', 'sh', 'php', 'jsp', 'cgi', 'html', 'htm', 'svg', 'msi', 'dll', 'scr', 'ps1']
     const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
-    if (blockedExts.includes(ext)) {
-      return NextResponse.json({ error: 'Tipo di file non consentito' }, { status: 400 })
-    }
 
     const buffer = Buffer.from(await file.arrayBuffer())
     const safeFileName = file.name.replace(/[\/\\:*?"<>|]/g, '_')

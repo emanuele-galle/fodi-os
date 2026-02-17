@@ -71,20 +71,12 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ success: false, error: 'File obbligatorio' }, { status: 400 })
     }
 
-    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+    const MAX_FILE_SIZE = 500 * 1024 * 1024 // 500MB
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ success: false, error: 'File troppo grande (max 10MB)' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'File troppo grande (max 500MB)' }, { status: 400 })
     }
 
-    // Allowed file types
-    const allowedExts = ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'jpg', 'jpeg', 'png', 'gif', 'webp']
     const ext = (file.name.split('.').pop() || '').toLowerCase()
-    if (!allowedExts.includes(ext)) {
-      return NextResponse.json(
-        { success: false, error: 'Tipo di file non consentito. Formati accettati: PDF, DOCX, XLSX, immagini (JPG, PNG, GIF, WEBP)' },
-        { status: 400 }
-      )
-    }
 
     // Validate category
     const validCategories = ['contract', 'quote', 'invoice', 'general']

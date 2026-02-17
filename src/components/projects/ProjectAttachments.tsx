@@ -44,12 +44,19 @@ function isPreviewable(mimeType: string): boolean {
   )
 }
 
-function getGDrivePreviewUrl(fileUrl: string): string {
+function getGDriveFileId(fileUrl: string): string | null {
   const match = fileUrl.match(/\/d\/([^/]+)/)
-  if (match) {
-    return `https://drive.google.com/file/d/${match[1]}/preview`
-  }
-  return fileUrl
+  return match ? match[1] : null
+}
+
+function getGDrivePreviewUrl(fileUrl: string): string {
+  const id = getGDriveFileId(fileUrl)
+  return id ? `https://drive.google.com/file/d/${id}/preview` : fileUrl
+}
+
+function getGDriveThumbnailUrl(fileUrl: string, size = 400): string {
+  const id = getGDriveFileId(fileUrl)
+  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w${size}` : fileUrl
 }
 
 export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsProps) {
@@ -208,7 +215,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={att.fileUrl}
+                      src={att.fileUrl.includes('drive.google.com') ? getGDriveThumbnailUrl(att.fileUrl, 200) : att.fileUrl}
                       alt={att.fileName}
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
@@ -310,7 +317,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
             {previewAttachment.mimeType.startsWith('image/') ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
-                src={previewAttachment.fileUrl}
+                src={previewAttachment.fileUrl.includes('drive.google.com') ? getGDriveThumbnailUrl(previewAttachment.fileUrl, 1200) : previewAttachment.fileUrl}
                 alt={previewAttachment.fileName}
                 className="max-w-full h-auto rounded-lg mx-auto"
                 referrerPolicy="no-referrer"

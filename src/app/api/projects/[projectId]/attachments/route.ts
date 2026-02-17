@@ -54,16 +54,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'File obbligatorio' }, { status: 400 })
     }
 
-    const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+    const MAX_FILE_SIZE = 500 * 1024 * 1024 // 500MB
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File troppo grande (max 50MB)' }, { status: 400 })
-    }
-
-    // Block dangerous file types
-    const blockedExts = ['exe', 'bat', 'cmd', 'sh', 'php', 'jsp', 'cgi', 'html', 'htm', 'svg', 'msi', 'dll', 'scr', 'ps1']
-    const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
-    if (blockedExts.includes(ext)) {
-      return NextResponse.json({ error: 'Tipo di file non consentito' }, { status: 400 })
+      return NextResponse.json({ error: 'File troppo grande (max 500MB)' }, { status: 400 })
     }
 
     // Verify project exists and get its name for GDrive folder

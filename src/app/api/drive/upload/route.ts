@@ -36,13 +36,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File obbligatorio' }, { status: 400 })
     }
 
-    // Block dangerous file types
-    const blockedExts = ['exe', 'bat', 'cmd', 'sh', 'php', 'jsp', 'cgi', 'msi', 'dll', 'scr', 'ps1']
-    const ext = (file.name.split('.').pop() || '').toLowerCase()
-    if (blockedExts.includes(ext)) {
-      return NextResponse.json({ error: 'Tipo di file non consentito' }, { status: 400 })
-    }
-
     // Sanitize filename (remove path traversal characters)
     const safeName = file.name.replace(/[\/\\:*?"<>|]/g, '_')
 

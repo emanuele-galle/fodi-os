@@ -16,20 +16,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File obbligatorio' }, { status: 400 })
     }
 
-    const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+    const MAX_FILE_SIZE = 500 * 1024 * 1024 // 500MB
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File troppo grande (max 50MB)' }, { status: 400 })
-    }
-
-    // Block dangerous file types
-    const blockedExts = ['exe', 'bat', 'cmd', 'sh', 'php', 'jsp', 'cgi', 'html', 'htm', 'svg', 'msi', 'dll', 'scr', 'ps1']
-    const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
-    if (blockedExts.includes(ext)) {
-      return NextResponse.json({ error: 'Tipo di file non consentito' }, { status: 400 })
+      return NextResponse.json({ error: 'File troppo grande (max 500MB)' }, { status: 400 })
     }
 
     // Sanitize filename (remove path traversal and special characters)
     const safeName = file.name.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.{2,}/g, '.')
+    const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
 
     const buffer = Buffer.from(await file.arrayBuffer())
     const key = `chat/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
