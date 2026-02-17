@@ -38,12 +38,11 @@ interface Template {
 interface WizardFormProps {
   template: Template
   cardSlug: string
-  logoUrl?: string | null
   companyName?: string
   phone?: string | null
 }
 
-export function WizardForm({ template, cardSlug, logoUrl, companyName, phone }: WizardFormProps) {
+export function WizardForm({ template, cardSlug, companyName, phone }: WizardFormProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -141,7 +140,6 @@ export function WizardForm({ template, cardSlug, logoUrl, companyName, phone }: 
     return (
       <WizardSuccess
         message={template.completionMessage}
-        logoUrl={logoUrl}
         companyName={companyName}
         cardSlug={cardSlug}
         phone={phone}
@@ -153,14 +151,14 @@ export function WizardForm({ template, cardSlug, logoUrl, companyName, phone }: 
     <div className="space-y-6">
       {/* Progress bar */}
       {template.showProgressBar && (
-        <div className="space-y-2">
-          <div className="flex justify-between items-center text-sm text-muted-foreground">
+        <div className="space-y-2.5">
+          <div className="flex justify-between items-center text-[12px] text-white/30">
             <span>Passo {currentStepIndex + 1} di {template.steps.length}</span>
             <span>{Math.round(((currentStepIndex + 1) / template.steps.length) * 100)}%</span>
           </div>
-          <div className="h-2 bg-purple-500/10 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple-600 to-indigo-600 transition-all duration-500 ease-out rounded-full"
+              className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500 ease-out rounded-full"
               style={{ width: `${((currentStepIndex + 1) / template.steps.length) * 100}%` }}
             />
           </div>
@@ -169,12 +167,12 @@ export function WizardForm({ template, cardSlug, logoUrl, companyName, phone }: 
 
       {/* Step content */}
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-1">{currentStep.title}</h2>
+        <h2 className="text-[16px] font-medium text-white/80 mb-1">{currentStep.title}</h2>
         {currentStep.description && (
-          <p className="text-sm text-muted-foreground mb-6">{currentStep.description}</p>
+          <p className="text-[13px] text-white/30 mb-6">{currentStep.description}</p>
         )}
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           {currentStep.fields.map(field => (
             <WizardField
               key={field.id}
@@ -189,7 +187,7 @@ export function WizardForm({ template, cardSlug, logoUrl, companyName, phone }: 
 
       {/* Inline error */}
       {submitError && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/15 text-red-400 text-[13px]">
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -204,7 +202,7 @@ export function WizardForm({ template, cardSlug, logoUrl, companyName, phone }: 
             type="button"
             onClick={handleBack}
             disabled={isSubmitting}
-            className="px-5 py-3 rounded-xl text-sm font-medium text-muted-foreground bg-white/60 dark:bg-white/[0.06] backdrop-blur-sm border border-border/30 hover:text-foreground transition-colors disabled:opacity-50"
+            className="px-5 py-3 rounded-xl text-[13px] font-medium text-white/40 bg-white/[0.03] border border-white/[0.06] hover:text-white/60 hover:bg-white/[0.05] transition-all disabled:opacity-40"
           >
             Indietro
           </button>
@@ -216,9 +214,9 @@ export function WizardForm({ template, cardSlug, logoUrl, companyName, phone }: 
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-semibold text-sm shadow-lg shadow-purple-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-medium text-[14px] transition-all duration-300 hover:brightness-110 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
               {isSubmitting ? (
                 <>
                   <svg className="w-4 h-4 animate-spin relative" fill="none" viewBox="0 0 24 24">
@@ -229,7 +227,7 @@ export function WizardForm({ template, cardSlug, logoUrl, companyName, phone }: 
                 </>
               ) : (
                 <>
-                  <svg className="w-[18px] h-[18px] relative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
                   <span className="relative">Invia</span>
@@ -240,7 +238,7 @@ export function WizardForm({ template, cardSlug, logoUrl, companyName, phone }: 
             <button
               type="button"
               onClick={handleNext}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-semibold text-sm shadow-lg shadow-purple-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.99]"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-medium text-[14px] transition-all duration-300 hover:brightness-110 active:scale-[0.99]"
             >
               Avanti
             </button>
