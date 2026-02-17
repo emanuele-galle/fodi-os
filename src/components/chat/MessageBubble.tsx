@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/utils'
-import { CheckCheck, FileText, Edit2, Trash2, MoreHorizontal, Reply, SmilePlus, Video } from 'lucide-react'
+import { Check, CheckCheck, FileText, Edit2, Trash2, MoreHorizontal, Reply, SmilePlus, Video } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '😮', '😢']
@@ -24,6 +24,12 @@ function parseReactions(metadata?: Record<string, unknown> | null): MessageReact
   }))
 }
 
+export interface ReadReceipt {
+  userId: string
+  name: string
+  readAt: string
+}
+
 interface MessageBubbleProps {
   message: {
     id: string
@@ -42,6 +48,7 @@ interface MessageBubbleProps {
   }
   isOwn: boolean
   currentUserId?: string
+  readReceipts?: ReadReceipt[]
   onEdit?: (messageId: string, newContent: string) => void
   onDelete?: (messageId: string) => void
   onReply?: (message: { id: string; content: string; authorName: string }) => void
@@ -122,7 +129,49 @@ function renderRichText(text: string, isOwn: boolean) {
   return parts
 }
 
-export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete, onReply, onReact }: MessageBubbleProps) {
+function ReadReceiptIndicator({ receipts }: { receipts?: ReadReceipt[] }) {
+  const [showTooltip, setShowTooltip] = useState(false)
+  const isRead = receipts && receipts.length > 0
+
+  return (
+    <div className="relative flex items-center gap-1 mt-0.5 pr-1">
+      <button
+        type="button"
+        onClick={() => setShowTooltip(!showTooltip)}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        className="flex items-center gap-0.5 cursor-pointer"
+        title={isRead ? 'Letto' : 'Consegnato'}
+      >
+        {isRead ? (
+          <CheckCheck className="h-3 w-3 text-blue-500" />
+        ) : (
+          <Check className="h-3 w-3 text-muted-foreground/50" />
+        )}
+      </button>
+      {showTooltip && isRead && receipts && receipts.length > 0 && (
+        <div className="absolute bottom-full mb-1.5 right-0 bg-card border border-border rounded-lg shadow-lg p-2 z-50 min-w-[180px] text-[11px]">
+          <p className="font-semibold text-foreground/70 mb-1.5">Letto da</p>
+          {receipts.map((r) => (
+            <div key={r.userId} className="flex items-center justify-between gap-3 py-0.5">
+              <span className="text-foreground/80">{r.name}</span>
+              <span className="text-muted-foreground/50 whitespace-nowrap">
+                {new Date(r.readAt).toLocaleString('it-IT', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function MessageBubble({ message, isOwn, currentUserId, readReceipts, onEdit, onDelete, onReply, onReact }: MessageBubbleProps) {
   const authorName = `${message.author.firstName} ${message.author.lastName}`
   const time = new Date(message.createdAt).toLocaleTimeString('it-IT', {
     hour: '2-digit',
@@ -546,9 +595,7 @@ export function MessageBubble({ message, isOwn, currentUserId, onEdit, onDelete,
         )}
 
         {isOwn && !editing && (
-          <div className="flex items-center gap-1 mt-0.5 pr-1">
-            <CheckCheck className="h-3 w-3 text-primary/60" />
-          </div>
+          <ReadReceiptIndicator receipts={readReceipts} />
         )}
       </div>
     </div>

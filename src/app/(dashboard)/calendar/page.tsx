@@ -127,7 +127,7 @@ const EVENT_COLORS = [
 type DesktopView = 'month' | 'week'
 
 export default function CalendarPage() {
-  const today = new Date()
+  const [today, setToday] = useState(() => new Date())
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
   const [events, setEvents] = useState<CalendarEvent[]>([])
@@ -159,14 +159,36 @@ export default function CalendarPage() {
   })
   const [creating, setCreating] = useState(false)
 
+  const [fodiCalendarId, setFodiCalendarId] = useState<string | null>(null)
+
+  const fetchCalendars = useCallback(async () => {
+    try {
+      const res = await fetch('/api/calendar')
+      const data = await res.json()
+      if (data.calendars) {
+        setCalendars(data.calendars)
+        // Find the "Fodi Srl" calendar (or similar name)
+        const fodiCal = (data.calendars as CalendarInfo[]).find((c) =>
+          c.summary.toLowerCase().includes('fodi')
+        )
+        if (fodiCal) {
+          setFodiCalendarId(fodiCal.id)
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
   const fetchEvents = useCallback(async () => {
     setLoading(true)
     setFetchError(null)
     const timeMin = new Date(year, month, 1).toISOString()
     const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString()
 
+    const calParam = fodiCalendarId ? `&calendarId=${encodeURIComponent(fodiCalendarId)}` : ''
     try {
-      const res = await fetch(`/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}`)
+      const res = await fetch(`/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}${calParam}`)
       const data = await res.json()
       if (data.connected === false) {
         setConnected(false)
@@ -180,20 +202,27 @@ export default function CalendarPage() {
     } finally {
       setLoading(false)
     }
-  }, [year, month])
+  }, [year, month, fodiCalendarId])
 
-  const fetchCalendars = useCallback(async () => {
-    try {
-      const res = await fetch('/api/calendar')
-      const data = await res.json()
-      if (data.calendars) setCalendars(data.calendars)
-    } catch {
-      // ignore
+  // Keep today in sync (update at midnight or when tab regains focus)
+  useEffect(() => {
+    const updateToday = () => {
+      const now = new Date()
+      setToday((prev) => {
+        if (prev.toDateString() !== now.toDateString()) return now
+        return prev
+      })
     }
+    // Check every minute
+    const interval = setInterval(updateToday, 60_000)
+    // Also check on visibility change (tab focus)
+    const onVisibility = () => { if (document.visibilityState === 'visible') updateToday() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisibility) }
   }, [])
 
+  // Fetch calendars first, then events depend on fodiCalendarId
   useEffect(() => {
-    fetchEvents()
     fetchCalendars()
     fetch('/api/team')
       .then((r) => r.ok ? r.json() : null)
@@ -201,7 +230,12 @@ export default function CalendarPage() {
         if (data?.items) setTeamMembers(data.items)
       })
       .catch(() => {})
-  }, [fetchEvents, fetchCalendars])
+  }, [fetchCalendars])
+
+  // Fetch events whenever month/year changes or fodiCalendarId is resolved
+  useEffect(() => {
+    fetchEvents()
+  }, [fetchEvents])
 
   // Open new event modal with a precompiled date
   const openNewEventForDate = useCallback((dateStr: string) => {
@@ -280,6 +314,7 @@ export default function CalendarPage() {
             location: newEvent.location,
             start,
             end,
+            ...(fodiCalendarId && { calendarId: fodiCalendarId }),
           }),
         })
         if (!res.ok) {
@@ -300,6 +335,7 @@ export default function CalendarPage() {
             end,
             withMeet: newEvent.withMeet || attendeeEmails.length > 0,
             attendees: attendeeEmails,
+            ...(fodiCalendarId && { calendarId: fodiCalendarId }),
           }),
         })
         if (!res.ok) {
@@ -326,7 +362,8 @@ export default function CalendarPage() {
     if (!selectedEvent) return
     setDeleting(true)
     try {
-      const res = await fetch(`/api/calendar/events/${selectedEvent.id}`, { method: 'DELETE' })
+      const calParam = fodiCalendarId ? `?calendarId=${encodeURIComponent(fodiCalendarId)}` : ''
+      const res = await fetch(`/api/calendar/events/${selectedEvent.id}${calParam}`, { method: 'DELETE' })
       if (res.ok) {
         setSelectedEvent(null)
         setConfirmDelete(false)
@@ -340,11 +377,10 @@ export default function CalendarPage() {
   }
 
   const goToToday = useCallback(() => {
-    const now = new Date()
-    setYear(now.getFullYear())
-    setMonth(now.getMonth())
-    setWeekAnchor(now.getDate())
-  }, [])
+    setYear(today.getFullYear())
+    setMonth(today.getMonth())
+    setWeekAnchor(today.getDate())
+  }, [today])
 
   const prevMonth = useCallback(() => {
     if (month === 0) { setMonth(11); setYear(y => y - 1) }
@@ -413,7 +449,9 @@ export default function CalendarPage() {
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Calendario</h1>
-            <p className="text-sm text-muted">Visualizza e gestisci i tuoi eventi</p>
+            <p className="text-sm text-muted">
+              {today.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -468,17 +506,16 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Calendar legend */}
-      {calendars.length > 1 && (
-        <div className="flex flex-wrap items-center gap-3 mb-4 text-xs">
-          {calendars.map((cal) => (
-            <div key={cal.id} className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cal.backgroundColor }} />
-              <span className="text-muted">{cal.summary}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Active calendar indicator */}
+      {fodiCalendarId && calendars.length > 0 && (() => {
+        const activeCal = calendars.find((c) => c.id === fodiCalendarId)
+        return activeCal ? (
+          <div className="flex items-center gap-2 mb-4 text-xs">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: activeCal.backgroundColor }} />
+            <span className="text-muted font-medium">{activeCal.summary}</span>
+          </div>
+        ) : null
+      })()}
 
       {fetchError && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">

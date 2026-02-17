@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { MessageCircle, Video, Hash, Users, Search, Info, X, CheckSquare } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ChannelList } from '@/components/chat/ChannelList'
-import { MessageThread } from '@/components/chat/MessageThread'
+import { MessageThread, ReadStatusMap } from '@/components/chat/MessageThread'
 import { MessageInput } from '@/components/chat/MessageInput'
 import { NewChannelModal } from '@/components/chat/NewChannelModal'
 import { ChannelInfoPanel } from '@/components/chat/ChannelInfoPanel'
@@ -74,6 +74,7 @@ export default function ChatPage() {
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set())
   const [sendError, setSendError] = useState<string | null>(null)
+  const [readStatus, setReadStatus] = useState<ReadStatusMap>({})
   const selectedIdRef = useRef(selectedId)
   selectedIdRef.current = selectedId
 
@@ -182,6 +183,18 @@ export default function ChatPage() {
       )
     }
 
+    // Handle read receipts
+    if (event.type === 'message_read' && event.data) {
+      const { userId, lastReadAt } = event.data as { userId: string; lastReadAt: string }
+      const channelId = (event as { channelId?: string }).channelId
+      if (channelId === selectedIdRef.current) {
+        setReadStatus((prev) => ({
+          ...prev,
+          [userId]: { ...prev[userId], lastReadAt },
+        }))
+      }
+    }
+
     // Handle typing indicator
     if (event.type === 'typing' && event.data) {
       const { userId, userName } = event.data as { userId: string; userName: string }
@@ -218,6 +231,7 @@ export default function ChatPage() {
     setSearchResults([])
     setSelectionMode(false)
     setSelectedMessages(new Set())
+    setReadStatus({})
 
     // Mark as read
     fetch(`/api/chat/channels/${id}/read`, { method: 'POST' })
@@ -607,6 +621,7 @@ export default function ChatPage() {
               channelId={selectedId}
               currentUserId={currentUserId}
               newMessages={newMessages}
+              readStatus={readStatus}
               onEditMessage={handleEditMessage}
               onDeleteMessage={handleDeleteMessage}
               onReply={handleReply}

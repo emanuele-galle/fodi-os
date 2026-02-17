@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Check } from 'lucide-react'
-import { MessageBubble } from './MessageBubble'
+import { MessageBubble, ReadReceipt } from './MessageBubble'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/utils'
 
@@ -21,10 +21,15 @@ interface Message {
   }
 }
 
+export interface ReadStatusMap {
+  [userId: string]: { lastReadAt: string | null; name: string }
+}
+
 interface MessageThreadProps {
   channelId: string
   currentUserId: string
   newMessages: Message[]
+  readStatus?: ReadStatusMap
   onEditMessage?: (messageId: string, newContent: string) => void
   onDeleteMessage?: (messageId: string) => void
   onDeleteMessages?: (messageIds: string[]) => void
@@ -36,14 +41,36 @@ interface MessageThreadProps {
   onToggleSelection?: (messageId: string) => void
 }
 
-export function MessageThread({ channelId, currentUserId, newMessages, onEditMessage, onDeleteMessage, onDeleteMessages, onReply, onReact, userRole, selectionMode, selectedMessages, onToggleSelection }: MessageThreadProps) {
+export function MessageThread({ channelId, currentUserId, newMessages, readStatus, onEditMessage, onDeleteMessage, onDeleteMessages, onReply, onReact, userRole, selectionMode, selectedMessages, onToggleSelection }: MessageThreadProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [cursor, setCursor] = useState<string | null>(null)
+  const [localReadStatus, setLocalReadStatus] = useState<ReadStatusMap>({})
   const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const shouldAutoScroll = useRef(true)
+
+  // Update local read status from props (SSE updates)
+  useEffect(() => {
+    if (readStatus) {
+      setLocalReadStatus((prev) => ({ ...prev, ...readStatus }))
+    }
+  }, [readStatus])
+
+  // Compute read receipts for a given message
+  function getReadReceipts(msg: Message): ReadReceipt[] {
+    if (msg.author.id !== currentUserId) return []
+    const receipts: ReadReceipt[] = []
+    const msgTime = new Date(msg.createdAt).getTime()
+    for (const [userId, info] of Object.entries(localReadStatus)) {
+      if (userId === currentUserId) continue // Skip self
+      if (info.lastReadAt && new Date(info.lastReadAt).getTime() >= msgTime) {
+        receipts.push({ userId, name: info.name, readAt: info.lastReadAt })
+      }
+    }
+    return receipts
+  }
 
   const fetchMessages = useCallback(async (cursorId?: string) => {
     const params = new URLSearchParams({ limit: '50' })
@@ -65,6 +92,7 @@ export function MessageThread({ channelId, currentUserId, newMessages, onEditMes
       if (data) {
         setMessages(data.items || [])
         setCursor(data.nextCursor)
+        if (data.readStatus) setLocalReadStatus(data.readStatus)
       }
       setLoading(false)
     })
@@ -209,6 +237,7 @@ export function MessageThread({ channelId, currentUserId, newMessages, onEditMes
                   message={msg}
                   isOwn={msg.author.id === currentUserId}
                   currentUserId={currentUserId}
+                  readReceipts={getReadReceipts(msg)}
                   onEdit={onEditMessage}
                   onDelete={onDeleteMessage}
                   onReply={onReply}

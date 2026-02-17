@@ -52,9 +52,27 @@ export async function GET(
 
     const nextCursor = messages.length === limit ? messages[messages.length - 1].id : null
 
+    // Fetch all members' lastReadAt for read receipts
+    const members = await prisma.chatMember.findMany({
+      where: { channelId },
+      select: {
+        userId: true,
+        lastReadAt: true,
+        user: { select: { firstName: true, lastName: true } },
+      },
+    })
+    const readStatus: Record<string, { lastReadAt: string | null; name: string }> = {}
+    for (const m of members) {
+      readStatus[m.userId] = {
+        lastReadAt: m.lastReadAt?.toISOString() || null,
+        name: `${m.user.firstName} ${m.user.lastName}`,
+      }
+    }
+
     return NextResponse.json({
       items: messages.reverse(), // chronological order
       nextCursor,
+      readStatus,
     })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

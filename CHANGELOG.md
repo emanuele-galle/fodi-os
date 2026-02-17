@@ -2,6 +2,69 @@
 
 Tutte le modifiche significative al progetto sono documentate in questo file.
 
+## [0.7.0] - 2026-02-17
+
+### Nuove Funzionalità
+
+#### Sicurezza: Verifica IP con OTP
+- **Autenticazione doppia IP-based** — Login da IP non riconosciuto richiede verifica OTP via email (6 cifre, scadenza 10 min)
+- **IP trusted automatici** — Dopo verifica, l'IP viene salvato e non richiede più OTP
+- **Rate limiting su 3 livelli** — Login (5/min per IP), invio OTP (3/10min per utente), verifica (5/5min per IP)
+- **OTP hashato con bcrypt** — Mai salvato in chiaro nel database
+- **Email di sicurezza** — Template dedicato con IP sospetto, codice OTP e avviso cambio password
+- **Seed IP esistenti** — Script per seedare gli IP attuali degli utenti come trusted (nessun blocco al primo accesso)
+
+#### Calendario
+- **Filtro calendario Fodi** — Il calendario mostra automaticamente gli eventi del calendario "Fodi Srl" se disponibile
+
+#### Chat
+- **Read receipts** — Conferme di lettura in tempo reale nei messaggi (chi ha letto, quando)
+
+### Modifiche Tecniche
+
+- Nuovi modelli Prisma: `TrustedIp`, `LoginOtp` con relazioni su `User`
+- Nuovo modulo `src/lib/email.ts` condiviso (estratto da `signature-email.ts`)
+- Nuova API `POST /api/auth/verify-ip` per verifica OTP
+- Nuova pagina `/verify-ip` con input 6 digit, auto-advance, paste support
+- Middleware aggiornato: `/verify-ip` aggiunta a PUBLIC_PATHS
+- Schema validazione: aggiunto `verifyIpOtpSchema`
+- API login: check IP trusted, generazione OTP, risposta 403 con `requiresIpVerification`
+- API chat messages: campo `readStatus` nella risposta GET
+- API chat read: broadcast SSE `message_read` event
+- Componenti chat: `MessageBubble` e `MessageThread` supportano read receipts
+
+---
+
+## [0.6.0] - 2026-02-16
+
+### Nuove Funzionalità
+
+#### Digital Business Card (NFC)
+- **Card digitale premium** — Design dark glassmorphism con animazioni
+- **Social completi** — Facebook, TikTok, YouTube, Telegram, WhatsApp
+- **Google Calendar booking** — Prenotazione appuntamenti integrata
+- **Lead capture wizard** — Form multi-step nella card per raccogliere contatti
+- **Leggibilità migliorata** — Font più grandi e contrasto per tutti gli utenti
+
+#### CRM & ERP
+- **Deals pipeline** — Gestione trattative con stage, probabilità, valore
+- **Tasks avanzati** — Urgency system, focus del giorno, deadline notifications
+- **Spese ricorrenti** — Gestione abbonamenti con frequenza e auto-rinnovo
+- **Azioni inline** — Edit/delete rapido su preventivi, firme, wizards
+
+#### UX & Mobile
+- **Fix zoom iOS** — Prevenuto zoom accidentale su input mobile
+- **Upload senza limiti** — Rimossi limiti su dimensione e estensione file
+- **Navigazione migliorata** — Link Card Digitale in settings, task cards cliccabili
+
+### Bug Fix
+- Fix permessi SALES (PM write per SALES, CONTENT, SUPPORT)
+- Fix salvataggio card digitale, dark preview, vCard foto + telefono
+- Fix preview immagini Google Drive
+- Fix icona Euro al posto di Dollaro nella pagina progetti
+
+---
+
 ## [0.5.0] - 2026-02-14
 
 ### Nuove Funzionalit&agrave;
