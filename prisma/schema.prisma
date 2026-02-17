@@ -1309,6 +1309,10 @@ model DigitalCard {
   githubUrl       String?
   websiteUrl      String?
   whatsappNumber  String?
+  facebookUrl     String?
+  tiktokUrl       String?
+  youtubeUrl      String?
+  telegramUrl     String?
 
   // Card content
   cardBio         String?   @db.Text

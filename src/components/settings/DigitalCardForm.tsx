@@ -16,6 +16,10 @@ interface CardData {
   githubUrl: string | null
   websiteUrl: string | null
   whatsappNumber: string | null
+  facebookUrl: string | null
+  tiktokUrl: string | null
+  youtubeUrl: string | null
+  telegramUrl: string | null
   showWizards: boolean
   isEnabled: boolean
   showBooking: boolean
@@ -104,6 +108,24 @@ export function DigitalCardForm({ card, onSave }: DigitalCardFormProps) {
                 onChange={(e) => handleChange('instagramUrl', e.target.value)}
               />
               <Input
+                label="Facebook URL"
+                placeholder="https://facebook.com/..."
+                value={formData.facebookUrl || ''}
+                onChange={(e) => handleChange('facebookUrl', e.target.value)}
+              />
+              <Input
+                label="TikTok URL"
+                placeholder="https://tiktok.com/@..."
+                value={formData.tiktokUrl || ''}
+                onChange={(e) => handleChange('tiktokUrl', e.target.value)}
+              />
+              <Input
+                label="YouTube URL"
+                placeholder="https://youtube.com/@..."
+                value={formData.youtubeUrl || ''}
+                onChange={(e) => handleChange('youtubeUrl', e.target.value)}
+              />
+              <Input
                 label="Twitter/X URL"
                 placeholder="https://twitter.com/..."
                 value={formData.twitterUrl || ''}
@@ -114,6 +136,12 @@ export function DigitalCardForm({ card, onSave }: DigitalCardFormProps) {
                 placeholder="https://github.com/..."
                 value={formData.githubUrl || ''}
                 onChange={(e) => handleChange('githubUrl', e.target.value)}
+              />
+              <Input
+                label="Telegram URL"
+                placeholder="https://t.me/..."
+                value={formData.telegramUrl || ''}
+                onChange={(e) => handleChange('telegramUrl', e.target.value)}
               />
               <Input
                 label="Sito Web URL"

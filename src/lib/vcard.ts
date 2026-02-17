@@ -12,6 +12,10 @@ interface VCardData {
   githubUrl?: string | null
   websiteUrl?: string | null
   whatsappNumber?: string | null
+  facebookUrl?: string | null
+  tiktokUrl?: string | null
+  youtubeUrl?: string | null
+  telegramUrl?: string | null
 }
 
 function escapeVCard(value: string): string {
@@ -55,11 +59,23 @@ export function generateVCard(data: VCardData): string {
   if (data.instagramUrl) {
     lines.push(`X-SOCIALPROFILE;TYPE=instagram:${data.instagramUrl}`)
   }
+  if (data.facebookUrl) {
+    lines.push(`X-SOCIALPROFILE;TYPE=facebook:${data.facebookUrl}`)
+  }
   if (data.twitterUrl) {
     lines.push(`X-SOCIALPROFILE;TYPE=twitter:${data.twitterUrl}`)
   }
   if (data.githubUrl) {
     lines.push(`X-SOCIALPROFILE;TYPE=github:${data.githubUrl}`)
+  }
+  if (data.tiktokUrl) {
+    lines.push(`X-SOCIALPROFILE;TYPE=tiktok:${data.tiktokUrl}`)
+  }
+  if (data.youtubeUrl) {
+    lines.push(`X-SOCIALPROFILE;TYPE=youtube:${data.youtubeUrl}`)
+  }
+  if (data.telegramUrl) {
+    lines.push(`X-SOCIALPROFILE;TYPE=telegram:${data.telegramUrl}`)
   }
 
   lines.push('END:VCARD')

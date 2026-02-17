@@ -105,63 +105,69 @@ export default async function CardPage({ params }: Props) {
   const hasBooking = card.showBooking && !!card.user.googleToken
 
   return (
-    <div className="max-w-md mx-auto px-5 py-12">
-      {/* Hero - immediate */}
-      <div className="animate-card-entrance animate-card-entrance-1">
-        <CardHero
-          firstName={card.user.firstName}
-          lastName={card.user.lastName}
-          avatarUrl={card.user.avatarUrl}
-          jobTitle={card.jobTitle}
-          cardBio={card.cardBio}
-          department={card.department}
-          logoUrl={company?.logoUrl}
-        />
-      </div>
-
-      {/* Actions - stagger 2 */}
-      <div className="mt-8 animate-card-entrance animate-card-entrance-2">
-        <CardActions
-          phone={card.user.phone}
-          email={card.user.email}
-          whatsappNumber={card.whatsappNumber}
-          slug={slug}
-        />
-      </div>
-
-      {/* Socials - stagger 3 */}
-      <div className="mt-6 animate-card-entrance animate-card-entrance-3">
-        <CardSocials
-          linkedinUrl={card.linkedinUrl}
-          instagramUrl={card.instagramUrl}
-          twitterUrl={card.twitterUrl}
-          githubUrl={card.githubUrl}
-          websiteUrl={card.websiteUrl}
-        />
-      </div>
-
-      {/* Company - stagger 4 */}
-      {company && (
-        <div className="mt-6 animate-card-entrance animate-card-entrance-4">
-          <CardCompany company={company} />
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50/80 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
+      <div className="max-w-md mx-auto px-5 py-14">
+        {/* Hero - immediate */}
+        <div className="animate-card-entrance animate-card-entrance-1">
+          <CardHero
+            firstName={card.user.firstName}
+            lastName={card.user.lastName}
+            avatarUrl={card.user.avatarUrl}
+            jobTitle={card.jobTitle}
+            cardBio={card.cardBio}
+            department={card.department}
+            logoUrl={company?.logoUrl}
+          />
         </div>
-      )}
 
-      {/* Booking - stagger 5 */}
-      {hasBooking && (
-        <div className="mt-6 animate-card-entrance animate-card-entrance-5">
-          <CardBooking slug={slug} duration={card.bookingDuration} />
+        {/* Actions - stagger 2 */}
+        <div className="mt-9 animate-card-entrance animate-card-entrance-2">
+          <CardActions
+            phone={card.user.phone}
+            email={card.user.email}
+            whatsappNumber={card.whatsappNumber}
+            slug={slug}
+          />
         </div>
-      )}
 
-      {/* Wizards - stagger 6 */}
-      {card.showWizards && wizards.length > 0 && (
-        <div className="mt-6 animate-card-entrance animate-card-entrance-6">
-          <CardWizardLinks wizards={wizards} cardSlug={slug} />
+        {/* Socials - stagger 3 */}
+        <div className="mt-7 animate-card-entrance animate-card-entrance-3">
+          <CardSocials
+            linkedinUrl={card.linkedinUrl}
+            instagramUrl={card.instagramUrl}
+            twitterUrl={card.twitterUrl}
+            githubUrl={card.githubUrl}
+            websiteUrl={card.websiteUrl}
+            facebookUrl={card.facebookUrl}
+            tiktokUrl={card.tiktokUrl}
+            youtubeUrl={card.youtubeUrl}
+            telegramUrl={card.telegramUrl}
+          />
         </div>
-      )}
 
-      <CardViewTracker slug={slug} />
+        {/* Company - stagger 4 */}
+        {company && (
+          <div className="mt-7 animate-card-entrance animate-card-entrance-4">
+            <CardCompany company={company} />
+          </div>
+        )}
+
+        {/* Booking - stagger 5 */}
+        {hasBooking && (
+          <div className="mt-7 animate-card-entrance animate-card-entrance-5">
+            <CardBooking slug={slug} duration={card.bookingDuration} />
+          </div>
+        )}
+
+        {/* Wizards - stagger 6 */}
+        {card.showWizards && wizards.length > 0 && (
+          <div className="mt-7 animate-card-entrance animate-card-entrance-6">
+            <CardWizardLinks wizards={wizards} cardSlug={slug} />
+          </div>
+        )}
+
+        <CardViewTracker slug={slug} />
+      </div>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { Avatar } from '@/components/ui/Avatar'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Linkedin, Instagram, Twitter, Github, Globe, MessageCircle } from 'lucide-react'
+import { Linkedin, Instagram, Twitter, Github, Globe, MessageCircle, Facebook, Youtube, Send } from 'lucide-react'
 
 interface CardData {
   jobTitle: string | null
@@ -14,6 +14,10 @@ interface CardData {
   githubUrl: string | null
   websiteUrl: string | null
   whatsappNumber: string | null
+  facebookUrl: string | null
+  tiktokUrl: string | null
+  youtubeUrl: string | null
+  telegramUrl: string | null
   showWizards: boolean
   isEnabled: boolean
   user: {
@@ -36,8 +40,11 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
   const socials = [
     { icon: Linkedin, url: card.linkedinUrl, color: 'text-[#0A66C2]' },
     { icon: Instagram, url: card.instagramUrl, color: 'text-[#E4405F]' },
+    { icon: Facebook, url: card.facebookUrl, color: 'text-[#1877F2]' },
+    { icon: Youtube, url: card.youtubeUrl, color: 'text-[#FF0000]' },
     { icon: Twitter, url: card.twitterUrl, color: 'text-[#1DA1F2]' },
     { icon: Github, url: card.githubUrl, color: 'text-foreground' },
+    { icon: Send, url: card.telegramUrl, color: 'text-[#26A5E4]' },
     { icon: Globe, url: card.websiteUrl, color: 'text-primary' },
   ].filter((s) => s.url)
 
@@ -89,7 +96,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
 
               {/* Social icons */}
               {socials.length > 0 && (
-                <div className="mt-4 flex items-center gap-3">
+                <div className="mt-4 flex items-center gap-2 flex-wrap justify-center">
                   {socials.map((social, i) => (
                     <div
                       key={i}

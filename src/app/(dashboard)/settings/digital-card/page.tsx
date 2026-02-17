@@ -19,6 +19,10 @@ interface CardData {
   githubUrl: string | null
   websiteUrl: string | null
   whatsappNumber: string | null
+  facebookUrl: string | null
+  tiktokUrl: string | null
+  youtubeUrl: string | null
+  telegramUrl: string | null
   showWizards: boolean
   isEnabled: boolean
   showBooking: boolean

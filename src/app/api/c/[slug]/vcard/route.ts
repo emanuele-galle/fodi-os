@@ -49,6 +49,10 @@ export async function GET(
       githubUrl: card.githubUrl,
       websiteUrl: card.websiteUrl || company?.siteUrl,
       whatsappNumber: card.whatsappNumber,
+      facebookUrl: card.facebookUrl,
+      tiktokUrl: card.tiktokUrl,
+      youtubeUrl: card.youtubeUrl,
+      telegramUrl: card.telegramUrl,
     })
 
     const filename = `${card.user.firstName}_${card.user.lastName}.vcf`
