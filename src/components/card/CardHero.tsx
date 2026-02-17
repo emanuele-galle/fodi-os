@@ -75,7 +75,7 @@ export default function CardHero({
 
       {/* Department badge */}
       {department && (
-        <div className="mt-3.5 inline-flex items-center gap-2 text-[11px] font-medium px-4 py-1.5 rounded-full bg-white/[0.04] text-white/45 border border-white/[0.06] tracking-widest uppercase">
+        <div className="mt-3.5 inline-flex items-center gap-2 text-[13px] font-medium px-4 py-1.5 rounded-full bg-white/[0.04] text-white/55 border border-white/[0.06] tracking-widest uppercase">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           {department}
         </div>
@@ -83,7 +83,7 @@ export default function CardHero({
 
       {/* Bio */}
       {cardBio && (
-        <p className="mt-6 text-[14px] leading-[1.8] text-white/35 max-w-[320px]">
+        <p className="mt-6 text-[15px] leading-[1.8] text-white/50 max-w-[320px]">
           {cardBio}
         </p>
       )}

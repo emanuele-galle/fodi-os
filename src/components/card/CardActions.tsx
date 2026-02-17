@@ -91,7 +91,7 @@ export default function CardActions({
               >
                 <Icon className="w-5 h-5" style={{ color: action.color }} strokeWidth={1.8} />
               </div>
-              <span className="relative text-[11px] font-medium text-white/40 tracking-wide uppercase">{action.label}</span>
+              <span className="relative text-[13px] font-medium text-white/50 tracking-wide uppercase">{action.label}</span>
             </a>
           )
         })}
@@ -101,7 +101,7 @@ export default function CardActions({
       <button
         onClick={handleSaveContact}
         disabled={downloading}
-        className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-white/[0.06] border border-white/[0.08] text-white/90 font-medium text-[13px] tracking-wide transition-all duration-300 hover:bg-white/[0.1] hover:border-white/[0.12] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+        className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-white/[0.06] border border-white/[0.08] text-white/90 font-semibold text-[15px] tracking-wide transition-all duration-300 hover:bg-white/[0.1] hover:border-white/[0.12] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {/* Shine sweep */}
         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />

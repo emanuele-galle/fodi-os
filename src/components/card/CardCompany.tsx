@@ -31,11 +31,11 @@ export default function CardCompany({ company }: CardCompanyProps) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-[14px] text-white/75">
+          <h3 className="font-medium text-[15px] text-white/80">
             {company.ragioneSociale}
           </h3>
           {company.siteUrl && (
-            <span className="text-[12px] text-white/30">
+            <span className="text-[13px] text-white/40">
               {company.siteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
             </span>
           )}

@@ -121,7 +121,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
           <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
             <Calendar className="w-4 h-4 text-purple-400" />
           </div>
-          <h2 className="text-[15px] font-semibold text-white/90 tracking-tight">Prenota un appuntamento</h2>
+          <h2 className="text-[16px] font-semibold text-white/90 tracking-tight">Prenota un appuntamento</h2>
         </div>
         <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/[0.06]" />
       </div>
@@ -143,7 +143,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
         {/* DATE SELECTION */}
         {step === 'date' && dates.length > 0 && (
           <div>
-            <p className="text-[13px] text-white/35 mb-4 text-center tracking-wide">Scegli una data</p>
+            <p className="text-[14px] text-white/45 mb-4 text-center tracking-wide">Scegli una data</p>
             <div className="relative">
               {dates.length > 4 && (
                 <>
@@ -170,10 +170,10 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
                           : 'bg-white/[0.03] border-white/[0.08] hover:border-purple-500/30 hover:bg-white/[0.06] text-white/70'
                       }`}
                     >
-                      <span className={`text-[11px] font-medium ${isSelected ? 'text-purple-200' : 'text-white/40'}`}>{day}</span>
+                      <span className={`text-[12px] font-medium ${isSelected ? 'text-purple-200' : 'text-white/40'}`}>{day}</span>
                       <span className="text-lg font-bold leading-none">{num}</span>
-                      <span className={`text-[10px] font-medium ${isSelected ? 'text-purple-200' : 'text-white/30'}`}>{month}</span>
-                      <span className={`text-[10px] mt-0.5 ${isSelected ? 'text-purple-200' : 'text-purple-400/60'}`}>
+                      <span className={`text-[12px] font-medium ${isSelected ? 'text-purple-200' : 'text-white/40'}`}>{month}</span>
+                      <span className={`text-[11px] mt-0.5 ${isSelected ? 'text-purple-200' : 'text-purple-400/60'}`}>
                         {slotCount} slot
                       </span>
                     </button>
@@ -185,7 +185,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
         )}
 
         {step === 'date' && dates.length === 0 && !error && (
-          <p className="text-sm text-white/30 text-center py-6">
+          <p className="text-sm text-white/40 text-center py-6">
             Nessuna disponibilità al momento
           </p>
         )}
@@ -197,7 +197,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
               <button onClick={() => setStep('date')} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors">
                 <ChevronLeft className="w-4 h-4 text-white/40" />
               </button>
-              <p className="text-[13px] text-white/40 flex items-center gap-1.5">
+              <p className="text-[14px] text-white/40 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
                 {formatDate(selectedDate).num} {formatDate(selectedDate).month} — Scegli l&apos;orario
               </p>
@@ -230,7 +230,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
               <button type="button" onClick={() => setStep('time')} className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors">
                 <ChevronLeft className="w-4 h-4 text-white/40" />
               </button>
-              <p className="text-[13px] text-white/40">
+              <p className="text-[14px] text-white/40">
                 {formatDate(selectedDate!).num} {formatDate(selectedDate!).month} alle {selectedTime} — {duration} min
               </p>
             </div>
@@ -287,7 +287,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
               <Check className="w-8 h-8 text-emerald-400" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2">Prenotato!</h3>
-            <p className="text-sm text-white/35 max-w-[260px]">
+            <p className="text-sm text-white/45 max-w-[260px]">
               Appuntamento confermato per il {formatDate(selectedDate!).num} {formatDate(selectedDate!).month} alle {selectedTime}. Riceverai una conferma via email.
             </p>
             <button

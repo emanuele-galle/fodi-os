@@ -25,9 +25,9 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2">
           <Sparkles className="w-4 h-4 text-purple-400/70" strokeWidth={1.8} />
-          <h2 className="text-[15px] font-medium text-white/60 tracking-wide">I nostri servizi</h2>
+          <h2 className="text-[16px] font-medium text-white/70 tracking-wide">I nostri servizi</h2>
         </div>
-        <p className="text-[12px] text-white/25">
+        <p className="text-[13px] text-white/40">
           Scopri cosa possiamo fare per te
         </p>
       </div>
@@ -48,11 +48,11 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
               {/* Content */}
               <div className="relative flex items-center justify-between gap-4">
                 <div className="flex-1 space-y-1.5">
-                  <h3 className="font-medium text-[14px] text-white/80 group-hover:text-white transition-colors">
+                  <h3 className="font-medium text-[15px] text-white/85 group-hover:text-white transition-colors">
                     {wizard.name}
                   </h3>
                   {wizard.description && (
-                    <p className="text-[12px] leading-relaxed text-white/30 line-clamp-2 group-hover:text-white/40 transition-colors">
+                    <p className="text-[13px] leading-relaxed text-white/40 line-clamp-2 group-hover:text-white/50 transition-colors">
                       {wizard.description}
                     </p>
                   )}

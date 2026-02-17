@@ -189,7 +189,7 @@ export default async function CardPage({ params }: Props) {
 
         {/* Footer */}
         <div className="mt-16 card-fade-in card-delay-7 flex justify-center">
-          <div className="flex items-center gap-2 text-[11px] text-white/20 tracking-wider uppercase">
+          <div className="flex items-center gap-2 text-[12px] text-white/25 tracking-wider uppercase">
             <div className="w-8 h-px bg-white/10" />
             <span>FODI Digital Card</span>
             <div className="w-8 h-px bg-white/10" />
