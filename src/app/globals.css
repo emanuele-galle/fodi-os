@@ -142,6 +142,43 @@ html {
   animation: gradientRotate 4s linear infinite;
 }
 
+/* === Digital Card Dark Theme Animations === */
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.card-fade-in {
+  animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.card-delay-1 { animation-delay: 0ms; }
+.card-delay-2 { animation-delay: 150ms; }
+.card-delay-3 { animation-delay: 300ms; }
+.card-delay-4 { animation-delay: 400ms; }
+.card-delay-5 { animation-delay: 500ms; }
+.card-delay-6 { animation-delay: 600ms; }
+.card-delay-7 { animation-delay: 800ms; }
+
+.animate-spin-slow {
+  animation: spinSlow 8s linear infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 4s ease-in-out infinite;
+}
+
 @keyframes countUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

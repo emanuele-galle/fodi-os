@@ -105,10 +105,32 @@ export default async function CardPage({ params }: Props) {
   const hasBooking = card.showBooking && !!card.user.googleToken
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50/80 dark:from-gray-950 dark:via-gray-950 dark:to-gray-900">
-      <div className="max-w-md mx-auto px-5 py-14">
-        {/* Hero - immediate */}
-        <div className="animate-card-entrance animate-card-entrance-1">
+    <div className="min-h-screen bg-[#0a0a0f] relative overflow-hidden">
+      {/* Ambient background effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-purple-600/8 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-blue-600/6 blur-[100px]" />
+        <div className="absolute top-[40%] right-[-5%] w-[300px] h-[300px] rounded-full bg-indigo-500/5 blur-[80px]" />
+      </div>
+
+      {/* Subtle grid pattern */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03]" style={{
+        backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+        backgroundSize: '60px 60px',
+      }} />
+
+      <div className="relative z-10 max-w-[420px] mx-auto px-6 py-16">
+        {/* Company logo top */}
+        <div className="card-fade-in card-delay-1 flex justify-center mb-12">
+          <img
+            src="/logo-dark.png"
+            alt="FODI"
+            className="h-10 w-auto opacity-70"
+          />
+        </div>
+
+        {/* Hero */}
+        <div className="card-fade-in card-delay-2">
           <CardHero
             firstName={card.user.firstName}
             lastName={card.user.lastName}
@@ -116,12 +138,11 @@ export default async function CardPage({ params }: Props) {
             jobTitle={card.jobTitle}
             cardBio={card.cardBio}
             department={card.department}
-            logoUrl={company?.logoUrl}
           />
         </div>
 
-        {/* Actions - stagger 2 */}
-        <div className="mt-9 animate-card-entrance animate-card-entrance-2">
+        {/* Actions */}
+        <div className="mt-10 card-fade-in card-delay-3">
           <CardActions
             phone={card.user.phone}
             email={card.user.email}
@@ -130,8 +151,8 @@ export default async function CardPage({ params }: Props) {
           />
         </div>
 
-        {/* Socials - stagger 3 */}
-        <div className="mt-7 animate-card-entrance animate-card-entrance-3">
+        {/* Socials */}
+        <div className="mt-8 card-fade-in card-delay-4">
           <CardSocials
             linkedinUrl={card.linkedinUrl}
             instagramUrl={card.instagramUrl}
@@ -145,26 +166,35 @@ export default async function CardPage({ params }: Props) {
           />
         </div>
 
-        {/* Company - stagger 4 */}
+        {/* Company */}
         {company && (
-          <div className="mt-7 animate-card-entrance animate-card-entrance-4">
+          <div className="mt-8 card-fade-in card-delay-5">
             <CardCompany company={company} />
           </div>
         )}
 
-        {/* Booking - stagger 5 */}
+        {/* Booking */}
         {hasBooking && (
-          <div className="mt-7 animate-card-entrance animate-card-entrance-5">
+          <div className="mt-8 card-fade-in card-delay-5">
             <CardBooking slug={slug} duration={card.bookingDuration} />
           </div>
         )}
 
-        {/* Wizards - stagger 6 */}
+        {/* Wizards */}
         {card.showWizards && wizards.length > 0 && (
-          <div className="mt-7 animate-card-entrance animate-card-entrance-6">
+          <div className="mt-8 card-fade-in card-delay-6">
             <CardWizardLinks wizards={wizards} cardSlug={slug} />
           </div>
         )}
+
+        {/* Footer */}
+        <div className="mt-16 card-fade-in card-delay-7 flex justify-center">
+          <div className="flex items-center gap-2 text-[11px] text-white/20 tracking-wider uppercase">
+            <div className="w-8 h-px bg-white/10" />
+            <span>FODI Digital Card</span>
+            <div className="w-8 h-px bg-white/10" />
+          </div>
+        </div>
 
         <CardViewTracker slug={slug} />
       </div>

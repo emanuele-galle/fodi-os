@@ -21,15 +21,15 @@ type CardSocialsProps = {
 }
 
 const socialConfig = {
-  linkedin: { icon: Linkedin, label: 'LinkedIn', color: 'hover:text-[#0A66C2]', hoverBg: 'hover:bg-[#0A66C2]/10', hoverBorder: 'hover:border-[#0A66C2]/25' },
-  instagram: { icon: Instagram, label: 'Instagram', color: 'hover:text-[#E4405F]', hoverBg: 'hover:bg-[#E4405F]/10', hoverBorder: 'hover:border-[#E4405F]/25' },
-  facebook: { icon: Facebook, label: 'Facebook', color: 'hover:text-[#1877F2]', hoverBg: 'hover:bg-[#1877F2]/10', hoverBorder: 'hover:border-[#1877F2]/25' },
-  tiktok: { icon: TikTokIcon, label: 'TikTok', color: 'hover:text-gray-900 dark:hover:text-white', hoverBg: 'hover:bg-gray-100 dark:hover:bg-white/8', hoverBorder: 'hover:border-gray-300 dark:hover:border-gray-600' },
-  youtube: { icon: Youtube, label: 'YouTube', color: 'hover:text-[#FF0000]', hoverBg: 'hover:bg-[#FF0000]/10', hoverBorder: 'hover:border-[#FF0000]/25' },
-  twitter: { icon: Twitter, label: 'X / Twitter', color: 'hover:text-[#1DA1F2]', hoverBg: 'hover:bg-[#1DA1F2]/10', hoverBorder: 'hover:border-[#1DA1F2]/25' },
-  github: { icon: Github, label: 'GitHub', color: 'hover:text-gray-900 dark:hover:text-white', hoverBg: 'hover:bg-gray-100 dark:hover:bg-white/8', hoverBorder: 'hover:border-gray-300 dark:hover:border-gray-600' },
-  telegram: { icon: Send, label: 'Telegram', color: 'hover:text-[#26A5E4]', hoverBg: 'hover:bg-[#26A5E4]/10', hoverBorder: 'hover:border-[#26A5E4]/25' },
-  website: { icon: Globe, label: 'Website', color: 'hover:text-purple-600 dark:hover:text-purple-400', hoverBg: 'hover:bg-purple-50 dark:hover:bg-purple-500/10', hoverBorder: 'hover:border-purple-200 dark:hover:border-purple-500/25' },
+  linkedin: { icon: Linkedin, label: 'LinkedIn', color: '#0A66C2' },
+  instagram: { icon: Instagram, label: 'Instagram', color: '#E4405F' },
+  facebook: { icon: Facebook, label: 'Facebook', color: '#1877F2' },
+  tiktok: { icon: TikTokIcon, label: 'TikTok', color: '#ff0050' },
+  youtube: { icon: Youtube, label: 'YouTube', color: '#FF0000' },
+  twitter: { icon: Twitter, label: 'X', color: '#1DA1F2' },
+  github: { icon: Github, label: 'GitHub', color: '#8b949e' },
+  telegram: { icon: Send, label: 'Telegram', color: '#26A5E4' },
+  website: { icon: Globe, label: 'Website', color: '#a78bfa' },
 } as const
 
 export default function CardSocials({
@@ -43,36 +43,44 @@ export default function CardSocials({
   youtubeUrl,
   telegramUrl,
 }: CardSocialsProps) {
-  type SocialItem = { url: string; icon: typeof Linkedin | typeof TikTokIcon; label: string; color: string; hoverBg: string; hoverBorder: string }
-  const socials: SocialItem[] = []
-  if (linkedinUrl) socials.push({ url: linkedinUrl, ...socialConfig.linkedin })
-  if (instagramUrl) socials.push({ url: instagramUrl, ...socialConfig.instagram })
-  if (facebookUrl) socials.push({ url: facebookUrl, ...socialConfig.facebook })
-  if (tiktokUrl) socials.push({ url: tiktokUrl, ...socialConfig.tiktok })
-  if (youtubeUrl) socials.push({ url: youtubeUrl, ...socialConfig.youtube })
-  if (twitterUrl) socials.push({ url: twitterUrl, ...socialConfig.twitter })
-  if (githubUrl) socials.push({ url: githubUrl, ...socialConfig.github })
-  if (telegramUrl) socials.push({ url: telegramUrl, ...socialConfig.telegram })
-  if (websiteUrl) socials.push({ url: websiteUrl, ...socialConfig.website })
+  type SocialKey = keyof typeof socialConfig
+  const entries: { key: SocialKey; url: string }[] = []
+  if (linkedinUrl) entries.push({ key: 'linkedin', url: linkedinUrl })
+  if (instagramUrl) entries.push({ key: 'instagram', url: instagramUrl })
+  if (facebookUrl) entries.push({ key: 'facebook', url: facebookUrl })
+  if (tiktokUrl) entries.push({ key: 'tiktok', url: tiktokUrl })
+  if (youtubeUrl) entries.push({ key: 'youtube', url: youtubeUrl })
+  if (twitterUrl) entries.push({ key: 'twitter', url: twitterUrl })
+  if (githubUrl) entries.push({ key: 'github', url: githubUrl })
+  if (telegramUrl) entries.push({ key: 'telegram', url: telegramUrl })
+  if (websiteUrl) entries.push({ key: 'website', url: websiteUrl })
 
-  if (socials.length === 0) return null
+  if (entries.length === 0) return null
 
   return (
     <div className="flex justify-center">
-      <div className="inline-flex items-center gap-1.5 p-2 rounded-2xl bg-white/60 dark:bg-white/[0.03] border border-gray-200/40 dark:border-white/[0.06] backdrop-blur-sm">
-        {socials.map((social, index) => {
-          const Icon = social.icon
+      <div className="inline-flex items-center gap-1 p-1.5 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
+        {entries.map((entry, index) => {
+          const config = socialConfig[entry.key]
+          const Icon = config.icon
           return (
             <a
               key={index}
-              href={social.url}
+              href={entry.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`w-12 h-12 rounded-xl ${social.hoverBg} ${social.hoverBorder} border border-transparent text-gray-400 dark:text-gray-500 ${social.color} transition-all duration-200 flex items-center justify-center hover:scale-110 active:scale-95`}
-              style={{ animationDelay: `${index * 50}ms` }}
-              aria-label={social.label}
+              className="group relative w-11 h-11 rounded-xl flex items-center justify-center text-white/25 transition-all duration-300 hover:text-white/90 active:scale-90"
+              style={{
+                animationDelay: `${index * 60}ms`,
+              }}
+              aria-label={config.label}
             >
-              <Icon className="w-[20px] h-[20px]" strokeWidth={1.8} />
+              {/* Hover glow background */}
+              <div
+                className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ backgroundColor: `${config.color}12` }}
+              />
+              <Icon className="w-[18px] h-[18px] relative transition-colors duration-300 group-hover:drop-shadow-sm" strokeWidth={1.6} style={{ '--tw-drop-shadow': `0 0 8px ${config.color}40` } as React.CSSProperties} />
             </a>
           )
         })}

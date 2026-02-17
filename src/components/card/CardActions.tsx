@@ -1,6 +1,6 @@
 'use client'
 
-import { Phone, Mail, MessageCircle, UserPlus } from 'lucide-react'
+import { Phone, Mail, MessageCircle, UserPlus, Download } from 'lucide-react'
 import { useState } from 'react'
 
 type CardActionsProps = {
@@ -47,32 +47,29 @@ export default function CardActions({
       href: `tel:${phone}`,
       icon: Phone,
       label: 'Chiama',
-      iconBg: 'bg-emerald-500',
-      shadow: 'shadow-emerald-500/20',
+      color: '#10B981',
       external: false,
     }] : []),
     ...(email ? [{
       href: `mailto:${email}`,
       icon: Mail,
       label: 'Email',
-      iconBg: 'bg-blue-500',
-      shadow: 'shadow-blue-500/20',
+      color: '#3B82F6',
       external: false,
     }] : []),
     ...(whatsappNumber ? [{
       href: `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`,
       icon: MessageCircle,
       label: 'WhatsApp',
-      iconBg: 'bg-green-500',
-      shadow: 'shadow-green-500/20',
+      color: '#25D366',
       external: true,
     }] : []),
   ]
 
   return (
-    <div className="space-y-3">
-      {/* Contact action grid */}
-      <div className={`grid gap-2 ${actions.length >= 3 ? 'grid-cols-3' : actions.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+    <div className="space-y-4">
+      {/* Action buttons row */}
+      <div className={`grid gap-3 ${actions.length >= 3 ? 'grid-cols-3' : actions.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {actions.map((action, index) => {
           const Icon = action.icon
           return (
@@ -81,12 +78,20 @@ export default function CardActions({
               href={action.href}
               target={action.external ? '_blank' : undefined}
               rel={action.external ? 'noopener noreferrer' : undefined}
-              className="group flex flex-col items-center gap-2.5 py-5 rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-gray-200/50 dark:border-white/[0.06] backdrop-blur-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.03] active:scale-[0.97]"
+              className="group relative flex flex-col items-center gap-3 py-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm transition-all duration-300 hover:bg-white/[0.06] hover:border-white/[0.1] active:scale-[0.97]"
             >
-              <div className={`w-12 h-12 rounded-2xl ${action.iconBg} flex items-center justify-center shadow-lg ${action.shadow} group-hover:shadow-xl transition-shadow duration-200`}>
-                <Icon className="w-[22px] h-[22px] text-white" strokeWidth={2} />
+              {/* Glow on hover */}
+              <div
+                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ boxShadow: `inset 0 0 30px ${action.color}08, 0 0 20px ${action.color}05` }}
+              />
+              <div
+                className="relative w-11 h-11 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                style={{ backgroundColor: `${action.color}15` }}
+              >
+                <Icon className="w-5 h-5" style={{ color: action.color }} strokeWidth={1.8} />
               </div>
-              <span className="text-[12px] font-semibold text-gray-500 dark:text-gray-400 tracking-wide">{action.label}</span>
+              <span className="relative text-[11px] font-medium text-white/40 tracking-wide uppercase">{action.label}</span>
             </a>
           )
         })}
@@ -96,12 +101,16 @@ export default function CardActions({
       <button
         onClick={handleSaveContact}
         disabled={downloading}
-        className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-bold text-[14px] shadow-lg shadow-purple-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/30 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-white/[0.06] border border-white/[0.08] text-white/90 font-medium text-[13px] tracking-wide transition-all duration-300 hover:bg-white/[0.1] hover:border-white/[0.12] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        {/* Animated shine */}
-        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-        <UserPlus className="w-[18px] h-[18px] relative" strokeWidth={2} />
-        <span className="relative">{downloading ? 'Download in corso...' : 'Salva Contatto'}</span>
+        {/* Shine sweep */}
+        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
+        {downloading ? (
+          <Download className="w-4 h-4 relative animate-bounce" strokeWidth={1.8} />
+        ) : (
+          <UserPlus className="w-4 h-4 relative" strokeWidth={1.8} />
+        )}
+        <span className="relative">{downloading ? 'Download...' : 'Salva Contatto'}</span>
       </button>
     </div>
   )
