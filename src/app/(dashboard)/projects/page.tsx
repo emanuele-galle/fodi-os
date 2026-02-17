@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import {
   FolderKanban, Plus, Search, ChevronLeft, ChevronRight, Building2, AlertCircle,
   LayoutGrid, List, Columns3, Download, MoreVertical, Copy, Archive, Trash2, Pencil,
-  FolderOpen, CheckCircle2, Clock, AlertTriangle, ArrowUpDown, DollarSign,
+  FolderOpen, CheckCircle2, Clock, AlertTriangle, ArrowUpDown, Euro,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -632,7 +632,7 @@ export default function ProjectsPage() {
       <div className="mt-2">
         <div className="flex items-center justify-between text-[10px] text-muted mb-0.5">
           <span className="flex items-center gap-1">
-            <DollarSign className="h-3 w-3" />
+            <Euro className="h-3 w-3" />
             Budget
           </span>
           <span>{spent.toLocaleString('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })} / {budget.toLocaleString('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}</span>
