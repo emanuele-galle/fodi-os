@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { sendViaSMTP } from '@/lib/email'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://os.fodisrl.it'
-const LOGO_URL = `${SITE_URL}/logo-dark.png`
+const LOGO_URL = `${SITE_URL}/logo-light.png`
 
 const PRIORITY = {
   URGENT: { label: 'Urgente', dot: '#EF4444' },
@@ -189,7 +189,7 @@ a{text-decoration:none}
 
   <!-- LOGO -->
   <tr><td style="padding:0 0 32px;text-align:center;">
-    <img src="${LOGO_URL}" alt="FODI" width="80" height="28" style="display:inline-block;" />
+    <img src="${LOGO_URL}" alt="FODI" width="120" height="42" style="display:inline-block;" />
   </td></tr>
 
   <!-- MAIN CARD -->
@@ -280,8 +280,12 @@ export async function POST(req: NextRequest) {
   const yesterdayStart = new Date(todayStart.getTime() - 864e5)
   const last24h = new Date(now.getTime() - 864e5)
 
+  const isTest = req.nextUrl.searchParams.get('test') === 'true'
   const users = await prisma.user.findMany({
-    where: { isActive: true, dailyDigest: true, role: { not: 'CLIENT' } },
+    where: {
+      isActive: true, dailyDigest: true, role: { not: 'CLIENT' },
+      ...(isTest && { email: 'emanuelegalle@gmail.com' }),
+    },
     select: { id: true, firstName: true, email: true },
   })
 
