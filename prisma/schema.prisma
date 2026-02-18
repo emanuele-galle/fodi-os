@@ -24,6 +24,7 @@ model User {
   timezone    String?   @default("Europe/Rome")
   language    String?   @default("it")
   dailyDigest Boolean   @default(true)
+  onboardingCompleted Boolean @default(false)
   role          Role      @default(DEVELOPER)
   isActive      Boolean   @default(true)
   sectionAccess Json?

@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
 
     const [
       totalClients,
@@ -23,7 +24,12 @@ export async function GET(request: NextRequest) {
       interactionsLastMonth,
       recentInteractions,
       topClientsByRevenue,
-      neglectedClients
+      neglectedClients,
+      dealsByStageRaw,
+      wonDealsRaw,
+      lostDealsCount,
+      interactionsByTypeRaw,
+      pipelineValueResult,
     ] = await Promise.all([
       prisma.client.count(),
       prisma.client.groupBy({ by: ['status'], _count: true }),
@@ -54,11 +60,78 @@ export async function GET(request: NextRequest) {
         },
         take: 10,
       }),
+      // Deals by stage with count and total value
+      prisma.deal.groupBy({
+        by: ['stage'],
+        _count: true,
+        _sum: { value: true },
+      }),
+      // Won deals (for monthly breakdown and conversion)
+      prisma.deal.findMany({
+        where: { stage: 'CLOSED_WON', actualCloseDate: { gte: sixMonthsAgo } },
+        select: { value: true, actualCloseDate: true },
+      }),
+      // Lost deals count (for conversion rate)
+      prisma.deal.count({ where: { stage: 'CLOSED_LOST' } }),
+      // Interactions by type
+      prisma.interaction.groupBy({
+        by: ['type'],
+        _count: true,
+      }),
+      // Pipeline value (non-closed deals)
+      prisma.deal.aggregate({
+        where: { stage: { notIn: ['CLOSED_WON', 'CLOSED_LOST'] } },
+        _sum: { value: true },
+      }),
     ])
 
     const statusMap: Record<string, number> = {}
     for (const s of clientsByStatus) statusMap[s.status] = s._count
     const totalRevenue = totalRevenueResult._sum.totalRevenue?.toString() || '0'
+
+    // Deals by stage
+    const dealsByStage = dealsByStageRaw.map((d) => ({
+      stage: d.stage,
+      count: d._count,
+      value: Number(d._sum.value || 0),
+    }))
+
+    // Won deals monthly (last 6 months)
+    const monthNames = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic']
+    const wonByMonth: Record<string, { count: number; value: number }> = {}
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${monthNames[d.getMonth()]} ${d.getFullYear().toString().slice(2)}`
+      wonByMonth[key] = { count: 0, value: 0 }
+    }
+    for (const deal of wonDealsRaw) {
+      if (deal.actualCloseDate) {
+        const d = new Date(deal.actualCloseDate)
+        const key = `${monthNames[d.getMonth()]} ${d.getFullYear().toString().slice(2)}`
+        if (wonByMonth[key]) {
+          wonByMonth[key].count++
+          wonByMonth[key].value += Number(deal.value || 0)
+        }
+      }
+    }
+    const wonDealsMonthly = Object.entries(wonByMonth).map(([month, data]) => ({
+      month,
+      count: data.count,
+      value: data.value,
+    }))
+
+    // Interactions by type
+    const interactionsByType = interactionsByTypeRaw.map((i) => ({
+      type: i.type,
+      count: i._count,
+    }))
+
+    // Conversion rate
+    const wonCount = dealsByStageRaw.find((d) => d.stage === 'CLOSED_WON')?._count || 0
+    const totalClosed = wonCount + lostDealsCount
+    const conversionRate = totalClosed > 0 ? Math.round((wonCount / totalClosed) * 100) : 0
+
+    const totalPipelineValue = pipelineValueResult._sum.value?.toString() || '0'
 
     return NextResponse.json({
       success: true,
@@ -73,6 +146,11 @@ export async function GET(request: NextRequest) {
         recentInteractions,
         topClientsByRevenue,
         neglectedClients,
+        dealsByStage,
+        wonDealsMonthly,
+        interactionsByType,
+        conversionRate,
+        totalPipelineValue,
       },
     })
   } catch (e) {

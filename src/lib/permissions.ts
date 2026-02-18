@@ -1,6 +1,6 @@
 import type { Role } from '@/generated/prisma/client'
 
-export type Module = 'crm' | 'erp' | 'pm' | 'kb' | 'content' | 'support' | 'admin' | 'portal' | 'chat' | 'training'
+export type Module = 'crm' | 'erp' | 'pm' | 'content' | 'support' | 'admin' | 'portal' | 'chat' | 'training'
 export type Permission = 'read' | 'write' | 'delete' | 'approve' | 'admin'
 
 type PermissionMap = Partial<Record<Module, Permission[]>>
@@ -10,7 +10,6 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     crm: ['read', 'write', 'delete', 'approve', 'admin'],
     erp: ['read', 'write', 'delete', 'approve', 'admin'],
     pm: ['read', 'write', 'delete', 'approve', 'admin'],
-    kb: ['read', 'write', 'delete', 'approve', 'admin'],
     content: ['read', 'write', 'delete', 'approve', 'admin'],
     support: ['read', 'write', 'delete', 'approve', 'admin'],
     admin: ['read', 'write', 'delete', 'approve', 'admin'],
@@ -22,7 +21,6 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     crm: ['read', 'write', 'delete', 'approve'],
     erp: ['read', 'write', 'delete', 'approve'],
     pm: ['read', 'write', 'delete', 'approve'],
-    kb: ['read', 'write'],
     content: ['read', 'write', 'approve'],
     support: ['read', 'write', 'approve'],
     admin: ['read'],
@@ -33,7 +31,6 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     crm: ['read', 'write', 'delete', 'approve'],
     erp: ['read', 'write'],
     pm: ['read', 'write', 'delete'],
-    kb: ['read'],
     support: ['read'],
     chat: ['read', 'write'],
     training: ['read'],
@@ -41,14 +38,12 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
   PM: {
     crm: ['read'],
     pm: ['read', 'write', 'approve'],
-    kb: ['read', 'write'],
     support: ['read'],
     chat: ['read', 'write'],
     training: ['read'],
   },
   DEVELOPER: {
     pm: ['read', 'write'],
-    kb: ['read', 'write'],
     support: ['read'],
     chat: ['read', 'write'],
     training: ['read'],
@@ -56,7 +51,6 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
   CONTENT: {
     content: ['read', 'write'],
     pm: ['read', 'write'],
-    kb: ['read', 'write'],
     chat: ['read', 'write'],
     training: ['read'],
   },
@@ -64,7 +58,6 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     support: ['read', 'write'],
     crm: ['read'],
     pm: ['read', 'write'],
-    kb: ['read'],
     chat: ['read', 'write'],
     training: ['read'],
   },

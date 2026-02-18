@@ -2,6 +2,7 @@ const CACHE_NAME = 'fodi-os-v2'
 const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.png',
+  '/offline.html',
 ]
 
 self.addEventListener('install', (event) => {
@@ -77,9 +78,16 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 
-  // Never intercept API calls or HTML navigation requests
+  // Never intercept API calls
   if (event.request.url.includes('/api/')) return
-  if (event.request.mode === 'navigate') return
+
+  // Navigation requests: network-first with offline fallback
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/offline.html'))
+    )
+    return
+  }
 
   // Only cache static assets (_next/static, images, fonts)
   const url = new URL(event.request.url)

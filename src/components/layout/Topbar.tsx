@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search, LogOut, Video, MessageSquare, UserCheck, CheckCircle, FileText, AlarmClock, Clock, AlertTriangle } from 'lucide-react'
+import { Bell, Search, LogOut, Video } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -8,36 +8,7 @@ import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { useSSE } from '@/hooks/useSSE'
-
-interface Notification {
-  id: string
-  type: string
-  title: string
-  message: string | null
-  link: string | null
-  isRead: boolean
-  createdAt: string
-  metadata?: Record<string, unknown> | null
-}
-
-const NOTIF_ICONS: Record<string, typeof Bell> = {
-  task_comment: MessageSquare,
-  ticket_comment: MessageSquare,
-  task_assigned: UserCheck,
-  task_completed: CheckCircle,
-  task_status_changed: CheckCircle,
-  MEETING: Video,
-  file_uploaded: FileText,
-  reminder: AlarmClock,
-  reminder_manual: AlarmClock,
-  task_overdue: AlertTriangle,
-  task_due_today: Clock,
-  task_due_tomorrow: AlarmClock,
-}
-
-function getNotifIcon(type: string) {
-  return NOTIF_ICONS[type] || Bell
-}
+import { type Notification, getNotifIcon } from '@/lib/notification-constants'
 
 interface TopbarProps {
   user: {
@@ -276,7 +247,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                   </button>
                 ) : <span />}
                 <button
-                  onClick={() => { setShowNotifications(false); router.push('/team/activity') }}
+                  onClick={() => { setShowNotifications(false); router.push('/notifications') }}
                   className="text-xs text-muted hover:text-foreground transition-colors"
                 >
                   Vedi tutte →

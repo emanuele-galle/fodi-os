@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -19,6 +20,10 @@ import {
   CheckSquare,
   Target,
 } from 'lucide-react'
+
+const DealsFunnelChart = dynamic(() => import('@/components/crm/CrmCharts').then(m => ({ default: m.DealsFunnelChart })), { ssr: false })
+const WonDealsChart = dynamic(() => import('@/components/crm/CrmCharts').then(m => ({ default: m.WonDealsChart })), { ssr: false })
+const InteractionsByTypeChart = dynamic(() => import('@/components/crm/CrmCharts').then(m => ({ default: m.InteractionsByTypeChart })), { ssr: false })
 
 interface StatsData {
   totalClients: number
@@ -47,6 +52,11 @@ interface StatsData {
     status: string
     interactions: { date: string }[]
   }[]
+  dealsByStage: { stage: string; count: number; value: number }[]
+  wonDealsMonthly: { month: string; count: number; value: number }[]
+  interactionsByType: { type: string; count: number }[]
+  conversionRate: number
+  totalPipelineValue: string
 }
 
 interface TaskItem {
@@ -233,6 +243,30 @@ export default function CrmDashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="flex items-center gap-4">
+            <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-indigo-500/10">
+              <Target className="h-5 w-5 text-indigo-500" />
+            </div>
+            <div>
+              <p className="text-xs text-muted">Valore Pipeline</p>
+              <p className="text-2xl font-bold">{formatCurrency(stats.totalPipelineValue)}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex items-center gap-4">
+            <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-emerald-500/10">
+              <TrendingUp className="h-5 w-5 text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-xs text-muted">Tasso Conversione</p>
+              <p className="text-2xl font-bold">{stats.conversionRate}%</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Middle Section */}
@@ -299,6 +333,18 @@ export default function CrmDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Charts */}
+      {stats.dealsByStage.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <DealsFunnelChart data={stats.dealsByStage} />
+          <WonDealsChart data={stats.wonDealsMonthly} />
+        </div>
+      )}
+
+      {stats.interactionsByType.length > 0 && (
+        <InteractionsByTypeChart data={stats.interactionsByType} />
+      )}
 
       {/* Tasks & Deals Widgets */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

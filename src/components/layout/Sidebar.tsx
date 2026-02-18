@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   CheckSquare,
   MessageCircle,
+  Bell,
   Building2,
   Users,
   FolderKanban,
@@ -15,6 +16,7 @@ import {
   Film,
   LifeBuoy,
   UsersRound,
+  BookOpen,
   Settings,
   ChevronRight,
   ChevronLeft,
@@ -41,6 +43,7 @@ const navigation: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'I Miei Task', href: '/tasks', icon: CheckSquare },
   { label: 'Chat', href: '/chat', icon: MessageCircle },
+  { label: 'Notifiche', href: '/notifications', icon: Bell },
   {
     label: 'Azienda',
     href: '/internal',
@@ -115,6 +118,7 @@ const navigation: NavItem[] = [
       { label: 'Log Attività', href: '/team/activity' },
     ],
   },
+  { label: 'Guida', href: '/guide', icon: BookOpen },
   {
     label: 'Impostazioni',
     href: '/settings',
@@ -135,9 +139,10 @@ interface SidebarProps {
   sectionAccess?: SectionAccessMap | null
   unreadChat?: number
   pendingTaskCount?: number
+  unreadNotifications?: number
 }
 
-export function Sidebar({ userRole, sectionAccess, unreadChat = 0, pendingTaskCount = 0 }: SidebarProps) {
+export function Sidebar({ userRole, sectionAccess, unreadChat = 0, pendingTaskCount = 0, unreadNotifications = 0 }: SidebarProps) {
   const pathname = usePathname()
   const { preferences, updatePreference, loaded } = useUserPreferences()
   const [expanded, setExpanded] = useState(true)
@@ -214,6 +219,7 @@ export function Sidebar({ userRole, sectionAccess, unreadChat = 0, pendingTaskCo
           // Badge count for this item
           const badgeCount = item.label === 'Chat' ? unreadChat
             : item.label === 'I Miei Task' ? pendingTaskCount
+            : item.label === 'Notifiche' ? unreadNotifications
             : 0
 
           const navContent = (

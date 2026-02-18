@@ -13,6 +13,10 @@ import dynamic from 'next/dynamic'
 const CommandPalette = dynamic(() => import('@/components/layout/CommandPalette').then(m => ({ default: m.CommandPalette })), {
   ssr: false,
 })
+const PwaInstallPrompt = dynamic(() => import('@/components/layout/PwaInstallPrompt').then(m => ({ default: m.PwaInstallPrompt })), {
+  ssr: false,
+})
+const OnboardingWizard = dynamic(() => import('@/components/layout/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })), { ssr: false })
 import { useAuthRefresh } from '@/hooks/useAuthRefresh'
 import type { Role } from '@/generated/prisma/client'
 import type { SectionAccessMap } from '@/lib/section-access'
@@ -40,6 +44,7 @@ export default function DashboardLayout({
   const [unreadChat, setUnreadChat] = useState(0)
   const [pendingTaskCount, setPendingTaskCount] = useState(0)
 
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [mobileNotificationsOpen, setMobileNotificationsOpen] = useState(false)
   const openCommandPalette = useCallback(() => setCommandPaletteOpen(true), [])
   const openMobileNotifications = useCallback(() => setMobileNotificationsOpen(true), [])
@@ -56,6 +61,13 @@ export default function DashboardLayout({
         const data = await res.json()
         if (data?.user) {
           setUser(data.user)
+          // Check onboarding status
+          fetch('/api/onboarding')
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+              if (data && !data.completed) setShowOnboarding(true)
+            })
+            .catch(() => {})
           return
         }
       }
@@ -79,7 +91,17 @@ export default function DashboardLayout({
       fetch('/api/notifications?limit=1')
         .then((res) => res.ok ? res.json() : null)
         .then((data) => {
-          if (data?.unreadCount !== undefined) setUnreadNotifications(data.unreadCount)
+          if (data?.unreadCount !== undefined) {
+            setUnreadNotifications(data.unreadCount)
+            // PWA Badge API
+            if ('setAppBadge' in navigator) {
+              if (data.unreadCount > 0) {
+                navigator.setAppBadge(data.unreadCount).catch(() => {})
+              } else {
+                navigator.clearAppBadge?.().catch(() => {})
+              }
+            }
+          }
         })
         .catch(() => {})
 
@@ -151,7 +173,7 @@ export default function DashboardLayout({
     <div className="h-screen flex bg-background overflow-hidden">
       {/* Sidebar: hidden on mobile, visible on md+ */}
       <div className="hidden md:block flex-shrink-0">
-        <Sidebar userRole={user.role} sectionAccess={user.sectionAccess} unreadChat={unreadChat} pendingTaskCount={pendingTaskCount} />
+        <Sidebar userRole={user.role} sectionAccess={user.sectionAccess} unreadChat={unreadChat} pendingTaskCount={pendingTaskCount} unreadNotifications={unreadNotifications} />
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-x-hidden">
@@ -222,6 +244,13 @@ export default function DashboardLayout({
       )}
 
       <IncomingCallBanner />
+      {showOnboarding && user && (
+        <OnboardingWizard
+          user={{ firstName: user.firstName, role: user.role }}
+          onComplete={() => setShowOnboarding(false)}
+        />
+      )}
+      <PwaInstallPrompt />
     </div>
   )
 }
