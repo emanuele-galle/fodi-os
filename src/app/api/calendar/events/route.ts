@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
     const calendar = getCalendarService(auth)
     const res = await calendar.events.insert({
       calendarId: calendarId || 'primary',
+      sendUpdates: 'all',
       ...(withMeet && { conferenceDataVersion: 1 }),
       requestBody: {
         summary,

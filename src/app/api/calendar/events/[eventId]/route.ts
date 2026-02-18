@@ -43,7 +43,7 @@ export async function DELETE(
 
   try {
     const calendar = getCalendarService(auth)
-    await calendar.events.delete({ calendarId, eventId })
+    await calendar.events.delete({ calendarId, eventId, sendUpdates: 'all' })
     return NextResponse.json({ success: true })
   } catch (e) {
     console.error('Calendar delete error:', e)
@@ -100,6 +100,7 @@ export async function PATCH(
     const res = await calendar.events.patch({
       calendarId: calendarId || 'primary',
       eventId,
+      sendUpdates: 'all',
       requestBody,
     })
 
