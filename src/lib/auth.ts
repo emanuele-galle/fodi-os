@@ -79,6 +79,13 @@ export async function clearAuthCookies(): Promise<void> {
   cookieStore.delete('fodi_refresh')
 }
 
+export function generateTempPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  const bytes = new Uint8Array(12)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => chars[b % chars.length]).join('')
+}
+
 export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get('fodi_access')?.value

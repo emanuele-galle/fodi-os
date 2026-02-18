@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import {
@@ -83,10 +82,11 @@ export function DealsFunnelChart({ data }: { data: DealsByStageData[] }) {
             <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
             <YAxis dataKey="label" type="category" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" width={75} />
             <Tooltip
-              formatter={(value: number, name: string) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={((value: number, name: string) => {
                 if (name === 'value') return formatCurrency(value)
                 return value
-              }}
+              }) as any}
               contentStyle={TOOLTIP_STYLE}
               cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }}
             />
@@ -114,7 +114,8 @@ export function WonDealsChart({ data }: { data: WonDealsData[] }) {
             <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
             <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
             <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" width={35} />
-            <Tooltip formatter={(value) => formatCurrency(Number(value))} contentStyle={TOOLTIP_STYLE} />
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <Tooltip formatter={((value: number) => formatCurrency(value)) as any} contentStyle={TOOLTIP_STYLE} />
             <Line type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2} dot={{ r: 4, fill: '#22c55e' }} activeDot={{ r: 6 }} name="Valore" />
           </LineChart>
         </ResponsiveContainer>

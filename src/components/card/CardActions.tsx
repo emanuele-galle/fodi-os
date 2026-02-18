@@ -35,8 +35,8 @@ export default function CardActions({
       a.click()
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
-    } catch (error) {
-      console.error('Error downloading vCard:', error)
+    } catch {
+      // Download silently failed
     } finally {
       setDownloading(false)
     }

@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hashPassword } from '@/lib/auth'
+import { hashPassword, generateTempPassword } from '@/lib/auth'
+import { ADMIN_ROLES } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
-
-const ADMIN_ROLES: Role[] = ['ADMIN', 'MANAGER']
-
-function generateTempPassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-  const bytes = new Uint8Array(12)
-  crypto.getRandomValues(bytes)
-  return Array.from(bytes, (b) => chars[b % chars.length]).join('')
-}
 
 export async function POST(
   request: NextRequest,

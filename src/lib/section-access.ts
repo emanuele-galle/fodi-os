@@ -152,16 +152,3 @@ export function getEffectiveSectionAccess(
   return result
 }
 
-/** Validate a sectionAccess JSON blob */
-export function isValidSectionAccess(value: unknown): value is SectionAccessMap {
-  if (!value || typeof value !== 'object') return false
-  const obj = value as Record<string, unknown>
-  for (const section of SECTIONS) {
-    if (!(section in obj)) return false
-    const perm = obj[section]
-    if (!perm || typeof perm !== 'object') return false
-    const p = perm as Record<string, unknown>
-    if (typeof p.view !== 'boolean' || typeof p.edit !== 'boolean') return false
-  }
-  return true
-}

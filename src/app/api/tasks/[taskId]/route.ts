@@ -196,6 +196,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     const notifMetadata = { projectName: taskProjectName, taskStatus: status || (previousTask?.status ?? undefined), priority: previousTask?.priority ?? task.priority }
 
+    // Fetch participants once for all notifications
+    const needsNotification = (status !== undefined && previousTask && status !== previousTask.status)
+      || priority !== undefined || dueDate !== undefined || description !== undefined
+    const participants = needsNotification ? await getTaskParticipants(taskId) : []
+
     // Status change notification
     if (status !== undefined && previousTask && status !== previousTask.status) {
       const statusLabels: Record<string, string> = {
@@ -206,7 +211,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         CANCELLED: 'Cancellata',
       }
       const newLabel = statusLabels[status] || status
-      const participants = await getTaskParticipants(taskId)
 
       // If completed, special notification to creator + assigners
       if (status === 'DONE') {
@@ -288,7 +292,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (description !== undefined) changes.push('descrizione')
 
       if (changes.length > 0) {
-        const participants = await getTaskParticipants(taskId)
         await notifyUsers(
           participants,
           currentUserId,
@@ -309,12 +312,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       await prisma.taskAssignment.deleteMany({
         where: { taskId, userId: { notIn: assigneeIds } },
       })
-      // Upsert new assignments
-      for (const uid of assigneeIds) {
-        await prisma.taskAssignment.upsert({
-          where: { taskId_userId: { taskId, userId: uid } },
-          update: {},
-          create: { taskId, userId: uid, role: 'assignee', assignedBy: currentUserId },
+      // Create new assignments (skip existing)
+      if (assigneeIds.length > 0) {
+        await prisma.taskAssignment.createMany({
+          data: assigneeIds.map((uid) => ({
+            taskId,
+            userId: uid,
+            role: 'assignee',
+            assignedBy: currentUserId,
+          })),
+          skipDuplicates: true,
         })
       }
     }

@@ -24,8 +24,8 @@ export function DigitalCardQRCode({ slug }: DigitalCardQRCodeProps) {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-    } catch (err) {
-      console.error('Download QR error:', err)
+    } catch {
+      // QR download silently failed
     }
   }
 

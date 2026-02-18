@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { computeUserStats } from '@/lib/analytics-utils'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -196,34 +197,9 @@ export async function GET(request: NextRequest) {
       }))
 
     // === BY USER (team performance) ===
-    const userMap: Record<string, { userName: string; assigned: number; completed: number; overdue: number; hoursLogged: number }> = {}
-    for (const t of tasks) {
-      const userIds = new Set<string>()
-      const userNames: Record<string, string> = {}
-      if (t.assignee) {
-        userIds.add(t.assignee.id)
-        userNames[t.assignee.id] = `${t.assignee.firstName} ${t.assignee.lastName}`
-      }
-      for (const a of t.assignments) {
-        userIds.add(a.user.id)
-        userNames[a.user.id] = `${a.user.firstName} ${a.user.lastName}`
-      }
-      const hours = t.timeEntries.reduce((s, e) => s + e.hours, 0)
-      for (const uid of userIds) {
-        if (!userMap[uid]) userMap[uid] = { userName: userNames[uid], assigned: 0, completed: 0, overdue: 0, hoursLogged: 0 }
-        userMap[uid].assigned++
-        if (t.status === 'DONE') userMap[uid].completed++
-        if (t.dueDate && new Date(t.dueDate) < now && t.status !== 'DONE' && t.status !== 'CANCELLED') {
-          userMap[uid].overdue++
-        }
-        userMap[uid].hoursLogged += hours
-      }
-    }
-    const byUser = Object.entries(userMap).map(([userId, data]) => ({
-      userId,
-      ...data,
-      hoursLogged: Math.round(data.hoursLogged * 10) / 10,
-      completionRate: data.assigned > 0 ? Math.round((data.completed / data.assigned) * 100) : 0,
+    const byUser = computeUserStats(tasks, now).map(u => ({
+      ...u,
+      completionRate: u.assigned > 0 ? Math.round((u.completed / u.assigned) * 100) : 0,
     }))
 
     // === HOURS BY PROJECT ===

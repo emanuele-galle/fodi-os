@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { Role } from '@/generated/prisma/client'
 import { updateUserSchema } from '@/lib/validation'
-
-const ADMIN_ROLES: Role[] = ['ADMIN', 'MANAGER']
+import { ADMIN_ROLES } from '@/lib/permissions'
 
 const USER_SELECT = {
   id: true,

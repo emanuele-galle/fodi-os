@@ -43,7 +43,7 @@ describe('Permissions - hasPermission', () => {
     })
   })
 
-  describe('SALES ha accesso solo a CRM, ERP, PM(read), Chat', () => {
+  describe('SALES ha accesso a CRM, ERP, PM, KB, Support, Chat', () => {
     it('SALES ha read/write su crm', () => {
       expect(hasPermission('SALES', 'crm', 'read')).toBe(true)
       expect(hasPermission('SALES', 'crm', 'write')).toBe(true)
@@ -54,9 +54,10 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('SALES', 'erp', 'write')).toBe(true)
     })
 
-    it('SALES ha solo read su pm', () => {
+    it('SALES ha read/write/delete su pm', () => {
       expect(hasPermission('SALES', 'pm', 'read')).toBe(true)
-      expect(hasPermission('SALES', 'pm', 'write')).toBe(false)
+      expect(hasPermission('SALES', 'pm', 'write')).toBe(true)
+      expect(hasPermission('SALES', 'pm', 'delete')).toBe(true)
     })
 
     it('SALES ha read su kb', () => {
@@ -64,9 +65,13 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('SALES', 'kb', 'write')).toBe(false)
     })
 
-    it('SALES NON ha accesso a content, support, admin, portal', () => {
+    it('SALES ha read su support', () => {
+      expect(hasPermission('SALES', 'support', 'read')).toBe(true)
+      expect(hasPermission('SALES', 'support', 'write')).toBe(false)
+    })
+
+    it('SALES NON ha accesso a content, admin, portal', () => {
       expect(hasPermission('SALES', 'content', 'read')).toBe(false)
-      expect(hasPermission('SALES', 'support', 'read')).toBe(false)
       expect(hasPermission('SALES', 'admin', 'read')).toBe(false)
       expect(hasPermission('SALES', 'portal', 'read')).toBe(false)
     })
@@ -79,9 +84,9 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('PM', 'pm', 'approve')).toBe(true)
     })
 
-    it('PM ha read/write su kb', () => {
+    it('PM ha read su kb', () => {
       expect(hasPermission('PM', 'kb', 'read')).toBe(true)
-      expect(hasPermission('PM', 'kb', 'write')).toBe(true)
+      expect(hasPermission('PM', 'kb', 'write')).toBe(false)
     })
 
     it('PM ha read su crm', () => {
@@ -129,9 +134,9 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('CONTENT', 'content', 'write')).toBe(true)
     })
 
-    it('CONTENT ha read su pm', () => {
+    it('CONTENT ha read/write su pm', () => {
       expect(hasPermission('CONTENT', 'pm', 'read')).toBe(true)
-      expect(hasPermission('CONTENT', 'pm', 'write')).toBe(false)
+      expect(hasPermission('CONTENT', 'pm', 'write')).toBe(true)
     })
 
     it('CONTENT NON ha accesso a crm, erp', () => {
@@ -156,9 +161,14 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('SUPPORT', 'kb', 'write')).toBe(false)
     })
 
-    it('SUPPORT NON ha accesso a erp, pm, content, admin', () => {
+    it('SUPPORT ha read/write su pm', () => {
+      expect(hasPermission('SUPPORT', 'pm', 'read')).toBe(true)
+      expect(hasPermission('SUPPORT', 'pm', 'write')).toBe(true)
+    })
+
+    it('SUPPORT NON ha accesso a erp, content, admin', () => {
       expect(hasPermission('SUPPORT', 'erp', 'read')).toBe(false)
-      expect(hasPermission('SUPPORT', 'pm', 'read')).toBe(false)
+      expect(hasPermission('SUPPORT', 'content', 'read')).toBe(false)
       expect(hasPermission('SUPPORT', 'admin', 'read')).toBe(false)
     })
   })
@@ -224,8 +234,8 @@ describe('Permissions - Matrice accesso moduli per API', () => {
   const accessMatrix: Record<string, { module: Module; rolesAllowed: Role[]; rolesDenied: Role[] }> = {
     'Tasks API (pm:read)': {
       module: 'pm',
-      rolesAllowed: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT'],
-      rolesDenied: ['SUPPORT', 'CLIENT'],
+      rolesAllowed: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT', 'SUPPORT'],
+      rolesDenied: ['CLIENT'],
     },
     'Chat API (chat:read)': {
       module: 'chat',
@@ -249,8 +259,8 @@ describe('Permissions - Matrice accesso moduli per API', () => {
     },
     'Support API (support:read)': {
       module: 'support',
-      rolesAllowed: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'],
-      rolesDenied: ['SALES', 'CONTENT', 'CLIENT'],
+      rolesAllowed: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT', 'SALES'],
+      rolesDenied: ['CONTENT', 'CLIENT'],
     },
   }
 

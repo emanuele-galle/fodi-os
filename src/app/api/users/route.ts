@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { ADMIN_ROLES } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
-    const isAdmin = role === 'ADMIN' || role === 'MANAGER'
+    const isAdmin = ADMIN_ROLES.includes(role)
 
     const users = await prisma.user.findMany({
       where: isAdmin ? {} : { isActive: true },
@@ -13,14 +14,14 @@ export async function GET(request: NextRequest) {
         id: true,
         firstName: true,
         lastName: true,
-        email: true,
+        email: isAdmin,
         role: true,
         isActive: true,
         avatarUrl: true,
-        phone: true,
-        lastLoginAt: true,
-        createdAt: true,
-        sectionAccess: true,
+        phone: isAdmin,
+        lastLoginAt: isAdmin,
+        createdAt: isAdmin,
+        sectionAccess: isAdmin,
       },
       orderBy: [{ isActive: 'desc' }, { firstName: 'asc' }],
     })

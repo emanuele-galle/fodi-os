@@ -284,7 +284,7 @@ export async function POST(req: NextRequest) {
   const users = await prisma.user.findMany({
     where: {
       isActive: true, dailyDigest: true, role: { not: 'CLIENT' },
-      ...(isTest && { email: 'emanuelegalle@gmail.com' }),
+      ...(isTest && process.env.DIGEST_TEST_EMAIL && { email: process.env.DIGEST_TEST_EMAIL }),
     },
     select: { id: true, firstName: true, email: true },
   })

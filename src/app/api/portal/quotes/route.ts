@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ error: e.message }, { status: 403 })
     }
+    console.error('[portal/quotes]', e)
     return NextResponse.json({ error: 'Errore interno del server' }, { status: 500 })
   }
 }

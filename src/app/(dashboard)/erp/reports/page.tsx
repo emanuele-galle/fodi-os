@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { BarChart3, AlertCircle, Download, CalendarDays, Filter } from 'lucide-react'
+import { BarChart3, AlertCircle, CalendarDays, Filter } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -68,7 +68,7 @@ export default function ReportsPage() {
   const [data, setData] = useState<OverviewData | null>(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
-  const [exporting, setExporting] = useState(false)
+
 
   useEffect(() => {
     fetch('/api/projects?limit=100')
@@ -95,17 +95,6 @@ export default function ReportsPage() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  const handleExport = async () => {
-    setExporting(true)
-    try {
-      const { exportReportPdf } = await import('@/lib/export-pdf')
-      await exportReportPdf('report-content', 'Analytics & Report')
-    } catch {
-      // silently fail
-    } finally {
-      setExporting(false)
-    }
-  }
 
   const kpi = data?.kpi
 
@@ -131,14 +120,6 @@ export default function ReportsPage() {
             <p className="text-xs md:text-sm text-muted">KPI, grafici interattivi e performance team</p>
           </div>
         </div>
-        <button
-          onClick={handleExport}
-          disabled={exporting || loading}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors self-start"
-        >
-          <Download className="h-4 w-4" />
-          {exporting ? 'Generazione...' : 'Esporta PDF'}
-        </button>
       </div>
 
       {/* Filters */}
