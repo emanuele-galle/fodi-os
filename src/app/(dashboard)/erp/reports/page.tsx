@@ -1,134 +1,174 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { TrendingUp, CheckCircle2, AlertCircle } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { BarChart3, AlertCircle, Download, CalendarDays, Filter } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import { Card, CardContent, CardTitle } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
-import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
 
-const RevenueBarChart = dynamic(() => import('@/components/erp/ReportsCharts').then(m => ({ default: m.RevenueBarChart })), {
+const MonthlyTrendChart = dynamic(() => import('@/components/erp/ReportsCharts').then(m => ({ default: m.MonthlyTrendChart })), {
   ssr: false,
-  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[310px] w-full rounded-xl" />,
 })
-const ExpenseBarChart = dynamic(() => import('@/components/erp/ReportsCharts').then(m => ({ default: m.ExpenseBarChart })), {
+const HoursPerProjectChart = dynamic(() => import('@/components/erp/ReportsCharts').then(m => ({ default: m.HoursPerProjectChart })), {
   ssr: false,
-  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[310px] w-full rounded-xl" />,
+})
+const ExpensePieChart = dynamic(() => import('@/components/erp/ReportsCharts').then(m => ({ default: m.ExpensePieChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[310px] w-full rounded-xl" />,
+})
+const DealsPipelineChart = dynamic(() => import('@/components/erp/ReportsCharts').then(m => ({ default: m.DealsPipelineChart })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[310px] w-full rounded-xl" />,
+})
+const TeamPerformanceTable = dynamic(() => import('@/components/erp/ReportsCharts').then(m => ({ default: m.TeamPerformanceTable })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[200px] w-full rounded-xl" />,
 })
 
-const MONTH_LABELS = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic']
-
-interface Stats {
-  revenueMTD: number
-  paid: number
+interface KPI {
+  totalTasks: number
+  completedTasks: number
+  overdueTasks: number
+  hoursLogged: number
+  quotesEmitted: number
+  quotesValue: number
+  expensesTotal: number
+  activeClients: number
+  openDeals: number
+  completionRate: number
 }
 
-interface RevenueDataPoint {
-  month: string
-  revenue: number
+interface Project {
+  id: string
+  name: string
 }
 
-interface ExpenseDataPoint {
-  category: string
-  amount: number
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type OverviewData = { kpi: KPI } & Record<string, any>
+
+function getDefaultDateRange() {
+  const now = new Date()
+  const from = new Date(now.getFullYear(), now.getMonth(), 1)
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  return {
+    from: from.toISOString().split('T')[0],
+    to: to.toISOString().split('T')[0],
+  }
 }
 
 export default function ReportsPage() {
-  const [stats, setStats] = useState<Stats>({ revenueMTD: 0, paid: 0 })
-  const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([])
-  const [expenseData, setExpenseData] = useState<ExpenseDataPoint[]>([])
-  const [totalExpenses, setTotalExpenses] = useState(0)
+  const defaults = getDefaultDateRange()
+  const [dateFrom, setDateFrom] = useState(defaults.from)
+  const [dateTo, setDateTo] = useState(defaults.to)
+  const [projectId, setProjectId] = useState('')
+  const [projects, setProjects] = useState<Project[]>([])
+  const [data, setData] = useState<OverviewData | null>(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
-    async function load() {
-      setFetchError(null)
-      try {
-        const now = new Date()
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
-
-        const [expensesRes] = await Promise.all([
-          fetch('/api/expenses?limit=200'),
-        ])
-
-        // Invoices module removed
-        const paidInvoices: { total: string; paidDate: string | null }[] = []
-
-        // Build revenue chart data from paid invoices (last 6 months)
-        const revenueByMonth: Record<string, number> = {}
-        for (let i = 5; i >= 0; i--) {
-          const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-          revenueByMonth[key] = 0
-        }
-        for (const inv of paidInvoices) {
-          if (inv.paidDate) {
-            const d = new Date(inv.paidDate)
-            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-            if (key in revenueByMonth) {
-              revenueByMonth[key] += parseFloat(inv.total)
-            }
-          }
-        }
-        setRevenueData(
-          Object.entries(revenueByMonth).map(([key, revenue]) => ({
-            month: MONTH_LABELS[parseInt(key.split('-')[1]) - 1],
-            revenue,
-          }))
-        )
-
-        // Build expense chart data grouped by category
-        if (expensesRes.ok) {
-          const expData = await expensesRes.json()
-          const expenses: { category: string; amount: string }[] = expData.items || []
-          const byCategory: Record<string, number> = {}
-          let expTotal = 0
-          for (const exp of expenses) {
-            const amt = parseFloat(exp.amount)
-            byCategory[exp.category] = (byCategory[exp.category] || 0) + amt
-            expTotal += amt
-          }
-          setExpenseData(
-            Object.entries(byCategory)
-              .map(([category, amount]) => ({ category, amount }))
-              .sort((a, b) => b.amount - a.amount)
-          )
-          setTotalExpenses(expTotal)
-        }
-
-        const paidTotal = paidInvoices.reduce((s, i) => s + parseFloat(i.total), 0)
-
-        const revenueMTD = paidInvoices
-          .filter((i) => i.paidDate && i.paidDate >= monthStart)
-          .reduce((s, i) => s + parseFloat(i.total), 0)
-
-        setStats({ revenueMTD, paid: paidTotal })
-
-      } catch {
-        setFetchError('Errore di rete nel caricamento dei report')
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
+    fetch('/api/projects?limit=100')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.items) setProjects(d.items) })
+      .catch(() => {})
   }, [])
 
-  const statCards = [
-    { label: 'Fatturato Mese', value: stats.revenueMTD, icon: TrendingUp, color: 'text-primary' },
-    { label: 'Incassato', value: stats.paid, icon: CheckCircle2, color: 'text-primary' },
-  ]
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    setFetchError(null)
+    try {
+      const params = new URLSearchParams({ dateFrom, dateTo })
+      if (projectId) params.set('projectId', projectId)
+      const res = await fetch(`/api/analytics/overview?${params}`)
+      if (!res.ok) throw new Error('Errore nel caricamento')
+      setData(await res.json())
+    } catch {
+      setFetchError('Errore di rete nel caricamento dei report')
+    } finally {
+      setLoading(false)
+    }
+  }, [dateFrom, dateTo, projectId])
+
+  useEffect(() => { loadData() }, [loadData])
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const { exportReportPdf } = await import('@/lib/export-pdf')
+      await exportReportPdf('report-content', 'Analytics & Report')
+    } catch {
+      // silently fail
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const kpi = data?.kpi
+
+  const kpiCards = kpi ? [
+    { label: 'Task Completate', value: `${kpi.completedTasks}/${kpi.totalTasks}`, sub: `${kpi.overdueTasks} in ritardo`, color: 'text-emerald-600' },
+    { label: 'Ore Loggate', value: `${kpi.hoursLogged}h`, sub: 'nel periodo', color: 'text-blue-600' },
+    { label: 'Preventivi', value: String(kpi.quotesEmitted), sub: formatCurrency(kpi.quotesValue), color: 'text-violet-600' },
+    { label: 'Spese', value: formatCurrency(kpi.expensesTotal), sub: 'nel periodo', color: 'text-red-500' },
+    { label: 'Clienti Attivi', value: String(kpi.activeClients), sub: `${kpi.openDeals} deal aperti`, color: 'text-amber-600' },
+    { label: 'Tasso Completamento', value: `${kpi.completionRate}%`, sub: 'task', color: kpi.completionRate >= 70 ? 'text-emerald-600' : kpi.completionRate >= 40 ? 'text-amber-600' : 'text-red-500' },
+  ] : []
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0 bg-primary/10 text-primary">
-          <TrendingUp className="h-5 w-5" />
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0 bg-primary/10 text-primary">
+            <BarChart3 className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold">Analytics & Report</h1>
+            <p className="text-xs md:text-sm text-muted">KPI, grafici interattivi e performance team</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <h1 className="text-xl md:text-2xl font-bold">Report Finanziari</h1>
-          <p className="text-xs md:text-sm text-muted">Analisi finanziaria e statistiche</p>
+        <button
+          onClick={handleExport}
+          disabled={exporting || loading}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors self-start"
+        >
+          <Download className="h-4 w-4" />
+          {exporting ? 'Generazione...' : 'Esporta PDF'}
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="flex items-center gap-2">
+          <CalendarDays className="h-4 w-4 text-muted" />
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={e => setDateFrom(e.target.value)}
+            className="text-sm border border-border/40 rounded-lg px-3 py-1.5 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          <span className="text-muted text-sm">—</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={e => setDateTo(e.target.value)}
+            className="text-sm border border-border/40 rounded-lg px-3 py-1.5 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted" />
+          <select
+            value={projectId}
+            onChange={e => setProjectId(e.target.value)}
+            className="text-sm border border-border/40 rounded-lg px-3 py-1.5 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            <option value="">Tutti i progetti</option>
+            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
         </div>
       </div>
 
@@ -138,45 +178,48 @@ export default function ReportsPage() {
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
           </div>
-          <button onClick={() => window.location.reload()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+          <button onClick={loadData} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
 
-      {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 md:h-24" />)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8 animate-stagger">
-          {statCards.map((stat) => (
-            <Card key={stat.label}>
-              <CardContent className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 !p-3 md:!p-4">
-                <div className={`p-2 md:p-3 rounded-full bg-secondary ${stat.color}`}>
-                  <stat.icon className="h-4 w-4 md:h-6 md:w-6" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs md:text-sm text-muted truncate">{stat.label}</p>
-                  <p className="text-base md:text-xl font-bold">{formatCurrency(stat.value)}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <div id="report-content">
+        {/* KPI Cards */}
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
+            {kpiCards.map((card) => (
+              <Card key={card.label}>
+                <CardContent className="!p-3 md:!p-4">
+                  <p className="text-xs text-muted truncate mb-1">{card.label}</p>
+                  <p className={`text-lg md:text-xl font-bold tabular-nums ${card.color}`}>{card.value}</p>
+                  <p className="text-[11px] text-muted mt-0.5">{card.sub}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-      {/* Financial Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-        <FinancialSummaryCard
-          income={stats.paid}
-          expenses={totalExpenses}
-          incomeLabel="Incassato"
-          expenseLabel="Spese"
-        />
-      </div>
+        {/* Charts Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[310px] rounded-xl" />)}
+          </div>
+        ) : data && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
+            <MonthlyTrendChart data={data.monthlyTrend} />
+            <HoursPerProjectChart data={data.hoursPerProject} />
+            <ExpensePieChart data={data.expensesByCategory} />
+            <DealsPipelineChart data={data.dealsPipeline} />
+          </div>
+        )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        <RevenueBarChart data={revenueData} />
-        <ExpenseBarChart data={expenseData} />
+        {/* Team Performance */}
+        {!loading && data && (
+          <TeamPerformanceTable data={data.byUser} />
+        )}
       </div>
     </div>
   )
