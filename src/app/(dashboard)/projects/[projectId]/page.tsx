@@ -63,6 +63,8 @@ interface Task {
   priority: string
   boardColumn: string
   folderId: string | null
+  folderName?: string | null
+  folderColor?: string | null
   dueDate: string | null
   estimatedHours: number | null
   assignee?: TaskUser | null
@@ -169,6 +171,7 @@ export default function ProjectDetailPage() {
   const [creatingMeet, setCreatingMeet] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
   const [clients, setClients] = useState<ClientOption[]>([])
   const [workspaces, setWorkspaces] = useState<WorkspaceOption[]>([])
   const [teamMembers, setTeamMembers] = useState<{ id: string; firstName: string; lastName: string; avatarUrl?: string | null }[]>([])
@@ -183,6 +186,7 @@ export default function ProjectDetailPage() {
   const [memberUserIds, setMemberUserIds] = useState<string[]>([])
   const [addingMembers, setAddingMembers] = useState(false)
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string>('')
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
@@ -224,6 +228,14 @@ export default function ProjectDetailPage() {
       setFolders(data)
     }
   }, [projectId])
+
+  useEffect(() => {
+    // Load user session for role check
+    fetch('/api/auth/session')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => { if (data?.user) setUserRole(data.user.role) })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     // Fetch all data in parallel to avoid waterfall
@@ -309,10 +321,11 @@ export default function ProjectDetailPage() {
       })
       if (res.ok) {
         setEditModalOpen(false)
+        setEditError(null)
         fetchProject()
       } else {
         const err = await res.json().catch(() => null)
-        alert(err?.error || 'Errore durante il salvataggio')
+        setEditError(err?.error || 'Errore durante il salvataggio')
       }
     } finally {
       setEditSubmitting(false)
@@ -456,7 +469,12 @@ export default function ProjectDetailPage() {
     )
   }
 
-  const allProjectTasks = project.tasks || []
+  const folderMap = Object.fromEntries(folders.map((f) => [f.id, f]))
+
+  const allProjectTasks = (project.tasks || []).map((t) => {
+    const f = t.folderId ? folderMap[t.folderId] : null
+    return f ? { ...t, folderName: f.name, folderColor: f.color } : t
+  })
   const allTasks = selectedFolderId
     ? allProjectTasks.filter((t) => t.folderId === selectedFolderId)
     : allProjectTasks
@@ -490,6 +508,7 @@ export default function ProjectDetailPage() {
           <thead>
             <tr className="border-b border-border text-left text-muted bg-secondary/30">
               <th className="py-3 px-4 font-medium">Titolo</th>
+              <th className="py-3 px-4 font-medium hidden lg:table-cell">Cartella</th>
               <th className="py-3 px-4 font-medium hidden md:table-cell">Assegnato</th>
               <th className="py-3 px-4 font-medium">Stato</th>
               <th className="py-3 px-4 font-medium hidden sm:table-cell">Priorità</th>
@@ -500,6 +519,14 @@ export default function ProjectDetailPage() {
             {allTasks.map((task) => (
               <tr key={task.id} onClick={() => openTaskDetail(task.id)} className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-colors duration-200 even:bg-secondary/20">
                 <td className="py-3 px-4 font-medium">{task.title}</td>
+                <td className="py-3 px-4 text-muted hidden lg:table-cell">
+                  {task.folderId && folderMap[task.folderId] ? (
+                    <span className="inline-flex items-center gap-1 text-xs">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: folderMap[task.folderId].color }} />
+                      {folderMap[task.folderId].name}
+                    </span>
+                  ) : '—'}
+                </td>
                 <td className="py-3 px-4 text-muted hidden md:table-cell">
                   {(task.assignments?.length ?? 0) > 0 ? (
                     <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
@@ -894,6 +921,9 @@ export default function ProjectDetailPage() {
               className="h-10 w-20 rounded-md border border-border cursor-pointer"
             />
           </div>
+          {editError && (
+            <p className="text-sm text-destructive">{editError}</p>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setEditModalOpen(false)}>Annulla</Button>
             <Button type="submit" disabled={editSubmitting}>{editSubmitting ? 'Salvataggio...' : 'Salva Modifiche'}</Button>
@@ -927,6 +957,7 @@ export default function ProjectDetailPage() {
           setTaskDetailId(null)
         }}
         onUpdated={fetchProject}
+        userRole={userRole}
       />
     </div>
   )

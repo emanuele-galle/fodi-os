@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hasPermission, requirePermission } from '@/lib/permissions'
+import { hasPermission, requirePermission, ADMIN_ROLES } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { updateTaskSchema } from '@/lib/validation'
 import { getTaskParticipants, notifyUsers } from '@/lib/notifications'
@@ -129,7 +129,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         { status: 400 }
       )
     }
-    const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, folderId, milestoneId, dueDate, estimatedHours, sortOrder, tags } = parsed.data
+    const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, projectId, folderId, milestoneId, dueDate, estimatedHours, sortOrder, tags } = parsed.data
+
+    // Only ADMIN/MANAGER can move tasks between projects
+    if (projectId !== undefined) {
+      if (!ADMIN_ROLES.includes(role)) {
+        return NextResponse.json({ success: false, error: 'Solo Admin e Manager possono spostare task tra progetti' }, { status: 403 })
+      }
+    }
 
     // Fetch previous state for auto-logging on status change
     let previousTask: { status: string; title: string; projectId: string | null; timerStartedAt: Date | null; timerUserId: string | null; project: { name: string } | null; priority: string } | null = null
@@ -138,6 +145,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         where: { id: taskId },
         select: { status: true, title: true, projectId: true, timerStartedAt: true, timerUserId: true, project: { select: { name: true } }, priority: true },
       })
+    }
+
+    // Validate folderId belongs to the correct project
+    if (folderId) {
+      const targetProjectId = projectId !== undefined ? projectId : (await prisma.task.findUnique({ where: { id: taskId }, select: { projectId: true } }))?.projectId
+      if (targetProjectId) {
+        const folder = await prisma.folder.findUnique({ where: { id: folderId }, select: { projectId: true } })
+        if (!folder || folder.projectId !== targetProjectId) {
+          return NextResponse.json({ success: false, error: 'La cartella non appartiene al progetto selezionato' }, { status: 400 })
+        }
+      }
     }
 
     const data: Record<string, unknown> = {}
@@ -164,6 +182,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (priority !== undefined) data.priority = priority
     if (boardColumn !== undefined) data.boardColumn = boardColumn
     if (assigneeId !== undefined) data.assigneeId = assigneeId
+    if (projectId !== undefined) {
+      data.projectId = projectId
+      // When moving to a different project, reset folderId (folders belong to projects)
+      if (folderId === undefined) data.folderId = null
+    }
     if (folderId !== undefined) data.folderId = folderId
     if (milestoneId !== undefined) data.milestoneId = milestoneId
     if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null

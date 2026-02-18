@@ -26,6 +26,9 @@ interface Task {
   status: string
   priority: string
   boardColumn: string
+  folderId?: string | null
+  folderName?: string | null
+  folderColor?: string | null
   dueDate: string | null
   estimatedHours: number | null
   assignee?: { id: string; firstName: string; lastName: string; avatarUrl: string | null } | null
@@ -86,7 +89,13 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
       }}
       className="bg-card rounded-md border border-border p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow"
     >
-      <p className="font-medium text-sm mb-2">{task.title}</p>
+      <p className="font-medium text-sm mb-1.5">{task.title}</p>
+      {task.folderName && (
+        <div className="flex items-center gap-1 mb-1.5">
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: task.folderColor || '#6366F1' }} />
+          <span className="text-[10px] text-muted truncate">{task.folderName}</span>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <Badge status={task.priority} className="text-[10px]">
           {task.priority}
