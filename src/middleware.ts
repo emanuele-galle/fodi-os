@@ -96,6 +96,11 @@ export async function middleware(request: NextRequest) {
       return setSecurityHeaders(NextResponse.next())
     }
 
+    // Allow POST /api/digest/send without auth (cron with secret header)
+    if (pathname === '/api/digest/send' && request.method === 'POST') {
+      return setSecurityHeaders(NextResponse.next())
+    }
+
     const authHeader = request.headers.get('authorization')
     const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
     const cookieToken = request.cookies.get('fodi_access')?.value

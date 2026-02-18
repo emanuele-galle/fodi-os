@@ -10,6 +10,7 @@ export const updateProfileSchema = z.object({
   bio: z.string().max(200).optional().nullable(),
   timezone: z.string().max(50).optional().nullable(),
   language: z.string().max(10).optional().nullable(),
+  dailyDigest: z.boolean().optional(),
 })
 
 export const updateUserSchema = z.object({

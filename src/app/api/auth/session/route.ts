@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
       phone: true,
       createdAt: true,
       lastLoginAt: true,
+      dailyDigest: true,
     }
 
     const user = await prisma.user.findUnique({

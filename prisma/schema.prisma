@@ -23,6 +23,7 @@ model User {
   bio         String?
   timezone    String?   @default("Europe/Rome")
   language    String?   @default("it")
+  dailyDigest Boolean   @default(true)
   role          Role      @default(DEVELOPER)
   isActive      Boolean   @default(true)
   sectionAccess Json?

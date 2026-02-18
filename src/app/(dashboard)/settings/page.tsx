@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { AvatarUpload } from '@/components/ui/AvatarUpload'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { Settings, Bell, Lock, Sun, Moon, User, Palette, Shield, Globe, Languages, Calendar, Info, CreditCard, ArrowRight } from 'lucide-react'
+import { Settings, Bell, Lock, Sun, Moon, User, Palette, Shield, Globe, Languages, Calendar, Info, CreditCard, ArrowRight, Mail } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Theme = 'light' | 'dark'
@@ -25,6 +25,7 @@ interface UserProfile {
   bio?: string | null
   timezone?: string | null
   language?: string | null
+  dailyDigest?: boolean
   createdAt?: string | null
   lastLoginAt?: string | null
 }
@@ -84,6 +85,7 @@ export default function SettingsPage() {
   const [pushLoading, setPushLoading] = useState(false)
   const [pushSupported, setPushSupported] = useState(false)
   const [isIOSNotPWA, setIsIOSNotPWA] = useState(false)
+  const [digestSaving, setDigestSaving] = useState(false)
 
   // Theme
   const [currentTheme, setCurrentTheme] = useState<Theme>('light')
@@ -303,6 +305,26 @@ export default function SettingsPage() {
       setMessage('Errore disconnessione')
     } finally {
       setDisconnecting(false)
+    }
+  }
+
+  const handleToggleDigest = async () => {
+    if (!user) return
+    setDigestSaving(true)
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dailyDigest: !user.dailyDigest }),
+      })
+      if (res.ok) {
+        setUser({ ...user, dailyDigest: !user.dailyDigest })
+        setMessage(user.dailyDigest ? 'Riepilogo giornaliero disattivato' : 'Riepilogo giornaliero attivato')
+      }
+    } catch {
+      setMessage('Errore di connessione')
+    } finally {
+      setDigestSaving(false)
     }
   }
 
@@ -668,7 +690,52 @@ export default function SettingsPage() {
           )}
 
           {/* Notifications */}
-          {activeSection === 'notifications' && pushSupported && (
+          {activeSection === 'notifications' && (
+            <>
+            {/* Daily Digest Email */}
+            <Card className="rounded-xl border border-border/20">
+              <CardTitle>Riepilogo Giornaliero via Email</CardTitle>
+              <CardContent>
+                <div className="space-y-5 p-1">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Mail className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium">Email Digest</p>
+                          <Badge variant={user.dailyDigest !== false ? 'success' : 'outline'}>
+                            {user.dailyDigest !== false ? 'Attivo' : 'Disattivato'}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted">
+                          {user.dailyDigest !== false
+                            ? 'Ogni mattina alle 9:00 ricevi un riepilogo delle tue task via email'
+                            : 'Attiva per ricevere un riepilogo giornaliero delle tue task'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      variant={user.dailyDigest !== false ? 'outline' : 'default'}
+                      size="sm"
+                      onClick={handleToggleDigest}
+                      disabled={digestSaving}
+                      className={cn('w-full sm:w-auto', user.dailyDigest !== false ? 'text-destructive hover:text-destructive' : '')}
+                    >
+                      {digestSaving
+                        ? 'Salvataggio...'
+                        : user.dailyDigest !== false
+                          ? 'Disattiva riepilogo email'
+                          : 'Attiva riepilogo email'}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {pushSupported && (
             <Card>
               <CardTitle>Notifiche Push</CardTitle>
               <CardContent>
@@ -727,6 +794,8 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
+            )}
+            </>
           )}
 
           {/* Integrations */}
