@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 import { requirePermission } from '@/lib/permissions'
+import { prisma } from '@/lib/prisma'
+import { notifyUsers } from '@/lib/notifications'
 import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
 
@@ -128,6 +130,34 @@ export async function POST(request: NextRequest) {
     const meetLink = res.data.conferenceData?.entryPoints?.find(
       (ep) => ep.entryPointType === 'video'
     )?.uri || null
+
+    // Send FODI OS notification to attendees
+    if (attendees && attendees.length > 0) {
+      const creator = await prisma.user.findUnique({
+        where: { id: userId! },
+        select: { firstName: true, lastName: true },
+      })
+      const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Qualcuno'
+
+      // Resolve attendee emails to FODI OS user IDs
+      const attendeeUsers = await prisma.user.findMany({
+        where: { email: { in: attendees } },
+        select: { id: true },
+      })
+      const attendeeIds = attendeeUsers.map((u) => u.id)
+
+      if (attendeeIds.length > 0) {
+        const eventDate = new Date(start).toLocaleDateString('it-IT', {
+          day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+        })
+        await notifyUsers(attendeeIds, userId, {
+          type: 'calendar_invite',
+          title: 'Nuovo evento in calendario',
+          message: `${creatorName} ti ha invitato a "${summary}" - ${eventDate}`,
+          link: '/calendar',
+        })
+      }
+    }
 
     return NextResponse.json({ ...res.data, meetLink }, { status: 201 })
   } catch (e) {

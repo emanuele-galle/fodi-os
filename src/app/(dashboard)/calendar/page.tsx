@@ -185,17 +185,42 @@ export default function CalendarPage() {
     setFetchError(null)
     const timeMin = new Date(year, month, 1).toISOString()
     const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString()
+    const baseParams = `timeMin=${timeMin}&timeMax=${timeMax}`
 
-    const calParam = fodiCalendarId ? `&calendarId=${encodeURIComponent(fodiCalendarId)}` : ''
     try {
-      const res = await fetch(`/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}${calParam}`)
-      const data = await res.json()
-      if (data.connected === false) {
+      // Fetch from primary calendar always
+      const primaryPromise = fetch(`/api/calendar/events?${baseParams}`)
+        .then((r) => r.json())
+        .catch(() => null)
+
+      // If a shared Fodi calendar exists, fetch from it too
+      const sharedPromise = fodiCalendarId
+        ? fetch(`/api/calendar/events?${baseParams}&calendarId=${encodeURIComponent(fodiCalendarId)}`)
+            .then((r) => r.json())
+            .catch(() => null)
+        : Promise.resolve(null)
+
+      const [primaryData, sharedData] = await Promise.all([primaryPromise, sharedPromise])
+
+      if (primaryData?.connected === false) {
         setConnected(false)
         return
       }
       setConnected(true)
-      setEvents(data.events || [])
+
+      // Merge events from both calendars, deduplicate by event id
+      const allEvents: CalendarEvent[] = []
+      const seenIds = new Set<string>()
+      for (const data of [sharedData, primaryData]) {
+        if (!data?.events) continue
+        for (const ev of data.events) {
+          if (!seenIds.has(ev.id)) {
+            seenIds.add(ev.id)
+            allEvents.push(ev)
+          }
+        }
+      }
+      setEvents(allEvents)
     } catch {
       setFetchError('Errore nel caricamento degli eventi')
       setConnected(false)
