@@ -9,6 +9,8 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { StepEditor } from './StepEditor'
 import { WizardPreview } from './WizardPreview'
 import { Input } from '@/components/ui/Input'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 import {
   ArrowLeft, Plus, Save, Globe, GlobeLock, Copy, Trash2,
 } from 'lucide-react'
@@ -67,6 +69,7 @@ export function WizardBuilder({ wizardId }: WizardBuilderProps) {
   const [wizard, setWizard] = useState<WizardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const { confirm, confirmProps } = useConfirm()
 
   // Editable header fields
   const [name, setName] = useState('')
@@ -128,7 +131,8 @@ export function WizardBuilder({ wizardId }: WizardBuilderProps) {
   }
 
   const deleteWizard = async () => {
-    if (!confirm('Eliminare questo wizard e tutti i suoi dati?')) return
+    const ok = await confirm({ message: 'Eliminare questo wizard e tutti i suoi dati?', variant: 'danger' })
+    if (!ok) return
     await fetch(`/api/wizards/${wizardId}`, { method: 'DELETE' })
     router.push('/erp/wizards')
   }
@@ -308,6 +312,8 @@ export function WizardBuilder({ wizardId }: WizardBuilderProps) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog {...confirmProps} />
 
       {/* Tabs */}
       <Tabs

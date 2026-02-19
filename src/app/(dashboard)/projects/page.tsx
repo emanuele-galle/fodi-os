@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import {
   FolderKanban, Plus, Search, ChevronLeft, ChevronRight, Building2, AlertCircle,
   LayoutGrid, List, Columns3, Download, MoreVertical, Copy, Archive, Trash2, Pencil,
@@ -289,6 +290,9 @@ export default function ProjectsPage() {
   useEffect(() => {
     fetchAllProjects()
   }, [fetchAllProjects])
+
+  // Real-time refresh when project data changes via SSE
+  useRealtimeRefresh('project', fetchProjects)
 
   useEffect(() => {
     setPage(1)

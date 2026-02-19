@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import {
   ChevronLeft,
   ChevronRight,
@@ -261,6 +262,9 @@ export default function CalendarPage() {
   useEffect(() => {
     fetchEvents()
   }, [fetchEvents])
+
+  // Real-time refresh when calendar data changes via SSE
+  useRealtimeRefresh('calendar', fetchEvents)
 
   // Open new event modal with a precompiled date
   const openNewEventForDate = useCallback((dateStr: string) => {

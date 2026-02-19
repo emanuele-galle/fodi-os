@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 
 interface ClientFull {
   id: string
@@ -75,6 +77,7 @@ export default function MergePage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { confirm, confirmProps } = useConfirm()
 
   const [fields, setFields] = useState<Record<string, 'source' | 'target'>>(() => {
     const initial: Record<string, 'source' | 'target'> = {}
@@ -137,9 +140,8 @@ export default function MergePage() {
   }
 
   async function handleMerge() {
-    if (!confirm('Sei sicuro? Il cliente sorgente verra eliminato e tutti i dati selezionati saranno trasferiti al cliente destinazione. Questa azione non puo essere annullata.')) {
-      return
-    }
+    const ok = await confirm({ message: 'Sei sicuro? Il cliente sorgente verra eliminato e tutti i dati selezionati saranno trasferiti al cliente destinazione. Questa azione non puo essere annullata.', variant: 'danger' })
+    if (!ok) return
 
     setSubmitting(true)
     setError(null)
@@ -350,6 +352,7 @@ export default function MergePage() {
           )}
         </Button>
       </div>
+      <ConfirmDialog {...confirmProps} />
     </div>
   )
 }

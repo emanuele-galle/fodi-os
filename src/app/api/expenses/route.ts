@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
-import { createExpenseSchema } from '@/lib/validation'
+import { createExpenseSchema, expenseAdvancedFields } from '@/lib/validation'
+import { calculateVat, calculateDeductibleVat } from '@/lib/accounting'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -19,14 +20,19 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
     const skip = (page - 1) * limit
-
     const recurring = searchParams.get('recurring')
+    const isPaid = searchParams.get('isPaid')
+    const bankAccountId = searchParams.get('bankAccountId')
+    const businessEntityId = searchParams.get('businessEntityId')
 
     const where = {
       ...(category && { category }),
       ...(clientId && { clientId }),
       ...(projectId && { projectId }),
       ...(recurring === null ? { isRecurring: false } : recurring === 'true' ? { isRecurring: true } : {}),
+      ...(isPaid !== null && isPaid !== '' && { isPaid: isPaid === 'true' }),
+      ...(bankAccountId && { bankAccountId }),
+      ...(businessEntityId && { businessEntityId }),
       ...(from || to
         ? {
             date: {
@@ -46,6 +52,8 @@ export async function GET(request: NextRequest) {
         include: {
           client: { select: { id: true, companyName: true } },
           project: { select: { id: true, name: true } },
+          bankAccount: { select: { id: true, name: true, icon: true } },
+          businessEntity: { select: { id: true, name: true } },
         },
       }),
       prisma.expense.count({ where }),
@@ -74,7 +82,23 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Parse advanced fields if present
+    const advanced = expenseAdvancedFields.safeParse(body)
+    const adv = advanced.success ? advanced.data : {}
+
     const { category, description, amount, date, receipt, clientId, projectId } = parsed.data
+
+    // Calculate VAT if vatRate provided
+    let netAmount: number | undefined
+    let vatDeductible: number | undefined
+    if (adv.vatRate) {
+      const { net, vat } = calculateVat(amount, adv.vatRate)
+      netAmount = net
+      if (adv.deductibility) {
+        vatDeductible = calculateDeductibleVat(vat, adv.deductibility)
+      }
+    }
 
     const expense = await prisma.expense.create({
       data: {
@@ -85,6 +109,14 @@ export async function POST(request: NextRequest) {
         receipt,
         clientId: clientId || null,
         projectId: projectId || null,
+        isPaid: adv.isPaid ?? true,
+        supplierName: adv.supplierName || null,
+        bankAccountId: adv.bankAccountId || null,
+        businessEntityId: adv.businessEntityId || null,
+        vatRate: adv.vatRate || null,
+        deductibility: adv.deductibility || null,
+        netAmount: netAmount ?? null,
+        vatDeductible: vatDeductible ?? null,
       },
     })
 

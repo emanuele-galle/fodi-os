@@ -22,7 +22,7 @@ const TOOLTIP_STYLE = {
   borderRadius: 12,
   border: '1px solid var(--color-border)',
   backdropFilter: 'blur(8px)',
-  fontSize: 12,
+  fontSize: 13,
 }
 
 const COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe', '#818cf8', '#4f46e5']
@@ -47,8 +47,8 @@ export function RevenueBarChart({ data }: { data: RevenueDataPoint[] }) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" width={35} />
+            <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+            <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={35} />
             <Tooltip formatter={(value) => formatCurrency(Number(value))} contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
             <Bar dataKey="revenue" fill="url(#gradRevenue)" radius={[6, 6, 0, 0]} />
           </BarChart>
@@ -72,8 +72,8 @@ export function ExpenseBarChart({ data }: { data: ExpenseDataPoint[] }) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="4 8" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis type="number" tickFormatter={(v) => `€${v}`} tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis type="category" dataKey="category" width={70} tick={{ fontSize: 10, fill: 'var(--color-muted)' }} stroke="transparent" />
+            <XAxis type="number" tickFormatter={(v) => `€${v}`} tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+            <YAxis type="category" dataKey="category" width={70} tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" />
             <Tooltip formatter={(value) => formatCurrency(Number(value))} contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
             <Bar dataKey="amount" fill="url(#gradExpense)" radius={[0, 6, 6, 0]} />
           </BarChart>
@@ -91,10 +91,10 @@ export function MonthlyTrendChart({ data }: { data: TrendPoint[] }) {
         <ResponsiveContainer width="100%" height={250}>
           <LineChart data={data} margin={{ left: -10, right: 10, top: 5 }}>
             <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" width={35} allowDecimals={false} />
+            <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+            <YAxis tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={35} allowDecimals={false} />
             <Tooltip contentStyle={TOOLTIP_STYLE} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 13 }} />
             <Line type="monotone" dataKey="created" name="Create" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3, fill: '#8b5cf6' }} />
             <Line type="monotone" dataKey="completed" name="Completate" stroke="#22c55e" strokeWidth={2} dot={{ r: 3, fill: '#22c55e' }} />
           </LineChart>
@@ -119,12 +119,12 @@ export function HoursPerProjectChart({ data }: { data: HoursProjectPoint[] }) {
     <Card>
       <CardContent>
         <CardTitle className="mb-4 text-base md:text-lg">Ore per Progetto</CardTitle>
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data} layout="vertical" margin={{ left: 0, right: 10 }}>
             <CartesianGrid strokeDasharray="4 8" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [`${v}h`, 'Ore']} />
+            <XAxis type="number" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+            <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" tickFormatter={(v: string) => v.length > 20 ? v.slice(0, 20) + '\u2026' : v} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [`${v}h`, 'Ore']} labelFormatter={(label) => label} />
             <Bar dataKey="hours" fill="#6366f1" radius={[0, 6, 6, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -180,12 +180,57 @@ export function DealsPipelineChart({ data }: { data: PipelinePoint[] }) {
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={chartData} margin={{ left: -10, right: 10 }}>
             <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis dataKey="stage" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" width={35} allowDecimals={false} />
+            <XAxis dataKey="stage" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+            <YAxis tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={35} allowDecimals={false} />
             <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value, name) => [name === 'value' ? formatCurrency(Number(value)) : value, name === 'value' ? 'Valore' : 'Deals']} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 13 }} />
             <Bar dataKey="count" name="Deals" fill="#6366f1" radius={[6, 6, 0, 0]} />
           </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  )
+}
+
+/* ── Accounting Charts ── */
+
+interface IncomeExpensePoint { month: string; income: number; expense: number }
+interface ProfitPoint { month: string; profit: number }
+
+export function IncomeExpenseBarChart({ data }: { data: IncomeExpensePoint[] }) {
+  return (
+    <Card>
+      <CardContent>
+        <CardTitle className="mb-4 text-base md:text-lg">Entrate vs Spese Mensili</CardTitle>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={data} margin={{ left: -10, right: 10, top: 5 }}>
+            <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
+            <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+            <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={40} />
+            <Tooltip formatter={(value) => formatCurrency(Number(value))} contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
+            <Legend wrapperStyle={{ fontSize: 13 }} />
+            <Bar dataKey="income" name="Entrate" fill="#22c55e" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="expense" name="Spese" fill="#ef4444" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function ProfitTrendLine({ data }: { data: ProfitPoint[] }) {
+  return (
+    <Card>
+      <CardContent>
+        <CardTitle className="mb-4 text-base md:text-lg">Andamento Profitto Mensile</CardTitle>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={data} margin={{ left: -10, right: 10, top: 5 }}>
+            <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
+            <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+            <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={40} />
+            <Tooltip formatter={(value) => formatCurrency(Number(value))} contentStyle={TOOLTIP_STYLE} />
+            <Line type="monotone" dataKey="profit" name="Profitto" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 4, fill: '#3b82f6' }} />
+          </LineChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>

@@ -4,6 +4,7 @@ import { hashPassword, generateTempPassword } from '@/lib/auth'
 import { inviteUserSchema } from '@/lib/validation'
 import { ADMIN_ROLES } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
+import { logActivity } from '@/lib/activity-log'
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,6 +71,17 @@ export async function POST(request: NextRequest) {
         createdAt: true,
       },
     })
+
+    const requesterId = request.headers.get('x-user-id')
+    if (requesterId) {
+      logActivity({
+        userId: requesterId,
+        action: 'user_invited',
+        entityType: 'user',
+        entityId: user.id,
+        metadata: { email, role: assignedRole },
+      })
+    }
 
     return NextResponse.json({ success: true, data: { user, tempPassword }, user, tempPassword }, { status: 201 })
   } catch (error) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, CreditCard, BarChart3, ArrowRight, Landmark, RefreshCw, FileSignature, FileCode, Wand2 } from 'lucide-react'
+import { FileText, CreditCard, BarChart3, ArrowRight, Landmark, RefreshCw, FileSignature, FileCode, Wand2, TrendingUp, Building2, Calendar, CalendarRange, Settings, FileCheck } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -72,11 +72,11 @@ export default function ErpPage() {
 
   const sections = [
     {
-      title: 'Preventivi',
-      description: 'Crea e gestisci preventivi per i clienti',
-      icon: FileText,
-      href: '/erp/quotes',
-      stat: loading ? null : `${stats.draftQuotes} bozze`,
+      title: 'Entrate',
+      description: 'Registro entrate e fatture',
+      icon: TrendingUp,
+      href: '/erp/income',
+      stat: null,
     },
     {
       title: 'Spese',
@@ -86,11 +86,53 @@ export default function ErpPage() {
       stat: loading ? null : `${formatCurrency(stats.monthExpenses)} questo mese`,
     },
     {
+      title: 'Conti & Giroconti',
+      description: 'Gestione conti bancari e trasferimenti',
+      icon: Building2,
+      href: '/erp/accounts',
+      stat: null,
+    },
+    {
+      title: 'Dashboard Mensile',
+      description: 'Panoramica finanziaria del mese',
+      icon: Calendar,
+      href: '/erp/dashboard/monthly',
+      stat: null,
+    },
+    {
+      title: 'Dashboard Annuale',
+      description: 'Panoramica finanziaria annuale',
+      icon: CalendarRange,
+      href: '/erp/dashboard/annual',
+      stat: null,
+    },
+    {
+      title: 'Statistiche',
+      description: 'Andamento mensile e proiezioni',
+      icon: BarChart3,
+      href: '/erp/dashboard/statistics',
+      stat: null,
+    },
+    {
+      title: 'Preventivi',
+      description: 'Crea e gestisci preventivi per i clienti',
+      icon: FileText,
+      href: '/erp/quotes',
+      stat: loading ? null : `${stats.draftQuotes} bozze`,
+    },
+    {
       title: 'Abbonamenti',
       description: 'Spese ricorrenti e sottoscrizioni',
       icon: RefreshCw,
       href: '/erp/expenses/subscriptions',
       stat: loading ? null : `${stats.activeSubscriptions} attivi · ${formatCurrency(stats.monthlySubCost)}/mese`,
+    },
+    {
+      title: 'Monitoraggio Fatture',
+      description: 'Fatture ricorrenti e scadenze',
+      icon: FileCheck,
+      href: '/erp/invoice-monitoring',
+      stat: null,
     },
     {
       title: 'Firme Digitali',
@@ -120,6 +162,13 @@ export default function ErpPage() {
       href: '/erp/reports',
       stat: null,
     },
+    {
+      title: 'Impostazioni',
+      description: 'Categorie, conti e configurazione',
+      icon: Settings,
+      href: '/erp/settings',
+      stat: null,
+    },
   ]
 
   return (
@@ -130,7 +179,7 @@ export default function ErpPage() {
         </div>
         <div>
           <h1 className="text-xl md:text-2xl font-bold">ERP</h1>
-          <p className="text-xs md:text-sm text-muted">Gestione preventivi, spese e report</p>
+          <p className="text-xs md:text-sm text-muted">Contabilità, preventivi, spese e report</p>
         </div>
       </div>
 
@@ -171,11 +220,11 @@ export default function ErpPage() {
         <div className="mt-6">
           <QuickActionsGrid
             actions={[
-              { icon: FileText, title: 'Preventivo', description: 'Crea nuovo', onClick: () => router.push('/erp/quotes/new') },
+              { icon: TrendingUp, title: 'Entrata', description: 'Registra', onClick: () => router.push('/erp/income') },
               { icon: CreditCard, title: 'Spesa', description: 'Registra', onClick: () => router.push('/erp/expenses') },
-              { icon: FileSignature, title: 'Firma', description: 'Nuova richiesta', onClick: () => router.push('/erp/signatures') },
-              { icon: Wand2, title: 'Wizard', description: 'Crea nuovo', onClick: () => router.push('/erp/wizards/new') },
-              { icon: BarChart3, title: 'Report', description: 'Visualizza', onClick: () => router.push('/erp/reports') },
+              { icon: FileText, title: 'Preventivo', description: 'Crea nuovo', onClick: () => router.push('/erp/quotes/new') },
+              { icon: Calendar, title: 'Dashboard', description: 'Mensile', onClick: () => router.push('/erp/dashboard/monthly') },
+              { icon: Settings, title: 'Impostazioni', description: 'Configura', onClick: () => router.push('/erp/settings') },
             ]}
           />
         </div>

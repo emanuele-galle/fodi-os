@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { markNotificationsReadSchema } from '@/lib/validation'
+import { sendBadgeUpdate } from '@/lib/sse'
 
 export async function GET(request: NextRequest) {
   try {
@@ -53,6 +54,10 @@ export async function PATCH(request: NextRequest) {
         data: { isRead: true },
       })
     }
+
+    // Send updated badge count
+    const newUnread = await prisma.notification.count({ where: { userId, isRead: false } })
+    sendBadgeUpdate(userId, { notifications: newUnread })
 
     return NextResponse.json({ success: true })
   } catch (e) {

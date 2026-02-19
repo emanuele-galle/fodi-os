@@ -104,7 +104,7 @@ export function MarginChart() {
         <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
         <XAxis
           dataKey="name"
-          tick={{ fontSize: 10, fill: 'var(--color-muted)' }}
+          tick={{ fontSize: 12, fill: 'var(--color-muted)' }}
           stroke="transparent"
           angle={-30}
           textAnchor="end"
@@ -112,7 +112,7 @@ export function MarginChart() {
           interval={0}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+          tick={{ fontSize: 13, fill: 'var(--color-muted)' }}
           stroke="transparent"
           tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
           width={40}
@@ -120,7 +120,7 @@ export function MarginChart() {
         <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
         <Legend
           formatter={(v) => v === 'ricavo' ? 'Ricavo' : 'Costo'}
-          wrapperStyle={{ fontSize: 12 }}
+          wrapperStyle={{ fontSize: 13 }}
         />
         <Bar dataKey="ricavo" fill="url(#gradRicavo)" radius={[6, 6, 0, 0]} />
         <Bar dataKey="costo" fill="url(#gradCosto)" radius={[6, 6, 0, 0]} />

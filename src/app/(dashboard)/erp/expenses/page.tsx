@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Receipt, Plus, AlertCircle, RefreshCw, Pencil, Trash2 } from 'lucide-react'
+import { Receipt, Plus, AlertCircle, RefreshCw, Pencil, Trash2, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -13,46 +13,79 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
 
+interface BankAccount {
+  id: string
+  name: string
+}
+
+interface BusinessEntity {
+  id: string
+  name: string
+}
+
+interface AccountingCategory {
+  id: string
+  name: string
+}
+
 interface Expense {
   id: string
-  category: string
+  isPaid: boolean
+  supplierName: string
   description: string
-  amount: string
   date: string
+  category: string
+  amount: string
+  vatRate: number
+  deductibility: number
+  netAmount: string | null
+  vatDeductible: string | null
   receipt: string | null
+  notes: string | null
   clientId: string | null
   projectId: string | null
+  bankAccountId: string | null
+  businessEntityId: string | null
+  bankAccount: { id: string; name: string } | null
+  businessEntity: { id: string; name: string } | null
   client: { id: string; companyName: string } | null
   project: { id: string; name: string } | null
 }
 
-const CATEGORY_LABEL: Record<string, string> = {
-  hosting: 'Hosting', software: 'Software', hardware: 'Hardware', dominio: 'Domini',
-  marketing: 'Marketing', formazione: 'Formazione', office: 'Ufficio', travel: 'Viaggi',
-  meals: 'Pasti', other: 'Altro',
-}
-
-const CATEGORY_OPTIONS = [
-  { value: '', label: 'Tutte le categorie' },
-  ...Object.entries(CATEGORY_LABEL).map(([value, label]) => ({ value, label })),
+const VAT_OPTIONS = [
+  { value: '0', label: '0%' },
+  { value: '4', label: '4%' },
+  { value: '10', label: '10%' },
+  { value: '22', label: '22%' },
 ]
 
-const CATEGORY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  hosting: 'default', software: 'success', hardware: 'warning', dominio: 'outline',
-  marketing: 'default', formazione: 'success', office: 'outline', travel: 'default',
-  meals: 'warning', other: 'outline',
-}
+const DEDUCTIBILITY_OPTIONS = [
+  { value: '0', label: '0%' },
+  { value: '50', label: '50%' },
+  { value: '100', label: '100%' },
+]
 
-const FORM_CATEGORIES = CATEGORY_OPTIONS.filter((o) => o.value !== '')
+const PAYMENT_FILTER_OPTIONS = [
+  { value: '', label: 'Tutte' },
+  { value: 'paid', label: 'Pagate' },
+  { value: 'unpaid', label: 'Non pagate' },
+]
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [clients, setClients] = useState<{ id: string; companyName: string }[]>([])
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
+  const [businessEntities, setBusinessEntities] = useState<BusinessEntity[]>([])
+  const [categories, setCategories] = useState<AccountingCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [paymentFilter, setPaymentFilter] = useState('')
+  const [bankAccountFilter, setBankAccountFilter] = useState('')
+  const [businessEntityFilter, setBusinessEntityFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [advancedView, setAdvancedView] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [editItem, setEditItem] = useState<Expense | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<Expense | null>(null)
@@ -67,6 +100,10 @@ export default function ExpensesPage() {
       const params = new URLSearchParams({ limit: '100' })
       if (fromDate) params.set('from', fromDate)
       if (toDate) params.set('to', toDate)
+      if (paymentFilter === 'paid') params.set('isPaid', 'true')
+      if (paymentFilter === 'unpaid') params.set('isPaid', 'false')
+      if (bankAccountFilter) params.set('bankAccountId', bankAccountFilter)
+      if (businessEntityFilter) params.set('businessEntityId', businessEntityFilter)
       if (categoryFilter) params.set('category', categoryFilter)
       const res = await fetch(`/api/expenses?${params}`)
       if (res.ok) {
@@ -80,16 +117,75 @@ export default function ExpensesPage() {
     } finally {
       setLoading(false)
     }
-  }, [fromDate, toDate, categoryFilter])
+  }, [fromDate, toDate, paymentFilter, bankAccountFilter, businessEntityFilter, categoryFilter])
 
   useEffect(() => { fetchExpenses() }, [fetchExpenses])
 
   useEffect(() => {
     fetch('/api/clients?limit=200').then(r => r.json()).then(d => setClients(d.items || []))
     fetch('/api/projects?limit=200').then(r => r.json()).then(d => setProjects(d.items || []))
+    fetch('/api/bank-accounts').then(r => r.json()).then(d => setBankAccounts(d.items || []))
+    fetch('/api/business-entities').then(r => r.json()).then(d => setBusinessEntities(d.items || []))
+    fetch('/api/accounting-categories?type=expense').then(r => r.json()).then(d => setCategories(d.items || []))
   }, [])
 
   const totalAmount = expenses.reduce((s, e) => s + parseFloat(e.amount), 0)
+
+  function computeNet(amount: string, vatRate: number) {
+    const gross = parseFloat(amount)
+    if (!vatRate) return gross
+    return gross / (1 + vatRate / 100)
+  }
+
+  function computeVat(amount: string, vatRate: number) {
+    const gross = parseFloat(amount)
+    if (!vatRate) return 0
+    return gross - gross / (1 + vatRate / 100)
+  }
+
+  function computeDeductibleVat(amount: string, vatRate: number, deductibility: number) {
+    return computeVat(amount, vatRate) * (deductibility / 100)
+  }
+
+  const bankAccountOptions = [
+    { value: '', label: 'Tutti i conti' },
+    ...bankAccounts.map(b => ({ value: b.id, label: b.name })),
+  ]
+
+  const businessEntityOptions = [
+    { value: '', label: 'Tutte le attività' },
+    ...businessEntities.map(b => ({ value: b.id, label: b.name })),
+  ]
+
+  const categoryOptions = [
+    { value: '', label: 'Tutte le categorie' },
+    ...categories.map(c => ({ value: c.name, label: c.name })),
+  ]
+
+  const formBankAccountOptions = [
+    { value: '', label: 'Seleziona conto' },
+    ...bankAccounts.map(b => ({ value: b.id, label: b.name })),
+  ]
+
+  const formBusinessEntityOptions = [
+    { value: '', label: 'Seleziona attività' },
+    ...businessEntities.map(b => ({ value: b.id, label: b.name })),
+  ]
+
+  const formCategoryOptions = [
+    { value: '', label: 'Seleziona categoria' },
+    ...categories.map(c => ({ value: c.name, label: c.name })),
+  ]
+
+  const formClientOptions = [
+    { value: '', label: 'Nessun cliente' },
+    ...clients.map(c => ({ value: c.id, label: c.companyName })),
+  ]
+
+  const formProjectOptions = [
+    { value: '', label: 'Nessun progetto' },
+    ...projects.map(p => ({ value: p.id, label: p.name })),
+  ]
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -97,12 +193,29 @@ export default function ExpensesPage() {
     setFormError(null)
     const form = new FormData(e.currentTarget)
     const body: Record<string, unknown> = {}
-    form.forEach((v, k) => {
-      if (typeof v === 'string' && v.trim()) body[k] = v.trim()
-    })
-    if (body.amount) body.amount = parseFloat(body.amount as string)
-    if (!body.clientId) body.clientId = null
-    if (!body.projectId) body.projectId = null
+
+    body.isPaid = form.get('isPaid') === 'on'
+    body.supplierName = (form.get('supplierName') as string || '').trim()
+    body.description = (form.get('description') as string || '').trim()
+    body.date = (form.get('date') as string || '').trim()
+    body.category = (form.get('category') as string || '').trim()
+    body.amount = parseFloat(form.get('amount') as string || '0')
+    body.vatRate = parseInt(form.get('vatRate') as string || '22', 10)
+    body.deductibility = parseInt(form.get('deductibility') as string || '100', 10)
+    body.notes = (form.get('notes') as string || '').trim() || null
+    body.receipt = (form.get('receipt') as string || '').trim() || null
+
+    const bankId = (form.get('bankAccountId') as string || '').trim()
+    body.bankAccountId = bankId || null
+
+    const bizId = (form.get('businessEntityId') as string || '').trim()
+    body.businessEntityId = bizId || null
+
+    const cId = (form.get('clientId') as string || '').trim()
+    body.clientId = cId || null
+
+    const pId = (form.get('projectId') as string || '').trim()
+    body.projectId = pId || null
 
     try {
       const url = editItem ? `/api/expenses/${editItem.id}` : '/api/expenses'
@@ -157,6 +270,7 @@ export default function ExpensesPage() {
 
   return (
     <div className="animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 md:p-2.5 rounded-xl flex-shrink-0 bg-primary/10 text-primary">
@@ -179,6 +293,7 @@ export default function ExpensesPage() {
         </Button>
       </div>
 
+      {/* Link Abbonamenti */}
       <Link
         href="/erp/expenses/subscriptions"
         className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 text-sm font-medium rounded-lg border border-border/30 hover:bg-secondary/10 transition-colors"
@@ -187,6 +302,7 @@ export default function ExpensesPage() {
         Vai agli Abbonamenti
       </Link>
 
+      {/* Stats Card */}
       <Card className="mb-6">
         <CardContent className="flex items-center gap-4">
           <div className="p-3 rounded-full bg-secondary text-primary">
@@ -199,7 +315,15 @@ export default function ExpensesPage() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <Select
+          label="Stato pagamento"
+          options={PAYMENT_FILTER_OPTIONS}
+          value={paymentFilter}
+          onChange={(e) => setPaymentFilter(e.target.value)}
+          className="w-full sm:w-44"
+        />
         <Input
           type="date"
           value={fromDate}
@@ -215,14 +339,40 @@ export default function ExpensesPage() {
           className="w-full sm:w-44"
         />
         <Select
+          label="Conto bancario"
+          options={bankAccountOptions}
+          value={bankAccountFilter}
+          onChange={(e) => setBankAccountFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+        <Select
+          label="Attività"
+          options={businessEntityOptions}
+          value={businessEntityFilter}
+          onChange={(e) => setBusinessEntityFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+        <Select
           label="Categoria"
-          options={CATEGORY_OPTIONS}
+          options={categoryOptions}
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="w-full sm:w-48"
         />
       </div>
 
+      {/* Advanced View Toggle */}
+      <div className="flex items-center gap-2 mb-6">
+        <button
+          onClick={() => setAdvancedView(!advancedView)}
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border border-border/30 hover:bg-secondary/10 transition-colors"
+        >
+          {advancedView ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          Vista Avanzata
+        </button>
+      </div>
+
+      {/* Error */}
       {fetchError && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
           <div className="flex items-center gap-2">
@@ -233,6 +383,7 @@ export default function ExpensesPage() {
         </div>
       )}
 
+      {/* Content */}
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
@@ -260,14 +411,26 @@ export default function ExpensesPage() {
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    <Badge variant={CATEGORY_BADGE[exp.category] || 'default'}>
-                      {CATEGORY_LABEL[exp.category] || exp.category}
-                    </Badge>
-                    {exp.client && <span className="text-xs text-muted">{exp.client.companyName}</span>}
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full flex-shrink-0 ${exp.isPaid ? 'bg-green-500' : 'bg-red-500'}`}
+                      title={exp.isPaid ? 'Pagata' : 'Non pagata'}
+                    />
+                    <Badge variant="default">{exp.category}</Badge>
                   </div>
                   <span className="font-bold text-sm">{formatCurrency(exp.amount)}</span>
                 </div>
-                <p className="text-sm truncate">{exp.description}</p>
+                <p className="text-sm truncate">{exp.supplierName || exp.description}</p>
+                {exp.notes && <p className="text-xs text-muted truncate mt-0.5">{exp.notes}</p>}
+                {advancedView && (
+                  <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
+                    {exp.bankAccount && <span>Conto: {exp.bankAccount.name}</span>}
+                    {exp.businessEntity && <span>Attività: {exp.businessEntity.name}</span>}
+                    <span>IVA: {exp.vatRate}%</span>
+                    <span>Deduc.: {exp.deductibility ?? 100}%</span>
+                    <span>Netto: {formatCurrency(computeNet(exp.amount, exp.vatRate))}</span>
+                    <span>IVA Detr.: {formatCurrency(computeDeductibleVat(exp.amount, exp.vatRate, exp.deductibility ?? 100))}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between mt-1">
                   <p className="text-xs text-muted">
                     {new Date(exp.date).toLocaleDateString('it-IT')}
@@ -287,10 +450,21 @@ export default function ExpensesPage() {
               <thead>
                 <tr className="border-b border-border/30">
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Data</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Pagato</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Fornitore</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Categoria</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Cliente</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Descrizione</th>
+                  {advancedView && (
+                    <>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Conto</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Attività</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">IVA%</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Deduc.%</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Netto</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">IVA Detr.</th>
+                    </>
+                  )}
                   <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Importo</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Note</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Azioni</th>
                 </tr>
               </thead>
@@ -299,13 +473,27 @@ export default function ExpensesPage() {
                   <tr key={exp.id} className="border-b border-border/10 hover:bg-secondary/8 transition-colors even:bg-secondary/[0.03]">
                     <td className="px-4 py-3.5">{new Date(exp.date).toLocaleDateString('it-IT')}</td>
                     <td className="px-4 py-3.5">
-                      <Badge variant={CATEGORY_BADGE[exp.category] || 'default'}>
-                        {CATEGORY_LABEL[exp.category] || exp.category}
-                      </Badge>
+                      <span
+                        className={`inline-block h-2.5 w-2.5 rounded-full ${exp.isPaid ? 'bg-green-500' : 'bg-red-500'}`}
+                        title={exp.isPaid ? 'Pagata' : 'Non pagata'}
+                      />
                     </td>
-                    <td className="px-4 py-3.5 text-muted">{exp.client?.companyName || '\u2014'}</td>
-                    <td className="px-4 py-3.5">{exp.description}</td>
+                    <td className="px-4 py-3.5">{exp.supplierName || '\u2014'}</td>
+                    <td className="px-4 py-3.5">
+                      <Badge variant="default">{exp.category}</Badge>
+                    </td>
+                    {advancedView && (
+                      <>
+                        <td className="px-4 py-3.5 text-muted">{exp.bankAccount?.name || '\u2014'}</td>
+                        <td className="px-4 py-3.5 text-muted">{exp.businessEntity?.name || '\u2014'}</td>
+                        <td className="px-4 py-3.5 text-right tabular-nums">{exp.vatRate}%</td>
+                        <td className="px-4 py-3.5 text-right tabular-nums">{exp.deductibility ?? 100}%</td>
+                        <td className="px-4 py-3.5 text-right tabular-nums">{formatCurrency(computeNet(exp.amount, exp.vatRate))}</td>
+                        <td className="px-4 py-3.5 text-right tabular-nums">{formatCurrency(computeDeductibleVat(exp.amount, exp.vatRate, exp.deductibility ?? 100))}</td>
+                      </>
+                    )}
                     <td className="px-4 py-3.5 font-medium text-right tabular-nums">{formatCurrency(exp.amount)}</td>
+                    <td className="px-4 py-3.5 text-muted max-w-[200px] truncate">{exp.notes || '\u2014'}</td>
                     <td className="px-4 py-3.5 text-right">
                       <div className="flex justify-end gap-1">
                         <button onClick={() => openEdit(exp)} className="p-1.5 rounded hover:bg-secondary/20" title="Modifica"><Pencil className="h-3.5 w-3.5 text-muted" /></button>
@@ -315,23 +503,66 @@ export default function ExpensesPage() {
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="border-t border-border/30 bg-secondary/5 font-semibold">
+                  <td className="px-4 py-3" colSpan={advancedView ? 4 : 4}>Totale</td>
+                  {advancedView && (
+                    <>
+                      <td className="px-4 py-3" />
+                      <td className="px-4 py-3" />
+                      <td className="px-4 py-3" />
+                      <td className="px-4 py-3" />
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {formatCurrency(expenses.reduce((s, e) => s + computeNet(e.amount, e.vatRate), 0))}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {formatCurrency(expenses.reduce((s, e) => s + computeDeductibleVat(e.amount, e.vatRate, e.deductibility ?? 100), 0))}
+                      </td>
+                    </>
+                  )}
+                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totalAmount)}</td>
+                  <td className="px-4 py-3" />
+                  <td className="px-4 py-3" />
+                </tr>
+              </tfoot>
             </table>
           </div>
         </>
       )}
 
       {/* Modal Crea/Modifica */}
-      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditItem(null) }} title={editItem ? 'Modifica Spesa' : 'Nuova Spesa'} size="md">
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditItem(null) }} title={editItem ? 'Modifica Spesa' : 'Nuova Spesa'} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Select name="category" label="Categoria *" options={FORM_CATEGORIES} defaultValue={editItem?.category || ''} />
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="isPaid"
+              defaultChecked={editItem?.isPaid ?? true}
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+            />
+            <span className="text-sm font-medium">Pagata</span>
+          </label>
+          <Input name="supplierName" label="Nome Fornitore" defaultValue={editItem?.supplierName || ''} />
           <Input name="description" label="Descrizione *" required defaultValue={editItem?.description || ''} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input name="amount" label="Importo (EUR) *" type="number" step="0.01" min="0" required defaultValue={editItem?.amount || ''} />
             <Input name="date" label="Data *" type="date" required defaultValue={editItem?.date?.split('T')[0] || ''} />
+            <Select name="category" label="Categoria *" options={formCategoryOptions} defaultValue={editItem?.category || ''} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Input name="amount" label="Importo (EUR) *" type="number" step="0.01" min="0" required defaultValue={editItem?.amount || ''} />
+            <Select name="vatRate" label="Aliquota IVA" options={VAT_OPTIONS} defaultValue={String(editItem?.vatRate ?? 22)} />
+            <Select name="deductibility" label="Deducibilità" options={DEDUCTIBILITY_OPTIONS} defaultValue={String(editItem?.deductibility ?? 100)} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select name="bankAccountId" label="Conto Bancario" options={formBankAccountOptions} defaultValue={editItem?.bankAccountId || ''} />
+            <Select name="businessEntityId" label="Attività" options={formBusinessEntityOptions} defaultValue={editItem?.businessEntityId || ''} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select name="clientId" label="Cliente" options={formClientOptions} defaultValue={editItem?.clientId || ''} />
+            <Select name="projectId" label="Progetto" options={formProjectOptions} defaultValue={editItem?.projectId || ''} />
           </div>
           <Input name="receipt" label="URL Ricevuta" placeholder="https://..." defaultValue={editItem?.receipt || ''} />
-          <Select name="clientId" label="Cliente" options={[{ value: '', label: 'Nessun cliente' }, ...clients.map(c => ({ value: c.id, label: c.companyName }))]} defaultValue={editItem?.clientId || ''} />
-          <Select name="projectId" label="Progetto" options={[{ value: '', label: 'Nessun progetto' }, ...projects.map(p => ({ value: p.id, label: p.name }))]} defaultValue={editItem?.projectId || ''} />
+          <Input name="notes" label="Note" defaultValue={editItem?.notes || ''} />
           {formError && (
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</div>
           )}
@@ -349,7 +580,7 @@ export default function ExpensesPage() {
           <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
             <p className="font-medium text-sm">{deleteConfirm.description}</p>
             <p className="text-xs text-muted mt-1">
-              {CATEGORY_LABEL[deleteConfirm.category] || deleteConfirm.category} &middot; {formatCurrency(deleteConfirm.amount)} &middot; {new Date(deleteConfirm.date).toLocaleDateString('it-IT')}
+              {deleteConfirm.category} &middot; {formatCurrency(deleteConfirm.amount)} &middot; {new Date(deleteConfirm.date).toLocaleDateString('it-IT')}
             </p>
           </div>
         )}

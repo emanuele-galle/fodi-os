@@ -9,6 +9,8 @@ import { MobileNotificationsPanel } from '@/components/layout/MobileNotification
 import { ImpersonationBanner } from '@/components/layout/ImpersonationBanner'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import dynamic from 'next/dynamic'
+import { SSEProvider } from '@/providers/SSEProvider'
+import { useSSE } from '@/hooks/useSSE'
 
 const CommandPalette = dynamic(() => import('@/components/layout/CommandPalette').then(m => ({ default: m.CommandPalette })), {
   ssr: false,
@@ -84,58 +86,65 @@ export default function DashboardLayout({
     loadSession()
   }, [])
 
-  // Fetch unread counts for mobile badges - use visibility API to pause when tab hidden
-  useEffect(() => {
-    function fetchCounts() {
-      if (document.hidden) return
-      fetch('/api/notifications?limit=1')
-        .then((res) => res.ok ? res.json() : null)
-        .then((data) => {
-          if (data?.unreadCount !== undefined) {
-            setUnreadNotifications(data.unreadCount)
-            // PWA Badge API
-            if ('setAppBadge' in navigator) {
-              if (data.unreadCount > 0) {
-                navigator.setAppBadge(data.unreadCount).catch(() => {})
-              } else {
-                navigator.clearAppBadge?.().catch(() => {})
-              }
+  // Fetch unread counts - initial load + fallback polling every 120s (SSE handles real-time)
+  const fetchCounts = useCallback(() => {
+    if (document.hidden) return
+    fetch('/api/notifications?limit=1')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.unreadCount !== undefined) {
+          setUnreadNotifications(data.unreadCount)
+          if ('setAppBadge' in navigator) {
+            if (data.unreadCount > 0) {
+              navigator.setAppBadge(data.unreadCount).catch(() => {})
+            } else {
+              navigator.clearAppBadge?.().catch(() => {})
             }
           }
-        })
-        .catch(() => {})
+        }
+      })
+      .catch(() => {})
 
-      fetch('/api/chat/channels')
-        .then((res) => res.ok ? res.json() : null)
-        .then((data) => {
-          const channels = data?.items || []
-          setUnreadChat(channels.reduce((sum: number, c: { unreadCount?: number }) => sum + (c.unreadCount || 0), 0))
-        })
-        .catch(() => {})
+    fetch('/api/chat/channels')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        const channels = data?.items || []
+        setUnreadChat(channels.reduce((sum: number, c: { unreadCount?: number }) => sum + (c.unreadCount || 0), 0))
+      })
+      .catch(() => {})
 
-      fetch('/api/tasks/count')
-        .then((res) => res.ok ? res.json() : null)
-        .then((data) => {
-          if (data?.count !== undefined) setPendingTaskCount(data.count)
-        })
-        .catch(() => {})
-    }
-
-    fetchCounts()
-    const interval = setInterval(fetchCounts, 30000)
-
-    // Instant badge update when chat is read or new message arrives
-    const handleChatRead = () => setUnreadChat((prev) => Math.max(0, prev - 1))
-    const handleChatNew = () => setUnreadChat((prev) => prev + 1)
-    window.addEventListener('chat:read', handleChatRead)
-    window.addEventListener('chat:new-message', handleChatNew)
-
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('chat:read', handleChatRead)
-      window.removeEventListener('chat:new-message', handleChatNew)
-    }
+    fetch('/api/tasks/count')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.count !== undefined) setPendingTaskCount(data.count)
+      })
+      .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    fetchCounts()
+    const interval = setInterval(fetchCounts, 120000) // 120s fallback
+    return () => clearInterval(interval)
+  }, [fetchCounts])
+
+  // Real-time badge updates via SSE
+  useSSE(useCallback((event) => {
+    if (event.type === 'badge_update') {
+      const badge = event.data as { notifications?: number; chat?: number; tasks?: number }
+      if (badge.notifications !== undefined) {
+        setUnreadNotifications(badge.notifications)
+        if ('setAppBadge' in navigator) {
+          if (badge.notifications > 0) {
+            navigator.setAppBadge(badge.notifications).catch(() => {})
+          } else {
+            navigator.clearAppBadge?.().catch(() => {})
+          }
+        }
+      }
+      if (badge.chat !== undefined) setUnreadChat(badge.chat)
+      if (badge.tasks !== undefined) setPendingTaskCount(badge.tasks)
+    }
+  }, []))
 
   // Heartbeat: update lastActiveAt every 60s, pause when tab hidden
   useEffect(() => {
@@ -170,6 +179,7 @@ export default function DashboardLayout({
   }
 
   return (
+    <SSEProvider>
     <div className="h-screen flex bg-background overflow-hidden">
       {/* Sidebar: hidden on mobile, visible on md+ */}
       <div className="hidden md:block flex-shrink-0">
@@ -252,5 +262,6 @@ export default function DashboardLayout({
       )}
       <PwaInstallPrompt />
     </div>
+    </SSEProvider>
   )
 }

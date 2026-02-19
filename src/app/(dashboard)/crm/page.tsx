@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
+import { useConfirm } from '@/hooks/useConfirm'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Users, Plus, Search, ChevronLeft, ChevronRight, AlertCircle, Download, ChevronDown, Clock, Trash2, Tag, CheckSquare, Filter, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -14,6 +15,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Avatar } from '@/components/ui/Avatar'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatCurrency } from '@/lib/utils'
 import { STATUS_OPTIONS, STATUS_LABELS, INDUSTRY_OPTIONS, SOURCE_OPTIONS } from '@/lib/crm-constants'
 
@@ -81,6 +83,7 @@ export default function CrmPage() {
   const [revenueMin, setRevenueMin] = useState('')
   const [revenueMax, setRevenueMax] = useState('')
   const duplicateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { confirm: confirmAction, confirmProps } = useConfirm()
   const limit = 20
 
   const clientForm = useFormPersist('new-client', {
@@ -566,7 +569,7 @@ export default function CrmPage() {
                   size="sm"
                   variant="outline"
                   className="h-8 text-xs text-destructive hover:bg-destructive/10"
-                  onClick={() => { if (confirm(`Eliminare ${selectedIds.size} clienti? Questa azione non può essere annullata.`)) executeBulkAction('delete') }}
+                  onClick={async () => { const ok = await confirmAction({ message: `Eliminare ${selectedIds.size} clienti? Questa azione non può essere annullata.`, variant: 'danger' }); if (ok) executeBulkAction('delete') }}
                   disabled={bulkSubmitting}
                 >
                   <Trash2 className="h-3 w-3 mr-1" />
@@ -788,6 +791,7 @@ export default function CrmPage() {
           </div>
         </form>
       </Modal>
+      <ConfirmDialog {...confirmProps} />
     </div>
   )
 }

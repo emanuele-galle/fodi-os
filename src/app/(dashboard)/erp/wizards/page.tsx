@@ -367,7 +367,7 @@ export default function WizardsPage() {
                       </div>
                       <h3 className="font-bold text-sm truncate">{w.name}</h3>
                     </div>
-                    {w.isSystem && <Badge variant="outline" className="text-[10px] flex-shrink-0">Sistema</Badge>}
+                    {w.isSystem && <Badge variant="outline" className="text-[11px] flex-shrink-0">Sistema</Badge>}
                   </div>
 
                   {/* Description */}
@@ -452,7 +452,7 @@ export default function WizardsPage() {
                     >
                       <td className="py-3 pr-4 pl-3">
                         <span className="font-medium">{w.name}</span>
-                        {w.isSystem && <Badge variant="outline" className="ml-2 text-[10px]">Sistema</Badge>}
+                        {w.isSystem && <Badge variant="outline" className="ml-2 text-[11px]">Sistema</Badge>}
                         {w.description && <p className="text-xs text-muted truncate max-w-xs">{w.description}</p>}
                       </td>
                       <td className="py-3 pr-4">

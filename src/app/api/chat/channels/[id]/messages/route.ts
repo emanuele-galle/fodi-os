@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createMessageSchema } from '@/lib/validation'
-import { sseManager } from '@/lib/sse'
+import { sseManager, sendBadgeUpdate } from '@/lib/sse'
 import { sendPush } from '@/lib/push'
 import { sanitizeHtml } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
@@ -152,6 +152,17 @@ export async function POST(
       type: 'new_message',
       data: message,
     })
+
+    // Badge update for other members (increment unread chat count)
+    for (const memberId of memberUserIds.filter((id) => id !== userId)) {
+      const unreadChannels = await prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) as count FROM "ChatMember" cm
+        JOIN "ChatChannel" cc ON cc.id = cm."channelId"
+        WHERE cm."userId" = ${memberId}
+          AND (cm."lastReadAt" IS NULL OR cc."updatedAt" > cm."lastReadAt")
+      `
+      sendBadgeUpdate(memberId, { chat: Number(unreadChannels[0]?.count ?? 0) })
+    }
 
     // Push notification for offline members (no active SSE connection)
     const offlineMembers = memberUserIds.filter(

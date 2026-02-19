@@ -52,6 +52,7 @@ const TaskDetailModal = dynamic(() => import('@/components/tasks/TaskDetailModal
   ssr: false,
 })
 import { useUserPreferences } from '@/hooks/useUserPreferences'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 
 interface TaskUser {
   id: string
@@ -282,6 +283,9 @@ export default function TasksPage() {
     fetchTasks()
     fetchTabCounts()
   }
+
+  // Real-time refresh when task data changes via SSE
+  useRealtimeRefresh('task', refreshAll)
 
   const sortedTasks = useMemo(() => sortTasks(tasks), [tasks])
 
@@ -622,6 +626,7 @@ export default function TasksPage() {
           setSelectedTaskId(null)
         }}
         onUpdated={refreshAll}
+        userRole={userRole}
       />
     </div>
   )

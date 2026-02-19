@@ -63,6 +63,7 @@ export default function QuoteDetailPage() {
   const [sending, setSending] = useState(false)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Edit mode state
   const [editing, setEditing] = useState(false)
@@ -230,13 +231,14 @@ export default function QuoteDetailPage() {
 
   async function handleDelete() {
     setDeleting(true)
+    setDeleteError(null)
     try {
       const res = await fetch(`/api/quotes/${quoteId}`, { method: 'DELETE' })
       if (res.ok) {
         router.push('/erp/quotes')
       } else {
         const data = await res.json().catch(() => null)
-        alert(data?.error || 'Errore nella cancellazione')
+        setDeleteError(data?.error || 'Errore nella cancellazione')
       }
     } finally {
       setDeleting(false)
@@ -568,6 +570,9 @@ export default function QuoteDetailPage() {
           <p className="text-sm text-muted">
             Confermi di voler eliminare il preventivo <strong>{quote.number}</strong>? Questa azione non puo essere annullata.
           </p>
+          {deleteError && (
+            <p className="text-sm text-destructive">{deleteError}</p>
+          )}
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>Annulla</Button>
             <Button variant="destructive" onClick={handleDelete} loading={deleting}>

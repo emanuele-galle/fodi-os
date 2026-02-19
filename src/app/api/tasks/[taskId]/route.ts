@@ -4,6 +4,7 @@ import { hasPermission, requirePermission, ADMIN_ROLES } from '@/lib/permissions
 import { logActivity } from '@/lib/activity-log'
 import { updateTaskSchema } from '@/lib/validation'
 import { getTaskParticipants, notifyUsers } from '@/lib/notifications'
+import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
@@ -354,8 +355,36 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       action: 'UPDATE',
       entityType: 'TASK',
       entityId: taskId,
-      metadata: { changedFields: Object.keys(data).join(',') },
+      metadata: {
+        title: task.title,
+        projectName: taskProjectName || null,
+        changedFields: Object.keys(data).join(','),
+      },
     })
+
+    // Send data_changed to all participants
+    const allParticipants = participants.length > 0 ? participants : await getTaskParticipants(taskId)
+    if (currentUserId) allParticipants.push(currentUserId)
+    sendDataChanged([...new Set(allParticipants)], 'task', taskId)
+
+    // Update badge counts for assignees if status changed
+    if (status !== undefined) {
+      const taskAssignees = await prisma.taskAssignment.findMany({
+        where: { taskId },
+        select: { userId: true },
+      })
+      const assigneeUserIds = taskAssignees.map((a) => a.userId)
+      if (task.assigneeId) assigneeUserIds.push(task.assigneeId as string)
+      for (const uid of [...new Set(assigneeUserIds)]) {
+        const count = await prisma.task.count({
+          where: {
+            status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] },
+            OR: [{ assigneeId: uid }, { assignments: { some: { userId: uid } } }],
+          },
+        })
+        sendBadgeUpdate(uid, { tasks: count })
+      }
+    }
 
     // Re-fetch with full includes
     const fullTask = await prisma.task.findUnique({
@@ -412,7 +441,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     // Check task exists
     const existing = await prisma.task.findUnique({
       where: { id: taskId },
-      select: { id: true, creatorId: true, assigneeId: true, assignments: { select: { userId: true } } },
+      select: { id: true, title: true, creatorId: true, assigneeId: true, project: { select: { name: true } }, assignments: { select: { userId: true } } },
     })
     if (!existing) {
       return NextResponse.json({ success: false, error: 'Task non trovato' }, { status: 404 })
@@ -429,9 +458,30 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       }
     }
 
+    // Collect participants before deletion
+    const deleteParticipants = [
+      existing.creatorId,
+      ...(existing.assigneeId ? [existing.assigneeId] : []),
+      ...existing.assignments.map((a) => a.userId),
+    ]
+
     await prisma.task.delete({ where: { id: taskId } })
 
-    logActivity({ userId, action: 'DELETE', entityType: 'TASK', entityId: taskId })
+    logActivity({ userId, action: 'DELETE', entityType: 'TASK', entityId: taskId, metadata: { title: existing.title, projectName: existing.project?.name || null } })
+
+    // Notify about data change
+    sendDataChanged([...new Set(deleteParticipants)], 'task', taskId)
+
+    // Update badge counts for assignees
+    for (const uid of [...new Set(deleteParticipants)]) {
+      const count = await prisma.task.count({
+        where: {
+          status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] },
+          OR: [{ assigneeId: uid }, { assignments: { some: { userId: uid } } }],
+        },
+      })
+      sendBadgeUpdate(uid, { tasks: count })
+    }
 
     return NextResponse.json({ success: true })
   } catch (e) {

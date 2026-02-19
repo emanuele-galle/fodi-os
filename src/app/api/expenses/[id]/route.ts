@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
-import { updateExpenseSchema } from '@/lib/validation'
+import { updateExpenseSchema, expenseAdvancedFields } from '@/lib/validation'
+import { calculateVat, calculateDeductibleVat } from '@/lib/accounting'
 import type { Role } from '@/generated/prisma/client'
 
 export async function PUT(
@@ -28,6 +29,9 @@ export async function PUT(
       )
     }
 
+    const advanced = expenseAdvancedFields.safeParse(body)
+    const adv = advanced.success ? advanced.data : {}
+
     const data: Record<string, unknown> = {}
     const d = parsed.data
     if (d.category !== undefined) data.category = d.category
@@ -37,6 +41,24 @@ export async function PUT(
     if (d.receipt !== undefined) data.receipt = d.receipt
     if (d.clientId !== undefined) data.clientId = d.clientId || null
     if (d.projectId !== undefined) data.projectId = d.projectId || null
+
+    // Advanced accounting fields
+    if (adv.isPaid !== undefined) data.isPaid = adv.isPaid
+    if (adv.supplierName !== undefined) data.supplierName = adv.supplierName || null
+    if (adv.bankAccountId !== undefined) data.bankAccountId = adv.bankAccountId || null
+    if (adv.businessEntityId !== undefined) data.businessEntityId = adv.businessEntityId || null
+    if (adv.vatRate !== undefined) data.vatRate = adv.vatRate || null
+    if (adv.deductibility !== undefined) data.deductibility = adv.deductibility || null
+
+    // Recalculate VAT if relevant fields changed
+    const amt = (d.amount ?? Number(existing.amount)) as number
+    const vr = adv.vatRate !== undefined ? adv.vatRate : existing.vatRate
+    const ded = adv.deductibility !== undefined ? adv.deductibility : existing.deductibility
+    if (vr) {
+      const { net, vat } = calculateVat(amt, vr)
+      data.netAmount = net
+      data.vatDeductible = ded ? calculateDeductibleVat(vat, ded) : null
+    }
 
     const updated = await prisma.expense.update({ where: { id }, data })
 

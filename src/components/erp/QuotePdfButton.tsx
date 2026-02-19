@@ -14,14 +14,16 @@ interface QuotePdfButtonProps {
 
 export function QuotePdfButton({ quoteId, quoteNumber, variant = 'outline', size = 'sm', showLabel = true }: QuotePdfButtonProps) {
   const [generating, setGenerating] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
 
   async function handleGeneratePdf() {
     setGenerating(true)
+    setPdfError(null)
     try {
       const res = await fetch(`/api/quotes/${quoteId}/pdf`, { method: 'POST' })
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Errore generazione PDF' }))
-        alert(err.error || 'Errore generazione PDF')
+        setPdfError(err.error || 'Errore generazione PDF')
         return
       }
 
@@ -40,16 +42,19 @@ export function QuotePdfButton({ quoteId, quoteNumber, variant = 'outline', size
   }
 
   return (
-    <Button
-      variant={variant}
-      size={size}
-      onClick={handleGeneratePdf}
-      disabled={generating}
-      loading={generating}
-      className="touch-manipulation"
-    >
-      <FileDown className="h-4 w-4" />
-      {showLabel && <span className="hidden sm:inline ml-1">{generating ? 'Generazione...' : 'Scarica PDF'}</span>}
-    </Button>
+    <div className="inline-flex items-center gap-2">
+      <Button
+        variant={variant}
+        size={size}
+        onClick={handleGeneratePdf}
+        disabled={generating}
+        loading={generating}
+        className="touch-manipulation"
+      >
+        <FileDown className="h-4 w-4" />
+        {showLabel && <span className="hidden sm:inline ml-1">{generating ? 'Generazione...' : 'Scarica PDF'}</span>}
+      </Button>
+      {pdfError && <span className="text-xs text-destructive">{pdfError}</span>}
+    </div>
   )
 }

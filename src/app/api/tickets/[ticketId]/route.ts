@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { updateTicketSchema } from '@/lib/validation'
 import { notifyUsers } from '@/lib/notifications'
+import { sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ ticketId: string }> }) {
@@ -128,6 +129,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           }
         )
       }
+
+      // Notify connected users about ticket change
+      sendDataChanged(Array.from(recipients), 'ticket', ticketId)
     }
 
     return NextResponse.json({ success: true, data: ticket })

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Film, Plus, Search, Image, FileText, FileVideo, FileAudio, File,
   FolderOpen, ArrowLeft, ExternalLink, Upload, FolderPlus, Link2Off, Star,
-  HardDrive, AlertCircle, LayoutGrid, List, Cloud, CloudOff,
+  HardDrive, AlertCircle, LayoutGrid, List, Cloud, CloudOff, CheckCircle2,
 } from 'lucide-react'
 import NextImage from 'next/image'
 import { Button } from '@/components/ui/Button'
@@ -17,6 +17,8 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Textarea } from '@/components/ui/Textarea'
 import { FileUpload } from '@/components/shared/FileUpload'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 
 // ============================================================
 // Types
@@ -104,6 +106,7 @@ function MinioAssetsTab() {
   const [assets, setAssets] = useState<Asset[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [reviewMsg, setReviewMsg] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [projectFilter, setProjectFilter] = useState('')
@@ -200,9 +203,12 @@ function MinioAssetsTab() {
     } catch { /* ignore */ }
   }
 
+  const { confirm: confirmDelete, confirmProps: confirmDeleteProps } = useConfirm()
+
   const handleDeleteDetail = async () => {
     if (!detailAsset) return
-    if (!window.confirm(`Eliminare "${detailAsset.fileName}"?`)) return
+    const ok = await confirmDelete({ message: `Eliminare "${detailAsset.fileName}"?`, variant: 'danger' })
+    if (!ok) return
     try {
       const res = await fetch(`/api/assets/${detailAsset.id}`, { method: 'DELETE' })
       if (res.ok) {
@@ -221,7 +227,8 @@ function MinioAssetsTab() {
         body: JSON.stringify({}),
       })
       if (res.ok) {
-        alert('Review creata!')
+        setReviewMsg('Review creata!')
+        setTimeout(() => setReviewMsg(null), 3000)
       }
     } catch { /* ignore */ }
   }
@@ -545,6 +552,13 @@ function MinioAssetsTab() {
               </>
             )}
 
+            {reviewMsg && (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                <p className="text-sm text-emerald-600">{reviewMsg}</p>
+              </div>
+            )}
+
             {/* Action buttons */}
             {!editing && (
               <div className="flex gap-2 border-t border-border pt-4">
@@ -562,6 +576,8 @@ function MinioAssetsTab() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Carica Asset" size="lg">
         <FileUpload onUpload={() => { fetchAssets(); setModalOpen(false) }} maxFiles={10} maxSize={10 * 1024 * 1024 * 1024} />
       </Modal>
+
+      <ConfirmDialog {...confirmDeleteProps} />
     </div>
   )
 }
@@ -729,7 +745,7 @@ function GoogleDriveTab() {
             <Upload className="h-4 w-4 mr-1" />
             {uploading ? `${uploadProgress}%` : 'Carica'}
           </Button>
-          <input id="drive-upload" type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
+          <input id="drive-upload" type="file" accept="*/*" className="hidden" onChange={handleUpload} disabled={uploading} />
         </div>
       </div>
 

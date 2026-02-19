@@ -42,7 +42,7 @@ export function CardTitle({
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 data-slot="card-title" className={cn('text-[15px] font-semibold text-foreground leading-none tracking-tight', className)} {...props}>
+    <h3 data-slot="card-title" className={cn('text-base font-semibold text-foreground leading-none tracking-tight', className)} {...props}>
       {children}
     </h3>
   )
@@ -54,7 +54,7 @@ export function CardDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p data-slot="card-description" className={cn('text-[13px] text-muted', className)} {...props}>
+    <p data-slot="card-description" className={cn('text-sm text-muted', className)} {...props}>
       {children}
     </p>
   )

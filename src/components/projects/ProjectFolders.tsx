@@ -5,6 +5,8 @@ import { FolderOpen, Plus, Pencil, Trash2, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent } from '@/components/ui/Card'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 
 interface Folder {
   id: string
@@ -36,6 +38,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { confirm, confirmProps } = useConfirm()
 
   async function handleCreate() {
     if (!newName.trim()) return
@@ -76,7 +79,8 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
   }
 
   async function handleDelete(folderId: string) {
-    if (!confirm('Eliminare questa cartella? Le task al suo interno non verranno eliminate.')) return
+    const ok = await confirm({ message: 'Eliminare questa cartella? Le task al suo interno non verranno eliminate.', variant: 'danger' })
+    if (!ok) return
     const res = await fetch(`/api/projects/${projectId}/folders`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -214,6 +218,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
           </div>
         ))}
       </div>
+      <ConfirmDialog {...confirmProps} />
     </div>
   )
 }

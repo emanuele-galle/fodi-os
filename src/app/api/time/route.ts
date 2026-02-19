@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           hours,
           taskId: taskId || null,
+          taskTitle: entry.task?.title || null,
           projectId: projectId || null,
           description: description || null,
         },
@@ -197,7 +198,7 @@ export async function DELETE(request: NextRequest) {
         action: 'DELETE',
         entityType: 'TimeEntry',
         entityId: id,
-        metadata: { hours: existing.hours, taskId: existing.taskId },
+        metadata: { hours: existing.hours, taskId: existing.taskId, description: existing.description },
       },
     })
 

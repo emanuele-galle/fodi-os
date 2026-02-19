@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           hours,
           taskId: taskId || null,
+          taskTitle: entry.task?.title || null,
           projectId: projectId || null,
           description: description || null,
         },

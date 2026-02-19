@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useConfirm } from '@/hooks/useConfirm'
 import {
   ChevronLeft, Edit, Plus, Phone, Mail, MessageSquare,
   Calendar, FileText, Users, Building2, Globe, Hash, FolderKanban, Trash2,
@@ -17,6 +18,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatCurrency } from '@/lib/utils'
 import {
   STATUS_LABELS, PRIORITY_BADGE, INTERACTION_ICONS, INTERACTION_TYPES,
@@ -917,6 +919,7 @@ function ClientDocumentsTab({ clientId }: { clientId: string }) {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const { confirm: confirmDocDelete, confirmProps: confirmDocDeleteProps } = useConfirm()
 
   const fetchDocs = useCallback(() => {
     fetch(`/api/clients/${clientId}/documents`)
@@ -944,7 +947,8 @@ function ClientDocumentsTab({ clientId }: { clientId: string }) {
   }
 
   const handleDelete = async (docId: string) => {
-    if (!confirm('Eliminare questo documento?')) return
+    const ok = await confirmDocDelete({ message: 'Eliminare questo documento?', variant: 'danger' })
+    if (!ok) return
     await fetch(`/api/clients/${clientId}/documents/${docId}`, { method: 'DELETE' })
     fetchDocs()
   }
@@ -965,7 +969,7 @@ function ClientDocumentsTab({ clientId }: { clientId: string }) {
         <label className={`inline-flex items-center gap-1.5 text-sm font-medium cursor-pointer rounded-lg border border-border/50 px-3 py-1.5 hover:bg-secondary/50 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
           <Upload className="h-4 w-4" />
           {uploading ? 'Caricamento...' : 'Carica File'}
-          <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp" />
+          <input type="file" className="hidden" onChange={handleUpload} accept="*/*" />
         </label>
       </div>
       {uploadError && (
@@ -1000,6 +1004,7 @@ function ClientDocumentsTab({ clientId }: { clientId: string }) {
           ))}
         </div>
       )}
+      <ConfirmDialog {...confirmDocDeleteProps} />
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 import { requirePermission } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import { notifyUsers } from '@/lib/notifications'
+import { sendDataChanged } from '@/lib/sse'
 import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
 
@@ -156,6 +157,7 @@ export async function POST(request: NextRequest) {
           message: `${creatorName} ti ha invitato a "${summary}" - ${eventDate}`,
           link: '/calendar',
         })
+        sendDataChanged(attendeeIds, 'calendar')
       }
     }
 

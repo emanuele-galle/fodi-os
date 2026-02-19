@@ -76,3 +76,23 @@ export const sseManager = globalForSSE.sseManager ?? new SSEManager()
 if (process.env.NODE_ENV !== 'production') {
   globalForSSE.sseManager = sseManager
 }
+
+// --- Real-time helpers ---
+
+export interface BadgeUpdate {
+  notifications?: number
+  chat?: number
+  tasks?: number
+}
+
+export function sendBadgeUpdate(userId: string, badge: BadgeUpdate) {
+  sseManager.sendToUser(userId, { type: 'badge_update', data: badge })
+}
+
+export type DataEntity = 'task' | 'notification' | 'ticket' | 'project' | 'calendar'
+
+export function sendDataChanged(userIds: string[], entity: DataEntity, id?: string) {
+  for (const userId of userIds) {
+    sseManager.sendToUser(userId, { type: 'data_changed', data: { entity, id } })
+  }
+}

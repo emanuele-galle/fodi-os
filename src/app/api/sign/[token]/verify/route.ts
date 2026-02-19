@@ -5,6 +5,8 @@ import { verifyOtp } from '@/lib/otp'
 import { verifyOtpSchema } from '@/lib/validation'
 import { addSignatureStamp } from '@/lib/signature-pdf'
 import { rateLimit } from '@/lib/rate-limit'
+import { sendPush } from '@/lib/push'
+import { sendViaSMTP } from '@/lib/email'
 
 export async function POST(
   request: NextRequest,
@@ -185,6 +187,41 @@ export async function POST(
         metadata: { signedPdfUrl },
       },
     })
+
+    // Notify requester
+    const reqWithRequester = await prisma.signatureRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        documentTitle: true,
+        signerName: true,
+        requesterId: true,
+        requester: { select: { id: true, email: true, firstName: true } },
+      },
+    })
+    if (reqWithRequester?.requester) {
+      const r = reqWithRequester.requester
+      prisma.notification.create({
+        data: {
+          userId: r.id,
+          type: 'signature_completed',
+          title: 'Documento firmato',
+          message: `${reqWithRequester.signerName} ha firmato "${reqWithRequester.documentTitle}"`,
+          link: '/erp/signatures',
+        },
+      }).catch(() => {})
+      sendPush(r.id, {
+        title: 'Documento firmato',
+        message: `${reqWithRequester.signerName} ha firmato "${reqWithRequester.documentTitle}"`,
+        link: '/erp/signatures',
+      })
+      if (r.email) {
+        sendViaSMTP(
+          r.email,
+          `Documento firmato: ${reqWithRequester.documentTitle}`,
+          `<p>Ciao ${r.firstName},</p><p><strong>${reqWithRequester.signerName}</strong> ha firmato il documento "${reqWithRequester.documentTitle}".</p><p>Puoi visualizzare i dettagli nella sezione <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://os.fodisrl.it'}/erp/signatures">Firme</a>.</p>`
+        )
+      }
+    }
 
     return NextResponse.json({ success: true, signedAt: signedAt.toISOString() })
   } catch (e) {

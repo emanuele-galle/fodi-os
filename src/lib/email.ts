@@ -6,7 +6,25 @@ const SMTP_USER = process.env.SMTP_USER
 const SMTP_PASS = process.env.SMTP_PASS
 const SMTP_FROM = process.env.SMTP_FROM || 'noreply@fodisrl.it'
 
-export async function sendViaSMTP(to: string, subject: string, html: string): Promise<boolean> {
+function stripHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<li>/gi, '- ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+export async function sendViaSMTP(to: string, subject: string, html: string, text?: string): Promise<boolean> {
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
     console.log('[EMAIL] SMTP non configurato, email simulata:')
     console.log(`  To: ${to}`)
@@ -30,6 +48,7 @@ export async function sendViaSMTP(to: string, subject: string, html: string): Pr
       to,
       subject,
       html,
+      text: text || stripHtml(html),
     })
     return true
   } catch (err) {

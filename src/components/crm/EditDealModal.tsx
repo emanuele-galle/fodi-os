@@ -5,6 +5,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 import { AlertCircle, Trash2 } from 'lucide-react'
 
 interface Deal {
@@ -55,6 +57,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { confirm, confirmProps } = useConfirm()
   const [clients, setClients] = useState<Client[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loadingContacts, setLoadingContacts] = useState(false)
@@ -162,7 +165,8 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
   }
 
   async function handleDelete() {
-    if (!confirm('Sei sicuro di voler eliminare questa opportunità?')) return
+    const ok = await confirm({ message: 'Sei sicuro di voler eliminare questa opportunità?', variant: 'danger' })
+    if (!ok) return
 
     setDeleting(true)
     setError(null)
@@ -349,6 +353,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
           </div>
         </div>
       </form>
+      <ConfirmDialog {...confirmProps} />
     </Modal>
   )
 }

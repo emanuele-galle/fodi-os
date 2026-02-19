@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { FieldEditor } from './FieldEditor'
 import { ConditionBuilder } from './ConditionBuilder'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 import { ChevronDown, ChevronUp, Trash2, Plus, GripVertical, Save } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -59,6 +61,8 @@ export function StepEditor({ step, index, wizardId, onUpdate, onDelete, allField
   const [description, setDescription] = useState(step.description || '')
   const [condition, setCondition] = useState(step.condition)
   const [saving, setSaving] = useState(false)
+  const [saveFirstMsg, setSaveFirstMsg] = useState(false)
+  const { confirm, confirmProps } = useConfirm()
 
   const saveStep = useCallback(async () => {
     setSaving(true)
@@ -100,16 +104,18 @@ export function StepEditor({ step, index, wizardId, onUpdate, onDelete, allField
   }, [wizardId, onUpdate])
 
   const deleteField = useCallback(async (fieldId: string, stepId: string) => {
-    if (!confirm('Eliminare questo campo?')) return
+    const ok = await confirm({ message: 'Eliminare questo campo?', variant: 'danger' })
+    if (!ok) return
     await fetch(`/api/wizards/${wizardId}/steps/${stepId}/fields/${fieldId}`, {
       method: 'DELETE',
     })
     onUpdate()
-  }, [wizardId, onUpdate])
+  }, [wizardId, onUpdate, confirm])
 
   const addNewField = useCallback(async () => {
     if (!step.id) {
-      alert('Salva prima lo step')
+      setSaveFirstMsg(true)
+      setTimeout(() => setSaveFirstMsg(false), 3000)
       return
     }
     const newField: WizardFieldData = {
@@ -132,12 +138,13 @@ export function StepEditor({ step, index, wizardId, onUpdate, onDelete, allField
   }, [step, onUpdate])
 
   const deleteStep = useCallback(async () => {
-    if (!confirm('Eliminare questo step e tutti i suoi campi?')) return
+    const ok = await confirm({ message: 'Eliminare questo step e tutti i suoi campi?', variant: 'danger' })
+    if (!ok) return
     if (step.id) {
       await fetch(`/api/wizards/${wizardId}/steps/${step.id}`, { method: 'DELETE' })
     }
     onDelete()
-  }, [step.id, wizardId, onDelete])
+  }, [step.id, wizardId, onDelete, confirm])
 
   // All fields from this step for condition builder
   const fieldsForCondition: AvailableField[] = step.fields
@@ -195,6 +202,11 @@ export function StepEditor({ step, index, wizardId, onUpdate, onDelete, allField
           {step.id && (
             <>
               <div className="border-t border-border/30 pt-3">
+                {saveFirstMsg && (
+                  <div className="mb-2 text-sm text-amber-600 bg-amber-500/10 rounded-lg px-3 py-2">
+                    Salva prima lo step
+                  </div>
+                )}
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-semibold">Campi</h4>
                   <Button variant="outline" size="sm" type="button" onClick={addNewField}>
@@ -231,6 +243,7 @@ export function StepEditor({ step, index, wizardId, onUpdate, onDelete, allField
           )}
         </div>
       )}
+      <ConfirmDialog {...confirmProps} />
     </div>
   )
 }

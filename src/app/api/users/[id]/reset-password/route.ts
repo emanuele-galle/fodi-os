@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { hashPassword, generateTempPassword } from '@/lib/auth'
 import { ADMIN_ROLES } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
+import { logActivity } from '@/lib/activity-log'
 
 export async function POST(
   request: NextRequest,
@@ -45,6 +46,13 @@ export async function POST(
         where: { userId: id },
       }),
     ])
+
+    logActivity({
+      userId: currentUserId,
+      action: 'password_reset',
+      entityType: 'user',
+      entityId: id,
+    })
 
     return NextResponse.json({ success: true, data: { tempPassword }, tempPassword })
   } catch (error) {

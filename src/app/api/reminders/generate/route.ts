@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,6 +8,10 @@ export async function POST(request: NextRequest) {
     const userRole = request.headers.get('x-user-role')
     if (userRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Non autorizzato' }, { status: 403 })
+    }
+
+    if (!rateLimit('reminders-generate', 1, 60000)) {
+      return NextResponse.json({ error: 'Generazione reminder già in corso. Riprova tra un minuto.' }, { status: 429 })
     }
 
     const now = new Date()

@@ -6,6 +6,8 @@ import { Upload, Trash2, Download, FileText, Image, File, Eye, Pencil, X, Check 
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 
 interface Attachment {
   id: string
@@ -68,6 +70,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [renaming, setRenaming] = useState(false)
+  const { confirm, confirmProps } = useConfirm()
 
   const fetchAttachments = useCallback(async () => {
     const url = folderId
@@ -133,7 +136,8 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
   })
 
   async function handleDelete(attachmentId: string) {
-    if (!confirm('Eliminare questo file?')) return
+    const ok = await confirm({ message: 'Eliminare questo file?', variant: 'danger' })
+    if (!ok) return
     const res = await fetch(`/api/projects/${projectId}/attachments?attachmentId=${attachmentId}`, {
       method: 'DELETE',
     })
@@ -369,6 +373,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
           </div>
         )}
       </Modal>
+      <ConfirmDialog {...confirmProps} />
     </div>
   )
 }

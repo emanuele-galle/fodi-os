@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createTicketSchema } from '@/lib/validation'
 import { notifyUsers } from '@/lib/notifications'
+import { sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -121,6 +122,9 @@ export async function POST(request: NextRequest) {
         metadata: { clientName: ticket.client?.companyName, ticketNumber: ticket.number },
       }
     )
+
+    // Notify connected users about new ticket
+    sendDataChanged(supportUsers.map((u) => u.id), 'ticket', ticket.id)
 
     return NextResponse.json({ success: true, data: ticket }, { status: 201 })
   } catch (e) {

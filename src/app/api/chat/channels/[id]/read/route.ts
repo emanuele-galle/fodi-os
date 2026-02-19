@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { sseManager } from '@/lib/sse'
+import { sseManager, sendBadgeUpdate } from '@/lib/sse'
 
 export async function POST(
   request: NextRequest,
@@ -27,6 +27,15 @@ export async function POST(
       type: 'message_read',
       data: { userId, lastReadAt: now.toISOString() },
     })
+
+    // Send updated chat badge count for the reading user
+    const unreadChannels = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) as count FROM "ChatMember" cm
+      JOIN "ChatChannel" cc ON cc.id = cm."channelId"
+      WHERE cm."userId" = ${userId}
+        AND (cm."lastReadAt" IS NULL OR cc."updatedAt" > cm."lastReadAt")
+    `
+    sendBadgeUpdate(userId, { chat: Number(unreadChannels[0]?.count ?? 0) })
 
     return NextResponse.json({ success: true, lastReadAt: now.toISOString() })
   } catch (e) {

@@ -17,6 +17,7 @@ import {
   LifeBuoy,
   UsersRound,
   BookOpen,
+  Library,
   Settings,
   ChevronRight,
   ChevronLeft,
@@ -31,24 +32,81 @@ import { Logo } from '@/components/ui/Logo'
 import { useUserPreferences } from '@/hooks/useUserPreferences'
 import { getEffectiveSectionAccess, HREF_TO_SECTION, type SectionAccessMap } from '@/lib/section-access'
 
+type NavGroup = 'main' | 'work' | 'admin' | 'team' | 'system'
+
 interface NavItem {
   label: string
   href: string
   icon: React.ElementType
   roles?: Role[]
   children?: { label: string; href: string }[]
+  group: NavGroup
 }
 
+const GROUP_LABELS: Record<NavGroup, string | null> = {
+  main: 'Principale',
+  work: 'Lavoro',
+  admin: 'Gestione',
+  team: 'Team & Risorse',
+  system: null,
+}
+
+const GROUP_ORDER: NavGroup[] = ['main', 'work', 'admin', 'team', 'system']
+
 const navigation: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'I Miei Task', href: '/tasks', icon: CheckSquare },
-  { label: 'Chat', href: '/chat', icon: MessageCircle },
-  { label: 'Notifiche', href: '/notifications', icon: Bell },
+  // Principale
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, group: 'main' },
+  { label: 'I Miei Task', href: '/tasks', icon: CheckSquare, group: 'main' },
+  { label: 'Calendario', href: '/calendar', icon: CalendarDays, group: 'main' },
+  { label: 'Chat', href: '/chat', icon: MessageCircle, group: 'main' },
+  { label: 'Notifiche', href: '/notifications', icon: Bell, group: 'main' },
+  // Lavoro
   {
-    label: 'Azienda',
-    href: '/internal',
-    icon: Building2,
-    roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT', 'SUPPORT'],
+    label: 'Progetti Clienti',
+    href: '/projects',
+    icon: FolderKanban,
+    roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'],
+    children: [
+      { label: 'Lista', href: '/projects' },
+      { label: 'Analytics', href: '/projects/analytics' },
+    ],
+    group: 'work',
+  },
+  {
+    label: 'Contenuti',
+    href: '/content',
+    icon: Film,
+    roles: ['ADMIN', 'MANAGER', 'CONTENT'],
+    children: [
+      { label: 'Libreria Asset', href: '/content/assets' },
+      { label: 'Revisioni', href: '/content/reviews' },
+      { label: 'Social', href: '/content/social' },
+    ],
+    group: 'work',
+  },
+  {
+    label: 'Supporto',
+    href: '/support',
+    icon: LifeBuoy,
+    roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'],
+    group: 'work',
+  },
+  // Gestione
+  {
+    label: 'Contabilita',
+    href: '/erp',
+    icon: Euro,
+    roles: ['ADMIN', 'MANAGER', 'SALES'],
+    children: [
+      { label: 'Preventivi', href: '/erp/quotes' },
+      { label: 'Template', href: '/erp/templates' },
+      { label: 'Firme', href: '/erp/signatures' },
+      { label: 'Wizard', href: '/erp/wizards' },
+      { label: 'Spese', href: '/erp/expenses' },
+      { label: 'Abbonamenti', href: '/erp/expenses/subscriptions' },
+      { label: 'Analytics & Report', href: '/erp/reports' },
+    ],
+    group: 'admin',
   },
   {
     label: 'CRM',
@@ -64,50 +122,16 @@ const navigation: NavItem[] = [
       { label: 'Leads', href: '/crm/leads' },
       { label: 'Gestione Tag', href: '/crm/settings/tags' },
     ],
+    group: 'admin',
   },
   {
-    label: 'Progetti Clienti',
-    href: '/projects',
-    icon: FolderKanban,
-    roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'],
-    children: [
-      { label: 'Lista', href: '/projects' },
-      { label: 'Analytics', href: '/projects/analytics' },
-    ],
+    label: 'Azienda',
+    href: '/internal',
+    icon: Building2,
+    roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT', 'SUPPORT'],
+    group: 'admin',
   },
-  { label: 'Calendario', href: '/calendar', icon: CalendarDays },
-  {
-    label: 'Contabilita',
-    href: '/erp',
-    icon: Euro,
-    roles: ['ADMIN', 'MANAGER', 'SALES'],
-    children: [
-      { label: 'Preventivi', href: '/erp/quotes' },
-      { label: 'Template', href: '/erp/templates' },
-      { label: 'Firme', href: '/erp/signatures' },
-      { label: 'Wizard', href: '/erp/wizards' },
-      { label: 'Spese', href: '/erp/expenses' },
-      { label: 'Abbonamenti', href: '/erp/expenses/subscriptions' },
-      { label: 'Analytics & Report', href: '/erp/reports' },
-    ],
-  },
-{
-    label: 'Contenuti',
-    href: '/content',
-    icon: Film,
-    roles: ['ADMIN', 'MANAGER', 'CONTENT'],
-    children: [
-      { label: 'Libreria Asset', href: '/content/assets' },
-      { label: 'Revisioni', href: '/content/reviews' },
-      { label: 'Social', href: '/content/social' },
-    ],
-  },
-  {
-    label: 'Supporto',
-    href: '/support',
-    icon: LifeBuoy,
-    roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'],
-  },
+  // Team & Risorse
   {
     label: 'Team',
     href: '/team',
@@ -116,9 +140,19 @@ const navigation: NavItem[] = [
       { label: 'Membri', href: '/team' },
       { label: 'Tracciamento Ore', href: '/time' },
       { label: 'Log Attività', href: '/team/activity' },
+      { label: 'Report', href: '/team/reports' },
     ],
+    group: 'team',
   },
-  { label: 'Guida', href: '/guide', icon: BookOpen },
+  {
+    label: 'Knowledge Base',
+    href: '/kb',
+    icon: Library,
+    roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
+    group: 'team',
+  },
+  // System (no title)
+  { label: 'Guida', href: '/guide', icon: BookOpen, group: 'system' },
   {
     label: 'Impostazioni',
     href: '/settings',
@@ -129,10 +163,9 @@ const navigation: NavItem[] = [
       { label: 'Utenti', href: '/settings/users' },
       { label: 'Sistema', href: '/settings/system' },
     ],
+    group: 'system',
   },
 ]
-
-const GROUP_SEPARATOR_LABELS = new Set(['Chat', 'Calendario', 'Contenuti', 'Supporto', 'Team'])
 
 interface SidebarProps {
   userRole: Role
@@ -208,129 +241,149 @@ export function Sidebar({ userRole, sectionAccess, unreadChat = 0, pendingTaskCo
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-none">
-        {filteredNav.map((item, index) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-          const isExpanded = expandedItem === item.label
-          const Icon = item.icon
+        {(() => {
+          // Group filtered items by their group, preserving order
+          const grouped = new Map<NavGroup, NavItem[]>()
+          for (const item of filteredNav) {
+            const list = grouped.get(item.group) || []
+            list.push(item)
+            grouped.set(item.group, list)
+          }
 
-          const prevItem = index > 0 ? filteredNav[index - 1] : null
-          const showSeparator = prevItem && GROUP_SEPARATOR_LABELS.has(prevItem.label)
+          return GROUP_ORDER.filter((g) => grouped.has(g)).map((group, groupIndex) => {
+            const items = grouped.get(group)!
+            const groupLabel = GROUP_LABELS[group]
 
-          // Badge count for this item
-          const badgeCount = item.label === 'Chat' ? unreadChat
-            : item.label === 'I Miei Task' ? pendingTaskCount
-            : item.label === 'Notifiche' ? unreadNotifications
-            : 0
-
-          const navContent = (
-            <Link
-              href={item.children ? '#' : item.href}
-              onClick={(e) => {
-                if (item.children) {
-                  e.preventDefault()
-                  setExpandedItem(isExpanded ? null : item.label)
-                }
-              }}
-              className={cn(
-                'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors duration-150 relative group',
-                isActive
-                  ? 'bg-white/[0.10] text-white font-semibold'
-                  : 'text-sidebar-foreground/60 hover:text-sidebar-foreground/80 hover:bg-white/[0.07]'
-              )}
-            >
-              {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-active" />
-              )}
-              <span className="relative flex-shrink-0">
-                <Icon
-                  className={cn(
-                    'h-[18px] w-[18px]',
-                    isActive && 'text-sidebar-active'
-                  )}
-                />
-                {!expanded && badgeCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
-                    {badgeCount > 99 ? '99+' : badgeCount}
-                  </span>
+            return (
+              <div key={group}>
+                {/* Separator between groups */}
+                {groupIndex > 0 && (
+                  <div className="h-px bg-white/[0.08] mx-3 my-2.5" />
                 )}
-              </span>
-              <AnimatePresence>
-                {expanded && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="flex-1 truncate whitespace-nowrap overflow-hidden"
-                  >
-                    {item.label}
-                  </motion.span>
+                {/* Group title (hidden when collapsed, null for system group) */}
+                {expanded && groupLabel && (
+                  <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground/30 px-3 pt-3 pb-1 select-none">
+                    {groupLabel}
+                  </div>
                 )}
-              </AnimatePresence>
-              {expanded && badgeCount > 0 && !item.children && (
-                <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-[11px] font-bold text-white flex-shrink-0">
-                  {badgeCount > 99 ? '99+' : badgeCount}
-                </span>
-              )}
-              {expanded && item.children && (
-                <ChevronRight
-                  className={cn(
-                    'h-4 w-4 transition-transform duration-200 flex-shrink-0',
-                    isExpanded && 'rotate-90'
-                  )}
-                />
-              )}
-            </Link>
-          )
+                {items.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                  const isExpanded = expandedItem === item.label
+                  const Icon = item.icon
 
-          return (
-            <div key={item.label}>
-              {showSeparator && (
-                <div className="h-px bg-white/[0.08] mx-3 my-2.5" />
-              )}
-              <div className="mb-0.5">
-                {!expanded ? (
-                  <Tooltip content={item.label} position="right">
-                    {navContent}
-                  </Tooltip>
-                ) : navContent}
+                  const badgeCount = item.label === 'Chat' ? unreadChat
+                    : item.label === 'I Miei Task' ? pendingTaskCount
+                    : item.label === 'Notifiche' ? unreadNotifications
+                    : 0
 
-                <AnimatePresence>
-                  {expanded && item.children && isExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
+                  const navContent = (
+                    <Link
+                      href={item.children ? '#' : item.href}
+                      onClick={(e) => {
+                        if (item.children) {
+                          e.preventDefault()
+                          setExpandedItem(isExpanded ? null : item.label)
+                        }
+                      }}
+                      className={cn(
+                        'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors duration-150 relative group',
+                        isActive
+                          ? 'bg-white/[0.10] text-white font-semibold'
+                          : 'text-sidebar-foreground/60 hover:text-sidebar-foreground/80 hover:bg-white/[0.07]'
+                      )}
                     >
-                      <div className="ml-9 mt-1 space-y-0.5 pb-1 border-l border-white/10 pl-0">
-                        {item.children.map((child) => (
-                          <Link
-                            key={child.href}
-                            href={child.href}
-                            className={cn(
-                              'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors duration-150',
-                              pathname === child.href
-                                ? 'text-sidebar-active bg-sidebar-active/10'
-                                : 'text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/[0.04]'
-                            )}
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-active" />
+                      )}
+                      <span className="relative flex-shrink-0">
+                        <Icon
+                          className={cn(
+                            'h-[18px] w-[18px]',
+                            isActive && 'text-sidebar-active'
+                          )}
+                        />
+                        {!expanded && badgeCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                            {badgeCount > 99 ? '99+' : badgeCount}
+                          </span>
+                        )}
+                      </span>
+                      <AnimatePresence>
+                        {expanded && (
+                          <motion.span
+                            initial={{ opacity: 0, width: 0 }}
+                            animate={{ opacity: 1, width: 'auto' }}
+                            exit={{ opacity: 0, width: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="flex-1 truncate whitespace-nowrap overflow-hidden"
                           >
-                            <span className={cn(
-                              'w-1 h-1 rounded-full flex-shrink-0',
-                              pathname === child.href ? 'bg-sidebar-active' : 'bg-sidebar-foreground/20'
-                            )} />
-                            {child.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                            {item.label}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                      {expanded && badgeCount > 0 && !item.children && (
+                        <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-[11px] font-bold text-white flex-shrink-0">
+                          {badgeCount > 99 ? '99+' : badgeCount}
+                        </span>
+                      )}
+                      {expanded && item.children && (
+                        <ChevronRight
+                          className={cn(
+                            'h-4 w-4 transition-transform duration-200 flex-shrink-0',
+                            isExpanded && 'rotate-90'
+                          )}
+                        />
+                      )}
+                    </Link>
+                  )
+
+                  return (
+                    <div key={item.label} className="mb-0.5">
+                      {!expanded ? (
+                        <Tooltip content={item.label} position="right">
+                          {navContent}
+                        </Tooltip>
+                      ) : navContent}
+
+                      <AnimatePresence>
+                        {expanded && item.children && isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="ml-9 mt-1 space-y-0.5 pb-1 border-l border-white/10 pl-0">
+                              {item.children.map((child) => (
+                                <Link
+                                  key={child.href}
+                                  href={child.href}
+                                  className={cn(
+                                    'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors duration-150',
+                                    pathname === child.href
+                                      ? 'text-sidebar-active bg-sidebar-active/10'
+                                      : 'text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/[0.04]'
+                                  )}
+                                >
+                                  <span className={cn(
+                                    'w-1 h-1 rounded-full flex-shrink-0',
+                                    pathname === child.href ? 'bg-sidebar-active' : 'bg-sidebar-foreground/20'
+                                  )} />
+                                  {child.label}
+                                </Link>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
-          )
-        })}
+            )
+          })
+        })()}
       </nav>
     </motion.aside>
   )

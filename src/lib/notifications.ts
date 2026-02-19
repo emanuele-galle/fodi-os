@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { sseManager } from '@/lib/sse'
+import { sseManager, sendBadgeUpdate } from '@/lib/sse'
 import { sendPush } from '@/lib/push'
 import type { Prisma } from '@/generated/prisma/client'
 
@@ -27,6 +27,10 @@ export async function createNotification(params: CreateNotificationParams) {
     type: 'notification',
     data: { id: notification.id, type, title, message, link, metadata },
   })
+
+  // Send badge update with fresh unread count
+  const unreadCount = await prisma.notification.count({ where: { userId, isRead: false } })
+  sendBadgeUpdate(userId, { notifications: unreadCount })
 
   sendPush(userId, { title, message, link })
 
@@ -56,12 +60,14 @@ export async function notifyUsers(
   }))
   await prisma.notification.createMany({ data })
 
-  // SSE + Push per user
+  // SSE + Push per user + badge update
   for (const userId of recipients) {
     sseManager.sendToUser(userId, {
       type: 'notification',
       data: { type: params.type, title: params.title, message: params.message, link: params.link, metadata: params.metadata },
     })
+    const unreadCount = await prisma.notification.count({ where: { userId, isRead: false } })
+    sendBadgeUpdate(userId, { notifications: unreadCount })
     sendPush(userId, { title: params.title, message: params.message, link: params.link })
   }
 }

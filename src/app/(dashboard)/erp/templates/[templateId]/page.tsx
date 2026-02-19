@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { TemplateEditor, type TemplateFormData } from '@/components/erp/TemplateEditor'
 import { TemplatePreview } from '@/components/erp/TemplatePreview'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 
 interface Client {
   id: string
@@ -59,6 +61,7 @@ export default function TemplateDetailPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [showPreview, setShowPreview] = useState(true)
+  const { confirm, confirmProps } = useConfirm()
 
   const fetchTemplate = useCallback(async () => {
     try {
@@ -115,7 +118,8 @@ export default function TemplateDetailPage() {
   }
 
   async function handleDelete() {
-    if (!confirm('Sei sicuro di voler eliminare questo template?')) return
+    const ok = await confirm({ message: 'Sei sicuro di voler eliminare questo template?', variant: 'danger' })
+    if (!ok) return
     const res = await fetch(`/api/quote-templates/${templateId}`, { method: 'DELETE' })
     if (res.ok) router.push('/erp/templates')
   }
@@ -255,6 +259,7 @@ export default function TemplateDetailPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog {...confirmProps} />
     </div>
   )
 }

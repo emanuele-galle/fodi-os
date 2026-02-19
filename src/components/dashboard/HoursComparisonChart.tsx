@@ -61,8 +61,8 @@ export function HoursComparisonChart({ data, loading }: HoursComparisonChartProp
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-        <XAxis dataKey="projectName" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
-        <YAxis tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" tickFormatter={(v) => `${v}h`} />
+        <XAxis dataKey="projectName" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+        <YAxis tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" tickFormatter={(v) => `${v}h`} />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
         <Legend formatter={(v) => LABELS[v] || v} />
         <Bar dataKey="estimated" fill="url(#gradEstimated)" radius={[4, 4, 0, 0]} />

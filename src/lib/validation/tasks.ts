@@ -26,6 +26,7 @@ export const updateTaskSchema = z.object({
   boardColumn: z.string().max(50).optional(),
   assigneeId: z.string().uuid('Assignee ID non valido').optional().nullable(),
   assigneeIds: z.array(z.string().uuid()).optional(),
+  projectId: z.string().uuid('Project ID non valido').optional().nullable(),
   folderId: z.string().uuid('Folder ID non valido').optional().nullable(),
   milestoneId: z.string().uuid('Milestone ID non valido').optional().nullable(),
   dueDate: z.string().datetime().optional().nullable(),

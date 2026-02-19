@@ -12,7 +12,7 @@ const TOOLTIP_STYLE = {
   borderRadius: 12,
   border: '1px solid var(--color-border)',
   backdropFilter: 'blur(8px)',
-  fontSize: 12,
+  fontSize: 13,
 }
 
 const COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#f59e0b', '#ef4444']
@@ -79,8 +79,8 @@ export function DealsFunnelChart({ data }: { data: DealsByStageData[] }) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="4 8" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis dataKey="label" type="category" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" width={75} />
+            <XAxis type="number" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+            <YAxis dataKey="label" type="category" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={75} />
             <Tooltip
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={((value: number, name: string) => {
@@ -112,8 +112,8 @@ export function WonDealsChart({ data }: { data: WonDealsData[] }) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" width={35} />
+            <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+            <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={35} />
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <Tooltip formatter={((value: number) => formatCurrency(value)) as any} contentStyle={TOOLTIP_STYLE} />
             <Line type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2} dot={{ r: 4, fill: '#22c55e' }} activeDot={{ r: 6 }} name="Valore" />

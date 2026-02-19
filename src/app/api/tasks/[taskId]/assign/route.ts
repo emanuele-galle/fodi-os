@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { notifyUsers } from '@/lib/notifications'
+import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
@@ -94,6 +95,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }
       )
     }
+
+    // Badge update for new and removed assignees
+    const affectedUsers = [...new Set([...toAdd, ...remove])]
+    for (const uid of affectedUsers) {
+      const count = await prisma.task.count({
+        where: {
+          status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] },
+          OR: [{ assigneeId: uid }, { assignments: { some: { userId: uid } } }],
+        },
+      })
+      sendBadgeUpdate(uid, { tasks: count })
+    }
+
+    // Data changed for all involved
+    const allInvolved = [...affectedUsers]
+    if (currentUserId) allInvolved.push(currentUserId)
+    sendDataChanged([...new Set(allInvolved)], 'task', taskId)
 
     return NextResponse.json(task)
   } catch (e) {

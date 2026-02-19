@@ -58,8 +58,6 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
 
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 30000)
-    return () => clearInterval(interval)
   }, [fetchNotifications])
 
   // Real-time notification updates via SSE

@@ -58,7 +58,7 @@ export function PipelineFunnel() {
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 5, bottom: 5 }} barCategoryGap="25%">
         <CartesianGrid strokeDasharray="3 6" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.3} />
-        <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} allowDecimals={false} />
+        <XAxis type="number" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} allowDecimals={false} />
         <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: 'var(--color-foreground)', fontWeight: 500 }} stroke="transparent" tickLine={false} axisLine={false} width={75} />
         <Tooltip
           formatter={(value?: number) => [value ?? 0, 'Clienti']}

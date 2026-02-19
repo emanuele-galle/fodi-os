@@ -30,6 +30,8 @@ interface CardData {
   bookingDaysAhead: number
   bookingStartHour: number
   bookingEndHour: number
+  viewCount: number
+  lastViewedAt: string | null
   user: {
     id: string
     firstName: string
@@ -129,6 +131,22 @@ export default function DigitalCardPage() {
               </a>
             </div>
           )}
+
+          {/* Analytics */}
+          <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg bg-card border border-border/30">
+              <p className="text-xs text-muted mb-1">Visualizzazioni Totali</p>
+              <p className="text-2xl font-bold">{card.viewCount || 0}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-card border border-border/30">
+              <p className="text-xs text-muted mb-1">Ultima Visualizzazione</p>
+              <p className="text-sm font-medium">
+                {card.lastViewedAt
+                  ? new Date(card.lastViewedAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  : 'Mai'}
+              </p>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left: Form */}

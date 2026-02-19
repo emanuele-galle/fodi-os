@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/hooks/useConfirm'
 
 interface SocialPost {
   id: string
@@ -104,6 +106,7 @@ export default function SocialPage() {
   const [editMediaUrls, setEditMediaUrls] = useState('')
   const [editError, setEditError] = useState<string | null>(null)
   const [editSubmitting, setEditSubmitting] = useState(false)
+  const { confirm: confirmSocial, confirmProps: confirmSocialProps } = useConfirm()
 
   const fetchPosts = useCallback(async () => {
     setLoading(true)
@@ -170,7 +173,8 @@ export default function SocialPage() {
 
   async function handleDelete() {
     if (!editPost) return
-    if (!window.confirm('Sei sicuro di voler eliminare questo post? L\'azione non e\' reversibile.')) return
+    const ok = await confirmSocial({ message: 'Sei sicuro di voler eliminare questo post? L\'azione non e\' reversibile.', variant: 'danger' })
+    if (!ok) return
     setEditSubmitting(true)
     setEditError(null)
     try {
@@ -510,6 +514,7 @@ export default function SocialPage() {
           </div>
         )}
       </Modal>
+      <ConfirmDialog {...confirmSocialProps} />
     </div>
   )
 }

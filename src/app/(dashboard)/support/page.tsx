@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { LifeBuoy, Plus, Search, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -131,6 +132,9 @@ export default function SupportPage() {
   useEffect(() => {
     fetchTickets()
   }, [fetchTickets])
+
+  // Real-time refresh when ticket data changes via SSE
+  useRealtimeRefresh('ticket', fetchTickets)
 
   useEffect(() => {
     setPage(1)

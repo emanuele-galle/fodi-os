@@ -186,11 +186,20 @@ export default function TeamActivityPage() {
                         <Badge variant="outline" className="text-[10px] mx-0.5">
                           {ENTITY_TYPE_LABELS[item.entityType] || item.entityType}
                         </Badge>
+                        {item.metadata && item.metadata.title && (
+                          <span className="text-muted"> — &quot;{String(item.metadata.title)}&quot;</span>
+                        )}
+                        {item.metadata && item.metadata.taskTitle && !item.metadata.title && (
+                          <span className="text-muted"> — &quot;{String(item.metadata.taskTitle)}&quot;</span>
+                        )}
                         {item.metadata && item.metadata.companyName && (
                           <span className="text-muted"> — {String(item.metadata.companyName)}</span>
                         )}
-                        {item.metadata && item.metadata.name && (
+                        {item.metadata && item.metadata.name && !item.metadata.title && (
                           <span className="text-muted"> — {String(item.metadata.name)}</span>
+                        )}
+                        {item.metadata && item.metadata.projectName && (
+                          <span className="text-xs text-muted ml-1">({String(item.metadata.projectName)})</span>
                         )}
                         {item.metadata && item.metadata.number && (
                           <span className="text-muted"> — #{String(item.metadata.number)}</span>

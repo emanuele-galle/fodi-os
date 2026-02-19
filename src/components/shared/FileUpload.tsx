@@ -237,7 +237,7 @@ export function FileUpload({
           ref={inputRef}
           type="file"
           multiple={maxFiles > 1}
-          accept={accept}
+          accept={accept || "*/*"}
           onChange={(e) => {
             if (e.target.files?.length) addFiles(e.target.files)
             e.target.value = ''

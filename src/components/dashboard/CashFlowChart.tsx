@@ -116,9 +116,9 @@ export function CashFlowChart() {
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="var(--color-border)" strokeOpacity={0.4} />
-        <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
+        <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
         <YAxis
-          tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
+          tick={{ fontSize: 13, fill: 'var(--color-muted)' }}
           stroke="transparent"
           tickLine={false}
           axisLine={false}

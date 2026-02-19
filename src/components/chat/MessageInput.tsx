@@ -120,6 +120,7 @@ export function MessageInput({ onSend, onSendFile, onTyping, replyTo, onCancelRe
             <input
               ref={fileInputRef}
               type="file"
+              accept="*/*"
               className="hidden"
               onChange={handleFileChange}
             />

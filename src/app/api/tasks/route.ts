@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createTaskSchema } from '@/lib/validation'
 import { notifyUsers } from '@/lib/notifications'
+import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -21,11 +22,16 @@ export async function GET(request: NextRequest) {
     const mine = searchParams.get('mine')
     const scope = searchParams.get('scope') // 'assigned' | 'created' | 'delegated' | 'all' (default: all my tasks)
     const personal = searchParams.get('personal')
+    const search = searchParams.get('search')
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
     const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = {}
+
+    if (search && search.trim().length >= 2) {
+      where.title = { contains: search.trim(), mode: 'insensitive' }
+    }
 
     if (status) {
       where.status = { in: status.split(',').map((s) => s.trim()) }
@@ -202,6 +208,21 @@ export async function POST(request: NextRequest) {
         }
       )
     }
+
+    // Send badge_update for assignees with fresh task count
+    for (const uid of allAssigneeIds) {
+      if (uid === userId) continue
+      const count = await prisma.task.count({
+        where: {
+          status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] },
+          OR: [{ assigneeId: uid }, { assignments: { some: { userId: uid } } }],
+        },
+      })
+      sendBadgeUpdate(uid, { tasks: count })
+    }
+
+    // Notify all connected users about data change
+    sendDataChanged([...allAssigneeIds, userId], 'task', task.id)
 
     // Re-fetch with full includes
     const fullTask = await prisma.task.findUnique({

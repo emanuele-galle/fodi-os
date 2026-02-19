@@ -278,27 +278,32 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     setUploading(true)
     try {
       for (const file of Array.from(e.target.files)) {
-        // Upload to assets first to get a real URL
+        // Upload reale su MinIO via /api/assets (FormData)
+        const formData = new FormData()
+        formData.append('file', file)
+        if (task?.project?.id) {
+          formData.append('projectId', task.project.id)
+        }
+
         const assetRes = await fetch('/api/assets', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fileName: file.name,
-            fileUrl: URL.createObjectURL(file),
-            fileSize: file.size,
-            mimeType: file.type || 'application/octet-stream',
-            category: file.type.startsWith('image/') ? 'image' : 'document',
-          }),
+          body: formData,
         })
-        const assetData = assetRes.ok ? await assetRes.json() : null
-        const fileUrl = assetData?.fileUrl || URL.createObjectURL(file)
 
+        if (!assetRes.ok) {
+          console.error('Asset upload failed:', await assetRes.text())
+          continue
+        }
+
+        const assetData = await assetRes.json()
+
+        // Collega il file alla task come attachment
         await fetch(`/api/tasks/${taskId}/attachments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fileName: file.name,
-            fileUrl,
+            fileUrl: assetData.fileUrl,
             fileSize: file.size,
             mimeType: file.type || 'application/octet-stream',
           }),
@@ -650,6 +655,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
                 <input
                   ref={fileInputRef}
                   type="file"
+                  accept="*/*"
                   multiple
                   onChange={handleFileUpload}
                   className="hidden"
