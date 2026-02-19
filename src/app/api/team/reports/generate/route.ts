@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   // Get all active non-CLIENT users
   const users = await prisma.user.findMany({
     where: { isActive: true, role: { not: 'CLIENT' } },
-    select: { id: true, firstName: true, lastName: true, email: true, role: true },
+    select: { id: true, firstName: true, lastName: true, email: true, role: true, jobTitle: true },
   })
 
   // Get ADMIN and PM users for email recipients
@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
     const reportData: DailyReportData = {
       userName,
       userEmail: user.email,
-      userRole: user.role,
+      userRole: user.jobTitle || user.role,
       date: dateStr,
       generatedAt,
       kpi: {

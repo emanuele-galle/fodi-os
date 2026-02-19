@@ -26,6 +26,7 @@ model User {
   dailyDigest Boolean   @default(true)
   onboardingCompleted Boolean @default(false)
   role          Role      @default(DEVELOPER)
+  jobTitle      String?
   isActive      Boolean   @default(true)
   sectionAccess Json?
   lastLoginAt    DateTime?
