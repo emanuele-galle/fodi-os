@@ -10,6 +10,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env.docker
+    volumes:
+      - ./certs:/app/certs:ro
     networks:
       - traefik-public
       - panel-internal
