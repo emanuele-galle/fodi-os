@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
@@ -46,6 +47,13 @@ import {
 } from '@/lib/section-access'
 import { formatDistanceToNow, format } from 'date-fns'
 import { it } from 'date-fns/locale'
+import { RolesContent } from '@/components/settings/RolesContent'
+
+interface CustomRoleOption {
+  id: string
+  name: string
+  color: string | null
+}
 
 interface UserItem {
   id: string
@@ -53,6 +61,8 @@ interface UserItem {
   lastName: string
   email: string
   role: string
+  customRoleId: string | null
+  customRole: CustomRoleOption | null
   isActive: boolean
   avatarUrl: string | null
   phone: string | null
@@ -74,8 +84,10 @@ interface UserStats {
 
 const ROLES = [
   { value: 'ADMIN', label: 'Admin' },
-  { value: 'MANAGER', label: 'Manager' },
-  { value: 'SALES', label: 'Commerciale' },
+  { value: 'DIR_COMMERCIALE', label: 'Dir. Commerciale' },
+  { value: 'DIR_TECNICO', label: 'Dir. Tecnico' },
+  { value: 'DIR_SUPPORT', label: 'Dir. Supporto' },
+  { value: 'COMMERCIALE', label: 'Commerciale' },
   { value: 'PM', label: 'Resp. Progetto' },
   { value: 'DEVELOPER', label: 'Sviluppatore' },
   { value: 'CONTENT', label: 'Contenuti' },
@@ -85,8 +97,10 @@ const ROLES = [
 
 const ROLE_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
   ADMIN: 'destructive',
-  MANAGER: 'warning',
-  SALES: 'success',
+  DIR_COMMERCIALE: 'warning',
+  DIR_TECNICO: 'warning',
+  DIR_SUPPORT: 'warning',
+  COMMERCIALE: 'success',
   PM: 'default',
   DEVELOPER: 'default',
   CONTENT: 'outline',
@@ -117,58 +131,86 @@ const PERMISSION_LABELS: Record<string, string> = {
 
 type ModalTab = 'profile' | 'permissions' | 'sections'
 
-export default function UsersAdminPage() {
+const PAGE_TABS = [
+  { id: 'users' as const, label: 'Utenti', icon: Users },
+  { id: 'roles' as const, label: 'Ruoli', icon: ShieldCheck },
+]
+
+type PageTab = 'users' | 'roles'
+
+function UsersPageContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const activePageTab = (searchParams.get('tab') as PageTab) || 'users'
+
+  function setPageTab(tab: PageTab) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (tab === 'users') {
+      params.delete('tab')
+    } else {
+      params.set('tab', tab)
+    }
+    const qs = params.toString()
+    router.push(`/settings/users${qs ? `?${qs}` : ''}`, { scroll: false })
+  }
+
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [showInviteForm, setShowInviteForm] = useState(false)
-  const [inviteData, setInviteData] = useState({ email: '', firstName: '', lastName: '', userRole: 'DEVELOPER', phone: '' })
+  const [inviteData, setInviteData] = useState({ email: '', firstName: '', lastName: '', userRole: 'DEVELOPER', customRoleId: '', phone: '' })
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteResult, setInviteResult] = useState<{ password: string; email: string } | null>(null)
   const [inviteError, setInviteError] = useState('')
   const [editingRole, setEditingRole] = useState<string | null>(null)
   const [copiedPassword, setCopiedPassword] = useState(false)
 
-  // Edit modal state
   const [editUser, setEditUser] = useState<UserItem | null>(null)
-  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', phone: '', role: '', avatarUrl: '' })
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', phone: '', role: '', customRoleId: '', avatarUrl: '' })
+  const [customRoles, setCustomRoles] = useState<CustomRoleOption[]>([])
   const [editTab, setEditTab] = useState<ModalTab>('profile')
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState('')
 
-  // Reset password state
   const [resetResult, setResetResult] = useState<string | null>(null)
   const [resetLoading, setResetLoading] = useState(false)
   const [copiedResetPw, setCopiedResetPw] = useState(false)
 
-  // Permissions state
   const [userPerms, setUserPerms] = useState<UserPermission[]>([])
   const [permsLoading, setPermsLoading] = useState(false)
   const [permsSaving, setPermsSaving] = useState(false)
 
-  // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
 
-  // Stats state
   const [userStats, setUserStats] = useState<UserStats | null>(null)
 
-  // Avatar upload state
   const [avatarUploading, setAvatarUploading] = useState(false)
 
-  // Impersonate state
   const [impersonating, setImpersonating] = useState(false)
 
-  // Section access state
   const [sectionOverrideActive, setSectionOverrideActive] = useState(false)
   const [sectionAccessDraft, setSectionAccessDraft] = useState<SectionAccessMap | null>(null)
   const [sectionsSaving, setSectionsSaving] = useState(false)
 
   useEffect(() => {
     loadUsers()
+    loadCustomRoles()
   }, [])
+
+  async function loadCustomRoles() {
+    try {
+      const res = await fetch('/api/roles')
+      if (res.ok) {
+        const data = await res.json()
+        setCustomRoles((data.items || []).filter((r: { isActive: boolean }) => r.isActive).map((r: { id: string; name: string; color: string | null }) => ({ id: r.id, name: r.name, color: r.color })))
+      }
+    } catch {
+      // silent
+    }
+  }
 
   const [fetchError, setFetchError] = useState<string | null>(null)
 
@@ -198,7 +240,10 @@ export default function UsersAdminPage() {
       const res = await fetch('/api/users/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(inviteData),
+        body: JSON.stringify({
+          ...inviteData,
+          customRoleId: inviteData.customRoleId || undefined,
+        }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -206,7 +251,7 @@ export default function UsersAdminPage() {
         return
       }
       setInviteResult({ password: data.tempPassword, email: inviteData.email })
-      setInviteData({ email: '', firstName: '', lastName: '', userRole: 'DEVELOPER', phone: '' })
+      setInviteData({ email: '', firstName: '', lastName: '', userRole: 'DEVELOPER', customRoleId: '', phone: '' })
       loadUsers()
     } catch {
       setInviteError('Errore di connessione')
@@ -258,7 +303,6 @@ export default function UsersAdminPage() {
     setTimeout(() => setCopiedResetPw(false), 2000)
   }
 
-  // Open edit modal
   const openEditModal = useCallback(async (user: UserItem) => {
     setEditUser(user)
     setEditForm({
@@ -267,6 +311,7 @@ export default function UsersAdminPage() {
       email: user.email,
       phone: user.phone || '',
       role: user.role,
+      customRoleId: user.customRoleId || '',
       avatarUrl: user.avatarUrl || '',
     })
     setEditTab('profile')
@@ -275,8 +320,6 @@ export default function UsersAdminPage() {
     setShowDeleteConfirm(false)
     setDeleteConfirmText('')
     setUserStats(null)
-
-    // Load stats
     loadUserStats(user.id)
   }, [])
 
@@ -288,13 +331,11 @@ export default function UsersAdminPage() {
       ])
       const tasksData = await tasksRes.json()
       const timeData = await timeRes.json()
-
       const tasks = tasksData?.items || tasksData?.tasks || []
       const totalTasks = Array.isArray(tasks) ? tasks.length : 0
       const completedTasks = Array.isArray(tasks) ? tasks.filter((t: { status: string }) => t.status === 'DONE').length : 0
       const entries = timeData?.items || timeData?.entries || []
       const totalHours = Array.isArray(entries) ? entries.reduce((sum: number, e: { hours: number }) => sum + (e.hours || 0), 0) : 0
-
       setUserStats({ tasksCompleted: completedTasks, tasksTotal: totalTasks, hoursLogged: totalHours })
     } catch {
       setUserStats({ tasksCompleted: 0, tasksTotal: 0, hoursLogged: 0 })
@@ -322,6 +363,7 @@ export default function UsersAdminPage() {
           email: editForm.email,
           phone: editForm.phone || null,
           role: editForm.role,
+          customRoleId: editForm.customRoleId || null,
           avatarUrl: editForm.avatarUrl || null,
         }),
       })
@@ -330,7 +372,6 @@ export default function UsersAdminPage() {
         setEditError(data.error || 'Errore durante il salvataggio')
         return
       }
-      // Update local state
       setUsers((prev) => prev.map((u) => (u.id === editUser.id ? { ...u, ...data.user } : u)))
       setEditUser(data.user)
     } catch {
@@ -358,7 +399,6 @@ export default function UsersAdminPage() {
     }
   }
 
-  // Permissions
   async function loadPermissions(userId: string) {
     setPermsLoading(true)
     try {
@@ -406,7 +446,6 @@ export default function UsersAdminPage() {
     }
   }
 
-  // Handle tab change
   function handleTabChange(tab: ModalTab) {
     setEditTab(tab)
     if (tab === 'permissions' && editUser) {
@@ -423,7 +462,6 @@ export default function UsersAdminPage() {
     }
   }
 
-  // Delete user
   async function handleDeleteUser() {
     if (!editUser) return
     setDeleteLoading(true)
@@ -443,7 +481,6 @@ export default function UsersAdminPage() {
     }
   }
 
-  // Section access save
   async function saveSectionAccess() {
     if (!editUser) return
     setSectionsSaving(true)
@@ -469,7 +506,6 @@ export default function UsersAdminPage() {
     }
   }
 
-  // Impersonate user
   async function handleImpersonate(targetUserId: string) {
     setImpersonating(true)
     try {
@@ -491,11 +527,9 @@ export default function UsersAdminPage() {
     }
   }
 
-  // Avatar upload
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !editUser) return
-
     if (!file.type.startsWith('image/')) {
       setEditError('Seleziona un file immagine')
       return
@@ -504,13 +538,11 @@ export default function UsersAdminPage() {
       setEditError('Immagine troppo grande (max 5 MB)')
       return
     }
-
     setAvatarUploading(true)
     setEditError('')
     try {
       const formData = new FormData()
       formData.append('file', file)
-
       const uploadRes = await fetch('/api/chat/upload', { method: 'POST', body: formData })
       if (!uploadRes.ok) {
         setEditError('Errore upload immagine')
@@ -536,27 +568,57 @@ export default function UsersAdminPage() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Users className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold">Gestione Utenti</h1>
-            <p className="text-xs md:text-sm text-muted">{users.length} utenti totali</p>
-          </div>
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Users className="h-6 w-6 text-primary" />
         </div>
-        <div className="hidden sm:block flex-shrink-0">
-          <Button size="sm" onClick={() => { setShowInviteForm(true); setInviteResult(null) }}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Invita Utente
-          </Button>
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold">Gestione Utenti</h1>
+          <p className="text-xs md:text-sm text-muted">{users.length} utenti totali</p>
         </div>
-        <Button onClick={() => { setShowInviteForm(true); setInviteResult(null) }} className="sm:hidden w-full">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Invita Utente
-        </Button>
       </div>
+
+      {/* Page tab bar */}
+      <div className="flex gap-1 mb-6 border-b border-border overflow-x-auto scrollbar-none">
+        {PAGE_TABS.map((tab) => {
+          const Icon = tab.icon
+          const isActive = activePageTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setPageTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap touch-manipulation min-h-[44px] ${
+                isActive
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted hover:text-foreground'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Roles tab */}
+      {activePageTab === 'roles' && <RolesContent />}
+
+      {/* Users tab */}
+      {activePageTab === 'users' && (
+        <>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-end mb-4 gap-3">
+            <div className="hidden sm:block flex-shrink-0">
+              <Button size="sm" onClick={() => { setShowInviteForm(true); setInviteResult(null) }}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Invita Utente
+              </Button>
+            </div>
+            <Button onClick={() => { setShowInviteForm(true); setInviteResult(null) }} className="sm:hidden w-full">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Invita Utente
+            </Button>
+          </div>
 
       {/* Invite Form Modal */}
       <Modal
@@ -634,11 +696,19 @@ export default function UsersAdminPage() {
               placeholder="+39 ..."
             />
             <Select
-              label="Ruolo"
+              label="Ruolo Base"
               options={ROLES}
               value={inviteData.userRole}
               onChange={(e) => setInviteData((d) => ({ ...d, userRole: e.target.value }))}
             />
+            {customRoles.length > 0 && (
+              <Select
+                label="Ruolo Personalizzato (opzionale)"
+                options={[{ value: '', label: 'Nessuno (usa ruolo base)' }, ...customRoles.map((r) => ({ value: r.id, label: r.name }))]}
+                value={inviteData.customRoleId}
+                onChange={(e) => setInviteData((d) => ({ ...d, customRoleId: e.target.value }))}
+              />
+            )}
             {inviteError && (
               <p className="text-sm text-destructive">{inviteError}</p>
             )}
@@ -662,7 +732,6 @@ export default function UsersAdminPage() {
       {/* Edit User Modal */}
       <Modal open={!!editUser} onClose={closeEditModal} title="Modifica Utente" size="xl">
         {editUser && (<>
-              {/* Header with avatar & info */}
               <div className="flex items-center gap-4 mb-6 pb-4 border-b border-border">
                 <div className="relative group">
                   <Avatar
@@ -706,7 +775,7 @@ export default function UsersAdminPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-1.5">
                     <Badge variant={ROLE_BADGE[editUser.role] || 'default'}>
-                      {editUser.role === 'ADMIN' || editUser.role === 'MANAGER' ? (
+                      {editUser.role === 'ADMIN' ? (
                         <ShieldCheck className="h-3 w-3 mr-1" />
                       ) : (
                         <Shield className="h-3 w-3 mr-1" />
@@ -739,7 +808,6 @@ export default function UsersAdminPage() {
                 </div>
               </div>
 
-              {/* Tabs */}
               <div className="flex gap-1 mb-4 border-b border-border overflow-x-auto scrollbar-none">
                 <button
                   onClick={() => handleTabChange('profile')}
@@ -780,159 +848,76 @@ export default function UsersAdminPage() {
                 </div>
               )}
 
-              {/* Profile Tab */}
               {editTab === 'profile' && (
                 <div className="space-y-6">
-                  {/* Edit fields */}
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Input
-                        label="Nome"
-                        value={editForm.firstName}
-                        onChange={(e) => setEditForm((f) => ({ ...f, firstName: e.target.value }))}
-                      />
-                      <Input
-                        label="Cognome"
-                        value={editForm.lastName}
-                        onChange={(e) => setEditForm((f) => ({ ...f, lastName: e.target.value }))}
-                      />
+                      <Input label="Nome" value={editForm.firstName} onChange={(e) => setEditForm((f) => ({ ...f, firstName: e.target.value }))} />
+                      <Input label="Cognome" value={editForm.lastName} onChange={(e) => setEditForm((f) => ({ ...f, lastName: e.target.value }))} />
                     </div>
-                    <Input
-                      label="Email"
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-                    />
+                    <Input label="Email" type="email" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Input
-                        label="Telefono"
-                        type="tel"
-                        value={editForm.phone}
-                        onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
-                        placeholder="+39 ..."
-                      />
-                      <Select
-                        label="Ruolo"
-                        options={ROLES}
-                        value={editForm.role}
-                        onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
-                      />
+                      <Input label="Telefono" type="tel" value={editForm.phone} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))} placeholder="+39 ..." />
+                      <Select label="Ruolo Base" options={ROLES} value={editForm.role} onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))} />
                     </div>
+                    {customRoles.length > 0 && (
+                      <Select
+                        label="Ruolo Personalizzato (opzionale)"
+                        options={[{ value: '', label: 'Nessuno (usa ruolo base)' }, ...customRoles.map((r) => ({ value: r.id, label: r.name }))]}
+                        value={editForm.customRoleId}
+                        onChange={(e) => setEditForm((f) => ({ ...f, customRoleId: e.target.value }))}
+                      />
+                    )}
                   </div>
-
                   <div className="flex gap-3">
-                    <Button onClick={handleEditSave} loading={editSaving} className="flex-1">
-                      Salva Modifiche
-                    </Button>
+                    <Button onClick={handleEditSave} loading={editSaving} className="flex-1">Salva Modifiche</Button>
                     {editUser.role !== 'ADMIN' && (
-                      <Button
-                        variant="outline"
-                        onClick={() => handleImpersonate(editUser.id)}
-                        loading={impersonating}
-                      >
-                        <LogIn className="h-4 w-4 mr-2" />
-                        Accedi come
+                      <Button variant="outline" onClick={() => handleImpersonate(editUser.id)} loading={impersonating}>
+                        <LogIn className="h-4 w-4 mr-2" />Accedi come
                       </Button>
                     )}
                   </div>
-
-                  {/* Reset Password Section */}
                   <div className="border-t border-border pt-4">
-                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                      <KeyRound className="h-4 w-4" />
-                      Reset Password
-                    </h4>
+                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2"><KeyRound className="h-4 w-4" />Reset Password</h4>
                     {resetResult ? (
                       <div className="bg-secondary rounded-lg p-4 space-y-2">
                         <p className="text-sm text-muted">Nuova password temporanea:</p>
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-mono font-semibold">{resetResult}</p>
-                          <button
-                            onClick={() => copyResetPassword(resetResult)}
-                            className="p-1 rounded hover:bg-background transition-colors"
-                            title="Copia password"
-                          >
-                            {copiedResetPw ? (
-                              <Check className="h-3.5 w-3.5 text-emerald-600" />
-                            ) : (
-                              <Copy className="h-3.5 w-3.5 text-muted" />
-                            )}
+                          <button onClick={() => copyResetPassword(resetResult)} className="p-1 rounded hover:bg-background transition-colors" title="Copia password">
+                            {copiedResetPw ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-muted" />}
                           </button>
                         </div>
                         <p className="text-xs text-muted">Comunica questa password all&apos;utente.</p>
                       </div>
                     ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleResetPassword}
-                        loading={resetLoading}
-                      >
-                        <KeyRound className="h-4 w-4 mr-2" />
-                        Genera Nuova Password
+                      <Button variant="outline" size="sm" onClick={handleResetPassword} loading={resetLoading}>
+                        <KeyRound className="h-4 w-4 mr-2" />Genera Nuova Password
                       </Button>
                     )}
                   </div>
-
-                  {/* Delete Section */}
                   <div className="border-t border-border pt-4">
-                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2 text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                      Zona Pericolosa
-                    </h4>
+                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2 text-destructive"><Trash2 className="h-4 w-4" />Zona Pericolosa</h4>
                     {showDeleteConfirm ? (
                       <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4 space-y-3">
-                        <p className="text-sm">
-                          Sei sicuro di voler eliminare <strong>{editUser.firstName} {editUser.lastName}</strong>?
-                          Questa azione non può essere annullata. Tutti i dati associati saranno rimossi.
-                        </p>
-                        <Input
-                          placeholder={`Scrivi "${editUser.email}" per confermare`}
-                          value={deleteConfirmText}
-                          onChange={(e) => setDeleteConfirmText(e.target.value)}
-                        />
+                        <p className="text-sm">Sei sicuro di voler eliminare <strong>{editUser.firstName} {editUser.lastName}</strong>? Questa azione non puo essere annullata.</p>
+                        <Input placeholder={`Scrivi "${editUser.email}" per confermare`} value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} />
                         <div className="flex gap-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText('') }}
-                          >
-                            Annulla
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={handleDeleteUser}
-                            loading={deleteLoading}
-                            disabled={deleteConfirmText !== editUser.email}
-                          >
-                            Elimina Definitivamente
-                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText('') }}>Annulla</Button>
+                          <Button variant="destructive" size="sm" onClick={handleDeleteUser} loading={deleteLoading} disabled={deleteConfirmText !== editUser.email}>Elimina Definitivamente</Button>
                         </div>
                       </div>
                     ) : (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setShowDeleteConfirm(true)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Elimina Utente
-                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => setShowDeleteConfirm(true)}><Trash2 className="h-4 w-4 mr-2" />Elimina Utente</Button>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Permissions Tab */}
               {editTab === 'permissions' && (
                 <div className="space-y-4">
                   {permsLoading ? (
-                    <div className="space-y-3">
-                      {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="h-10 rounded shimmer" />
-                      ))}
-                    </div>
+                    <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => (<div key={i} className="h-10 rounded shimmer" />))}</div>
                   ) : (
                     <>
                       <div className="overflow-x-auto rounded-xl border border-border/20 overflow-hidden">
@@ -940,11 +925,7 @@ export default function UsersAdminPage() {
                           <thead>
                             <tr className="border-b border-border/30">
                               <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Modulo</th>
-                              {PERMISSIONS.map((p) => (
-                                <th key={p} className="px-2 py-3 text-center text-xs font-medium text-muted uppercase tracking-wider">
-                                  {PERMISSION_LABELS[p]}
-                                </th>
-                              ))}
+                              {PERMISSIONS.map((p) => (<th key={p} className="px-2 py-3 text-center text-xs font-medium text-muted uppercase tracking-wider">{PERMISSION_LABELS[p]}</th>))}
                             </tr>
                           </thead>
                           <tbody>
@@ -958,11 +939,7 @@ export default function UsersAdminPage() {
                                       aria-checked={hasUserPerm(mod.key, perm)}
                                       aria-label={`${mod.label} - ${perm}`}
                                       onClick={() => togglePerm(mod.key, perm)}
-                                      className={`h-6 w-6 min-h-[44px] min-w-[44px] rounded border-2 transition-all inline-flex items-center justify-center ${
-                                        hasUserPerm(mod.key, perm)
-                                          ? 'bg-primary border-primary text-primary-foreground'
-                                          : 'border-border hover:border-primary/50'
-                                      }`}
+                                      className={`h-6 w-6 min-h-[44px] min-w-[44px] rounded border-2 transition-all inline-flex items-center justify-center ${hasUserPerm(mod.key, perm) ? 'bg-primary border-primary text-primary-foreground' : 'border-border hover:border-primary/50'}`}
                                     >
                                       {hasUserPerm(mod.key, perm) && <Check className="h-3.5 w-3.5" />}
                                     </button>
@@ -973,18 +950,14 @@ export default function UsersAdminPage() {
                           </tbody>
                         </table>
                       </div>
-                      <Button onClick={savePermissions} loading={permsSaving}>
-                        Salva Permessi
-                      </Button>
+                      <Button onClick={savePermissions} loading={permsSaving}>Salva Permessi</Button>
                     </>
                   )}
                 </div>
               )}
 
-              {/* Sections Tab */}
               {editTab === 'sections' && sectionAccessDraft && (
                 <div className="space-y-4">
-                  {/* Override toggle */}
                   <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 border border-border/50">
                     <div>
                       <p className="text-sm font-medium">Personalizzazione attiva</p>
@@ -1001,77 +974,41 @@ export default function UsersAdminPage() {
                           setSectionAccessDraft(getDefaultSectionAccess(editUser.role as import('@/generated/prisma/client').Role))
                         }
                       }}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
-                        sectionOverrideActive ? 'bg-primary' : 'bg-border'
-                      }`}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${sectionOverrideActive ? 'bg-primary' : 'bg-border'}`}
                     >
-                      <span
-                        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                          sectionOverrideActive ? 'translate-x-5' : ''
-                        }`}
-                      />
+                      <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${sectionOverrideActive ? 'translate-x-5' : ''}`} />
                     </button>
                   </div>
-
-                  {/* Section cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {SECTIONS.map((section) => {
                       const Icon = SECTION_ICONS[section]
                       const perm = sectionAccessDraft[section]
                       const defaults = editUser ? getDefaultSectionAccess(editUser.role as import('@/generated/prisma/client').Role) : null
                       const isDefault = defaults ? perm.view === defaults[section].view && perm.edit === defaults[section].edit : false
-
                       return (
-                        <div
-                          key={section}
-                          className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                            perm.view ? 'border-border bg-card' : 'border-border/50 bg-secondary/30 opacity-60'
-                          }`}
-                        >
-                          <div className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            perm.view ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted'
-                          }`}>
+                        <div key={section} className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${perm.view ? 'border-border bg-card' : 'border-border/50 bg-secondary/30 opacity-60'}`}>
+                          <div className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 ${perm.view ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted'}`}>
                             <Icon className="h-4.5 w-4.5" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
                               <p className="text-sm font-medium truncate">{SECTION_LABELS[section]}</p>
-                              {sectionOverrideActive && !isDefault && (
-                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" title="Modificato dal default" />
-                              )}
+                              {sectionOverrideActive && !isDefault && (<span className="h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" title="Modificato dal default" />)}
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <button
-                              onClick={() => {
-                                setSectionAccessDraft((prev) => prev ? {
-                                  ...prev,
-                                  [section]: { ...prev[section], view: !prev[section].view, edit: !prev[section].view ? prev[section].edit : false },
-                                } : prev)
-                              }}
+                              onClick={() => { setSectionAccessDraft((prev) => prev ? { ...prev, [section]: { ...prev[section], view: !prev[section].view, edit: !prev[section].view ? prev[section].edit : false } } : prev) }}
                               disabled={!sectionOverrideActive}
-                              className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                                perm.view
-                                  ? 'bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25'
-                                  : 'bg-secondary text-muted hover:bg-secondary/80'
-                              } ${!sectionOverrideActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              className={`px-2 py-1 rounded text-xs font-medium transition-all ${perm.view ? 'bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25' : 'bg-secondary text-muted hover:bg-secondary/80'} ${!sectionOverrideActive ? 'opacity-50 cursor-not-allowed' : ''}`}
                               title={perm.view ? 'Visibile' : 'Nascosto'}
                             >
                               {perm.view ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                             </button>
                             <button
-                              onClick={() => {
-                                setSectionAccessDraft((prev) => prev ? {
-                                  ...prev,
-                                  [section]: { ...prev[section], edit: !prev[section].edit },
-                                } : prev)
-                              }}
+                              onClick={() => { setSectionAccessDraft((prev) => prev ? { ...prev, [section]: { ...prev[section], edit: !prev[section].edit } } : prev) }}
                               disabled={!sectionOverrideActive || !perm.view}
-                              className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                                perm.edit
-                                  ? 'bg-indigo-500/15 text-indigo-600 hover:bg-indigo-500/25'
-                                  : 'bg-secondary text-muted hover:bg-secondary/80'
-                              } ${(!sectionOverrideActive || !perm.view) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              className={`px-2 py-1 rounded text-xs font-medium transition-all ${perm.edit ? 'bg-indigo-500/15 text-indigo-600 hover:bg-indigo-500/25' : 'bg-secondary text-muted hover:bg-secondary/80'} ${(!sectionOverrideActive || !perm.view) ? 'opacity-50 cursor-not-allowed' : ''}`}
                               title={perm.edit ? 'Modifica attiva' : 'Solo lettura'}
                             >
                               <Pencil className="h-3.5 w-3.5" />
@@ -1081,24 +1018,11 @@ export default function UsersAdminPage() {
                       )
                     })}
                   </div>
-
-                  {/* Actions */}
                   <div className="flex items-center gap-3 pt-2">
-                    <Button onClick={saveSectionAccess} loading={sectionsSaving} className="flex-1">
-                      Salva Sezioni
-                    </Button>
+                    <Button onClick={saveSectionAccess} loading={sectionsSaving} className="flex-1">Salva Sezioni</Button>
                     {sectionOverrideActive && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (editUser) {
-                            setSectionAccessDraft(getDefaultSectionAccess(editUser.role as import('@/generated/prisma/client').Role))
-                          }
-                        }}
-                      >
-                        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                        Ripristina Default
+                      <Button variant="outline" size="sm" onClick={() => { if (editUser) { setSectionAccessDraft(getDefaultSectionAccess(editUser.role as import('@/generated/prisma/client').Role)) } }}>
+                        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />Ripristina Default
                       </Button>
                     )}
                   </div>
@@ -1117,26 +1041,14 @@ export default function UsersAdminPage() {
         </div>
       )}
 
-      {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-          <Input
-            placeholder="Cerca per nome o email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
+          <Input placeholder="Cerca per nome o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
-        <Select
-          options={[{ value: '', label: 'Tutti i ruoli' }, ...ROLES]}
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="w-full sm:w-48"
-        />
+        <Select options={[{ value: '', label: 'Tutti i ruoli' }, ...ROLES]} value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="w-full sm:w-48" />
       </div>
 
-      {/* Users Table */}
       <Card>
         <CardContent>
           {loading ? (
@@ -1144,159 +1056,60 @@ export default function UsersAdminPage() {
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 py-3">
                   <div className="h-10 w-10 rounded-full shimmer" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-40 rounded shimmer" />
-                    <div className="h-3 w-56 rounded shimmer" />
-                  </div>
+                  <div className="flex-1 space-y-2"><div className="h-4 w-40 rounded shimmer" /><div className="h-3 w-56 rounded shimmer" /></div>
                 </div>
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <EmptyState
-              icon={Users}
-              title="Nessun utente trovato"
-              description={search || roleFilter ? 'Prova a modificare i filtri.' : 'Nessun utente registrato.'}
-            />
+            <EmptyState icon={Users} title="Nessun utente trovato" description={search || roleFilter ? 'Prova a modificare i filtri.' : 'Nessun utente registrato.'} />
           ) : (
             <div className="divide-y divide-border">
               {filtered.map((u) => (
-                <div
-                  key={u.id}
-                  className={`py-3 px-2 -mx-2 rounded-md transition-colors ${
-                    u.isActive ? 'hover:bg-secondary/30' : 'opacity-60'
-                  }`}
-                >
-                  {/* Mobile layout */}
+                <div key={u.id} className={`py-3 px-2 -mx-2 rounded-md transition-colors ${u.isActive ? 'hover:bg-secondary/30' : 'opacity-60'}`}>
                   <div className="md:hidden">
                     <div className="flex items-center gap-3 mb-2">
-                      <Avatar
-                        name={`${u.firstName} ${u.lastName}`}
-                        src={u.avatarUrl}
-                        size="md"
-                      />
+                      <Avatar name={`${u.firstName} ${u.lastName}`} src={u.avatarUrl} size="md" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {u.firstName} {u.lastName}
-                        </p>
+                        <p className="font-medium truncate">{u.firstName} {u.lastName}</p>
                         <p className="text-sm text-muted truncate">{u.email}</p>
                       </div>
-                      <Badge variant={ROLE_BADGE[u.role] || 'default'}>
-                        {ROLE_LABELS[u.role] || u.role}
-                      </Badge>
+                      <Badge variant={ROLE_BADGE[u.role] || 'default'}>{ROLE_LABELS[u.role] || u.role}</Badge>
                     </div>
                     <div className="flex items-center justify-between pl-12">
-                      {u.lastLoginAt && (
-                        <p className="text-xs text-muted">
-                          {formatDistanceToNow(new Date(u.lastLoginAt), { locale: it, addSuffix: true })}
-                        </p>
-                      )}
+                      {u.lastLoginAt && (<p className="text-xs text-muted">{formatDistanceToNow(new Date(u.lastLoginAt), { locale: it, addSuffix: true })}</p>)}
                       <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => openEditModal(u)}
-                          className="min-h-[44px] min-w-[44px] rounded-md text-muted hover:text-foreground hover:bg-secondary transition-colors flex items-center justify-center touch-manipulation"
-                          title="Modifica utente"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleToggleActive(u.id, u.isActive)}
-                          className={`min-h-[44px] min-w-[44px] rounded-md transition-colors flex items-center justify-center touch-manipulation ${
-                            u.isActive
-                              ? 'text-emerald-600 hover:bg-emerald-500/10'
-                              : 'text-muted hover:bg-secondary'
-                          }`}
-                          title={u.isActive ? 'Disattiva utente' : 'Riattiva utente'}
-                        >
-                          <Power className="h-4 w-4" />
-                        </button>
+                        <button onClick={() => openEditModal(u)} className="min-h-[44px] min-w-[44px] rounded-md text-muted hover:text-foreground hover:bg-secondary transition-colors flex items-center justify-center touch-manipulation" title="Modifica utente"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => handleToggleActive(u.id, u.isActive)} className={`min-h-[44px] min-w-[44px] rounded-md transition-colors flex items-center justify-center touch-manipulation ${u.isActive ? 'text-emerald-600 hover:bg-emerald-500/10' : 'text-muted hover:bg-secondary'}`} title={u.isActive ? 'Disattiva utente' : 'Riattiva utente'}><Power className="h-4 w-4" /></button>
                       </div>
                     </div>
                   </div>
-
-                  {/* Desktop layout */}
                   <div className="hidden md:flex items-center gap-4">
-                    <Avatar
-                      name={`${u.firstName} ${u.lastName}`}
-                      src={u.avatarUrl}
-                      size="md"
-                    />
+                    <Avatar name={`${u.firstName} ${u.lastName}`} src={u.avatarUrl} size="md" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">
-                        {u.firstName} {u.lastName}
-                      </p>
+                      <p className="font-medium truncate">{u.firstName} {u.lastName}</p>
                       <p className="text-sm text-muted truncate">{u.email}</p>
-                      {u.lastLoginAt && (
-                        <p className="text-xs text-muted">
-                          Ultimo accesso: {formatDistanceToNow(new Date(u.lastLoginAt), { locale: it, addSuffix: true })}
-                        </p>
-                      )}
+                      {u.lastLoginAt && (<p className="text-xs text-muted">Ultimo accesso: {formatDistanceToNow(new Date(u.lastLoginAt), { locale: it, addSuffix: true })}</p>)}
                     </div>
-
-                    {/* Role selector */}
                     <div className="relative">
                       {editingRole === u.id ? (
-                        <select
-                          className="text-xs border border-border rounded-md bg-background px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          value={u.role}
-                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                          onBlur={() => setEditingRole(null)}
-                          autoFocus
-                        >
-                          {ROLES.map((r) => (
-                            <option key={r.value} value={r.value}>{r.label}</option>
-                          ))}
+                        <select className="text-xs border border-border rounded-md bg-background px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50" value={u.role} onChange={(e) => handleRoleChange(u.id, e.target.value)} onBlur={() => setEditingRole(null)} autoFocus>
+                          {ROLES.map((r) => (<option key={r.value} value={r.value}>{r.label}</option>))}
                         </select>
                       ) : (
-                        <button
-                          onClick={() => setEditingRole(u.id)}
-                          className="flex items-center gap-1 group"
-                          title="Cambia ruolo"
-                        >
+                        <button onClick={() => setEditingRole(u.id)} className="flex items-center gap-1 group" title="Cambia ruolo">
                           <Badge variant={ROLE_BADGE[u.role] || 'default'}>
-                            {u.role === 'ADMIN' || u.role === 'MANAGER' ? (
-                              <ShieldCheck className="h-3 w-3 mr-1" />
-                            ) : (
-                              <Shield className="h-3 w-3 mr-1" />
-                            )}
+                            {u.role === 'ADMIN' ? <ShieldCheck className="h-3 w-3 mr-1" /> : <Shield className="h-3 w-3 mr-1" />}
                             {ROLE_LABELS[u.role] || u.role}
                           </Badge>
                           <ChevronDown className="h-3 w-3 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
                         </button>
                       )}
                     </div>
-
-                    {/* Impersonate button */}
                     {u.role !== 'ADMIN' && (
-                      <button
-                        onClick={() => handleImpersonate(u.id)}
-                        className="p-1.5 rounded-md text-muted hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="Accedi come questo utente"
-                      >
-                        <LogIn className="h-4 w-4" />
-                      </button>
+                      <button onClick={() => handleImpersonate(u.id)} className="p-1.5 rounded-md text-muted hover:text-primary hover:bg-primary/10 transition-colors" title="Accedi come questo utente"><LogIn className="h-4 w-4" /></button>
                     )}
-
-                    {/* Edit button */}
-                    <button
-                      onClick={() => openEditModal(u)}
-                      className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-secondary transition-colors"
-                      title="Modifica utente"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-
-                    {/* Active status toggle */}
-                    <button
-                      onClick={() => handleToggleActive(u.id, u.isActive)}
-                      className={`p-1.5 rounded-md transition-colors ${
-                        u.isActive
-                          ? 'text-emerald-600 hover:bg-emerald-500/10'
-                          : 'text-muted hover:bg-secondary'
-                      }`}
-                      title={u.isActive ? 'Disattiva utente' : 'Riattiva utente'}
-                    >
-                      <Power className="h-4 w-4" />
-                    </button>
+                    <button onClick={() => openEditModal(u)} className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-secondary transition-colors" title="Modifica utente"><Pencil className="h-4 w-4" /></button>
+                    <button onClick={() => handleToggleActive(u.id, u.isActive)} className={`p-1.5 rounded-md transition-colors ${u.isActive ? 'text-emerald-600 hover:bg-emerald-500/10' : 'text-muted hover:bg-secondary'}`} title={u.isActive ? 'Disattiva utente' : 'Riattiva utente'}><Power className="h-4 w-4" /></button>
                   </div>
                 </div>
               ))}
@@ -1304,6 +1117,16 @@ export default function UsersAdminPage() {
           )}
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
+  )
+}
+
+export default function UsersAdminPage() {
+  return (
+    <Suspense>
+      <UsersPageContent />
+    </Suspense>
   )
 }

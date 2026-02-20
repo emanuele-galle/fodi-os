@@ -65,7 +65,7 @@ const navigation: NavItem[] = [
     label: 'Progetti Clienti',
     href: '/projects',
     icon: FolderKanban,
-    roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'],
+    roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT'],
     children: [
       { label: 'Lista', href: '/projects' },
       { label: 'Analytics', href: '/projects/analytics' },
@@ -76,7 +76,7 @@ const navigation: NavItem[] = [
     label: 'Contenuti',
     href: '/content',
     icon: Film,
-    roles: ['ADMIN', 'MANAGER', 'CONTENT'],
+    roles: ['ADMIN', 'DIR_TECNICO', 'CONTENT'],
     children: [
       { label: 'Libreria Asset', href: '/content/assets' },
       { label: 'Revisioni', href: '/content/reviews' },
@@ -88,7 +88,7 @@ const navigation: NavItem[] = [
     label: 'Supporto',
     href: '/support',
     icon: LifeBuoy,
-    roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'],
+    roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM', 'DEVELOPER', 'SUPPORT'],
     group: 'work',
   },
   // Gestione
@@ -96,7 +96,7 @@ const navigation: NavItem[] = [
     label: 'Contabilita',
     href: '/erp',
     icon: Euro,
-    roles: ['ADMIN', 'MANAGER', 'SALES'],
+    roles: ['ADMIN', 'DIR_COMMERCIALE', 'COMMERCIALE'],
     children: [
       { label: 'Preventivi', href: '/erp/quotes' },
       { label: 'Template', href: '/erp/templates' },
@@ -104,7 +104,13 @@ const navigation: NavItem[] = [
       { label: 'Wizard', href: '/erp/wizards' },
       { label: 'Spese', href: '/erp/expenses' },
       { label: 'Abbonamenti', href: '/erp/expenses/subscriptions' },
+      { label: 'Entrate', href: '/erp/income' },
+      { label: 'Conti Bancari', href: '/erp/accounts' },
+      { label: 'Fatture Ricorrenti', href: '/erp/invoice-monitoring' },
+      { label: 'Giornale', href: '/erp/journal' },
+      { label: 'Dashboard', href: '/erp/dashboard/monthly' },
       { label: 'Analytics & Report', href: '/erp/reports' },
+      { label: 'Impostazioni', href: '/erp/settings' },
     ],
     group: 'admin',
   },
@@ -112,11 +118,10 @@ const navigation: NavItem[] = [
     label: 'CRM',
     href: '/crm',
     icon: Users,
-    roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'SUPPORT'],
+    roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'SUPPORT'],
     children: [
       { label: 'Dashboard', href: '/crm/dashboard' },
       { label: 'Clienti', href: '/crm' },
-      { label: 'Opportunità', href: '/crm/deals' },
       { label: 'Pipeline', href: '/crm/pipeline' },
       { label: 'Attività', href: '/crm/tasks' },
       { label: 'Leads', href: '/crm/leads' },
@@ -128,7 +133,7 @@ const navigation: NavItem[] = [
     label: 'Azienda',
     href: '/internal',
     icon: Building2,
-    roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT', 'SUPPORT'],
+    roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
     group: 'admin',
   },
   // Team & Risorse
@@ -136,19 +141,13 @@ const navigation: NavItem[] = [
     label: 'Team',
     href: '/team',
     icon: UsersRound,
-    children: [
-      { label: 'Membri', href: '/team' },
-      { label: 'Tracciamento Ore', href: '/time' },
-      { label: 'Log Attività', href: '/team/activity' },
-      { label: 'Report', href: '/team/reports' },
-    ],
     group: 'team',
   },
   {
     label: 'Knowledge Base',
     href: '/kb',
     icon: Library,
-    roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
+    roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
     group: 'team',
   },
   // System (no title)
@@ -170,12 +169,13 @@ const navigation: NavItem[] = [
 interface SidebarProps {
   userRole: Role
   sectionAccess?: SectionAccessMap | null
+  customRoleSectionAccess?: SectionAccessMap | null
   unreadChat?: number
   pendingTaskCount?: number
   unreadNotifications?: number
 }
 
-export function Sidebar({ userRole, sectionAccess, unreadChat = 0, pendingTaskCount = 0, unreadNotifications = 0 }: SidebarProps) {
+export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unreadChat = 0, pendingTaskCount = 0, unreadNotifications = 0 }: SidebarProps) {
   const pathname = usePathname()
   const { preferences, updatePreference, loaded } = useUserPreferences()
   const [expanded, setExpanded] = useState(true)
@@ -192,7 +192,7 @@ export function Sidebar({ userRole, sectionAccess, unreadChat = 0, pendingTaskCo
     if (!next) setExpandedItem(null)
   }, [expanded, updatePreference])
 
-  const effective = getEffectiveSectionAccess(userRole, sectionAccess)
+  const effective = getEffectiveSectionAccess(userRole, sectionAccess, customRoleSectionAccess)
   const filteredNav = navigation.filter((item) => {
     const section = HREF_TO_SECTION[item.href]
     if (section) return effective[section]?.view
