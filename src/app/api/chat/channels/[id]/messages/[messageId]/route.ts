@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requirePermission } from '@/lib/permissions'
+import { hasPermission, requirePermission } from '@/lib/permissions'
 import { sseManager } from '@/lib/sse'
 import { sanitizeHtml } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
@@ -84,7 +84,7 @@ export async function DELETE(
     if (!message || message.channelId !== channelId) {
       return NextResponse.json({ error: 'Messaggio non trovato' }, { status: 404 })
     }
-    if (message.authorId !== userId) {
+    if (message.authorId !== userId && !hasPermission(role, 'chat', 'admin')) {
       return NextResponse.json({ error: 'Puoi eliminare solo i tuoi messaggi' }, { status: 403 })
     }
 

@@ -247,6 +247,7 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
                   message={msg}
                   isOwn={msg.author.id === currentUserId}
                   currentUserId={currentUserId}
+                  userRole={userRole}
                   readReceipts={getReadReceipts(msg)}
                   onEdit={onEditMessage}
                   onDelete={onDeleteMessage}

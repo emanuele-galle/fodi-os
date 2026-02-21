@@ -48,6 +48,7 @@ interface MessageBubbleProps {
   }
   isOwn: boolean
   currentUserId?: string
+  userRole?: string
   readReceipts?: ReadReceipt[]
   onEdit?: (messageId: string, newContent: string) => void
   onDelete?: (messageId: string) => void
@@ -171,7 +172,9 @@ function ReadReceiptIndicator({ receipts }: { receipts?: ReadReceipt[] }) {
   )
 }
 
-export function MessageBubble({ message, isOwn, currentUserId, readReceipts, onEdit, onDelete, onReply, onReact }: MessageBubbleProps) {
+export function MessageBubble({ message, isOwn, currentUserId, userRole, readReceipts, onEdit, onDelete, onReply, onReact }: MessageBubbleProps) {
+  const isSystemAdmin = userRole === 'ADMIN'
+  const canDelete = isOwn || isSystemAdmin
   const authorName = `${message.author.firstName} ${message.author.lastName}`
   const time = new Date(message.createdAt).toLocaleTimeString('it-IT', {
     hour: '2-digit',
@@ -449,7 +452,7 @@ export function MessageBubble({ message, isOwn, currentUserId, readReceipts, onE
                   <Edit2 className="h-4.5 w-4.5" />
                 </button>
               )}
-              {isOwn && onDelete && (
+              {canDelete && onDelete && (
                 <button
                   onClick={() => { onDelete(message.id); setMobileActionsOpen(false) }}
                   className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-destructive/10 text-destructive touch-manipulation"
@@ -537,8 +540,8 @@ export function MessageBubble({ message, isOwn, currentUserId, readReceipts, onE
                   <Reply className="h-4 w-4 md:h-3.5 md:w-3.5" />
                 </button>
               )}
-              {/* Own message menu (edit/delete) */}
-              {isOwn && (onEdit || onDelete) && (
+              {/* Message menu (edit for own, delete for own or admin) */}
+              {((isOwn && onEdit) || (canDelete && onDelete)) && (
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
@@ -549,7 +552,7 @@ export function MessageBubble({ message, isOwn, currentUserId, readReceipts, onE
                   </button>
                   {menuOpen && (
                     <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[140px]">
-                      {onEdit && (
+                      {isOwn && onEdit && (
                         <button
                           onClick={() => { setEditing(true); setEditText(message.content); setMenuOpen(false) }}
                           className="w-full flex items-center gap-2 px-3 py-2.5 md:py-1.5 text-sm hover:bg-secondary/60 transition-colors text-left touch-manipulation"
@@ -557,7 +560,7 @@ export function MessageBubble({ message, isOwn, currentUserId, readReceipts, onE
                           <Edit2 className="h-4 w-4 md:h-3.5 md:w-3.5" /> Modifica
                         </button>
                       )}
-                      {onDelete && (
+                      {canDelete && onDelete && (
                         <button
                           onClick={() => { onDelete(message.id); setMenuOpen(false) }}
                           className="w-full flex items-center gap-2 px-3 py-2.5 md:py-1.5 text-sm hover:bg-destructive/10 text-destructive transition-colors text-left touch-manipulation"
