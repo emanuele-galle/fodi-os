@@ -557,7 +557,7 @@ export default function CalendarPage() {
         <EmptyState
           icon={Link2Off}
           title="Google Calendar non connesso"
-          description="Collega il tuo account Google per visualizzare e gestire i tuoi eventi direttamente da FODI OS."
+          description="Collega il tuo account Google per visualizzare e gestire i tuoi eventi direttamente da FODI OS. Assicurati di accettare tutti i permessi richiesti (Calendario, Drive, Meet)."
           action={
             <Button onClick={() => window.location.href = '/api/auth/google'}>
               <img src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png" alt="" className="h-5 w-5 mr-2" />

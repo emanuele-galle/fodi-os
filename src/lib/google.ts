@@ -19,6 +19,11 @@ export function createOAuth2Client() {
   )
 }
 
+const REQUIRED_SCOPES = [
+  'https://www.googleapis.com/auth/calendar',
+  'https://www.googleapis.com/auth/calendar.events',
+]
+
 export function getAuthUrl(state: string) {
   const client = createOAuth2Client()
   return client.generateAuthUrl({
@@ -26,15 +31,31 @@ export function getAuthUrl(state: string) {
     prompt: 'consent',
     scope: SCOPES,
     state,
+    include_granted_scopes: true,
   })
 }
 
-export async function getAuthenticatedClient(userId: string) {
+/**
+ * Check if the stored scope string contains all required scopes for calendar.
+ */
+export function hasRequiredScopes(scope: string | null | undefined): boolean {
+  if (!scope) return false
+  return REQUIRED_SCOPES.every((s) => scope.includes(s))
+}
+
+export async function getAuthenticatedClient(userId: string, requireCalendar = true) {
   const tokenRecord = await prisma.googleToken.findUnique({
     where: { userId },
   })
 
   if (!tokenRecord) return null
+
+  // If calendar access is needed, check that stored scopes are sufficient
+  if (requireCalendar && !hasRequiredScopes(tokenRecord.scope)) {
+    // Scope insufficienti - elimina token per forzare re-auth con scope completi
+    await prisma.googleToken.delete({ where: { userId } })
+    return null
+  }
 
   const client = createOAuth2Client()
   client.setCredentials({

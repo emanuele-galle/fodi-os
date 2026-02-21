@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
-import { createOAuth2Client } from '@/lib/google'
+import { createOAuth2Client, hasRequiredScopes } from '@/lib/google'
 import { prisma } from '@/lib/prisma'
 import { google } from 'googleapis'
 
@@ -44,6 +44,11 @@ export async function GET(request: NextRequest) {
 
     if (!tokens.access_token || !tokens.refresh_token) {
       return siteRedirect('/settings?google=error&reason=no_tokens')
+    }
+
+    // Check if user granted all required scopes (calendar)
+    if (!hasRequiredScopes(tokens.scope)) {
+      return siteRedirect('/settings?google=error&reason=insufficient_scopes')
     }
 
     // Get user email from Google

@@ -196,7 +196,11 @@ export default function SettingsPage() {
       setMessage('Google connesso con successo!')
     } else if (googleResult === 'error') {
       const reason = searchParams.get('reason')
-      setMessage(`Errore connessione Google: ${reason || 'sconosciuto'}`)
+      if (reason === 'insufficient_scopes') {
+        setMessage('Devi accettare TUTTI i permessi richiesti da Google (Calendario, Drive, Meet). Riprova e assicurati di selezionare tutte le caselle.')
+      } else {
+        setMessage(`Errore connessione Google: ${reason || 'sconosciuto'}`)
+      }
     }
   }, [searchParams])
 
