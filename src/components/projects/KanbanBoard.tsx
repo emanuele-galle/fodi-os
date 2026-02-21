@@ -19,6 +19,14 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
+import { AvatarStack } from '@/components/ui/AvatarStack'
+
+interface TaskUser {
+  id: string
+  firstName: string
+  lastName: string
+  avatarUrl: string | null
+}
 
 interface Task {
   id: string
@@ -31,7 +39,8 @@ interface Task {
   folderColor?: string | null
   dueDate: string | null
   estimatedHours: number | null
-  assignee?: { id: string; firstName: string; lastName: string; avatarUrl: string | null } | null
+  assignee?: TaskUser | null
+  assignments?: { id: string; role: string; user: TaskUser }[]
 }
 
 const BOARD_COLUMNS = [
@@ -106,14 +115,16 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
               {new Date(task.dueDate).toLocaleDateString('it-IT')}
             </span>
           )}
-          {task.assignee && (
+          {(task.assignments?.length ?? 0) > 0 ? (
+            <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
+          ) : task.assignee ? (
             <Avatar
               name={`${task.assignee.firstName} ${task.assignee.lastName}`}
               src={task.assignee.avatarUrl}
               size="sm"
               className="!h-6 !w-6 !text-[10px]"
             />
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -129,14 +140,16 @@ function TaskCardOverlay({ task }: { task: Task }) {
           {task.priority}
         </Badge>
         <div className="flex items-center gap-2">
-          {task.assignee && (
+          {(task.assignments?.length ?? 0) > 0 ? (
+            <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
+          ) : task.assignee ? (
             <Avatar
               name={`${task.assignee.firstName} ${task.assignee.lastName}`}
               src={task.assignee.avatarUrl}
               size="sm"
               className="!h-6 !w-6 !text-[10px]"
             />
-          )}
+          ) : null}
         </div>
       </div>
     </div>
