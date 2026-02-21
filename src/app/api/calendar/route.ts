@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
+import { getCalendarService, checkAuthStatus, withRetry, isScopeError } from '@/lib/google'
 import { requirePermission } from '@/lib/permissions'
+import { prisma } from '@/lib/prisma'
 import type { Role } from '@/generated/prisma/client'
 
 // GET /api/calendar - List user's calendars
@@ -21,14 +22,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 
-  const auth = await getAuthenticatedClient(userId)
+  const { client: auth, error: authError } = await checkAuthStatus(userId)
   if (!auth) {
-    return NextResponse.json({ error: 'Google non connesso', connected: false }, { status: 403 })
+    return NextResponse.json({
+      error: authError === 'scopes' ? 'Permessi calendario insufficienti. Riconnetti Google.' : 'Google non connesso',
+      connected: false,
+      reason: authError,
+    }, { status: 403 })
   }
 
   try {
     const calendar = getCalendarService(auth)
-    const res = await calendar.calendarList.list()
+    const res = await withRetry(() => calendar.calendarList.list())
 
     const calendars = (res.data.items || []).map((cal) => ({
       id: cal.id,
@@ -42,6 +47,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ calendars })
   } catch (e) {
+    if (isScopeError(e)) {
+      await prisma.googleToken.delete({ where: { userId } }).catch(() => {})
+      return NextResponse.json({
+        error: 'Permessi calendario insufficienti. Riconnetti Google.',
+        connected: false,
+        reason: 'scopes',
+      }, { status: 403 })
+    }
     console.error('Calendar list error:', e)
     return NextResponse.json({ error: 'Errore nel recupero calendari' }, { status: 500 })
   }

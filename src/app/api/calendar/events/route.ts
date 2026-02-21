@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
+import { getAuthenticatedClient, getCalendarService, checkAuthStatus, withRetry, isScopeError } from '@/lib/google'
 import { requirePermission } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import { notifyUsers } from '@/lib/notifications'
@@ -17,6 +17,7 @@ const createEventSchema = z.object({
   attendees: z.array(z.string().email()).optional(),
   calendarId: z.string().optional(),
   withMeet: z.boolean().optional(),
+  recurrence: z.array(z.string()).optional(),
 })
 
 const CALENDAR_VIEWER_ROLES: Role[] = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM']
@@ -105,21 +106,88 @@ export async function GET(request: NextRequest) {
   }
 
   // Single-user mode (default)
-  const auth = await getAuthenticatedClient(userId)
+  const { client: auth, error: authError } = await checkAuthStatus(userId)
   if (!auth) {
-    return NextResponse.json({ error: 'Google non connesso', connected: false }, { status: 403 })
+    return NextResponse.json({
+      error: authError === 'scopes' ? 'Permessi calendario insufficienti. Riconnetti Google.' : 'Google non connesso',
+      connected: false,
+      reason: authError,
+    }, { status: 403 })
+  }
+
+  // Multi-calendar mode: fetch events from multiple Google calendars in parallel
+  const calendarIdsParam = searchParams.get('calendarIds')
+  if (calendarIdsParam) {
+    const calIds = [...new Set(calendarIdsParam.split(',').filter(Boolean))]
+    if (calIds.length === 0) {
+      return NextResponse.json({ events: [] })
+    }
+
+    try {
+      const calService = getCalendarService(auth)
+      // Fetch calendar list to get colors
+      const calListRes = await calService.calendarList.list()
+      const calColorMap = new Map<string, string>()
+      for (const cal of calListRes.data.items || []) {
+        if (cal.id && cal.backgroundColor) {
+          calColorMap.set(cal.id, cal.backgroundColor)
+        }
+      }
+
+      const results = await Promise.allSettled(
+        calIds.map(async (cId) => {
+          const res = await calService.events.list({
+            calendarId: cId,
+            timeMin,
+            ...(timeMax && { timeMax }),
+            maxResults,
+            singleEvents: true,
+            orderBy: 'startTime',
+          })
+          return {
+            calendarId: cId,
+            events: (res.data.items || []).map((ev) => ({
+              ...ev,
+              _calendarId: cId,
+              _calendarColor: calColorMap.get(cId) || '#039BE5',
+            })),
+          }
+        })
+      )
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const allEvents: any[] = results
+        .filter((r) => r.status === 'fulfilled')
+        .flatMap((r: any) => r.value.events)
+
+      // Deduplicate by event id + calendarId
+      const seen = new Set<string>()
+      const unique = allEvents.filter((ev) => {
+        const key = `${ev.id}_${ev._calendarId}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+
+      return NextResponse.json({ events: unique, multiCalendar: true })
+    } catch (e) {
+      console.error('Calendar multi-calendar error:', e)
+      return NextResponse.json({ error: 'Errore nel recupero eventi multi-calendario' }, { status: 500 })
+    }
   }
 
   try {
     const calendar = getCalendarService(auth)
-    const res = await calendar.events.list({
-      calendarId,
-      timeMin,
-      ...(timeMax && { timeMax }),
-      maxResults,
-      singleEvents: true,
-      orderBy: 'startTime',
-    })
+    const res = await withRetry(() =>
+      calendar.events.list({
+        calendarId,
+        timeMin,
+        ...(timeMax && { timeMax }),
+        maxResults,
+        singleEvents: true,
+        orderBy: 'startTime',
+      })
+    )
 
     return NextResponse.json({
       events: res.data.items || [],
@@ -127,6 +195,15 @@ export async function GET(request: NextRequest) {
       summary: res.data.summary,
     })
   } catch (e) {
+    if (isScopeError(e)) {
+      // Delete invalid token and signal scope error
+      await prisma.googleToken.delete({ where: { userId } }).catch(() => {})
+      return NextResponse.json({
+        error: 'Permessi calendario insufficienti. Riconnetti Google.',
+        connected: false,
+        reason: 'scopes',
+      }, { status: 403 })
+    }
     console.error('Calendar events error:', e)
     return NextResponse.json({ error: 'Errore nel recupero eventi' }, { status: 500 })
   }
@@ -150,9 +227,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 
-  const auth = await getAuthenticatedClient(userId)
+  const { client: auth, error: authError } = await checkAuthStatus(userId)
   if (!auth) {
-    return NextResponse.json({ error: 'Google non connesso', connected: false }, { status: 403 })
+    return NextResponse.json({
+      error: authError === 'scopes' ? 'Permessi calendario insufficienti. Riconnetti Google.' : 'Google non connesso',
+      connected: false,
+      reason: authError,
+    }, { status: 403 })
   }
 
   const body = await request.json()
@@ -163,11 +244,11 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     )
   }
-  const { summary, description, start, end, location, attendees, calendarId, withMeet } = parsed.data
+  const { summary, description, start, end, location, attendees, calendarId, withMeet, recurrence } = parsed.data
 
   try {
     const calendar = getCalendarService(auth)
-    const res = await calendar.events.insert({
+    const res = await withRetry(() => calendar.events.insert({
       calendarId: calendarId || 'primary',
       sendUpdates: 'all',
       ...(withMeet && { conferenceDataVersion: 1 }),
@@ -177,6 +258,7 @@ export async function POST(request: NextRequest) {
         location,
         start: { dateTime: start, timeZone: 'Europe/Rome' },
         end: { dateTime: end, timeZone: 'Europe/Rome' },
+        ...(recurrence && recurrence.length > 0 && { recurrence }),
         ...(attendees && {
           attendees: attendees.map((email: string) => ({ email })),
         }),
@@ -189,7 +271,7 @@ export async function POST(request: NextRequest) {
           },
         }),
       },
-    })
+    }))
 
     const meetLink = res.data.conferenceData?.entryPoints?.find(
       (ep) => ep.entryPointType === 'video'
@@ -247,6 +329,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ...res.data, meetLink }, { status: 201 })
   } catch (e) {
+    if (isScopeError(e)) {
+      await prisma.googleToken.delete({ where: { userId: userId! } }).catch(() => {})
+      return NextResponse.json({
+        error: 'Permessi calendario insufficienti. Riconnetti Google.',
+        connected: false,
+        reason: 'scopes',
+      }, { status: 403 })
+    }
     console.error('Calendar create error:', e)
     return NextResponse.json({ error: 'Errore nella creazione evento' }, { status: 500 })
   }

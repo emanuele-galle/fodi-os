@@ -20,6 +20,8 @@ import {
   Check,
   X,
   Mail,
+  Repeat,
+  RefreshCw,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -43,6 +45,10 @@ interface CalendarEvent {
   }
   _ownerUserId?: string
   _ownerName?: string
+  _calendarId?: string
+  _calendarColor?: string
+  recurringEventId?: string
+  recurrence?: string[]
 }
 
 interface CalendarInfo {
@@ -63,6 +69,56 @@ interface TeamMember {
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 8) // 8:00 - 20:00
+
+const RRULE_DAYS: Record<number, string> = {
+  0: 'SU', 1: 'MO', 2: 'TU', 3: 'WE', 4: 'TH', 5: 'FR', 6: 'SA',
+}
+
+const RRULE_DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+
+type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'custom'
+type RecurrenceEndType = 'never' | 'date' | 'count'
+
+function buildRruleString(
+  type: RecurrenceType,
+  startDate: string,
+  customDays: number[],
+  endType: RecurrenceEndType,
+  endDate: string,
+  endCount: number,
+): string[] {
+  if (type === 'none') return []
+
+  let rule = 'RRULE:'
+  const dayOfWeek = startDate ? new Date(startDate + 'T00:00:00').getDay() : 1
+
+  switch (type) {
+    case 'daily':
+      rule += 'FREQ=DAILY'
+      break
+    case 'weekly':
+      rule += `FREQ=WEEKLY;BYDAY=${RRULE_DAYS[dayOfWeek]}`
+      break
+    case 'biweekly':
+      rule += `FREQ=WEEKLY;INTERVAL=2;BYDAY=${RRULE_DAYS[dayOfWeek]}`
+      break
+    case 'monthly':
+      rule += 'FREQ=MONTHLY'
+      break
+    case 'custom':
+      if (customDays.length === 0) return []
+      rule += `FREQ=WEEKLY;BYDAY=${customDays.map((d) => RRULE_DAYS[d]).join(',')}`
+      break
+  }
+
+  if (endType === 'date' && endDate) {
+    rule += `;UNTIL=${endDate.replace(/-/g, '')}T235959Z`
+  } else if (endType === 'count' && endCount > 0) {
+    rule += `;COUNT=${endCount}`
+  }
+
+  return [rule]
+}
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate()
@@ -142,6 +198,7 @@ const TEAM_COLORS = [
 
 const CALENDAR_VIEWER_ROLES = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM']
 const LS_KEY = 'fodi-calendar-team'
+const LS_CALENDARS_KEY = 'fodi-calendar-selected'
 
 type DesktopView = 'month' | 'week'
 
@@ -177,14 +234,29 @@ export default function CalendarPage() {
     withMeet: false,
   })
   const [creating, setCreating] = useState(false)
+  const [blockMode, setBlockMode] = useState(false)
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>('none')
+  const [recurrenceCustomDays, setRecurrenceCustomDays] = useState<number[]>([])
+  const [recurrenceEndType, setRecurrenceEndType] = useState<RecurrenceEndType>('never')
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState('')
+  const [recurrenceEndCount, setRecurrenceEndCount] = useState(10)
 
   const [fodiCalendarId, setFodiCalendarId] = useState<string | null>(null)
+
+  // Multi-calendar state: which Google calendars are visible
+  const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set())
+  const [targetCalendarId, setTargetCalendarId] = useState<string>('')
 
   // Team calendar state
   const [userRole, setUserRole] = useState('')
   const [userId, setUserId] = useState('')
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([])
   const [showTeamPanel, setShowTeamPanel] = useState(false)
+
+  // Sync status tracking
+  const [syncStatus, setSyncStatus] = useState<'ok' | 'error' | 'scopes' | null>(null)
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
+  const [scopeError, setScopeError] = useState(false)
 
   const canViewTeam = CALENDAR_VIEWER_ROLES.includes(userRole)
   const isMultiUser = canViewTeam && selectedTeamIds.length > 0
@@ -218,6 +290,25 @@ export default function CalendarPage() {
         if (fodiCal) {
           setFodiCalendarId(fodiCal.id)
         }
+
+        // Initialize selectedCalendars from localStorage or default to all
+        const allCalIds = (data.calendars as CalendarInfo[]).map((c) => c.id)
+        try {
+          const saved = localStorage.getItem(LS_CALENDARS_KEY)
+          if (saved) {
+            const parsed = JSON.parse(saved) as string[]
+            const valid = parsed.filter((id) => allCalIds.includes(id))
+            setSelectedCalendars(new Set(valid.length > 0 ? valid : allCalIds))
+          } else {
+            setSelectedCalendars(new Set(allCalIds))
+          }
+        } catch {
+          setSelectedCalendars(new Set(allCalIds))
+        }
+
+        // Default target calendar: primary or first
+        const primaryCal = (data.calendars as CalendarInfo[]).find((c) => c.primary)
+        setTargetCalendarId(primaryCal?.id || allCalIds[0] || '')
       }
     } catch {
       // ignore
@@ -241,51 +332,57 @@ export default function CalendarPage() {
 
         if (data?.connected === false) {
           setConnected(false)
+          if (data.reason === 'scopes') { setScopeError(true); setSyncStatus('scopes') }
           return
         }
         setConnected(true)
+        setSyncStatus('ok')
+        setLastSyncTime(new Date())
+        setScopeError(false)
         setEvents(data.events || [])
         return
       }
 
-      // Single-user mode (default)
-      const primaryPromise = fetch(`/api/calendar/events?${baseParams}`)
-        .then((r) => r.json())
-        .catch(() => null)
+      // Single-user mode: use multi-calendar endpoint if calendars selected
+      if (selectedCalendars.size > 0) {
+        const calIdsParam = [...selectedCalendars].map(encodeURIComponent).join(',')
+        const res = await fetch(`/api/calendar/events?${baseParams}&calendarIds=${calIdsParam}`)
+        const data = await res.json()
 
-      const sharedPromise = fodiCalendarId
-        ? fetch(`/api/calendar/events?${baseParams}&calendarId=${encodeURIComponent(fodiCalendarId)}`)
-            .then((r) => r.json())
-            .catch(() => null)
-        : Promise.resolve(null)
-
-      const [primaryData, sharedData] = await Promise.all([primaryPromise, sharedPromise])
-
-      if (primaryData?.connected === false) {
-        setConnected(false)
-        return
-      }
-      setConnected(true)
-
-      const allEvents: CalendarEvent[] = []
-      const seenIds = new Set<string>()
-      for (const data of [sharedData, primaryData]) {
-        if (!data?.events) continue
-        for (const ev of data.events) {
-          if (!seenIds.has(ev.id)) {
-            seenIds.add(ev.id)
-            allEvents.push(ev)
-          }
+        if (data?.connected === false) {
+          setConnected(false)
+          if (data.reason === 'scopes') { setScopeError(true); setSyncStatus('scopes') }
+          return
         }
+        setConnected(true)
+        setSyncStatus('ok')
+        setLastSyncTime(new Date())
+        setScopeError(false)
+        setEvents(data.events || [])
+      } else {
+        // Fallback: fetch primary calendar only
+        const res = await fetch(`/api/calendar/events?${baseParams}`)
+        const data = await res.json()
+
+        if (data?.connected === false) {
+          setConnected(false)
+          if (data.reason === 'scopes') { setScopeError(true); setSyncStatus('scopes') }
+          return
+        }
+        setConnected(true)
+        setSyncStatus('ok')
+        setLastSyncTime(new Date())
+        setScopeError(false)
+        setEvents(data.events || [])
       }
-      setEvents(allEvents)
     } catch {
       setFetchError('Errore nel caricamento degli eventi')
+      setSyncStatus('error')
       setConnected(false)
     } finally {
       setLoading(false)
     }
-  }, [year, month, fodiCalendarId, selectedTeamIds, canViewTeam])
+  }, [year, month, selectedCalendars, selectedTeamIds, canViewTeam])
 
   // Keep today in sync (update at midnight or when tab regains focus)
   useEffect(() => {
@@ -338,6 +435,13 @@ export default function CalendarPage() {
     }
   }, [selectedTeamIds])
 
+  // Persist calendar selection
+  useEffect(() => {
+    if (selectedCalendars.size > 0) {
+      localStorage.setItem(LS_CALENDARS_KEY, JSON.stringify([...selectedCalendars]))
+    }
+  }, [selectedCalendars])
+
   // Fetch calendars first, then events depend on fodiCalendarId
   useEffect(() => {
     fetchCalendars()
@@ -374,6 +478,11 @@ export default function CalendarPage() {
     setSelectedAttendees([])
     setAttendeeSearch('')
     setCreateError(null)
+    setRecurrenceType('none')
+    setRecurrenceCustomDays([])
+    setRecurrenceEndType('never')
+    setRecurrenceEndDate('')
+    setRecurrenceEndCount(10)
     setShowNewEvent(true)
   }, [])
 
@@ -404,23 +513,73 @@ export default function CalendarPage() {
     setAttendeeSearch('')
     setEditingEvent(ev)
     setCreateError(null)
+    setRecurrenceType('none')
+    setRecurrenceCustomDays([])
+    setRecurrenceEndType('never')
+    setRecurrenceEndDate('')
+    setRecurrenceEndCount(10)
+    // Set target calendar to the event's calendar if available
+    if (ev._calendarId) setTargetCalendarId(ev._calendarId)
     setSelectedEvent(null)
     setShowNewEvent(true)
   }, [])
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newEvent.summary || !newEvent.startDate || !newEvent.startTime) return
+    if (!blockMode && !newEvent.summary) return
+    if (!newEvent.startDate || !newEvent.startTime) return
     setCreating(true)
     setCreateError(null)
 
     const effectiveEndDate = newEvent.endDate || newEvent.startDate
     const effectiveEndTime = newEvent.endTime || addHour(newEvent.startTime)
 
+    // Block slot mode: call /api/availability/block
+    if (blockMode && !editingEvent) {
+      try {
+        const start = `${newEvent.startDate}T${newEvent.startTime}:00`
+        const end = `${effectiveEndDate}T${effectiveEndTime}:00`
+        const recurrenceRules = buildRruleString(
+          recurrenceType, newEvent.startDate, recurrenceCustomDays,
+          recurrenceEndType, recurrenceEndDate, recurrenceEndCount,
+        )
+        const res = await fetch('/api/availability/block', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            start,
+            end,
+            title: newEvent.summary || undefined,
+            ...(recurrenceRules.length > 0 && { recurrence: recurrenceRules }),
+          }),
+        })
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          setCreateError(data.error || 'Errore nel blocco slot')
+          return
+        }
+        setShowNewEvent(false)
+        setBlockMode(false)
+        setNewEvent({ summary: '', description: '', location: '', startDate: '', startTime: '', endDate: '', endTime: '', withMeet: false })
+        fetchEvents()
+        return
+      } catch {
+        setCreateError('Errore di rete. Riprova.')
+        return
+      } finally {
+        setCreating(false)
+      }
+    }
+
     const start = `${newEvent.startDate}T${newEvent.startTime}:00`
     const end = `${effectiveEndDate}T${effectiveEndTime}:00`
 
     const attendeeEmails = selectedAttendees
+    const recurrenceRules = buildRruleString(
+      recurrenceType, newEvent.startDate, recurrenceCustomDays,
+      recurrenceEndType, recurrenceEndDate, recurrenceEndCount,
+    )
 
     try {
       if (editingEvent) {
@@ -435,7 +594,8 @@ export default function CalendarPage() {
             start,
             end,
             attendees: attendeeEmails,
-            ...(fodiCalendarId && { calendarId: fodiCalendarId }),
+            ...(targetCalendarId ? { calendarId: targetCalendarId } : fodiCalendarId ? { calendarId: fodiCalendarId } : {}),
+            ...(recurrenceRules.length > 0 && { recurrence: recurrenceRules }),
           }),
         })
         if (!res.ok) {
@@ -456,7 +616,8 @@ export default function CalendarPage() {
             end,
             withMeet: newEvent.withMeet || attendeeEmails.length > 0,
             attendees: attendeeEmails,
-            ...(fodiCalendarId && { calendarId: fodiCalendarId }),
+            ...(targetCalendarId ? { calendarId: targetCalendarId } : fodiCalendarId ? { calendarId: fodiCalendarId } : {}),
+            ...(recurrenceRules.length > 0 && { recurrence: recurrenceRules }),
           }),
         })
         if (!res.ok) {
@@ -483,7 +644,8 @@ export default function CalendarPage() {
     if (!selectedEvent) return
     setDeleting(true)
     try {
-      const calParam = fodiCalendarId ? `?calendarId=${encodeURIComponent(fodiCalendarId)}` : ''
+      const eventCalId = selectedEvent._calendarId || fodiCalendarId
+      const calParam = eventCalId ? `?calendarId=${encodeURIComponent(eventCalId)}` : ''
       const res = await fetch(`/api/calendar/events/${selectedEvent.id}${calParam}`, { method: 'DELETE' })
       if (res.ok) {
         setSelectedEvent(null)
@@ -531,6 +693,10 @@ export default function CalendarPage() {
   const getEventColor = useCallback((ev: CalendarEvent) => {
     if (isMultiUser && ev._ownerUserId) {
       return teamColorMap.get(ev._ownerUserId) || TEAM_COLORS[0]
+    }
+    // Use calendar color from multi-calendar API response
+    if (ev._calendarColor) {
+      return ev._calendarColor
     }
     const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
     return EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
@@ -647,7 +813,31 @@ export default function CalendarPage() {
         ) : null
       })()}
 
-      {fetchError && (
+      {/* Sync status badge */}
+      {syncStatus && !scopeError && (
+        <div className={`mb-3 flex items-center gap-2 text-xs ${syncStatus === 'ok' ? 'text-emerald-600' : 'text-amber-600'}`}>
+          <RefreshCw className={`h-3 w-3 ${syncStatus === 'ok' ? '' : 'animate-spin'}`} />
+          <span>
+            {syncStatus === 'ok' ? 'Sincronizzazione attiva' : 'Errore sincronizzazione'}
+            {lastSyncTime && syncStatus === 'ok' && (
+              <> &middot; {lastSyncTime.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</>
+            )}
+          </span>
+        </div>
+      )}
+
+      {/* Scope error banner - reconnect Google */}
+      {scopeError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-400/30 bg-amber-50 dark:bg-amber-900/10 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <p className="text-sm text-amber-800 dark:text-amber-200">Permessi Google Calendar insufficienti. Riconnetti per ripristinare la sincronizzazione.</p>
+          </div>
+          <Button size="sm" variant="outline" className="flex-shrink-0 border-amber-400 text-amber-700 hover:bg-amber-100" onClick={() => window.location.href = '/api/auth/google'}>Riconnetti Google</Button>
+        </div>
+      )}
+
+      {fetchError && !scopeError && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
@@ -758,6 +948,50 @@ export default function CalendarPage() {
         </div>
       )}
 
+      {/* Mobile calendars panel (non-team users) */}
+      {calendars.length > 1 && !canViewTeam && (
+        <div className="md:hidden mb-4 p-3 rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold flex items-center gap-1.5">
+              <Calendar className="h-4 w-4 text-muted" />
+              I miei calendari
+            </p>
+          </div>
+          <div className="space-y-1 max-h-48 overflow-y-auto">
+            {calendars.map((cal) => {
+              const isSelected = selectedCalendars.has(cal.id)
+              return (
+                <button
+                  key={cal.id}
+                  onClick={() => {
+                    setSelectedCalendars((prev) => {
+                      const next = new Set(prev)
+                      if (isSelected) next.delete(cal.id)
+                      else next.add(cal.id)
+                      return next
+                    })
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-left transition-colors ${
+                    isSelected ? 'bg-secondary/50' : 'hover:bg-secondary/30'
+                  }`}
+                >
+                  <div
+                    className={`w-3 h-3 rounded-sm border-2 flex items-center justify-center ${
+                      isSelected ? '' : 'border-border'
+                    }`}
+                    style={isSelected ? { backgroundColor: cal.backgroundColor, borderColor: cal.backgroundColor } : {}}
+                  >
+                    {isSelected && <Check className="h-2 w-2 text-white" />}
+                  </div>
+                  <span className="text-sm truncate">{cal.summary}</span>
+                  {cal.primary && <span className="text-xs text-muted ml-auto">(principale)</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-4">
         {/* Desktop team sidebar */}
         {canViewTeam && (
@@ -820,6 +1054,115 @@ export default function CalendarPage() {
                         </button>
                       )
                     })}
+                </div>
+
+                {/* Google calendars section inside team sidebar */}
+                {calendars.length > 1 && (
+                  <>
+                    <div className="border-t border-border/50 my-3" />
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold flex items-center gap-1.5 text-muted">
+                        <Calendar className="h-3.5 w-3.5" />
+                        I miei calendari
+                      </p>
+                    </div>
+                    <div className="space-y-0.5">
+                      {calendars.map((cal) => {
+                        const isSelected = selectedCalendars.has(cal.id)
+                        return (
+                          <button
+                            key={cal.id}
+                            onClick={() => {
+                              setSelectedCalendars((prev) => {
+                                const next = new Set(prev)
+                                if (isSelected) next.delete(cal.id)
+                                else next.add(cal.id)
+                                return next
+                              })
+                            }}
+                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors ${
+                              isSelected ? 'bg-secondary/50' : 'hover:bg-secondary/30'
+                            }`}
+                          >
+                            <div
+                              className={`w-3 h-3 rounded-sm border-2 flex-shrink-0 flex items-center justify-center ${
+                                isSelected ? '' : 'border-border'
+                              }`}
+                              style={isSelected ? { backgroundColor: cal.backgroundColor, borderColor: cal.backgroundColor } : {}}
+                            >
+                              {isSelected && <Check className="h-2 w-2 text-white" />}
+                            </div>
+                            <span className="text-xs truncate">{cal.summary}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Desktop Google calendars sidebar */}
+        {calendars.length > 1 && !canViewTeam && (
+          <div className="hidden md:block w-52 flex-shrink-0">
+            <Card className="sticky top-4">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-semibold flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4 text-muted" />
+                    I miei calendari
+                  </p>
+                </div>
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => setSelectedCalendars(new Set(calendars.map((c) => c.id)))}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Tutti
+                  </button>
+                  <button
+                    onClick={() => {
+                      const primary = calendars.find((c) => c.primary)
+                      setSelectedCalendars(new Set(primary ? [primary.id] : []))
+                    }}
+                    className="text-xs text-muted hover:underline"
+                  >
+                    Principale
+                  </button>
+                </div>
+                <div className="space-y-0.5">
+                  {calendars.map((cal) => {
+                    const isSelected = selectedCalendars.has(cal.id)
+                    return (
+                      <button
+                        key={cal.id}
+                        onClick={() => {
+                          setSelectedCalendars((prev) => {
+                            const next = new Set(prev)
+                            if (isSelected) next.delete(cal.id)
+                            else next.add(cal.id)
+                            return next
+                          })
+                        }}
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors ${
+                          isSelected ? 'bg-secondary/50' : 'hover:bg-secondary/30'
+                        }`}
+                      >
+                        <div
+                          className={`w-3 h-3 rounded-sm border-2 flex-shrink-0 flex items-center justify-center ${
+                            isSelected ? '' : 'border-border'
+                          }`}
+                          style={isSelected ? { backgroundColor: cal.backgroundColor, borderColor: cal.backgroundColor } : {}}
+                        >
+                          {isSelected && <Check className="h-2 w-2 text-white" />}
+                        </div>
+                        <span className="text-xs truncate">{cal.summary}</span>
+                        {cal.primary && <span className="text-[10px] text-muted ml-auto flex-shrink-0">principale</span>}
+                      </button>
+                    )
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -898,9 +1241,14 @@ export default function CalendarPage() {
                                   </p>
                                 )}
                               </div>
-                              {ev.conferenceData?.entryPoints?.find(ep => ep.entryPointType === 'video') && (
-                                <Video className="h-4 w-4 text-indigo-500 flex-shrink-0" />
-                              )}
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                {ev.recurringEventId && (
+                                  <span title="Evento ricorrente"><Repeat className="h-3.5 w-3.5 text-muted" /></span>
+                                )}
+                                {ev.conferenceData?.entryPoints?.find(ep => ep.entryPointType === 'video') && (
+                                  <Video className="h-4 w-4 text-indigo-500" />
+                                )}
+                              </div>
                             </button>
                           )
                         })}
@@ -1137,6 +1485,13 @@ export default function CalendarPage() {
               </div>
             </div>
 
+            {selectedEvent.recurringEventId && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
+                <Repeat className="h-4 w-4 text-primary flex-shrink-0" />
+                <span className="text-sm">Evento ricorrente</span>
+              </div>
+            )}
+
             {selectedEvent.location && (
               <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
                 <MapPin className="h-4 w-4 text-emerald-500 flex-shrink-0" />
@@ -1242,8 +1597,8 @@ export default function CalendarPage() {
       {/* New/Edit event modal */}
       <Modal
         open={showNewEvent}
-        onClose={() => { setShowNewEvent(false); setEditingEvent(null) }}
-        title={editingEvent ? 'Modifica Evento' : 'Nuovo Evento'}
+        onClose={() => { setShowNewEvent(false); setEditingEvent(null); setBlockMode(false) }}
+        title={editingEvent ? 'Modifica Evento' : blockMode ? 'Blocca Disponibilità' : 'Nuovo Evento'}
       >
         <form onSubmit={handleCreateEvent} className="space-y-4">
           {createError && (
@@ -1253,13 +1608,54 @@ export default function CalendarPage() {
             </div>
           )}
 
+          {/* Block slot toggle - only when creating (not editing) */}
+          {!editingEvent && (
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div
+                role="switch"
+                aria-checked={blockMode}
+                onClick={() => {
+                  setBlockMode(!blockMode)
+                  if (!blockMode) setNewEvent({ ...newEvent, summary: 'Non disponibile' })
+                  else setNewEvent({ ...newEvent, summary: '' })
+                }}
+                className={`relative w-10 h-5 rounded-full transition-colors ${blockMode ? 'bg-orange-500' : 'bg-border'}`}
+              >
+                <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${blockMode ? 'translate-x-5' : ''}`} />
+              </div>
+              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                Segna come non disponibile
+              </span>
+            </label>
+          )}
+
           <Input
             id="summary"
-            label="Titolo"
+            label={blockMode ? 'Motivo (opzionale)' : 'Titolo'}
             value={newEvent.summary}
             onChange={(e) => setNewEvent({ ...newEvent, summary: e.target.value })}
-            required
+            required={!blockMode}
+            placeholder={blockMode ? 'Non disponibile' : ''}
           />
+
+          {/* Calendar target selector */}
+          {calendars.length > 1 && (
+            <div>
+              <label htmlFor="targetCal" className="block text-sm font-medium mb-1">Calendario</label>
+              <select
+                id="targetCal"
+                value={targetCalendarId}
+                onChange={(e) => setTargetCalendarId(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+              >
+                {calendars.map((cal) => (
+                  <option key={cal.id} value={cal.id}>
+                    {cal.summary}{cal.primary ? ' (principale)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
@@ -1305,25 +1701,135 @@ export default function CalendarPage() {
             />
           </div>
 
-          <Input
-            id="location"
-            label="Luogo"
-            value={newEvent.location}
-            onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
-          />
+          {!blockMode && (
+            <>
+              <Input
+                id="location"
+                label="Luogo"
+                value={newEvent.location}
+                onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
+              />
 
+              <div>
+                <label htmlFor="desc" className="block text-sm font-medium mb-1">Descrizione</label>
+                <textarea
+                  id="desc"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                  value={newEvent.description}
+                  onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Recurrence selector */}
           <div>
-            <label htmlFor="desc" className="block text-sm font-medium mb-1">Descrizione</label>
-            <textarea
-              id="desc"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
-              value={newEvent.description}
-              onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-            />
+            <label className="flex items-center gap-1.5 text-sm font-medium mb-2">
+              <Repeat className="h-4 w-4 text-muted" />
+              Ripetizione
+            </label>
+            <select
+              value={recurrenceType}
+              onChange={(e) => setRecurrenceType(e.target.value as RecurrenceType)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+            >
+              <option value="none">Nessuna ripetizione</option>
+              <option value="daily">Ogni giorno</option>
+              <option value="weekly">Ogni settimana</option>
+              <option value="biweekly">Ogni 2 settimane</option>
+              <option value="monthly">Ogni mese</option>
+              <option value="custom">Personalizzata...</option>
+            </select>
+
+            {recurrenceType === 'custom' && (
+              <div className="mt-2 p-3 rounded-lg bg-secondary/30 space-y-3">
+                <p className="text-xs font-medium text-muted">Ripeti nei giorni:</p>
+                <div className="flex gap-1.5">
+                  {[0, 1, 2, 3, 4, 5, 6].map((dayIdx) => {
+                    const isSelected = recurrenceCustomDays.includes(dayIdx)
+                    return (
+                      <button
+                        key={dayIdx}
+                        type="button"
+                        onClick={() => {
+                          setRecurrenceCustomDays((prev) =>
+                            isSelected ? prev.filter((d) => d !== dayIdx) : [...prev, dayIdx]
+                          )
+                        }}
+                        className={`w-9 h-9 rounded-full text-xs font-medium transition-colors ${
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-background border border-border text-muted hover:border-primary/50'
+                        }`}
+                      >
+                        {RRULE_DAY_LABELS[dayIdx]}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {recurrenceType !== 'none' && (
+              <div className="mt-2 p-3 rounded-lg bg-secondary/30 space-y-2">
+                <p className="text-xs font-medium text-muted">Termina:</p>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="recurrenceEnd"
+                      checked={recurrenceEndType === 'never'}
+                      onChange={() => setRecurrenceEndType('never')}
+                      className="accent-primary"
+                    />
+                    Mai
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="recurrenceEnd"
+                      checked={recurrenceEndType === 'date'}
+                      onChange={() => setRecurrenceEndType('date')}
+                      className="accent-primary"
+                    />
+                    Il giorno
+                    {recurrenceEndType === 'date' && (
+                      <input
+                        type="date"
+                        value={recurrenceEndDate}
+                        onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                        className="ml-1 rounded-md border border-border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      />
+                    )}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="recurrenceEnd"
+                      checked={recurrenceEndType === 'count'}
+                      onChange={() => setRecurrenceEndType('count')}
+                      className="accent-primary"
+                    />
+                    Dopo
+                    {recurrenceEndType === 'count' && (
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={recurrenceEndCount}
+                        onChange={(e) => setRecurrenceEndCount(parseInt(e.target.value) || 1)}
+                        className="ml-1 w-16 rounded-md border border-border bg-background px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      />
+                    )}
+                    <span className={recurrenceEndType === 'count' ? '' : 'text-muted'}>occorrenze</span>
+                  </label>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Participants selection - team members + external emails */}
-          <div>
+          {/* Participants selection - hidden in block mode */}
+          {!blockMode && <div>
             <label className="flex items-center gap-1.5 text-sm font-medium mb-2">
               <Users className="h-4 w-4 text-muted" />
               Partecipanti
@@ -1418,10 +1924,10 @@ export default function CalendarPage() {
                 </button>
               )}
             </div>
-          </div>
+          </div>}
 
-          {/* Meet toggle */}
-          {!editingEvent && (
+          {/* Meet toggle - hidden in block mode */}
+          {!blockMode && !editingEvent && (
             <label className="flex items-center gap-3 text-sm p-3 rounded-lg bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors">
               <div className="relative">
                 <input
@@ -1447,7 +1953,7 @@ export default function CalendarPage() {
               Annulla
             </Button>
             <Button type="submit" loading={creating}>
-              {editingEvent ? 'Salva Modifiche' : 'Crea Evento'}
+              {editingEvent ? 'Salva Modifiche' : blockMode ? 'Blocca Slot' : 'Crea Evento'}
             </Button>
           </div>
         </form>

@@ -487,7 +487,8 @@ export default function ExpensesPage() {
                   </div>
                   <span className="font-bold text-sm">{formatCurrency(exp.amount)}</span>
                 </div>
-                <p className="text-sm truncate">{exp.supplierName || exp.description}</p>
+                <p className="text-sm font-medium truncate">{exp.description}</p>
+                {exp.supplierName && <p className="text-xs text-muted truncate">{exp.supplierName}</p>}
                 {exp.notes && <p className="text-xs text-muted truncate mt-0.5">{exp.notes}</p>}
                 {advancedView && (
                   <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
@@ -519,6 +520,7 @@ export default function ExpensesPage() {
                 <tr className="border-b border-border/30">
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Data</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Pagato</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Descrizione</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Fornitore</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Categoria</th>
                   {advancedView && (
@@ -546,6 +548,7 @@ export default function ExpensesPage() {
                         title={exp.isPaid ? 'Pagata' : 'Non pagata'}
                       />
                     </td>
+                    <td className="px-4 py-3.5 font-medium max-w-[250px] truncate">{exp.description}</td>
                     <td className="px-4 py-3.5">{exp.supplierName || '\u2014'}</td>
                     <td className="px-4 py-3.5">
                       <Badge variant="default">{exp.category}</Badge>

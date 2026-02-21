@@ -73,6 +73,12 @@ export default function PortalHomePage() {
         >
           Documenti
         </button>
+        <button
+          onClick={() => router.push('/portal/booking')}
+          className="px-4 py-2 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors"
+        >
+          Prenotazioni
+        </button>
       </div>
 
       {/* Preventivi */}

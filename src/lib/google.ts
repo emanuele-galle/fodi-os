@@ -87,6 +87,94 @@ export async function getAuthenticatedClient(userId: string, requireCalendar = t
   return client
 }
 
+export type AuthErrorReason = 'no_token' | 'scopes' | 'token_expired' | null
+
+export interface AuthCheckResult {
+  client: InstanceType<typeof google.auth.OAuth2> | null
+  error: AuthErrorReason
+}
+
+/**
+ * Check auth status with structured error info.
+ * Unlike getAuthenticatedClient which returns null for all failures,
+ * this returns the reason so routes can respond appropriately.
+ */
+export async function checkAuthStatus(userId: string, requireCalendar = true): Promise<AuthCheckResult> {
+  const tokenRecord = await prisma.googleToken.findUnique({
+    where: { userId },
+  })
+
+  if (!tokenRecord) return { client: null, error: 'no_token' }
+
+  if (requireCalendar && !hasRequiredScopes(tokenRecord.scope)) {
+    await prisma.googleToken.delete({ where: { userId } })
+    return { client: null, error: 'scopes' }
+  }
+
+  const client = createOAuth2Client()
+  client.setCredentials({
+    access_token: tokenRecord.accessToken,
+    refresh_token: tokenRecord.refreshToken,
+    expiry_date: tokenRecord.expiresAt.getTime(),
+  })
+
+  if (tokenRecord.expiresAt.getTime() < Date.now()) {
+    try {
+      const { credentials } = await client.refreshAccessToken()
+      await prisma.googleToken.update({
+        where: { userId },
+        data: {
+          accessToken: credentials.access_token!,
+          expiresAt: new Date(credentials.expiry_date!),
+          ...(credentials.refresh_token && { refreshToken: credentials.refresh_token }),
+        },
+      })
+      client.setCredentials(credentials)
+    } catch {
+      await prisma.googleToken.delete({ where: { userId } })
+      return { client: null, error: 'token_expired' }
+    }
+  }
+
+  return { client, error: null }
+}
+
+/**
+ * Retry wrapper for Google API calls with exponential backoff.
+ * Retries on transient errors (429, 500, 503).
+ */
+export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn()
+    } catch (err: unknown) {
+      const status = (err as { code?: number })?.code ||
+        (err as { response?: { status?: number } })?.response?.status
+      if ([429, 500, 503].includes(status as number) && i < maxRetries - 1) {
+        await new Promise((r) => setTimeout(r, Math.pow(2, i) * 1000))
+        continue
+      }
+      throw err
+    }
+  }
+  throw new Error('Max retries exceeded')
+}
+
+/**
+ * Check if a Google API error is a scope/permission error.
+ */
+export function isScopeError(err: unknown): boolean {
+  const message = (err as { message?: string })?.message || ''
+  const status = (err as { code?: number })?.code ||
+    (err as { response?: { status?: number } })?.response?.status
+  return (
+    status === 403 &&
+    (message.includes('insufficient authentication scopes') ||
+     message.includes('Insufficient Permission') ||
+     message.includes('insufficientPermissions'))
+  )
+}
+
 export function getCalendarService(auth: InstanceType<typeof google.auth.OAuth2>) {
   return google.calendar({ version: 'v3', auth })
 }

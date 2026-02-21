@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
+import { getCalendarService, checkAuthStatus, withRetry, isScopeError } from '@/lib/google'
+import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
@@ -12,6 +13,7 @@ const updateEventSchema = z.object({
   location: z.string().optional(),
   calendarId: z.string().optional(),
   attendees: z.array(z.string().email()).optional(),
+  recurrence: z.array(z.string()).optional(),
 })
 
 // DELETE /api/calendar/events/[eventId]
@@ -34,9 +36,13 @@ export async function DELETE(
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 
-  const auth = await getAuthenticatedClient(userId)
+  const { client: auth, error: authError } = await checkAuthStatus(userId)
   if (!auth) {
-    return NextResponse.json({ error: 'Google non connesso', connected: false }, { status: 403 })
+    return NextResponse.json({
+      error: authError === 'scopes' ? 'Permessi calendario insufficienti. Riconnetti Google.' : 'Google non connesso',
+      connected: false,
+      reason: authError,
+    }, { status: 403 })
   }
 
   const { eventId } = await params
@@ -44,9 +50,17 @@ export async function DELETE(
 
   try {
     const calendar = getCalendarService(auth)
-    await calendar.events.delete({ calendarId, eventId, sendUpdates: 'all' })
+    await withRetry(() => calendar.events.delete({ calendarId, eventId, sendUpdates: 'all' }))
     return NextResponse.json({ success: true })
   } catch (e) {
+    if (isScopeError(e)) {
+      await prisma.googleToken.delete({ where: { userId: userId! } }).catch(() => {})
+      return NextResponse.json({
+        error: 'Permessi calendario insufficienti. Riconnetti Google.',
+        connected: false,
+        reason: 'scopes',
+      }, { status: 403 })
+    }
     console.error('Calendar delete error:', e)
     return NextResponse.json({ error: 'Errore nella cancellazione evento' }, { status: 500 })
   }
@@ -72,9 +86,13 @@ export async function PATCH(
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 
-  const auth = await getAuthenticatedClient(userId)
+  const { client: auth, error: authError } = await checkAuthStatus(userId)
   if (!auth) {
-    return NextResponse.json({ error: 'Google non connesso', connected: false }, { status: 403 })
+    return NextResponse.json({
+      error: authError === 'scopes' ? 'Permessi calendario insufficienti. Riconnetti Google.' : 'Google non connesso',
+      connected: false,
+      reason: authError,
+    }, { status: 403 })
   }
 
   const { eventId } = await params
@@ -87,7 +105,7 @@ export async function PATCH(
     )
   }
 
-  const { summary, description, start, end, location, calendarId, attendees } = parsed.data
+  const { summary, description, start, end, location, calendarId, attendees, recurrence } = parsed.data
 
   try {
     const calendar = getCalendarService(auth)
@@ -98,16 +116,25 @@ export async function PATCH(
     if (start !== undefined) requestBody.start = { dateTime: start, timeZone: 'Europe/Rome' }
     if (end !== undefined) requestBody.end = { dateTime: end, timeZone: 'Europe/Rome' }
     if (attendees !== undefined) requestBody.attendees = attendees.map((email) => ({ email }))
+    if (recurrence !== undefined) requestBody.recurrence = recurrence
 
-    const res = await calendar.events.patch({
+    const res = await withRetry(() => calendar.events.patch({
       calendarId: calendarId || 'primary',
       eventId,
       sendUpdates: 'all',
       requestBody,
-    })
+    }))
 
     return NextResponse.json(res.data)
   } catch (e) {
+    if (isScopeError(e)) {
+      await prisma.googleToken.delete({ where: { userId: userId! } }).catch(() => {})
+      return NextResponse.json({
+        error: 'Permessi calendario insufficienti. Riconnetti Google.',
+        connected: false,
+        reason: 'scopes',
+      }, { status: 403 })
+    }
     console.error('Calendar update error:', e)
     return NextResponse.json({ error: 'Errore nella modifica evento' }, { status: 500 })
   }
