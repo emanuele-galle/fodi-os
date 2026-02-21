@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { hasPermission, requirePermission, ADMIN_ROLES } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { updateTaskSchema } from '@/lib/validation'
-import { getTaskParticipants, notifyUsers } from '@/lib/notifications'
+import { getTaskParticipants, getProjectMembers, notifyUsers } from '@/lib/notifications'
 import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
@@ -132,10 +132,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, projectId, folderId, milestoneId, dueDate, estimatedHours, sortOrder, tags } = parsed.data
 
-    // Only ADMIN/MANAGER can move tasks between projects
+    // Only ADMIN/DIR_TECNICO can move tasks between projects
     if (projectId !== undefined) {
-      if (!ADMIN_ROLES.includes(role)) {
-        return NextResponse.json({ success: false, error: 'Solo Admin e Manager possono spostare task tra progetti' }, { status: 403 })
+      if (role !== 'ADMIN' && role !== 'DIR_TECNICO') {
+        return NextResponse.json({ success: false, error: 'Solo Admin e Direttore Tecnico possono spostare task tra progetti' }, { status: 403 })
       }
     }
 
@@ -220,10 +220,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     const notifMetadata = { projectName: taskProjectName, taskStatus: status || (previousTask?.status ?? undefined), priority: previousTask?.priority ?? task.priority }
 
-    // Fetch participants once for all notifications
+    // Fetch notification recipients: project members if task belongs to a project, otherwise task participants
     const needsNotification = (status !== undefined && previousTask && status !== previousTask.status)
       || priority !== undefined || dueDate !== undefined || description !== undefined
-    const participants = needsNotification ? await getTaskParticipants(taskId) : []
+    const effectiveProjectId = task.projectId as string | null
+    const participants = needsNotification
+      ? (effectiveProjectId ? await getProjectMembers(effectiveProjectId) : await getTaskParticipants(taskId))
+      : []
 
     // Status change notification
     if (status !== undefined && previousTask && status !== previousTask.status) {
@@ -259,6 +262,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             message: `${actorName} ha completato "${task.title}"`,
             link: taskLink,
             metadata: notifMetadata,
+            projectId: effectiveProjectId ?? undefined,
           }
         )
 
@@ -273,11 +277,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               message: `${actorName} ha completato "${task.title}"`,
               link: taskLink,
               metadata: notifMetadata,
+              projectId: effectiveProjectId ?? undefined,
             }
           )
         }
 
-        // Notify other participants (excluding creator and assigners, already notified above)
+        // Notify other members/participants (excluding creator and assigners, already notified above)
         const alreadyNotified = new Set([task.creatorId, ...assignerIds])
         const others = participants.filter((id) => !alreadyNotified.has(id))
         if (others.length > 0) {
@@ -290,6 +295,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               message: `${actorName} ha completato "${task.title}"`,
               link: taskLink,
               metadata: notifMetadata,
+              projectId: effectiveProjectId ?? undefined,
             }
           )
         }
@@ -303,6 +309,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             message: `${actorName} ha cambiato lo stato di "${task.title}" in "${newLabel}"`,
             link: taskLink,
             metadata: notifMetadata,
+            projectId: effectiveProjectId ?? undefined,
           }
         )
       }
@@ -325,6 +332,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             message: `${actorName} ha modificato ${changes.join(', ')} di "${task.title}"`,
             link: taskLink,
             metadata: notifMetadata,
+            projectId: effectiveProjectId ?? undefined,
           }
         )
       }

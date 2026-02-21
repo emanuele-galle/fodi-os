@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft, Send, ArrowRight, Eye, Pencil, X, Save, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -57,6 +57,11 @@ export default function QuoteDetailPage() {
 
   const [quote, setQuote] = useState<QuoteDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => { mountedRef.current = false }
+  }, [])
   const [showPdfPreview, setShowPdfPreview] = useState(false)
   const [confirmConvertOpen, setConfirmConvertOpen] = useState(false)
   const [converting, setConverting] = useState(false)
@@ -79,12 +84,12 @@ export default function QuoteDetailPage() {
   const fetchQuote = useCallback(async () => {
     try {
       const res = await fetch(`/api/quotes/${quoteId}`)
-      if (res.ok) {
+      if (res.ok && mountedRef.current) {
         const json = await res.json()
         setQuote(json.data || json)
       }
     } finally {
-      setLoading(false)
+      if (mountedRef.current) setLoading(false)
     }
   }, [quoteId])
 

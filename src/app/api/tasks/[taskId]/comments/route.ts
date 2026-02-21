@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
-import { getTaskParticipants, notifyUsers } from '@/lib/notifications'
+import { getTaskParticipants, getProjectMembers, notifyUsers } from '@/lib/notifications'
 import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
@@ -71,17 +71,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    // Notify all task participants (creator + assignees + commenters) except comment author
-    const participants = await getTaskParticipants(taskId)
+    // Notify all project members (or task participants if no project) except comment author
+    const recipients = task.projectId
+      ? await getProjectMembers(task.projectId)
+      : await getTaskParticipants(taskId)
     const authorName = `${comment.author.firstName} ${comment.author.lastName}`
     await notifyUsers(
-      participants,
+      recipients,
       userId,
       {
         type: 'task_comment',
         title: 'Nuovo commento',
         message: `${authorName} ha commentato "${task.title}"`,
         link: `/tasks?taskId=${taskId}&commentId=${comment.id}`,
+        projectId: task.projectId ?? undefined,
       }
     )
 

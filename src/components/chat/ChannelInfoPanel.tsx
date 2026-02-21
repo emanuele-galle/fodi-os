@@ -41,6 +41,7 @@ interface TeamMember {
 interface ChannelInfoPanelProps {
   channelId: string
   currentUserId: string
+  currentUserRole?: string
   teamMembers: TeamMember[]
   onClose: () => void
   onDeleteChannel?: (id: string) => void
@@ -59,7 +60,7 @@ const ROLE_LABELS: Record<string, string> = {
   MEMBER: 'Membro',
 }
 
-export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClose, onDeleteChannel }: ChannelInfoPanelProps) {
+export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, teamMembers, onClose, onDeleteChannel }: ChannelInfoPanelProps) {
   const [channel, setChannel] = useState<ChannelInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [editingName, setEditingName] = useState(false)
@@ -69,6 +70,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClos
   const [showAddMember, setShowAddMember] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [removingMember, setRemovingMember] = useState<string | null>(null)
 
   useEffect(() => {
     fetchChannel()
@@ -97,6 +99,22 @@ export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClos
     }
   }
 
+  async function handleRemoveMember(userId: string) {
+    setRemovingMember(userId)
+    try {
+      const res = await fetch(`/api/chat/channels/${channelId}/members`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
+      if (res.ok) {
+        fetchChannel()
+      }
+    } finally {
+      setRemovingMember(null)
+    }
+  }
+
   async function handleAddMember(userId: string) {
     const res = await fetch(`/api/chat/channels/${channelId}/members`, {
       method: 'POST',
@@ -119,7 +137,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClos
 
   const TypeIcon = TYPE_ICONS[channel.type] || Hash
   const currentMember = channel.members.find((m) => m.userId === currentUserId)
-  const isOwnerOrAdmin = currentMember?.role === 'OWNER' || currentMember?.role === 'ADMIN'
+  const isOwnerOrAdmin = currentMember?.role === 'OWNER' || currentMember?.role === 'ADMIN' || currentUserRole === 'ADMIN'
   const existingMemberIds = new Set(channel.members.map((m) => m.userId))
   const availableMembers = teamMembers.filter((m) => !existingMemberIds.has(m.id))
 
@@ -272,6 +290,16 @@ export function ChannelInfoPanel({ channelId, currentUserId, teamMembers, onClos
                 <span className="text-[10px] text-muted-foreground/50 font-medium">
                   {ROLE_LABELS[member.role] || member.role}
                 </span>
+                {isOwnerOrAdmin && member.role !== 'OWNER' && member.userId !== currentUserId && channel.type !== 'DIRECT' && (
+                  <button
+                    onClick={() => handleRemoveMember(member.userId)}
+                    disabled={removingMember === member.userId}
+                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                    title="Rimuovi membro"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
               </div>
             ))}
           </div>

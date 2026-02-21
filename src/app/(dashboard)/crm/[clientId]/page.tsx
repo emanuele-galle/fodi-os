@@ -578,7 +578,7 @@ export default function ClientDetailPage() {
         Torna alla lista clienti
       </button>
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <Avatar name={client.companyName} size="lg" />
           <div>
@@ -599,18 +599,71 @@ export default function ClientDetailPage() {
         </div>
       </div>
 
+      {/* Quick Stats */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="bg-card border border-border/40 rounded-lg p-3">
+          <p className="text-xs text-muted mb-0.5">Revenue Totale</p>
+          <p className="text-lg font-bold text-emerald-500">{formatCurrency(client.totalRevenue)}</p>
+        </div>
+        <div className="bg-card border border-border/40 rounded-lg p-3">
+          <p className="text-xs text-muted mb-0.5">Contatti</p>
+          <p className="text-lg font-bold">{client.contacts.length}</p>
+        </div>
+        <div className="bg-card border border-border/40 rounded-lg p-3">
+          <p className="text-xs text-muted mb-0.5">Interazioni</p>
+          <p className="text-lg font-bold">{client.interactions.length}</p>
+        </div>
+      </div>
+
       <Tabs
         tabs={[
-          { id: 'overview', label: 'Panoramica', content: overviewTab },
+          { id: 'overview', label: 'Panoramica', content: (
+            <div className="space-y-6">
+              {overviewTab}
+              <div>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Receipt className="h-4 w-4 text-emerald-500" />Finanze & Spese</h3>
+                <ClientFinancesTab clientId={clientId} quotes={client.quotes} />
+                <div className="mt-4">
+                  <ClientExpensesTab clientId={clientId} />
+                </div>
+              </div>
+            </div>
+          )},
           { id: 'contacts', label: 'Contatti', content: contactsTab },
-          { id: 'interactions', label: 'Interazioni', content: interactionsTab },
-          { id: 'tasks', label: 'Attività', content: tasksTab },
-          { id: 'deals', label: 'Opportunità', content: dealsTab },
-          { id: 'projects', label: 'Progetti', content: projectsTab },
-          { id: 'quotes', label: 'Preventivi', content: quotesTab },
-          { id: 'finances', label: 'Finanze', content: <ClientFinancesTab clientId={clientId} quotes={client.quotes} /> },
-          { id: 'expenses', label: 'Spese', content: <ClientExpensesTab clientId={clientId} /> },
-          { id: 'signatures', label: 'Firme', content: <ClientSignaturesTab clientId={clientId} /> },
+          { id: 'activity', label: 'Attività', content: (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><MessageSquare className="h-4 w-4 text-blue-500" />Interazioni</h3>
+                {interactionsTab}
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><CheckSquare className="h-4 w-4 text-violet-500" />Task CRM</h3>
+                {tasksTab}
+              </div>
+            </div>
+          )},
+          { id: 'commercial', label: 'Commerciale', content: (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp className="h-4 w-4 text-purple-500" />Opportunità</h3>
+                {dealsTab}
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><FileText className="h-4 w-4 text-amber-500" />Preventivi</h3>
+                {quotesTab}
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Paperclip className="h-4 w-4 text-cyan-500" />Firme</h3>
+                <ClientSignaturesTab clientId={clientId} />
+              </div>
+              {client.projects.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><FolderKanban className="h-4 w-4 text-emerald-500" />Progetti</h3>
+                  {projectsTab}
+                </div>
+              )}
+            </div>
+          )},
           { id: 'documents', label: 'Documenti', content: documentsTab },
           { id: 'timeline', label: 'Cronologia', content: timelineTab },
         ]}
@@ -885,7 +938,7 @@ function ClientDealsTab({ clientId }: { clientId: string }) {
   }, [clientId])
 
   if (loading) return <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
-  if (deals.length === 0) return <EmptyState icon={TrendingUp} title="Nessuna opportunità" description="Le opportunità di vendita per questo cliente appariranno qui." action={<Button size="sm" onClick={() => window.location.href = '/crm/deals'}><Plus className="h-4 w-4 mr-1" />Nuova Opportunità</Button>} />
+  if (deals.length === 0) return <EmptyState icon={TrendingUp} title="Nessuna opportunità" description="Le opportunità di vendita per questo cliente appariranno qui." action={<Button size="sm" onClick={() => window.location.href = '/crm/pipeline'}><Plus className="h-4 w-4 mr-1" />Nuova Opportunità</Button>} />
 
   return (
     <div className="space-y-2">

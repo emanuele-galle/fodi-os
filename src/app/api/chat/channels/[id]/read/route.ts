@@ -30,8 +30,8 @@ export async function POST(
 
     // Send updated chat badge count for the reading user
     const unreadChannels = await prisma.$queryRaw<[{ count: bigint }]>`
-      SELECT COUNT(*) as count FROM "ChatMember" cm
-      JOIN "ChatChannel" cc ON cc.id = cm."channelId"
+      SELECT COUNT(*) as count FROM "chat_members" cm
+      JOIN "chat_channels" cc ON cc.id = cm."channelId"
       WHERE cm."userId" = ${userId}
         AND (cm."lastReadAt" IS NULL OR cc."updatedAt" > cm."lastReadAt")
     `

@@ -21,7 +21,7 @@ export async function GET(
   if (!report) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Non-admin can only download their own reports
-  const isAdmin = role === 'ADMIN' || role === 'MANAGER' || role === 'PM'
+  const isAdmin = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM'].includes(role)
   if (!isAdmin && report.userId !== userId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }

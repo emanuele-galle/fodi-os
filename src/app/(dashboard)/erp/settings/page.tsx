@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, Plus, Pencil, Trash2, Building2, CreditCard, Tags, Target, Save } from 'lucide-react'
+import { Settings, Plus, Pencil, Trash2, Building2, CreditCard, Tags, Target, Save, Percent, Loader2 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -12,17 +12,20 @@ import { Badge } from '@/components/ui/Badge'
 interface AccountingCategory { id: string; name: string; type: string; icon: string | null; isActive: boolean; sortOrder: number }
 interface BankAccount { id: string; name: string; type: string; icon: string | null; balance: string; isActive: boolean }
 interface BusinessEntity { id: string; name: string; isActive: boolean }
+interface VatRateItem { id: string; rate: string; label: string; code: string; description: string | null; isActive: boolean; isDefault: boolean; sortOrder: number }
 
-type EditTarget = { type: 'category'; item?: AccountingCategory } | { type: 'account'; item?: BankAccount } | { type: 'entity'; item?: BusinessEntity } | null
+type EditTarget = { type: 'category'; item?: AccountingCategory } | { type: 'account'; item?: BankAccount } | { type: 'entity'; item?: BusinessEntity } | { type: 'vatRate'; item?: VatRateItem } | null
 
 export default function ErpSettingsPage() {
   const [categories, setCategories] = useState<AccountingCategory[]>([])
   const [accounts, setAccounts] = useState<BankAccount[]>([])
   const [entities, setEntities] = useState<BusinessEntity[]>([])
+  const [vatRates, setVatRates] = useState<VatRateItem[]>([])
   const [loading, setLoading] = useState(true)
   const [editTarget, setEditTarget] = useState<EditTarget>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: string; id: string; name: string } | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [seedingVat, setSeedingVat] = useState(false)
 
   // Profit Goals
   const [goalYear, setGoalYear] = useState(new Date().getFullYear())
@@ -32,16 +35,28 @@ export default function ErpSettingsPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const [catRes, accRes, entRes] = await Promise.all([
+    const [catRes, accRes, entRes, vatRes] = await Promise.all([
       fetch('/api/accounting-categories').then(r => r.json()),
       fetch('/api/bank-accounts').then(r => r.json()),
       fetch('/api/business-entities').then(r => r.json()),
+      fetch('/api/vat-rates?active=false').then(r => r.json()),
     ])
     setCategories(catRes.items || [])
     setAccounts(accRes.items || [])
     setEntities(entRes.items || [])
+    setVatRates(vatRes.items || [])
     setLoading(false)
   }, [])
+
+  async function seedVatRates() {
+    setSeedingVat(true)
+    try {
+      await fetch('/api/vat-rates/seed', { method: 'POST' })
+      fetchAll()
+    } finally {
+      setSeedingVat(false)
+    }
+  }
 
   const fetchGoals = useCallback(async (year: number) => {
     try {
@@ -107,6 +122,12 @@ export default function ErpSettingsPage() {
         body.isActive = true
         const url = item ? `/api/business-entities/${item.id}` : '/api/business-entities'
         await fetch(url, { method: item ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      } else if (editTarget.type === 'vatRate') {
+        const item = editTarget.item
+        if (body.rate) body.rate = parseFloat(body.rate as string)
+        body.isActive = true
+        const url = item ? `/api/vat-rates/${item.id}` : '/api/vat-rates'
+        await fetch(url, { method: item ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       }
       setEditTarget(null)
       fetchAll()
@@ -119,7 +140,7 @@ export default function ErpSettingsPage() {
     if (!deleteTarget) return
     setSubmitting(true)
     try {
-      const urlMap: Record<string, string> = { category: 'accounting-categories', account: 'bank-accounts', entity: 'business-entities' }
+      const urlMap: Record<string, string> = { category: 'accounting-categories', account: 'bank-accounts', entity: 'business-entities', vatRate: 'vat-rates' }
       await fetch(`/api/${urlMap[deleteTarget.type]}/${deleteTarget.id}`, { method: 'DELETE' })
       setDeleteTarget(null)
       fetchAll()
@@ -328,15 +349,43 @@ export default function ErpSettingsPage() {
         {/* Aliquote IVA */}
         <Card>
           <CardHeader>
-            <CardTitle>Aliquote IVA</CardTitle>
-            <CardDescription>Aliquote preconfigurate (non modificabili)</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2"><Percent className="h-4 w-4" /> Aliquote IVA</CardTitle>
+                <CardDescription>Aliquote IVA configurabili per entrate e spese</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                {vatRates.length === 0 && (
+                  <Button size="sm" variant="outline" onClick={seedVatRates} disabled={seedingVat}>
+                    {seedingVat ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    Carica Standard
+                  </Button>
+                )}
+                <Button size="sm" onClick={() => setEditTarget({ type: 'vatRate' })}><Plus className="h-4 w-4" /> Nuova</Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-3">
-              {['0%', '4%', '10%', '22%'].map(rate => (
-                <Badge key={rate} variant="outline" className="text-sm px-3 py-1">{rate}</Badge>
-              ))}
-            </div>
+            {loading ? <p className="text-sm text-muted">Caricamento...</p> : vatRates.length === 0 ? (
+              <p className="text-sm text-muted">Nessuna aliquota IVA. Clicca &quot;Carica Standard&quot; per importare le aliquote italiane.</p>
+            ) : (
+              <div className="space-y-2">
+                {vatRates.map(vr => (
+                  <div key={vr.id} className="flex items-center justify-between rounded-lg border border-border/20 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{vr.label}</span>
+                      <Badge variant="outline" className="text-xs">{vr.code}</Badge>
+                      {vr.isDefault && <Badge variant="default" className="text-xs">Default</Badge>}
+                      {!vr.isActive && <Badge variant="outline" className="text-xs text-muted">Disattivata</Badge>}
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => setEditTarget({ type: 'vatRate', item: vr })} className="p-1.5 rounded hover:bg-secondary/20"><Pencil className="h-3.5 w-3.5 text-muted" /></button>
+                      <button onClick={() => setDeleteTarget({ type: 'vatRate', id: vr.id, name: vr.label })} className="p-1.5 rounded hover:bg-secondary/20"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -345,7 +394,8 @@ export default function ErpSettingsPage() {
       <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title={
         editTarget?.type === 'category' ? (editTarget.item ? 'Modifica Categoria' : 'Nuova Categoria') :
         editTarget?.type === 'account' ? (editTarget.item ? 'Modifica Conto' : 'Nuovo Conto') :
-        editTarget?.type === 'entity' ? (editTarget.item ? 'Modifica Attività' : 'Nuova Attività') : ''
+        editTarget?.type === 'entity' ? (editTarget.item ? 'Modifica Attività' : 'Nuova Attività') :
+        editTarget?.type === 'vatRate' ? (editTarget.item ? 'Modifica Aliquota IVA' : 'Nuova Aliquota IVA') : ''
       } size="sm">
         <form onSubmit={handleSubmit} className="space-y-4">
           {editTarget?.type === 'category' && (
@@ -365,6 +415,16 @@ export default function ErpSettingsPage() {
           )}
           {editTarget?.type === 'entity' && (
             <Input name="name" label="Nome *" required defaultValue={editTarget.item?.name || ''} />
+          )}
+          {editTarget?.type === 'vatRate' && (
+            <>
+              <Input name="label" label="Label *" required placeholder="22% Ordinaria" defaultValue={editTarget.item?.label || ''} />
+              <div className="grid grid-cols-2 gap-4">
+                <Input name="rate" label="Aliquota % *" type="number" step="0.01" min="0" max="100" required defaultValue={editTarget.item?.rate || ''} />
+                <Input name="code" label="Codice *" required placeholder="22" defaultValue={editTarget.item?.code || ''} />
+              </div>
+              <Input name="description" label="Descrizione" defaultValue={editTarget.item?.description || ''} />
+            </>
           )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setEditTarget(null)}>Annulla</Button>

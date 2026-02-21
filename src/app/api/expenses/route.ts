@@ -117,6 +117,9 @@ export async function POST(request: NextRequest) {
         deductibility: adv.deductibility || null,
         netAmount: netAmount ?? null,
         vatDeductible: vatDeductible ?? null,
+        invoiceNumber: adv.invoiceNumber || null,
+        dueDate: adv.dueDate ? new Date(adv.dueDate) : null,
+        paymentMethod: adv.paymentMethod || null,
       },
     })
 

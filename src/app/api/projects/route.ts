@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
     const skip = (page - 1) * limit
 
-    // ADMIN and MANAGER see all projects; others see only projects they are members of
-    const isAdminOrManager = role === 'ADMIN' || role === 'MANAGER'
+    // ADMIN sees all projects; others see only projects they are members of
+    const isAdminOrManager = role === 'ADMIN'
     const memberFilter = isAdminOrManager ? {} : { members: { some: { userId } } }
 
     const where = {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, CreditCard, BarChart3, ArrowRight, Landmark, RefreshCw, FileSignature, FileCode, Wand2, TrendingUp, Building2, Calendar, CalendarRange, Settings, FileCheck } from 'lucide-react'
+import { FileText, CreditCard, BarChart3, ArrowRight, Landmark, RefreshCw, FileSignature, FileCode, Wand2, TrendingUp, Building2, Calendar, CalendarRange, Settings, FileCheck, BookOpen } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -90,6 +90,13 @@ export default function ErpPage() {
       description: 'Gestione conti bancari e trasferimenti',
       icon: Building2,
       href: '/erp/accounts',
+      stat: null,
+    },
+    {
+      title: 'Prima Nota',
+      description: 'Registro cronologico di tutti i movimenti',
+      icon: BookOpen,
+      href: '/erp/journal',
       stat: null,
     },
     {

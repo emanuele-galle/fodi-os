@@ -28,13 +28,20 @@ jobs:
             git pull origin main
             docker compose build
             docker compose up -d
-            sleep 10
-            if curl -sf http://localhost:$(docker compose port app 3000 | cut -d: -f2)/api/health > /dev/null 2>&1; then
-              echo "Health check passed"
-            elif docker compose ps app | grep -q healthy; then
+            echo "Waiting for container to be healthy..."
+            for i in $(seq 1 30); do
+              if curl -sf http://localhost:$(docker compose port app 3000 | cut -d: -f2)/api/health > /dev/null 2>&1; then
+                echo "Health check passed"
+                exit 0
+              fi
+              sleep 5
+            done
+            if docker compose ps app | grep -q healthy; then
               echo "Container healthy (health endpoint not available)"
             else
-              echo "Warning: Container may not be healthy"
+              echo "ERROR: Container is not healthy after 150s"
+              docker compose logs --tail=50 app
+              exit 1
             fi
 
       - name: Notify deployment

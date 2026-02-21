@@ -117,7 +117,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
   const [moveFolderId, setMoveFolderId] = useState<string>('')
   const [moving, setMoving] = useState(false)
 
-  const isAdmin = userRole === 'ADMIN' || userRole === 'MANAGER'
+  const isAdmin = userRole === 'ADMIN'
 
   const editForm = useFormPersist(`task-edit:${taskId || 'none'}`, {
     title: '',

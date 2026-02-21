@@ -209,8 +209,8 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
             <rect x={0} y={0} width={totalWidth} height={HEADER_HEIGHT} fill="var(--color-secondary)" opacity={0.3} />
 
             {/* Header labels and vertical grid */}
-            {headerMarkers.map((marker, i) => (
-              <g key={i}>
+            {headerMarkers.map((marker) => (
+              <g key={marker.label}>
                 <line
                   x1={marker.x}
                   y1={HEADER_HEIGHT}
@@ -258,7 +258,7 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
             )}
 
             {/* Dependency arrows */}
-            {dependencies.map((dep, i) => {
+            {dependencies.map((dep) => {
               const fromRow = taskRowMap.get(dep.dependsOnId)
               const toRow = taskRowMap.get(dep.taskId)
               if (fromRow === undefined || toRow === undefined) return null
@@ -273,7 +273,7 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
               const midX = (fromX + toX) / 2
 
               return (
-                <g key={i}>
+                <g key={`${dep.dependsOnId}-${dep.taskId}`}>
                   <path
                     d={`M ${fromX} ${fromY} C ${midX} ${fromY}, ${midX} ${toY}, ${toX} ${toY}`}
                     fill="none"

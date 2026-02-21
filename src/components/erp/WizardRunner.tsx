@@ -59,6 +59,7 @@ export function WizardRunner({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [completed, setCompleted] = useState(false)
+  const [completionError, setCompletionError] = useState<string | null>(null)
 
   const visibleSteps = template.steps.filter((s) =>
     evaluateCondition(s.condition as WizardCondition | null, answers)
@@ -144,15 +145,20 @@ export function WizardRunner({
     } else {
       // Complete
       setSaving(true)
+      setCompletionError(null)
       try {
-        await fetch(`${apiBase}/${submissionId}`, {
+        const res = await fetch(`${apiBase}/${submissionId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ currentStep, answers, status: 'COMPLETED' }),
         })
-        await fetch(`${apiBase}/${submissionId}/complete`, { method: 'POST' })
+        if (!res.ok) throw new Error('save failed')
+        const completeRes = await fetch(`${apiBase}/${submissionId}/complete`, { method: 'POST' })
+        if (!completeRes.ok) throw new Error('complete failed')
         setCompleted(true)
         onComplete?.()
+      } catch {
+        setCompletionError('Errore durante il salvataggio. Riprova.')
       } finally {
         setSaving(false)
       }
@@ -216,6 +222,12 @@ export function WizardRunner({
           />
         ))}
       </div>
+
+      {completionError && (
+        <div className="mb-4 p-3 rounded-md text-sm bg-destructive/10 text-destructive border border-destructive/20">
+          {completionError}
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <Button

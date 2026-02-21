@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
         firstName: true,
         lastName: true,
         role: true,
+        customRoleId: true,
       },
     })
 
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: `${user.firstName} ${user.lastName}`,
       role: user.role,
+      customRoleId: user.customRoleId,
     }
 
     const [accessToken, refreshToken] = await Promise.all([

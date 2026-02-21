@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
         firstName: true,
         lastName: true,
         role: true,
+        customRoleId: true,
         password: true,
         isActive: true,
       },
@@ -50,11 +51,16 @@ export async function POST(request: NextRequest) {
 
     // === IP VERIFICATION ===
     const clientIp = ip !== 'unknown' ? ip : ''
+    const isDev = process.env.NODE_ENV === 'development'
 
-    if (clientIp) {
-      const trustedIp = await prisma.trustedIp.findUnique({
-        where: { userId_ipAddress: { userId: user.id, ipAddress: clientIp } },
-      })
+    if (!isDev) {
+      // clientIp might be empty — treat as untrusted
+      const ipForLookup = clientIp || 'unknown'
+      const trustedIp = clientIp
+        ? await prisma.trustedIp.findUnique({
+            where: { userId_ipAddress: { userId: user.id, ipAddress: clientIp } },
+          })
+        : null
 
       if (trustedIp) {
         // IP trusted - aggiorna lastUsedAt e continua con il login normale
@@ -63,7 +69,7 @@ export async function POST(request: NextRequest) {
           data: { lastUsedAt: new Date() },
         })
       } else {
-        // IP NON trusted - genera OTP e richiedi verifica
+        // IP NON trusted or unknown - genera OTP e richiedi verifica
 
         // Rate limit invio OTP: 3 per 10 min per userId
         if (!rateLimit(`otp-send:${user.id}`, 3, 10 * 60 * 1000)) {
@@ -75,7 +81,7 @@ export async function POST(request: NextRequest) {
 
         // Invalidare OTP precedenti non usati per questo user+IP
         await prisma.loginOtp.updateMany({
-          where: { userId: user.id, ipAddress: clientIp, isUsed: false },
+          where: { userId: user.id, ipAddress: ipForLookup, isUsed: false },
           data: { isUsed: true },
         })
 
@@ -88,21 +94,21 @@ export async function POST(request: NextRequest) {
           data: {
             userId: user.id,
             otpHash,
-            ipAddress: clientIp,
+            ipAddress: ipForLookup,
             userAgent,
             expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minuti
           },
         })
 
         // Invia email
-        await sendLoginOtpEmail(user.email, otpCode, clientIp)
+        await sendLoginOtpEmail(user.email, otpCode, ipForLookup)
 
         logActivity({
           userId: user.id,
           action: 'LOGIN_OTP_SENT',
           entityType: 'AUTH',
           entityId: user.id,
-          metadata: { ip: clientIp, reason: 'untrusted_ip' },
+          metadata: { ip: ipForLookup, reason: clientIp ? 'untrusted_ip' : 'unknown_ip' },
         })
 
         return NextResponse.json(
@@ -123,6 +129,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: `${user.firstName} ${user.lastName}`,
       role: user.role,
+      customRoleId: user.customRoleId,
     }
 
     const [accessToken, refreshToken] = await Promise.all([

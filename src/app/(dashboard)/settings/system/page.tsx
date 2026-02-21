@@ -344,8 +344,10 @@ const PROJECT_STATUS_LABELS: Record<string, string> = {
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
-  MANAGER: 'Manager',
-  SALES: 'Commerciale',
+  DIR_COMMERCIALE: 'Dir. Commerciale',
+  DIR_TECNICO: 'Dir. Tecnico',
+  DIR_SUPPORT: 'Dir. Supporto',
+  COMMERCIALE: 'Commerciale',
   PM: 'Resp. Progetto',
   DEVELOPER: 'Sviluppatore',
   CONTENT: 'Contenuti',

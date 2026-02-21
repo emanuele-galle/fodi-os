@@ -26,9 +26,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: '10gb',
+      bodySizeLimit: '100mb',
     },
-    middlewareClientMaxBodySize: '10gb',
     optimizePackageImports: [
       'lucide-react',
       'date-fns',

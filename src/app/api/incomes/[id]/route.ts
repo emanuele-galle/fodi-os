@@ -29,6 +29,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (d.businessEntityId !== undefined) data.businessEntityId = d.businessEntityId || null
     if (d.category !== undefined) data.category = d.category
     if (d.vatRate !== undefined) data.vatRate = d.vatRate
+    if (d.invoiceNumber !== undefined) data.invoiceNumber = d.invoiceNumber || null
+    if (d.dueDate !== undefined) data.dueDate = d.dueDate ? new Date(d.dueDate) : null
+    if (d.paymentMethod !== undefined) data.paymentMethod = d.paymentMethod || null
     if (d.notes !== undefined) data.notes = d.notes || null
     if (d.clientId !== undefined) data.clientId = d.clientId || null
 

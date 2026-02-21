@@ -221,8 +221,6 @@ export default function DashboardPage() {
         setWeekHours(hours)
         setWeekBillableHours(billable)
 
-        setTotalRevenue(0)
-
         const expenses = (expensesRes?.items || [])
           .filter((e: { date: string }) => e.date >= monthStart)
           .reduce((s: number, e: { amount: string }) => s + parseFloat(e.amount), 0)
@@ -236,7 +234,7 @@ export default function DashboardPage() {
           { label: 'Progetti in Corso', value: String(projectsRes?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
           { label: 'Preventivi Aperti', value: String(quotesRes?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
           { label: 'Ore Questa Settimana', value: hours.toFixed(1) + 'h', icon: Clock, color: 'text-muted', href: '/time' },
-          { label: 'Fatturato Mese', value: formatCurrency(0), icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
+          { label: 'Fatturato Mese', value: totalRevenue > 0 ? formatCurrency(totalRevenue) : 'N/D', icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
           { label: 'Ticket Aperti', value: String(ticketsRes?.total ?? 0), icon: AlertCircle, color: 'text-destructive', href: '/support' },
         ])
       } catch {

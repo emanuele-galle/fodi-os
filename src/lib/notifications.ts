@@ -10,6 +10,7 @@ interface CreateNotificationParams {
   message: string
   link?: string
   metadata?: Record<string, unknown>
+  projectId?: string
 }
 
 /**
@@ -17,10 +18,10 @@ interface CreateNotificationParams {
  * Use this helper everywhere instead of duplicating notification logic.
  */
 export async function createNotification(params: CreateNotificationParams) {
-  const { userId, type, title, message, link, metadata } = params
+  const { userId, type, title, message, link, metadata, projectId } = params
 
   const notification = await prisma.notification.create({
-    data: { userId, type, title, message, link, metadata: (metadata ?? undefined) as Prisma.InputJsonValue | undefined },
+    data: { userId, type, title, message, link, metadata: (metadata ?? undefined) as Prisma.InputJsonValue | undefined, projectId: projectId ?? null },
   })
 
   sseManager.sendToUser(userId, {
@@ -57,6 +58,7 @@ export async function notifyUsers(
     message: params.message,
     link: params.link,
     metadata: (params.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
+    projectId: params.projectId ?? null,
   }))
   await prisma.notification.createMany({ data })
 
@@ -92,4 +94,15 @@ export async function getTaskParticipants(taskId: string): Promise<string[]> {
   for (const c of task.comments) ids.add(c.authorId)
 
   return Array.from(ids)
+}
+
+/**
+ * Get all member user IDs for a project.
+ */
+export async function getProjectMembers(projectId: string): Promise<string[]> {
+  const members = await prisma.projectMember.findMany({
+    where: { projectId },
+    select: { userId: true },
+  })
+  return members.map((m) => m.userId)
 }

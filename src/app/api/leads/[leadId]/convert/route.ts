@@ -63,6 +63,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         where: { id: leadId },
         data: {
           status: 'CONVERTED',
+          convertedClientId: client.id,
           notes: lead.notes
             ? `${lead.notes}\nConvertito in cliente: ${companyName}`
             : `Convertito in cliente: ${companyName}`,

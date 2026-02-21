@@ -45,7 +45,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Non-admin users can only see projects they are members of
-    const isAdminOrManager = role === 'ADMIN' || role === 'MANAGER'
+    const isAdminOrManager = role === 'ADMIN'
     if (!isAdminOrManager) {
       const isMember = project.members.some((m) => m.userId === userId)
       if (!isMember) {

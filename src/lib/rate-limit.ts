@@ -1,7 +1,9 @@
+// NOTE: In-memory rate limiter — state is per-process and not shared across
+// multiple instances/workers. Sufficient for single-container deployments.
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 // Cleanup expired entries every 5 minutes to prevent memory leak
-setInterval(() => {
+const cleanupTimer = setInterval(() => {
   const now = Date.now()
   for (const [key, entry] of rateLimitMap) {
     if (now > entry.resetAt) {
@@ -9,6 +11,7 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000)
+cleanupTimer.unref()
 
 export function rateLimit(key: string, maxAttempts: number = 5, windowMs: number = 60000): boolean {
   const now = Date.now()

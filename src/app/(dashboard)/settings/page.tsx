@@ -43,8 +43,8 @@ const THEMES: { value: Theme; label: string; icon: typeof Sun; description: stri
 ]
 
 const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Amministratore', MANAGER: 'Manager', SALES: 'Commerciale', PM: 'Project Manager',
-  DEVELOPER: 'Sviluppatore', CONTENT: 'Content', SUPPORT: 'Supporto', CLIENT: 'Cliente',
+  ADMIN: 'Amministratore', DIR_COMMERCIALE: 'Dir. Commerciale', DIR_TECNICO: 'Dir. Tecnico', DIR_SUPPORT: 'Dir. Supporto',
+  COMMERCIALE: 'Commerciale', PM: 'Project Manager', DEVELOPER: 'Sviluppatore', CONTENT: 'Content', SUPPORT: 'Supporto', CLIENT: 'Cliente',
 }
 
 const TIMEZONES = [

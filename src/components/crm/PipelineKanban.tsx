@@ -9,6 +9,7 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
@@ -186,7 +187,7 @@ export function PipelineKanban({ clientsByStatus, onStatusChange }: PipelineKanb
 }
 
 function DroppableColumn({ status, children }: { status: string; children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useSortable({
+  const { setNodeRef, isOver } = useDroppable({
     id: `column-${status}`,
     data: { type: 'column', status },
   })

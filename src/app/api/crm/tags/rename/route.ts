@@ -6,7 +6,7 @@ import type { Role } from '@/generated/prisma/client'
 export async function PATCH(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
-    requirePermission(role, 'crm', 'admin')
+    requirePermission(role, 'crm', 'write')
 
     const { oldName, newName } = await request.json()
     if (!oldName || !newName || typeof oldName !== 'string' || typeof newName !== 'string') {
@@ -19,25 +19,25 @@ export async function PATCH(request: NextRequest) {
 
     await Promise.all([
       prisma.$executeRaw`
-        UPDATE "Client"
+        UPDATE "clients"
         SET tags = array_append(array_remove(tags, ${oldName}), ${newName})
         WHERE tags @> ARRAY[${oldName}]::text[]
         AND NOT (tags @> ARRAY[${newName}]::text[])
       `,
       prisma.$executeRaw`
-        UPDATE "Client"
+        UPDATE "clients"
         SET tags = array_remove(tags, ${oldName})
         WHERE tags @> ARRAY[${oldName}]::text[]
         AND tags @> ARRAY[${newName}]::text[]
       `,
       prisma.$executeRaw`
-        UPDATE "Task"
+        UPDATE "tasks"
         SET tags = array_append(array_remove(tags, ${oldName}), ${newName})
         WHERE tags @> ARRAY[${oldName}]::text[]
         AND NOT (tags @> ARRAY[${newName}]::text[])
       `,
       prisma.$executeRaw`
-        UPDATE "Task"
+        UPDATE "tasks"
         SET tags = array_remove(tags, ${oldName})
         WHERE tags @> ARRAY[${oldName}]::text[]
         AND tags @> ARRAY[${newName}]::text[]

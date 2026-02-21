@@ -3,6 +3,7 @@ import { z } from 'zod'
 export const createTicketSchema = z.object({
   clientId: z.string().uuid('Client ID non valido'),
   projectId: z.string().uuid('Project ID non valido').optional(),
+  assigneeId: z.string().uuid('Assignee ID non valido').optional(),
   subject: z.string().min(1, 'Oggetto obbligatorio').max(300),
   description: z.string().min(1, 'Descrizione obbligatoria'),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'),

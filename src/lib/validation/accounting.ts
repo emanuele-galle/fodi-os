@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
-const vatRates = ['0', '4', '10', '22'] as const
 const deductibilityRates = ['0', '50', '100'] as const
+const paymentMethods = ['bonifico', 'contanti', 'carta', 'assegno', 'riba', 'altro'] as const
 
 // ─── Income ──────────────────────────────────────────────────
 export const createIncomeSchema = z.object({
@@ -12,7 +12,10 @@ export const createIncomeSchema = z.object({
   businessEntityId: z.string().uuid().optional().nullable(),
   category: z.string().min(1, 'Categoria obbligatoria'),
   amount: z.number().min(0, 'Importo non valido'),
-  vatRate: z.enum(vatRates).optional().default('22'),
+  vatRate: z.string().optional().default('22'),
+  invoiceNumber: z.string().max(50).optional().nullable(),
+  dueDate: z.string().date().optional().nullable(),
+  paymentMethod: z.enum(paymentMethods).optional().nullable(),
   notes: z.string().max(1000).optional().nullable(),
   clientId: z.string().uuid().optional().nullable(),
 })
@@ -67,6 +70,11 @@ export const expenseAdvancedFields = z.object({
   supplierName: z.string().optional().nullable(),
   bankAccountId: z.string().uuid().optional().nullable(),
   businessEntityId: z.string().uuid().optional().nullable(),
-  vatRate: z.enum(vatRates).optional().nullable(),
+  vatRate: z.string().optional().nullable(),
   deductibility: z.enum(deductibilityRates).optional().nullable(),
+  invoiceNumber: z.string().max(50).optional().nullable(),
+  dueDate: z.string().date().optional().nullable(),
+  paymentMethod: z.enum(paymentMethods).optional().nullable(),
 })
+
+export { paymentMethods }

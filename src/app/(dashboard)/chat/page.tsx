@@ -691,6 +691,7 @@ export default function ChatPage() {
             <ChannelInfoPanel
               channelId={selectedId}
               currentUserId={currentUserId}
+              currentUserRole={currentUserRole}
               teamMembers={teamMembers}
               onClose={() => setShowInfoPanel(false)}
               onDeleteChannel={(id) => {

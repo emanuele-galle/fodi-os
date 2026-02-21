@@ -10,6 +10,8 @@ const USER_SELECT = {
   lastName: true,
   email: true,
   role: true,
+  customRoleId: true,
+  customRole: { select: { id: true, name: true, color: true } },
   isActive: true,
   avatarUrl: true,
   phone: true,
@@ -53,9 +55,9 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: 'Non puoi modificare il tuo ruolo' }, { status: 400 })
     }
 
-    // Managers cannot promote to ADMIN
-    if (role === 'MANAGER' && data.role === 'ADMIN') {
-      return NextResponse.json({ success: false, error: 'Un Manager non puo\' assegnare il ruolo Admin' }, { status: 403 })
+    // Only ADMIN can assign ADMIN role
+    if (role !== 'ADMIN' && data.role === 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Solo un Admin puo\' assegnare il ruolo Admin' }, { status: 403 })
     }
 
     // Check if target user exists
@@ -64,9 +66,9 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: 'Utente non trovato' }, { status: 404 })
     }
 
-    // Managers cannot edit admins
-    if (role === 'MANAGER' && existingUser.role === 'ADMIN') {
-      return NextResponse.json({ success: false, error: 'Un Manager non puo\' modificare un Admin' }, { status: 403 })
+    // Only ADMIN can edit other admins
+    if (role !== 'ADMIN' && existingUser.role === 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Solo un Admin puo\' modificare un altro Admin' }, { status: 403 })
     }
 
     // Check email uniqueness if changing
@@ -90,6 +92,7 @@ export async function PATCH(
     if (data.phone !== undefined) updateData.phone = data.phone ? data.phone.trim() : null
     if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl || null
     if (data.sectionAccess !== undefined) updateData.sectionAccess = data.sectionAccess
+    if (data.customRoleId !== undefined) updateData.customRoleId = data.customRoleId || null
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ success: false, error: 'Nessun campo da aggiornare' }, { status: 400 })
@@ -131,9 +134,9 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: 'Utente non trovato' }, { status: 404 })
     }
 
-    // Managers cannot delete admins
-    if (role === 'MANAGER' && user.role === 'ADMIN') {
-      return NextResponse.json({ success: false, error: 'Un Manager non puo\' eliminare un Admin' }, { status: 403 })
+    // Only ADMIN can delete other admins
+    if (role !== 'ADMIN' && user.role === 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Solo un Admin puo\' eliminare un altro Admin' }, { status: 403 })
     }
 
     await prisma.user.delete({ where: { id } })

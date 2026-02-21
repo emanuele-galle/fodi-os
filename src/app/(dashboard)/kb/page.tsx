@@ -74,7 +74,7 @@ export default function KbPage() {
   useEffect(() => { setPage(1) }, [search, category])
 
   const totalPages = Math.ceil(total / limit)
-  const canWrite = ['ADMIN', 'MANAGER'].includes(userRole)
+  const canWrite = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT'].includes(userRole)
 
   return (
     <div className="animate-fade-in">

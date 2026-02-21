@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   })
 
   // Get ADMIN and PM users for email recipients
-  const recipients = users.filter(u => u.role === 'ADMIN' || u.role === 'PM' || u.role === 'MANAGER')
+  const recipients = users.filter(u => ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM'].includes(u.role))
 
   // Fetch company profile + logo for PDF header
   const companyProfile = await prisma.companyProfile.findFirst()
@@ -301,15 +301,36 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    const pdfFileName = `report-${dateStr}-${user.firstName.toLowerCase()}-${user.lastName.toLowerCase()}.pdf`
+
     pdfAttachments.push({
-      name: `report-${dateStr}-${user.firstName.toLowerCase()}-${user.lastName.toLowerCase()}.pdf`,
+      name: pdfFileName,
       content: pdfBuffer,
     })
+
+    // Send individual email to the user with their own report
+    if (user.email) {
+      const dateFormatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('it-IT', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      })
+      try {
+        const individualHtml = buildIndividualEmail(dateFormatted, userName, totalHours, completedTasks.length)
+        await sendReportEmail(
+          user.email,
+          `Il tuo Report Giornaliero ${dateFormatted} — FODI OS`,
+          individualHtml,
+          [{ name: pdfFileName, content: pdfBuffer }]
+        )
+        emailed++
+      } catch (err) {
+        console.error(`[daily-reports] Error emailing individual ${user.email}:`, err)
+      }
+    }
 
     generated++
   }
 
-  // Send email to ADMIN/PM/MANAGER with all PDFs attached
+  // Send summary email to ADMIN/PM/DIR with ALL PDFs attached
   if (pdfAttachments.length > 0 && recipients.length > 0) {
     const dateFormatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('it-IT', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -319,11 +340,10 @@ export async function POST(req: NextRequest) {
 
     for (const r of recipients) {
       try {
-        // Send email with attachments using nodemailer directly
-        await sendReportEmail(r.email, `Report Giornaliero ${dateFormatted} — FODI OS`, html, pdfAttachments)
+        await sendReportEmail(r.email, `Riepilogo Report Giornalieri ${dateFormatted} — FODI OS`, html, pdfAttachments)
         emailed++
       } catch (err) {
-        console.error(`[daily-reports] Error emailing ${r.email}:`, err)
+        console.error(`[daily-reports] Error emailing summary ${r.email}:`, err)
       }
     }
   }
@@ -373,6 +393,39 @@ async function sendReportEmail(
 }
 
 // ─── Email HTML ─────────────────────────────────────────────
+
+function buildIndividualEmail(dateFormatted: string, userName: string, totalHours: number, tasksCompleted: number): string {
+  return `<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f3f4f6;padding:20px;">
+  <div style="max-width:560px;margin:0 auto;background:white;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+    <h2 style="color:#1e293b;margin:0 0 8px;">Il tuo Report — ${dateFormatted}</h2>
+    <p style="color:#64748b;font-size:14px;margin:0 0 20px;">
+      Ciao <strong>${userName}</strong>, ecco il riepilogo della tua giornata.
+    </p>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:20px;">
+      <div style="display:flex;gap:24px;">
+        <div>
+          <p style="color:#475569;font-size:12px;font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Ore registrate</p>
+          <p style="color:#1e293b;font-size:24px;font-weight:700;margin:0;">${totalHours.toFixed(1)}</p>
+        </div>
+        <div>
+          <p style="color:#475569;font-size:12px;font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Task completati</p>
+          <p style="color:#1e293b;font-size:24px;font-weight:700;margin:0;">${tasksCompleted}</p>
+        </div>
+      </div>
+    </div>
+    <p style="color:#64748b;font-size:13px;margin:0 0 20px;">
+      Il report completo è allegato in formato PDF.
+    </p>
+    <p style="color:#94a3b8;font-size:11px;margin:0;">
+      FODI S.r.l. — Generato automaticamente da FODI OS
+    </p>
+  </div>
+</body>
+</html>`
+}
 
 function buildNotificationEmail(dateFormatted: string, reportCount: number, fileNames: string[]): string {
   const fileList = fileNames.map(f => `<li style="padding:4px 0;font-size:13px;color:#374151;">${f}</li>`).join('')

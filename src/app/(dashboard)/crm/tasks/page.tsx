@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { CheckSquare, Search, Plus, Edit, Trash2, CheckCircle, ChevronLeft, ChevronRight, AlertCircle, Clock, User, Building2 } from 'lucide-react'
+import { CheckSquare, Search, Plus, Edit, Trash2, CheckCircle, ChevronLeft, ChevronRight, AlertCircle, Clock, User, Building2, List, LayoutGrid, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Avatar } from '@/components/ui/Avatar'
 import { PRIORITY_BADGE } from '@/lib/crm-constants'
+import Link from 'next/link'
 
 interface StaffUser {
   id: string
@@ -90,6 +91,13 @@ const TYPE_LABELS: Record<string, string> = {
   OTHER: 'Altro',
 }
 
+const KANBAN_COLUMNS = ['TODO', 'IN_PROGRESS', 'DONE'] as const
+
+const NEXT_STATUS: Record<string, string> = {
+  TODO: 'IN_PROGRESS',
+  IN_PROGRESS: 'DONE',
+}
+
 const emptyNewTask = {
   title: '',
   description: '',
@@ -117,6 +125,8 @@ export default function CrmTasksPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
+  const [clientFilter, setClientFilter] = useState('')
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -137,17 +147,16 @@ export default function CrmTasksPage() {
     setLoading(true)
     setFetchError(null)
     try {
-      const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+      const params = new URLSearchParams({ page: String(page), limit: String(limit), crmOnly: 'true' })
       if (search) params.set('search', search)
       if (statusFilter) params.set('status', statusFilter)
       if (priorityFilter) params.set('priority', priorityFilter)
+      if (clientFilter) params.set('clientId', clientFilter)
       const res = await fetch(`/api/tasks?${params}`)
       if (res.ok) {
         const data = await res.json()
-        // Filter only tasks with clientId (CRM tasks)
-        const crmTasks = (data.items || []).filter((t: CrmTask) => t.clientId !== null)
-        setTasks(crmTasks)
-        setTotal(crmTasks.length)
+        setTasks(data.items || [])
+        setTotal(data.total || 0)
       } else {
         setFetchError('Errore nel caricamento delle attività')
       }
@@ -156,14 +165,14 @@ export default function CrmTasksPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, statusFilter, priorityFilter])
+  }, [page, search, statusFilter, priorityFilter, clientFilter])
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
-  useEffect(() => { setPage(1) }, [search, statusFilter, priorityFilter])
+  useEffect(() => { setPage(1) }, [search, statusFilter, priorityFilter, clientFilter])
   useEffect(() => {
     fetch('/api/users').then(r => r.json()).then(data => {
       const users = (data.items || data.data || []).filter((u: StaffUser & { isActive?: boolean }) =>
-        u.isActive !== false && ['ADMIN', 'MANAGER', 'SALES', 'PM'].includes(u.role)
+        u.isActive !== false && ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM'].includes(u.role)
       )
       setStaffUsers(users)
     }).catch(() => {})
@@ -175,6 +184,13 @@ export default function CrmTasksPage() {
   }, [])
 
   const totalPages = Math.ceil(total / limit)
+
+  const isOverdue = (task: CrmTask) => {
+    if (task.status === 'DONE' || !task.dueDate) return false
+    return new Date(task.dueDate) < new Date()
+  }
+
+  const overdueCount = tasks.filter(isOverdue).length
 
   // Create task
   const handleCreate = async () => {
@@ -253,15 +269,15 @@ export default function CrmTasksPage() {
     }
   }
 
-  // Complete task
-  const handleComplete = async (taskId: string) => {
+  // Update task status (for kanban)
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
     try {
       const res = await fetch(`/api/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: 'DONE',
-          completedAt: new Date().toISOString(),
+          status: newStatus,
+          ...(newStatus === 'DONE' ? { completedAt: new Date().toISOString() } : {}),
         }),
       })
       if (res.ok) {
@@ -270,6 +286,11 @@ export default function CrmTasksPage() {
     } catch {
       // Silent fail
     }
+  }
+
+  // Complete task
+  const handleComplete = async (taskId: string) => {
+    await handleStatusChange(taskId, 'DONE')
   }
 
   // Delete task
@@ -293,11 +314,6 @@ export default function CrmTasksPage() {
     }
   }
 
-  const isOverdue = (task: CrmTask) => {
-    if (task.status === 'DONE' || !task.dueDate) return false
-    return new Date(task.dueDate) < new Date()
-  }
-
   return (
     <div className="animate-fade-in">
       {/* Header */}
@@ -311,10 +327,29 @@ export default function CrmTasksPage() {
             <p className="text-xs md:text-sm text-muted mt-0.5">Gestione attività collegate ai clienti</p>
           </div>
         </div>
-        <Button onClick={() => { setModalOpen(true); setFormError(null) }} size="sm">
-          <Plus className="h-4 w-4 mr-1.5" />
-          Nuova Attività
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* View toggle */}
+          <div className="hidden sm:flex items-center gap-1 bg-secondary/30 rounded-lg p-0.5">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${viewMode === 'list' ? 'bg-card text-foreground shadow-sm' : 'text-muted hover:text-foreground'}`}
+            >
+              <List className="h-3.5 w-3.5" />
+              Lista
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${viewMode === 'kanban' ? 'bg-card text-foreground shadow-sm' : 'text-muted hover:text-foreground'}`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Kanban
+            </button>
+          </div>
+          <Button onClick={() => { setModalOpen(true); setFormError(null) }} size="sm">
+            <Plus className="h-4 w-4 mr-1.5" />
+            Nuova Attività
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -328,7 +363,7 @@ export default function CrmTasksPage() {
             className="pl-10"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Select
             options={TASK_STATUS_OPTIONS}
             value={statusFilter}
@@ -341,9 +376,26 @@ export default function CrmTasksPage() {
             onChange={(e) => setPriorityFilter(e.target.value)}
             className="w-44"
           />
+          <Select
+            options={[
+              { value: '', label: 'Tutti i clienti' },
+              ...clients.map(c => ({ value: c.id, label: c.companyName }))
+            ]}
+            value={clientFilter}
+            onChange={(e) => setClientFilter(e.target.value)}
+            className="w-48"
+          />
           <span className="text-sm text-muted whitespace-nowrap">{total} totali</span>
         </div>
       </div>
+
+      {/* Overdue banner */}
+      {overdueCount > 0 && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+          <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+          <p className="text-sm"><span className="font-semibold text-amber-600">{overdueCount}</span> attività scadute</p>
+        </div>
+      )}
 
       {/* Error */}
       {fetchError && (
@@ -367,8 +419,65 @@ export default function CrmTasksPage() {
         <EmptyState
           icon={CheckSquare}
           title="Nessuna attività trovata"
-          description={search || statusFilter || priorityFilter ? 'Prova a modificare i filtri di ricerca.' : 'Nessuna attività CRM al momento. Crea la prima!'}
+          description={search || statusFilter || priorityFilter || clientFilter ? 'Prova a modificare i filtri di ricerca.' : 'Nessuna attività CRM al momento. Crea la prima!'}
         />
+      ) : viewMode === 'kanban' ? (
+        /* Kanban View */
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {KANBAN_COLUMNS.map(status => {
+            const statusTasks = tasks.filter(t => t.status === status)
+            return (
+              <div key={status} className="space-y-2">
+                <div className="flex items-center justify-between px-2">
+                  <h3 className="text-sm font-semibold">{STATUS_LABELS[status]}</h3>
+                  <Badge variant="outline" className="text-xs">{statusTasks.length}</Badge>
+                </div>
+                <div className="space-y-2 min-h-[200px] rounded-lg bg-secondary/20 p-2">
+                  {statusTasks.map(task => (
+                    <div key={task.id} className="bg-card border border-border/40 rounded-lg p-3 space-y-1.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium">{task.title}</p>
+                        {NEXT_STATUS[status] && (
+                          <button
+                            onClick={() => handleStatusChange(task.id, NEXT_STATUS[status])}
+                            className="flex-shrink-0 p-1 rounded hover:bg-secondary/50 text-muted hover:text-foreground transition-colors"
+                            title={`Sposta a ${STATUS_LABELS[NEXT_STATUS[status]]}`}
+                          >
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      {task.client && (
+                        <Link href={`/crm/${task.clientId}`} className="text-xs text-primary hover:underline block">
+                          {task.client.companyName}
+                        </Link>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <Badge variant={PRIORITY_BADGE[task.priority] || 'default'} className="text-xs">
+                          {PRIORITY_LABELS[task.priority]}
+                        </Badge>
+                        {task.dueDate && (
+                          <span className={`text-[11px] ${isOverdue(task) ? 'text-destructive font-medium' : 'text-muted'}`}>
+                            {new Date(task.dueDate).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
+                          </span>
+                        )}
+                      </div>
+                      {task.assignee && (
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <Avatar name={`${task.assignee.firstName} ${task.assignee.lastName}`} src={task.assignee.avatarUrl} size="xs" />
+                          <span className="text-[11px] text-muted">{task.assignee.firstName} {task.assignee.lastName}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {statusTasks.length === 0 && (
+                    <p className="text-xs text-muted text-center py-8">Nessuna attività</p>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       ) : (
         <>
           {/* Mobile Card View */}
@@ -398,10 +507,10 @@ export default function CrmTasksPage() {
                   <p className="text-xs text-muted line-clamp-2">{task.description}</p>
                 )}
                 {task.client && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted">
+                  <Link href={`/crm/${task.clientId}`} className="flex items-center gap-1.5 text-xs text-primary hover:underline">
                     <Building2 className="h-3 w-3" />
                     {task.client.companyName}
-                  </div>
+                  </Link>
                 )}
                 {task.assignee && (
                   <div className="flex items-center gap-1.5 text-xs text-muted">
@@ -465,13 +574,13 @@ export default function CrmTasksPage() {
                     </td>
                     <td className="px-4 py-3">
                       {task.client ? (
-                        <a
+                        <Link
                           href={`/crm/${task.clientId}`}
                           className="text-primary hover:underline flex items-center gap-1.5"
                         >
                           <Building2 className="h-3.5 w-3.5" />
                           {task.client.companyName}
-                        </a>
+                        </Link>
                       ) : (
                         <span className="text-muted">—</span>
                       )}

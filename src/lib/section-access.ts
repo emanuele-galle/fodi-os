@@ -102,8 +102,10 @@ export const HREF_TO_SECTION: Record<string, Section> = {
 // Role → sections allowed (replicates current sidebar filtering logic)
 const ROLE_SECTION_VIEW: Record<Role, Section[]> = {
   ADMIN: SECTIONS,
-  MANAGER: SECTIONS,
-  SALES: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'erp', 'support', 'team', 'settings'],
+  DIR_COMMERCIALE: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'erp', 'support', 'team', 'settings'],
+  DIR_TECNICO: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'content', 'support', 'team', 'settings'],
+  DIR_SUPPORT: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'support', 'team', 'settings'],
+  COMMERCIALE: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'erp', 'support', 'team', 'settings'],
   PM: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'support', 'team', 'settings'],
   DEVELOPER: ['dashboard', 'tasks', 'chat', 'internal', 'projects', 'calendar', 'support', 'team', 'settings'],
   CONTENT: ['dashboard', 'tasks', 'chat', 'internal', 'projects', 'calendar', 'content', 'team', 'settings'],
@@ -111,22 +113,28 @@ const ROLE_SECTION_VIEW: Record<Role, Section[]> = {
   CLIENT: ['dashboard', 'tasks', 'chat', 'calendar', 'team', 'settings'],
 }
 
-// Roles that have edit by default (ADMIN, MANAGER always edit; others view-only on some sections)
-const ADMIN_ROLES: Role[] = ['ADMIN', 'MANAGER']
+// Director primary sections (edit access)
+const DIRECTOR_PRIMARY_SECTIONS: Partial<Record<Role, Section[]>> = {
+  DIR_COMMERCIALE: ['crm', 'erp'],
+  DIR_TECNICO: ['projects', 'content'],
+  DIR_SUPPORT: ['support', 'crm'],
+}
 
 // ── Functions ──────────────────────────────────────────────────
 
 /** Get the default section access map for a role (replicates current sidebar logic) */
 export function getDefaultSectionAccess(role: Role): SectionAccessMap {
   const allowed = ROLE_SECTION_VIEW[role] || []
-  const isAdmin = ADMIN_ROLES.includes(role)
+  const isAdmin = role === 'ADMIN'
+  const directorPrimary = DIRECTOR_PRIMARY_SECTIONS[role]
 
   const map = {} as SectionAccessMap
   for (const section of SECTIONS) {
     const canView = allowed.includes(section)
+    const canEdit = isAdmin || (!!directorPrimary && directorPrimary.includes(section))
     map[section] = {
       view: canView,
-      edit: canView && isAdmin,
+      edit: canView && canEdit,
     }
   }
   return map
@@ -135,11 +143,15 @@ export function getDefaultSectionAccess(role: Role): SectionAccessMap {
 /** Resolve effective permissions: override takes priority, fallback to role defaults */
 export function getEffectiveSectionAccess(
   role: Role,
-  sectionAccess: SectionAccessMap | null | undefined
+  sectionAccess: SectionAccessMap | null | undefined,
+  customRoleSectionAccess?: SectionAccessMap | null,
 ): SectionAccessMap {
-  const defaults = getDefaultSectionAccess(role)
+  // If custom role section access provided, use it as base instead of role defaults
+  const defaults = customRoleSectionAccess
+    ? mergeSectionAccess(customRoleSectionAccess)
+    : getDefaultSectionAccess(role)
   if (!sectionAccess) return defaults
-  // Merge: only accept valid sections
+  // Merge user-level overrides on top
   const result = { ...defaults }
   for (const section of SECTIONS) {
     if (sectionAccess[section]) {
@@ -151,4 +163,22 @@ export function getEffectiveSectionAccess(
   }
   return result
 }
+
+/** Build a full SectionAccessMap from a partial custom role section access */
+function mergeSectionAccess(custom: SectionAccessMap): SectionAccessMap {
+  const map = {} as SectionAccessMap
+  for (const section of SECTIONS) {
+    if (custom[section]) {
+      map[section] = {
+        view: !!custom[section].view,
+        edit: !!custom[section].edit,
+      }
+    } else {
+      map[section] = { view: false, edit: false }
+    }
+  }
+  return map
+}
+
+export { ROLE_SECTION_VIEW }
 

@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { clientId, projectId, subject, description, priority, category } = parsed.data
+    const { clientId, projectId, assigneeId, subject, description, priority, category } = parsed.data
 
     // Generate ticket number: T-YYYY-NNN
     const year = new Date().getFullYear()
@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
         clientId,
         projectId: projectId || null,
         creatorId: userId,
+        assigneeId: assigneeId || null,
         number,
         subject,
         description,
@@ -123,8 +124,25 @@ export async function POST(request: NextRequest) {
       }
     )
 
+    // Notify assignee if set at creation
+    if (assigneeId && !supportUsers.some((u) => u.id === assigneeId)) {
+      await notifyUsers(
+        [assigneeId],
+        userId,
+        {
+          type: 'ticket_assigned',
+          title: 'Ticket assegnato',
+          message: `Ti è stato assegnato il ticket "${subject}" (${number})`,
+          link: `/support/${ticket.id}`,
+          metadata: { clientName: ticket.client?.companyName, ticketNumber: ticket.number },
+        }
+      )
+    }
+
     // Notify connected users about new ticket
-    sendDataChanged(supportUsers.map((u) => u.id), 'ticket', ticket.id)
+    const notifyIds = [...supportUsers.map((u) => u.id)]
+    if (assigneeId && !notifyIds.includes(assigneeId)) notifyIds.push(assigneeId)
+    sendDataChanged(notifyIds, 'ticket', ticket.id)
 
     return NextResponse.json({ success: true, data: ticket }, { status: 201 })
   } catch (e) {

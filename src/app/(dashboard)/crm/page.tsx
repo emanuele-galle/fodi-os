@@ -82,6 +82,9 @@ export default function CrmPage() {
   const [neglectedFilter, setNeglectedFilter] = useState(false)
   const [revenueMin, setRevenueMin] = useState('')
   const [revenueMax, setRevenueMax] = useState('')
+  const [tagFilter, setTagFilter] = useState('')
+  const [createdAfter, setCreatedAfter] = useState('')
+  const [createdBefore, setCreatedBefore] = useState('')
   const duplicateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { confirm: confirmAction, confirmProps } = useConfirm()
   const limit = 20
@@ -89,6 +92,7 @@ export default function CrmPage() {
   const clientForm = useFormPersist('new-client', {
     companyName: '',
     vatNumber: '',
+    fiscalCode: '',
     pec: '',
     sdi: '',
     website: '',
@@ -118,6 +122,9 @@ export default function CrmPage() {
       if (neglectedFilter) params.set('neglected', 'true')
       if (revenueMin) params.set('revenueMin', revenueMin)
       if (revenueMax) params.set('revenueMax', revenueMax)
+      if (tagFilter) params.set('tags', tagFilter)
+      if (createdAfter) params.set('createdAfter', createdAfter)
+      if (createdBefore) params.set('createdBefore', createdBefore)
       const res = await fetch(`/api/clients?${params}`)
       if (res.ok) {
         const data = await res.json()
@@ -131,7 +138,7 @@ export default function CrmPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, statusFilter, industryFilter, sourceFilter, neglectedFilter, revenueMin, revenueMax])
+  }, [page, search, statusFilter, industryFilter, sourceFilter, neglectedFilter, revenueMin, revenueMax, tagFilter, createdAfter, createdBefore])
 
   useEffect(() => {
     fetchClients()
@@ -321,16 +328,16 @@ export default function CrmPage() {
           className="w-full sm:w-48"
         />
         <Button
-          variant={filtersOpen || industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax ? 'default' : 'outline'}
+          variant={filtersOpen || industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax || tagFilter || createdAfter || createdBefore ? 'default' : 'outline'}
           size="sm"
           onClick={() => setFiltersOpen(!filtersOpen)}
           className="h-10"
         >
           <Filter className="h-4 w-4 mr-1.5" />
           Filtri
-          {(industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax) && (
+          {(industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax || tagFilter || createdAfter || createdBefore) && (
             <span className="ml-1.5 bg-white/20 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-              {[industryFilter, sourceFilter, neglectedFilter, revenueMin, revenueMax].filter(Boolean).length}
+              {[industryFilter, sourceFilter, neglectedFilter, revenueMin, revenueMax, tagFilter, createdAfter, createdBefore].filter(Boolean).length}
             </span>
           )}
         </Button>
@@ -370,6 +377,24 @@ export default function CrmPage() {
                 onChange={(e) => { setRevenueMax(e.target.value); setPage(1) }}
               />
             </div>
+            <Input
+              label="Tag (virgola separati)"
+              placeholder="vip, premium"
+              value={tagFilter}
+              onChange={(e) => { setTagFilter(e.target.value); setPage(1) }}
+            />
+            <Input
+              label="Creato dal"
+              type="date"
+              value={createdAfter}
+              onChange={(e) => { setCreatedAfter(e.target.value); setPage(1) }}
+            />
+            <Input
+              label="Creato fino al"
+              type="date"
+              value={createdBefore}
+              onChange={(e) => { setCreatedBefore(e.target.value); setPage(1) }}
+            />
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/20">
             <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -381,7 +406,7 @@ export default function CrmPage() {
               />
               <span className="text-sm text-muted">Solo clienti trascurati <span className="text-xs">(nessun contatto da 30+ giorni)</span></span>
             </label>
-            {(industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax) && (
+            {(industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax || tagFilter || createdAfter || createdBefore) && (
               <button
                 onClick={() => {
                   setIndustryFilter('')
@@ -389,6 +414,9 @@ export default function CrmPage() {
                   setNeglectedFilter(false)
                   setRevenueMin('')
                   setRevenueMax('')
+                  setTagFilter('')
+                  setCreatedAfter('')
+                  setCreatedBefore('')
                   setPage(1)
                 }}
                 className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
@@ -402,7 +430,7 @@ export default function CrmPage() {
       )}
 
       {/* Active Filter Chips */}
-      {!filtersOpen && (industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax) && (
+      {!filtersOpen && (industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax || tagFilter || createdAfter || createdBefore) && (
         <div className="flex items-center gap-2 flex-wrap mb-4">
           {industryFilter && (
             <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
@@ -434,8 +462,26 @@ export default function CrmPage() {
               <button onClick={() => setNeglectedFilter(false)}><X className="h-3 w-3" /></button>
             </span>
           )}
+          {tagFilter && (
+            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+              Tag: {tagFilter}
+              <button onClick={() => setTagFilter('')}><X className="h-3 w-3" /></button>
+            </span>
+          )}
+          {createdAfter && (
+            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+              Dal: {createdAfter}
+              <button onClick={() => setCreatedAfter('')}><X className="h-3 w-3" /></button>
+            </span>
+          )}
+          {createdBefore && (
+            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+              Fino al: {createdBefore}
+              <button onClick={() => setCreatedBefore('')}><X className="h-3 w-3" /></button>
+            </span>
+          )}
           <button
-            onClick={() => { setIndustryFilter(''); setSourceFilter(''); setNeglectedFilter(false); setRevenueMin(''); setRevenueMax('') }}
+            onClick={() => { setIndustryFilter(''); setSourceFilter(''); setNeglectedFilter(false); setRevenueMin(''); setRevenueMax(''); setTagFilter(''); setCreatedAfter(''); setCreatedBefore('') }}
             className="text-xs text-muted hover:text-foreground"
           >
             Rimuovi tutto
@@ -760,6 +806,7 @@ export default function CrmPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label="P.IVA" value={clientForm.values.vatNumber} onChange={(e) => clientForm.setValue('vatNumber', e.target.value)} />
+            <Input label="Codice Fiscale" value={clientForm.values.fiscalCode} onChange={(e) => clientForm.setValue('fiscalCode', e.target.value)} />
             <Input label="PEC" type="email" value={clientForm.values.pec} onChange={(e) => clientForm.setValue('pec', e.target.value)} />
             <Input label="Codice SDI" value={clientForm.values.sdi} onChange={(e) => clientForm.setValue('sdi', e.target.value)} />
             <Input label="Sito Web" value={clientForm.values.website} onChange={(e) => clientForm.setValue('website', e.target.value)} />

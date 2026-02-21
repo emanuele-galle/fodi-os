@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
         lastName: true,
         email: isAdmin,
         role: true,
+        customRoleId: isAdmin,
+        customRole: isAdmin ? { select: { id: true, name: true, color: true } } : false,
         isActive: true,
         avatarUrl: true,
         phone: isAdmin,

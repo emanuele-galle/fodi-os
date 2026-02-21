@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { TrendingUp, Plus, AlertCircle, Pencil, Trash2, Eye, EyeOff } from 'lucide-react'
+import { TrendingUp, Plus, AlertCircle, Pencil, Trash2, Eye, EyeOff, Download } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
+import { generateCSV, downloadCSV } from '@/lib/export-csv'
 
 interface BankAccount {
   id: string
@@ -42,6 +43,9 @@ interface Income {
   vatRate: number
   bankAccountId: string | null
   businessEntityId: string | null
+  invoiceNumber: string | null
+  dueDate: string | null
+  paymentMethod: string | null
   notes: string | null
   clientId: string | null
   bankAccount: { id: string; name: string } | null
@@ -49,12 +53,7 @@ interface Income {
   client: { id: string; companyName: string } | null
 }
 
-const VAT_OPTIONS = [
-  { value: '0', label: '0%' },
-  { value: '4', label: '4%' },
-  { value: '10', label: '10%' },
-  { value: '22', label: '22%' },
-]
+interface VatRateOption { value: string; label: string }
 
 const PAYMENT_FILTER_OPTIONS = [
   { value: '', label: 'Tutte' },
@@ -68,6 +67,7 @@ export default function IncomePage() {
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
   const [businessEntities, setBusinessEntities] = useState<BusinessEntity[]>([])
   const [categories, setCategories] = useState<AccountingCategory[]>([])
+  const [vatOptions, setVatOptions] = useState<VatRateOption[]>([{ value: '22', label: '22%' }])
   const [loading, setLoading] = useState(true)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
@@ -116,6 +116,12 @@ export default function IncomePage() {
     fetch('/api/bank-accounts').then(r => r.json()).then(d => setBankAccounts(d.items || []))
     fetch('/api/business-entities').then(r => r.json()).then(d => setBusinessEntities(d.items || []))
     fetch('/api/accounting-categories?type=income').then(r => r.json()).then(d => setCategories(d.items || []))
+    fetch('/api/vat-rates').then(r => r.json()).then(d => {
+      const items = d.items || []
+      if (items.length > 0) {
+        setVatOptions(items.map((v: { code: string; label: string }) => ({ value: v.code, label: v.label })))
+      }
+    })
   }, [])
 
   const totalAmount = incomes.reduce((s, e) => s + parseFloat(e.amount), 0)
@@ -179,7 +185,10 @@ export default function IncomePage() {
     body.date = (form.get('date') as string || '').trim()
     body.category = (form.get('category') as string || '').trim()
     body.amount = parseFloat(form.get('amount') as string || '0')
-    body.vatRate = parseInt(form.get('vatRate') as string || '22', 10)
+    body.vatRate = (form.get('vatRate') as string || '22').trim()
+    body.invoiceNumber = (form.get('invoiceNumber') as string || '').trim() || null
+    body.dueDate = (form.get('dueDate') as string || '').trim() || null
+    body.paymentMethod = (form.get('paymentMethod') as string || '').trim() || null
     body.notes = (form.get('notes') as string || '').trim() || null
 
     const bankId = (form.get('bankAccountId') as string || '').trim()
@@ -242,6 +251,25 @@ export default function IncomePage() {
     setModalOpen(true)
   }
 
+  function handleExportCSV() {
+    const headers = ['Data', 'N. Fattura', 'Cliente', 'Categoria', 'Importo', 'IVA %', 'Pagata', 'Scadenza', 'Metodo Pagamento', 'Conto', 'Note']
+    const rows = incomes.map((i) => [
+      new Date(i.date).toLocaleDateString('it-IT'),
+      i.invoiceNumber || '',
+      i.clientName,
+      i.category,
+      parseFloat(i.amount).toFixed(2),
+      String(i.vatRate || ''),
+      i.isPaid ? 'Si' : 'No',
+      i.dueDate ? new Date(i.dueDate).toLocaleDateString('it-IT') : '',
+      i.paymentMethod || '',
+      i.bankAccount?.name || '',
+      i.notes || '',
+    ])
+    const csv = generateCSV(headers, rows)
+    downloadCSV(`entrate_${new Date().toISOString().split('T')[0]}.csv`, csv)
+  }
+
   return (
     <div className="animate-fade-in">
       {/* Header */}
@@ -255,16 +283,22 @@ export default function IncomePage() {
             <p className="text-xs md:text-sm text-muted">Registro entrate e fatture</p>
           </div>
         </div>
-        <div className="hidden sm:block flex-shrink-0">
-          <Button size="sm" onClick={openCreate}>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={incomes.length === 0} className="hidden sm:flex">
+            <Download className="h-4 w-4" />
+            CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={incomes.length === 0} className="sm:hidden">
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button size="sm" onClick={openCreate} className="hidden sm:flex">
             <Plus className="h-4 w-4" />
             Nuova Entrata
           </Button>
+          <Button onClick={openCreate} className="sm:hidden">
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-        <Button onClick={openCreate} className="sm:hidden flex-shrink-0">
-          <Plus className="h-4 w-4 mr-1" />
-          Nuova
-        </Button>
       </div>
 
       {/* Stats Card */}
@@ -418,6 +452,8 @@ export default function IncomePage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Categoria</th>
                   {advancedView && (
                     <>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">N° Fattura</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Scadenza</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Conto</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Attività</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">IVA%</th>
@@ -446,6 +482,17 @@ export default function IncomePage() {
                     </td>
                     {advancedView && (
                       <>
+                        <td className="px-4 py-3.5 text-muted text-xs">{inc.invoiceNumber || '\u2014'}</td>
+                        <td className="px-4 py-3.5">{inc.dueDate ? (() => {
+                          const due = new Date(inc.dueDate)
+                          const now = new Date()
+                          const diff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                          const dateStr = due.toLocaleDateString('it-IT')
+                          if (inc.isPaid) return <span className="text-xs text-emerald-600">{dateStr}</span>
+                          if (diff < 0) return <span className="text-xs font-medium text-red-500">{dateStr} (scaduta)</span>
+                          if (diff <= 7) return <span className="text-xs font-medium text-amber-600">{dateStr}</span>
+                          return <span className="text-xs text-muted">{dateStr}</span>
+                        })() : '\u2014'}</td>
                         <td className="px-4 py-3.5 text-muted">{inc.bankAccount?.name || '\u2014'}</td>
                         <td className="px-4 py-3.5 text-muted">{inc.businessEntity?.name || '\u2014'}</td>
                         <td className="px-4 py-3.5 text-right tabular-nums">{inc.vatRate}%</td>
@@ -466,9 +513,11 @@ export default function IncomePage() {
               </tbody>
               <tfoot>
                 <tr className="border-t border-border/30 bg-secondary/5 font-semibold">
-                  <td className="px-4 py-3" colSpan={advancedView ? 4 : 4}>Totale</td>
+                  <td className="px-4 py-3" colSpan={4}>Totale</td>
                   {advancedView && (
                     <>
+                      <td className="px-4 py-3" />
+                      <td className="px-4 py-3" />
                       <td className="px-4 py-3" />
                       <td className="px-4 py-3" />
                       <td className="px-4 py-3" />
@@ -509,7 +558,20 @@ export default function IncomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input name="amount" label="Importo (EUR) *" type="number" step="0.01" min="0" required defaultValue={editItem?.amount || ''} />
-            <Select name="vatRate" label="Aliquota IVA" options={VAT_OPTIONS} defaultValue={String(editItem?.vatRate ?? 22)} />
+            <Select name="vatRate" label="Aliquota IVA" options={vatOptions} defaultValue={String(editItem?.vatRate ?? '22')} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Input name="invoiceNumber" label="N° Fattura" placeholder="FT-2026/001" defaultValue={editItem?.invoiceNumber || ''} />
+            <Input name="dueDate" label="Scadenza" type="date" defaultValue={editItem?.dueDate?.split('T')[0] || ''} />
+            <Select name="paymentMethod" label="Metodo Pagamento" options={[
+              { value: '', label: 'Seleziona' },
+              { value: 'bonifico', label: 'Bonifico' },
+              { value: 'contanti', label: 'Contanti' },
+              { value: 'carta', label: 'Carta' },
+              { value: 'assegno', label: 'Assegno' },
+              { value: 'riba', label: 'Ri.Ba' },
+              { value: 'altro', label: 'Altro' },
+            ]} defaultValue={editItem?.paymentMethod || ''} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select name="bankAccountId" label="Conto Bancario" options={formBankAccountOptions} defaultValue={editItem?.bankAccountId || ''} />

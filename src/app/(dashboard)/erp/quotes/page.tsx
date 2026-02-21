@@ -44,6 +44,8 @@ export default function QuotesPage() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [clientFilter, setClientFilter] = useState('')
+  const [clients, setClients] = useState<{ id: string; companyName: string }[]>([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [deleteConfirm, setDeleteConfirm] = useState<Quote | null>(null)
@@ -57,6 +59,7 @@ export default function QuotesPage() {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) })
       if (search) params.set('search', search)
       if (statusFilter) params.set('status', statusFilter)
+      if (clientFilter) params.set('clientId', clientFilter)
       const res = await fetch(`/api/quotes?${params}`)
       if (res.ok) {
         const data = await res.json()
@@ -70,10 +73,14 @@ export default function QuotesPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, statusFilter])
+  }, [page, search, statusFilter, clientFilter])
 
   useEffect(() => { fetchQuotes() }, [fetchQuotes])
-  useEffect(() => { setPage(1) }, [search, statusFilter])
+  useEffect(() => { setPage(1) }, [search, statusFilter, clientFilter])
+
+  useEffect(() => {
+    fetch('/api/clients?limit=200').then(r => r.json()).then(d => setClients(d.items || []))
+  }, [])
 
   const totalPages = Math.ceil(total / limit)
 
@@ -133,6 +140,12 @@ export default function QuotesPage() {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="w-full sm:w-48"
         />
+        <Select
+          options={[{ value: '', label: 'Tutti i clienti' }, ...clients.map(c => ({ value: c.id, label: c.companyName }))]}
+          value={clientFilter}
+          onChange={(e) => setClientFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
       </div>
 
       {fetchError && (
@@ -153,9 +166,9 @@ export default function QuotesPage() {
         <EmptyState
           icon={Receipt}
           title="Nessun preventivo trovato"
-          description={search || statusFilter ? 'Prova a modificare i filtri.' : 'Crea il tuo primo preventivo.'}
+          description={search || statusFilter || clientFilter ? 'Prova a modificare i filtri.' : 'Crea il tuo primo preventivo.'}
           action={
-            !search && !statusFilter ? (
+            !search && !statusFilter && !clientFilter ? (
               <Button onClick={() => router.push('/erp/quotes/new')}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nuovo Preventivo

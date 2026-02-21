@@ -47,8 +47,10 @@ const TYPE_ICON: Record<string, React.ElementType> = {
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
-  MANAGER: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
-  SALES: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  DIR_COMMERCIALE: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
+  DIR_TECNICO: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
+  DIR_SUPPORT: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
+  COMMERCIALE: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
   PM: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400',
   DEVELOPER: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400',
   CONTENT: 'bg-pink-500/15 text-pink-600 dark:text-pink-400',
@@ -58,8 +60,10 @@ const ROLE_COLORS: Record<string, string> = {
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
-  MANAGER: 'Manager',
-  SALES: 'Sales',
+  DIR_COMMERCIALE: 'Dir. Comm.',
+  DIR_TECNICO: 'Dir. Tech.',
+  DIR_SUPPORT: 'Dir. Supp.',
+  COMMERCIALE: 'Comm.',
   PM: 'PM',
   DEVELOPER: 'Dev',
   CONTENT: 'Content',

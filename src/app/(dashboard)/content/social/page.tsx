@@ -90,6 +90,9 @@ export default function SocialPage() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [activeStatus, setActiveStatus] = useState('DRAFT')
+  const [platformFilter, setPlatformFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -114,6 +117,9 @@ export default function SocialPage() {
     try {
       const params = new URLSearchParams()
       if (activeStatus) params.set('status', activeStatus)
+      if (platformFilter) params.set('platform', platformFilter)
+      if (fromDate) params.set('from', fromDate)
+      if (toDate) params.set('to', toDate)
       const res = await fetch(`/api/social?${params}`)
       if (res.ok) {
         const data = await res.json()
@@ -126,7 +132,7 @@ export default function SocialPage() {
     } finally {
       setLoading(false)
     }
-  }, [activeStatus])
+  }, [activeStatus, platformFilter, fromDate, toDate])
 
   useEffect(() => {
     fetchPosts()
@@ -296,6 +302,30 @@ export default function SocialPage() {
             {tab.label}
           </button>
         ))}
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <Select
+          options={[{ value: '', label: 'Tutte le piattaforme' }, ...PLATFORM_OPTIONS]}
+          value={platformFilter}
+          onChange={(e) => setPlatformFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+        <Input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          label="Dal"
+          className="w-full sm:w-44"
+        />
+        <Input
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          label="Al"
+          className="w-full sm:w-44"
+        />
       </div>
 
       {loading ? (

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Receipt, Plus, AlertCircle, RefreshCw, Pencil, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Receipt, Plus, AlertCircle, RefreshCw, Pencil, Trash2, Eye, EyeOff, Download } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -12,6 +12,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
+import { generateCSV, downloadCSV } from '@/lib/export-csv'
 
 interface BankAccount {
   id: string
@@ -41,6 +42,9 @@ interface Expense {
   netAmount: string | null
   vatDeductible: string | null
   receipt: string | null
+  invoiceNumber: string | null
+  dueDate: string | null
+  paymentMethod: string | null
   notes: string | null
   clientId: string | null
   projectId: string | null
@@ -52,12 +56,7 @@ interface Expense {
   project: { id: string; name: string } | null
 }
 
-const VAT_OPTIONS = [
-  { value: '0', label: '0%' },
-  { value: '4', label: '4%' },
-  { value: '10', label: '10%' },
-  { value: '22', label: '22%' },
-]
+interface VatRateOption { value: string; label: string }
 
 const DEDUCTIBILITY_OPTIONS = [
   { value: '0', label: '0%' },
@@ -78,6 +77,7 @@ export default function ExpensesPage() {
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
   const [businessEntities, setBusinessEntities] = useState<BusinessEntity[]>([])
   const [categories, setCategories] = useState<AccountingCategory[]>([])
+  const [vatOptions, setVatOptions] = useState<VatRateOption[]>([{ value: '22', label: '22%' }])
   const [loading, setLoading] = useState(true)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
@@ -85,6 +85,9 @@ export default function ExpensesPage() {
   const [bankAccountFilter, setBankAccountFilter] = useState('')
   const [businessEntityFilter, setBusinessEntityFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [clientFilter, setClientFilter] = useState('')
+  const [projectFilter, setProjectFilter] = useState('')
+  const [recurringFilter, setRecurringFilter] = useState('')
   const [advancedView, setAdvancedView] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [editItem, setEditItem] = useState<Expense | null>(null)
@@ -105,6 +108,10 @@ export default function ExpensesPage() {
       if (bankAccountFilter) params.set('bankAccountId', bankAccountFilter)
       if (businessEntityFilter) params.set('businessEntityId', businessEntityFilter)
       if (categoryFilter) params.set('category', categoryFilter)
+      if (clientFilter) params.set('clientId', clientFilter)
+      if (projectFilter) params.set('projectId', projectFilter)
+      if (recurringFilter === 'true') params.set('recurring', 'true')
+      if (recurringFilter === 'false') params.set('recurring', 'false')
       const res = await fetch(`/api/expenses?${params}`)
       if (res.ok) {
         const data = await res.json()
@@ -117,7 +124,7 @@ export default function ExpensesPage() {
     } finally {
       setLoading(false)
     }
-  }, [fromDate, toDate, paymentFilter, bankAccountFilter, businessEntityFilter, categoryFilter])
+  }, [fromDate, toDate, paymentFilter, bankAccountFilter, businessEntityFilter, categoryFilter, clientFilter, projectFilter, recurringFilter])
 
   useEffect(() => { fetchExpenses() }, [fetchExpenses])
 
@@ -127,6 +134,12 @@ export default function ExpensesPage() {
     fetch('/api/bank-accounts').then(r => r.json()).then(d => setBankAccounts(d.items || []))
     fetch('/api/business-entities').then(r => r.json()).then(d => setBusinessEntities(d.items || []))
     fetch('/api/accounting-categories?type=expense').then(r => r.json()).then(d => setCategories(d.items || []))
+    fetch('/api/vat-rates').then(r => r.json()).then(d => {
+      const items = d.items || []
+      if (items.length > 0) {
+        setVatOptions(items.map((v: { code: string; label: string }) => ({ value: v.code, label: v.label })))
+      }
+    })
   }, [])
 
   const totalAmount = expenses.reduce((s, e) => s + parseFloat(e.amount), 0)
@@ -200,8 +213,11 @@ export default function ExpensesPage() {
     body.date = (form.get('date') as string || '').trim()
     body.category = (form.get('category') as string || '').trim()
     body.amount = parseFloat(form.get('amount') as string || '0')
-    body.vatRate = parseInt(form.get('vatRate') as string || '22', 10)
+    body.vatRate = (form.get('vatRate') as string || '22').trim()
     body.deductibility = parseInt(form.get('deductibility') as string || '100', 10)
+    body.invoiceNumber = (form.get('invoiceNumber') as string || '').trim() || null
+    body.dueDate = (form.get('dueDate') as string || '').trim() || null
+    body.paymentMethod = (form.get('paymentMethod') as string || '').trim() || null
     body.notes = (form.get('notes') as string || '').trim() || null
     body.receipt = (form.get('receipt') as string || '').trim() || null
 
@@ -268,6 +284,27 @@ export default function ExpensesPage() {
     setModalOpen(true)
   }
 
+  function handleExportCSV() {
+    const headers = ['Data', 'N. Fattura', 'Fornitore', 'Descrizione', 'Categoria', 'Importo', 'IVA %', 'Deducibilita %', 'Pagata', 'Scadenza', 'Metodo Pagamento', 'Conto', 'Note']
+    const rows = expenses.map((e) => [
+      new Date(e.date).toLocaleDateString('it-IT'),
+      e.invoiceNumber || '',
+      e.supplierName || '',
+      e.description,
+      e.category,
+      parseFloat(e.amount).toFixed(2),
+      String(e.vatRate || ''),
+      String(e.deductibility || ''),
+      e.isPaid ? 'Si' : 'No',
+      e.dueDate ? new Date(e.dueDate).toLocaleDateString('it-IT') : '',
+      e.paymentMethod || '',
+      e.bankAccount?.name || '',
+      e.notes || '',
+    ])
+    const csv = generateCSV(headers, rows)
+    downloadCSV(`spese_${new Date().toISOString().split('T')[0]}.csv`, csv)
+  }
+
   return (
     <div className="animate-fade-in">
       {/* Header */}
@@ -281,16 +318,22 @@ export default function ExpensesPage() {
             <p className="text-xs md:text-sm text-muted">Registrazione e analisi costi</p>
           </div>
         </div>
-        <div className="hidden sm:block flex-shrink-0">
-          <Button size="sm" onClick={openCreate}>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={expenses.length === 0} className="hidden sm:flex">
+            <Download className="h-4 w-4" />
+            CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={expenses.length === 0} className="sm:hidden">
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button size="sm" onClick={openCreate} className="hidden sm:flex">
             <Plus className="h-4 w-4" />
             Nuova Spesa
           </Button>
+          <Button onClick={openCreate} className="sm:hidden">
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-        <Button onClick={openCreate} className="sm:hidden flex-shrink-0">
-          <Plus className="h-4 w-4 mr-1" />
-          Nuova
-        </Button>
       </div>
 
       {/* Link Abbonamenti */}
@@ -316,7 +359,7 @@ export default function ExpensesPage() {
       </Card>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-4">
         <Select
           label="Stato pagamento"
           options={PAYMENT_FILTER_OPTIONS}
@@ -358,6 +401,31 @@ export default function ExpensesPage() {
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="w-full sm:w-48"
+        />
+        <Select
+          label="Cliente"
+          options={[{ value: '', label: 'Tutti i clienti' }, ...clients.map(c => ({ value: c.id, label: c.companyName }))]}
+          value={clientFilter}
+          onChange={(e) => setClientFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+        <Select
+          label="Progetto"
+          options={[{ value: '', label: 'Tutti i progetti' }, ...projects.map(p => ({ value: p.id, label: p.name }))]}
+          value={projectFilter}
+          onChange={(e) => setProjectFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+        <Select
+          label="Tipo"
+          options={[
+            { value: '', label: 'Tutte' },
+            { value: 'true', label: 'Ricorrenti' },
+            { value: 'false', label: 'Una tantum' },
+          ]}
+          value={recurringFilter}
+          onChange={(e) => setRecurringFilter(e.target.value)}
+          className="w-full sm:w-40"
         />
       </div>
 
@@ -550,12 +618,25 @@ export default function ExpensesPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input name="amount" label="Importo (EUR) *" type="number" step="0.01" min="0" required defaultValue={editItem?.amount || ''} />
-            <Select name="vatRate" label="Aliquota IVA" options={VAT_OPTIONS} defaultValue={String(editItem?.vatRate ?? 22)} />
+            <Select name="vatRate" label="Aliquota IVA" options={vatOptions} defaultValue={String(editItem?.vatRate ?? '22')} />
             <Select name="deductibility" label="Deducibilità" options={DEDUCTIBILITY_OPTIONS} defaultValue={String(editItem?.deductibility ?? 100)} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select name="bankAccountId" label="Conto Bancario" options={formBankAccountOptions} defaultValue={editItem?.bankAccountId || ''} />
             <Select name="businessEntityId" label="Attività" options={formBusinessEntityOptions} defaultValue={editItem?.businessEntityId || ''} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Input name="invoiceNumber" label="N° Fattura Fornitore" placeholder="FA-2026/123" defaultValue={editItem?.invoiceNumber || ''} />
+            <Input name="dueDate" label="Scadenza" type="date" defaultValue={editItem?.dueDate?.split('T')[0] || ''} />
+            <Select name="paymentMethod" label="Metodo Pagamento" options={[
+              { value: '', label: 'Seleziona' },
+              { value: 'bonifico', label: 'Bonifico' },
+              { value: 'contanti', label: 'Contanti' },
+              { value: 'carta', label: 'Carta' },
+              { value: 'assegno', label: 'Assegno' },
+              { value: 'riba', label: 'Ri.Ba' },
+              { value: 'altro', label: 'Altro' },
+            ]} defaultValue={editItem?.paymentMethod || ''} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select name="clientId" label="Cliente" options={formClientOptions} defaultValue={editItem?.clientId || ''} />

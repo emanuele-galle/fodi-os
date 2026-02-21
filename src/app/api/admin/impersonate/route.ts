@@ -24,11 +24,15 @@ export async function POST(request: NextRequest) {
 
     const target = await prisma.user.findUnique({
       where: { id: targetUserId },
-      select: { id: true, firstName: true, lastName: true, role: true },
+      select: { id: true, firstName: true, lastName: true, role: true, isActive: true },
     })
 
     if (!target) {
       return NextResponse.json({ error: 'Utente non trovato' }, { status: 404 })
+    }
+
+    if (!target.isActive) {
+      return NextResponse.json({ error: 'Utente non attivo' }, { status: 400 })
     }
 
     const cookieStore = await cookies()

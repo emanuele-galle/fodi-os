@@ -23,12 +23,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { email, firstName, lastName, userRole, phone } = parsed.data
+    const { email, firstName, lastName, userRole, customRoleId, phone } = parsed.data
     const assignedRole: Role = userRole || 'DEVELOPER'
 
-    // Managers cannot create Admin users
-    if (role === 'MANAGER' && assignedRole === 'ADMIN') {
-      return NextResponse.json({ success: false, error: 'Un Manager non puo creare utenti Admin' }, { status: 403 })
+    // Only ADMIN can create other ADMIN users
+    if (role !== 'ADMIN' && assignedRole === 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Solo un Admin puo creare utenti Admin' }, { status: 403 })
     }
 
     // Check if user already exists
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
         lastName,
         password: hashedPassword,
         role: assignedRole,
+        ...(customRoleId && { customRoleId }),
         isActive: true,
         ...(phone && { phone: phone.trim() }),
       },

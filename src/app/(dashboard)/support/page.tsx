@@ -83,11 +83,14 @@ export default function SupportPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
+  const [assigneeFilter, setAssigneeFilter] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [clients, setClients] = useState<{ value: string; label: string }[]>([])
+  const [teamMembers, setTeamMembers] = useState<{ value: string; label: string }[]>([])
+  const [projects, setProjects] = useState<{ value: string; label: string; clientId?: string }[]>([])
   const limit = 20
 
   const ticketForm = useFormPersist('new-ticket', {
@@ -96,6 +99,8 @@ export default function SupportPage() {
     description: '',
     priority: 'MEDIUM',
     category: 'general',
+    assigneeId: '',
+    projectId: '',
   })
 
   // Open modal if ?action=new is in URL
@@ -114,6 +119,7 @@ export default function SupportPage() {
       if (search) params.set('search', search)
       if (statusFilter) params.set('status', statusFilter)
       if (priorityFilter) params.set('priority', priorityFilter)
+      if (assigneeFilter) params.set('assigneeId', assigneeFilter)
       const res = await fetch(`/api/tickets?${params}`)
       if (res.ok) {
         const data = await res.json()
@@ -127,7 +133,7 @@ export default function SupportPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, statusFilter, priorityFilter])
+  }, [page, search, statusFilter, priorityFilter, assigneeFilter])
 
   useEffect(() => {
     fetchTickets()
@@ -138,9 +144,9 @@ export default function SupportPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [search, statusFilter, priorityFilter])
+  }, [search, statusFilter, priorityFilter, assigneeFilter])
 
-  // Fetch clients for create modal
+  // Fetch clients, team members, projects for create modal and filters
   useEffect(() => {
     fetch('/api/clients?limit=100')
       .then((res) => (res.ok ? res.json() : { items: [] }))
@@ -152,6 +158,28 @@ export default function SupportPage() {
             label: c.companyName,
           })),
         ])
+      })
+    fetch('/api/users')
+      .then((res) => (res.ok ? res.json() : { items: [] }))
+      .then((data) => {
+        const members = (data.items || data.users || [])
+          .filter((u: { isActive: boolean }) => u.isActive)
+          .map((u: { id: string; firstName: string; lastName: string }) => ({
+            value: u.id,
+            label: `${u.firstName} ${u.lastName}`,
+          }))
+        setTeamMembers(members)
+      })
+    fetch('/api/projects?limit=200')
+      .then((res) => (res.ok ? res.json() : { items: [] }))
+      .then((data) => {
+        setProjects(
+          (data.items || []).map((p: { id: string; name: string; clientId?: string; client?: { id: string } }) => ({
+            value: p.id,
+            label: p.name,
+            clientId: p.clientId || p.client?.id,
+          }))
+        )
       })
   }, [])
 
@@ -226,6 +254,12 @@ export default function SupportPage() {
           onChange={(e) => setPriorityFilter(e.target.value)}
           className="w-full sm:w-40"
         />
+        <Select
+          options={[{ value: '', label: 'Tutti gli assegnatari' }, ...teamMembers]}
+          value={assigneeFilter}
+          onChange={(e) => setAssigneeFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
       </div>
 
       {fetchError && (
@@ -248,9 +282,9 @@ export default function SupportPage() {
         <EmptyState
           icon={LifeBuoy}
           title="Nessun ticket trovato"
-          description={search || statusFilter || priorityFilter ? 'Prova a modificare i filtri.' : 'Crea il tuo primo ticket.'}
+          description={search || statusFilter || priorityFilter || assigneeFilter ? 'Prova a modificare i filtri.' : 'Crea il tuo primo ticket.'}
           action={
-            !search && !statusFilter && !priorityFilter ? (
+            !search && !statusFilter && !priorityFilter && !assigneeFilter ? (
               <Button onClick={() => setModalOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nuovo Ticket
@@ -367,7 +401,15 @@ export default function SupportPage() {
               <button type="button" onClick={ticketForm.reset} className="underline hover:no-underline">Scarta bozza</button>
             </div>
           )}
-          <Select label="Cliente" options={clients} value={ticketForm.values.clientId} onChange={(e) => ticketForm.setValue('clientId', e.target.value)} />
+          <Select label="Cliente *" options={clients} value={ticketForm.values.clientId} onChange={(e) => { ticketForm.setValue('clientId', e.target.value); ticketForm.setValue('projectId', '') }} />
+          {ticketForm.values.clientId && projects.filter((p) => p.clientId === ticketForm.values.clientId).length > 0 && (
+            <Select
+              label="Progetto"
+              options={[{ value: '', label: 'Nessun progetto' }, ...projects.filter((p) => p.clientId === ticketForm.values.clientId)]}
+              value={ticketForm.values.projectId}
+              onChange={(e) => ticketForm.setValue('projectId', e.target.value)}
+            />
+          )}
           <Input label="Oggetto *" required value={ticketForm.values.subject} onChange={(e) => ticketForm.setValue('subject', e.target.value)} />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-foreground">Descrizione *</label>
@@ -384,6 +426,12 @@ export default function SupportPage() {
             <Select label="Priorità" options={PRIORITY_CREATE_OPTIONS} value={ticketForm.values.priority} onChange={(e) => ticketForm.setValue('priority', e.target.value)} />
             <Select label="Categoria" options={CATEGORY_CREATE_OPTIONS} value={ticketForm.values.category} onChange={(e) => ticketForm.setValue('category', e.target.value)} />
           </div>
+          <Select
+            label="Assegna a"
+            options={[{ value: '', label: 'Non assegnato' }, ...teamMembers]}
+            value={ticketForm.values.assigneeId}
+            onChange={(e) => ticketForm.setValue('assigneeId', e.target.value)}
+          />
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
               Annulla

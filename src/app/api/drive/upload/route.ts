@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedClient, getDriveService, getDriveRootFolderId, isInsideAllowedFolder } from '@/lib/google'
+import { getAdminDriveClient } from '@/lib/storage'
 import { requirePermission } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
 import { Readable } from 'stream'
@@ -22,9 +23,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 
+  // Try user's own Google account first, fallback to admin account
+  let drive
   const auth = await getAuthenticatedClient(userId)
-  if (!auth) {
-    return NextResponse.json({ error: 'Google non connesso', connected: false }, { status: 403 })
+  if (auth) {
+    drive = getDriveService(auth)
+  } else {
+    try {
+      drive = await getAdminDriveClient()
+    } catch {
+      return NextResponse.json({ error: 'Google non connesso', connected: false }, { status: 403 })
+    }
   }
 
   try {
@@ -39,7 +48,6 @@ export async function POST(request: NextRequest) {
     // Sanitize filename (remove path traversal characters)
     const safeName = file.name.replace(/[\/\\:*?"<>|]/g, '_')
 
-    const drive = getDriveService(auth)
     const rootFolderId = await getDriveRootFolderId(userId)
 
     // Validate target folder is inside allowed root

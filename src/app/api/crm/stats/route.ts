@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
 
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+
     const [
       totalClients,
       clientsByStatus,
@@ -30,6 +32,10 @@ export async function GET(request: NextRequest) {
       lostDealsCount,
       interactionsByTypeRaw,
       pipelineValueResult,
+      leadsByStatusRaw,
+      avgDealValueResult,
+      overdueTasksCount,
+      dealsClosingSoon,
     ] = await Promise.all([
       prisma.client.count(),
       prisma.client.groupBy({ by: ['status'], _count: true }),
@@ -83,6 +89,32 @@ export async function GET(request: NextRequest) {
         where: { stage: { notIn: ['CLOSED_WON', 'CLOSED_LOST'] } },
         _sum: { value: true },
       }),
+      // Leads grouped by status
+      prisma.lead.groupBy({
+        by: ['status'],
+        _count: true,
+      }),
+      // Average deal value
+      prisma.deal.aggregate({
+        _avg: { value: true },
+      }),
+      // Overdue tasks (CRM-related: clientId not null)
+      prisma.task.count({
+        where: {
+          dueDate: { lt: now },
+          status: { not: 'DONE' },
+          clientId: { not: null },
+        },
+      }),
+      // Deals closing within 7 days
+      prisma.deal.findMany({
+        where: {
+          expectedCloseDate: { gte: now, lte: sevenDaysFromNow },
+          stage: { notIn: ['CLOSED_WON', 'CLOSED_LOST'] },
+        },
+        include: { client: { select: { id: true, companyName: true } } },
+        orderBy: { expectedCloseDate: 'asc' },
+      }),
     ])
 
     const statusMap: Record<string, number> = {}
@@ -133,6 +165,12 @@ export async function GET(request: NextRequest) {
 
     const totalPipelineValue = pipelineValueResult._sum.value?.toString() || '0'
 
+    // Leads by status map
+    const leadsByStatus: Record<string, number> = {}
+    for (const l of leadsByStatusRaw) leadsByStatus[l.status] = l._count
+
+    const avgDealValue = avgDealValueResult._avg.value?.toString() || '0'
+
     return NextResponse.json({
       success: true,
       data: {
@@ -151,6 +189,10 @@ export async function GET(request: NextRequest) {
         interactionsByType,
         conversionRate,
         totalPipelineValue,
+        leadsByStatus,
+        avgDealValue,
+        overdueTasksCount,
+        dealsClosingSoon,
       },
     })
   } catch (e) {

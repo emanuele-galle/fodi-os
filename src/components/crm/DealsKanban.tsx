@@ -9,6 +9,7 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
@@ -130,9 +131,10 @@ function DealCardOverlay({ deal }: { deal: Deal }) {
 interface DealsKanbanProps {
   dealsByStage: Record<string, Deal[]>
   onStageChange: (dealId: string, newStage: string) => void
+  onRefresh?: () => void
 }
 
-export function DealsKanban({ dealsByStage, onStageChange }: DealsKanbanProps) {
+export function DealsKanban({ dealsByStage, onStageChange, onRefresh }: DealsKanbanProps) {
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null)
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null)
 
@@ -242,7 +244,7 @@ export function DealsKanban({ dealsByStage, onStageChange }: DealsKanbanProps) {
           onOpenChange={(open) => !open && setEditingDeal(null)}
           onSuccess={() => {
             setEditingDeal(null)
-            // Parent will reload via onStageChange
+            onRefresh?.()
           }}
         />
       )}
@@ -251,7 +253,7 @@ export function DealsKanban({ dealsByStage, onStageChange }: DealsKanbanProps) {
 }
 
 function DroppableColumn({ stage, children }: { stage: string; children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useSortable({
+  const { setNodeRef, isOver } = useDroppable({
     id: `column-${stage}`,
     data: { type: 'column', stage },
   })

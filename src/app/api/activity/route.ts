@@ -15,8 +15,8 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')))
 
-    // ADMIN/MANAGER see all activity, others see only their own
-    const isAdmin = role === 'ADMIN' || role === 'MANAGER'
+    // ADMIN sees all activity, others see only their own
+    const isAdmin = role === 'ADMIN'
 
     const where = {
       ...(!isAdmin && { userId }),

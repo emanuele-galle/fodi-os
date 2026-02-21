@@ -1,19 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import type { Role } from '@/generated/prisma/client'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const role = request.headers.get('x-user-role') as Role
-    const userId = request.headers.get('x-user-id')!
-
-    // ADMIN sees all workspaces, others see only their own
-    const where = role === 'ADMIN'
-      ? {}
-      : { members: { some: { userId } } }
-
+    // Workspaces are organizational structures visible to all authenticated users
     const workspaces = await prisma.workspace.findMany({
-      where,
+      where: {},
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       include: {
         _count: { select: { members: true, projects: true } },

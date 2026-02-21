@@ -74,17 +74,21 @@ export async function POST(
       return NextResponse.json({ error: 'Nessun OTP valido. Richiedi un nuovo codice.' }, { status: 400 })
     }
 
-    // Check max attempts for this OTP
-    if (latestOtp.attempts >= latestOtp.maxAttempts) {
+    // Atomic check + increment to prevent race conditions
+    const updated = await prisma.signatureOtp.updateMany({
+      where: {
+        id: latestOtp.id,
+        attempts: { lt: latestOtp.maxAttempts },
+        isUsed: false,
+      },
+      data: { attempts: { increment: 1 } },
+    })
+
+    if (updated.count === 0) {
+      // Max attempts reached
       await prisma.signatureOtp.update({ where: { id: latestOtp.id }, data: { isUsed: true } })
       return NextResponse.json({ error: 'Troppi tentativi. Richiedi un nuovo codice.' }, { status: 429 })
     }
-
-    // Increment attempt counter
-    await prisma.signatureOtp.update({
-      where: { id: latestOtp.id },
-      data: { attempts: { increment: 1 } },
-    })
 
     // Verify OTP
     const valid = await verifyOtp(otp, latestOtp.otpHash)
@@ -156,7 +160,7 @@ export async function POST(
             ContentType: 'application/pdf',
           }))
 
-          signedPdfUrl = `${process.env.S3_PUBLIC_URL || process.env.S3_ENDPOINT || 'http://vps-panel-minio:9000'}/${bucket}/${key}`
+          signedPdfUrl = `${process.env.S3_PUBLIC_URL || 'https://storage.fodivps2.cloud'}/${bucket}/${key}`
         } catch (uploadErr) {
           console.error('[SIGNATURE] Errore upload PDF firmato:', uploadErr)
           // Keep fallback URL

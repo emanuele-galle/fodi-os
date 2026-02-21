@@ -26,6 +26,7 @@ model User {
   dailyDigest Boolean   @default(true)
   onboardingCompleted Boolean @default(false)
   role          Role      @default(DEVELOPER)
+  customRoleId  String?
   jobTitle      String?
   isActive      Boolean   @default(true)
   sectionAccess Json?
@@ -35,6 +36,7 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  customRole       CustomRole?      @relation(fields: [customRoleId], references: [id], onDelete: SetNull)
   refreshTokens    RefreshToken[]
   permissions      UserPermission[]
   workspaceMembers WorkspaceMember[]
@@ -74,6 +76,7 @@ assetUploads     Asset[]
   @@index([email])
   @@index([role])
   @@index([isActive])
+  @@index([customRoleId])
   @@index([lastActiveAt])
   @@map("users")
 }
@@ -124,13 +127,33 @@ model UserPermission {
 
 enum Role {
   ADMIN
-  MANAGER
-  SALES
+  DIR_COMMERCIALE
+  DIR_TECNICO
+  DIR_SUPPORT
+  COMMERCIALE
   PM
   DEVELOPER
   CONTENT
   SUPPORT
   CLIENT
+}
+
+model CustomRole {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  description       String?
+  color             String?  @default("#6366f1")
+  baseRole          Role     @default(DEVELOPER)
+  modulePermissions Json     @default("{}")
+  sectionAccess     Json     @default("{}")
+  isSystem          Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  users             User[]
+
+  @@index([name])
+  @@map("custom_roles")
 }
 
 // ============================================================
@@ -215,6 +238,7 @@ model Client {
   deals           Deal[]
   expenses        Expense[]
   incomes         Income[]
+  convertedLeads  Lead[]    @relation("LeadConverted")
 
   @@index([status])
   @@index([slug])
@@ -291,16 +315,19 @@ model Lead {
   source     String   @default("website")
   status     String   @default("NEW")
   notes      String?  @db.Text
-  assigneeId String?
-  assignee   User?    @relation("LeadAssignee", fields: [assigneeId], references: [id])
-  deals      Deal[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  assigneeId        String?
+  assignee          User?    @relation("LeadAssignee", fields: [assigneeId], references: [id])
+  convertedClientId String?
+  convertedClient   Client?  @relation("LeadConverted", fields: [convertedClientId], references: [id])
+  deals             Deal[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([status])
   @@index([assigneeId])
   @@index([createdAt])
   @@index([status, createdAt])
+  @@index([convertedClientId])
   @@map("leads")
 }
 
@@ -374,11 +401,12 @@ model Project {
   quotes       Quote[]
   tickets      Ticket[]
   assets       Asset[]
-  chatChannels ChatChannel[]
-  folders      Folder[]
-  attachments  ProjectAttachment[]
-  members      ProjectMember[]
-  expenses     Expense[]
+  chatChannels  ChatChannel[]
+  folders       Folder[]
+  attachments   ProjectAttachment[]
+  members       ProjectMember[]
+  expenses      Expense[]
+  notifications Notification[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -742,10 +770,13 @@ model Expense {
   supplierName     String?
   bankAccountId    String?
   businessEntityId String?
-  vatRate          String?         // "0", "4", "10", "22"
-  deductibility    String?         // "0", "50", "100"
+  vatRate          String?
+  deductibility    String?
   netAmount        Decimal?        @db.Decimal(12, 2)
   vatDeductible    Decimal?        @db.Decimal(12, 2)
+  invoiceNumber    String?
+  dueDate          DateTime?       @db.Date
+  paymentMethod    String?
 
   bankAccount      BankAccount?    @relation(fields: [bankAccountId], references: [id])
   businessEntity   BusinessEntity? @relation(fields: [businessEntityId], references: [id])
@@ -808,9 +839,12 @@ model Income {
   businessEntityId String?
   category         String
   amount           Decimal         @db.Decimal(12, 2)
-  vatRate          String          @default("22") // "0", "4", "10", "22"
+  vatRate          String          @default("22")
   netAmount        Decimal?        @db.Decimal(12, 2)
   vatAmount        Decimal?        @db.Decimal(12, 2)
+  invoiceNumber    String?
+  dueDate          DateTime?       @db.Date
+  paymentMethod    String?
   notes            String?
   clientId         String?
   createdAt        DateTime        @default(now())
@@ -894,6 +928,21 @@ model AccountingCategory {
 
   @@unique([name, type])
   @@map("accounting_categories")
+}
+
+model VatRate {
+  id          String  @id @default(uuid())
+  rate        Decimal @db.Decimal(5, 2)
+  label       String
+  code        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+  isDefault   Boolean @default(false)
+  sortOrder   Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("vat_rates")
 }
 
 // ============================================================
@@ -1082,15 +1131,18 @@ model Notification {
   link      String?
   isRead    Boolean  @default(false)
   metadata  Json?
+  projectId String?
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([isRead])
   @@index([createdAt])
   @@index([userId, isRead])
   @@index([userId, createdAt])
+  @@index([projectId])
   @@map("notifications")
 }
 

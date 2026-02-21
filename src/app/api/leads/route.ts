@@ -27,6 +27,8 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
     const skip = (page - 1) * limit
 
+    const assigneeId = searchParams.get('assigneeId')
+
     const where = {
       ...(search && {
         OR: [
@@ -36,9 +38,10 @@ export async function GET(request: NextRequest) {
         ],
       }),
       ...(status && { status }),
+      ...(assigneeId && { assigneeId }),
     }
 
-    const [items, total] = await Promise.all([
+    const [items, total, statusCountsRaw] = await Promise.all([
       prisma.lead.findMany({
         where,
         skip,
@@ -46,12 +49,19 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         include: {
           assignee: { select: { id: true, firstName: true, lastName: true } },
+          convertedClient: { select: { id: true, companyName: true } },
         },
       }),
       prisma.lead.count({ where }),
+      prisma.lead.groupBy({ by: ['status'], _count: true }),
     ])
 
-    return NextResponse.json({ success: true, data: items, items, total, page, limit })
+    const statusCounts: Record<string, number> = {}
+    for (const row of statusCountsRaw) {
+      statusCounts[row.status] = row._count
+    }
+
+    return NextResponse.json({ success: true, data: items, items, total, page, limit, statusCounts })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

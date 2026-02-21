@@ -66,17 +66,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Backup source client in activity log
-      logActivity({
-        userId,
-        action: 'MERGE_CLIENT_BACKUP',
-        entityType: 'CLIENT',
-        entityId: sourceId,
-        metadata: { backup: JSON.stringify(source) },
-      })
+    // Backup source client in activity log (before transaction, intentionally persists on failure)
+    logActivity({
+      userId,
+      action: 'MERGE_CLIENT_BACKUP',
+      entityType: 'CLIENT',
+      entityId: sourceId,
+      metadata: { backup: JSON.stringify(source) },
+    })
 
-      // 2. Build update data from chosen fields
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Build update data from chosen fields
       const updateData: Record<string, unknown> = {}
       const sourceRecord = source as unknown as Record<string, unknown>
       for (const field of MERGEABLE_FIELDS) {

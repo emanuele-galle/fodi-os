@@ -11,6 +11,7 @@ const updateEventSchema = z.object({
   description: z.string().optional(),
   location: z.string().optional(),
   calendarId: z.string().optional(),
+  attendees: z.array(z.string().email()).optional(),
 })
 
 // DELETE /api/calendar/events/[eventId]
@@ -86,7 +87,7 @@ export async function PATCH(
     )
   }
 
-  const { summary, description, start, end, location, calendarId } = parsed.data
+  const { summary, description, start, end, location, calendarId, attendees } = parsed.data
 
   try {
     const calendar = getCalendarService(auth)
@@ -96,6 +97,7 @@ export async function PATCH(
     if (location !== undefined) requestBody.location = location
     if (start !== undefined) requestBody.start = { dateTime: start, timeZone: 'Europe/Rome' }
     if (end !== undefined) requestBody.end = { dateTime: end, timeZone: 'Europe/Rome' }
+    if (attendees !== undefined) requestBody.attendees = attendees.map((email) => ({ email }))
 
     const res = await calendar.events.patch({
       calendarId: calendarId || 'primary',

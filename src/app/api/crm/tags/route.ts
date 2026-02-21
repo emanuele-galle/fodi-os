@@ -6,18 +6,18 @@ import type { Role } from '@/generated/prisma/client'
 export async function GET(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
-    requirePermission(role, 'crm', 'admin')
+    requirePermission(role, 'crm', 'read')
 
     const [clientTags, taskTags] = await Promise.all([
       prisma.$queryRaw<{ tag: string; count: bigint }[]>`
         SELECT unnest(tags) as tag, COUNT(*) as count
-        FROM "Client"
+        FROM "clients"
         WHERE array_length(tags, 1) > 0
         GROUP BY tag
       `,
       prisma.$queryRaw<{ tag: string; count: bigint }[]>`
         SELECT unnest(tags) as tag, COUNT(*) as count
-        FROM "Task"
+        FROM "tasks"
         WHERE array_length(tags, 1) > 0
         GROUP BY tag
       `,
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
-    requirePermission(role, 'crm', 'admin')
+    requirePermission(role, 'crm', 'write')
 
     const { tag } = await request.json()
     if (!tag || typeof tag !== 'string') {
@@ -62,11 +62,11 @@ export async function DELETE(request: NextRequest) {
 
     await Promise.all([
       prisma.$executeRaw`
-        UPDATE "Client" SET tags = array_remove(tags, ${tag})
+        UPDATE "clients" SET tags = array_remove(tags, ${tag})
         WHERE tags @> ARRAY[${tag}]::text[]
       `,
       prisma.$executeRaw`
-        UPDATE "Task" SET tags = array_remove(tags, ${tag})
+        UPDATE "tasks" SET tags = array_remove(tags, ${tag})
         WHERE tags @> ARRAY[${tag}]::text[]
       `,
     ])

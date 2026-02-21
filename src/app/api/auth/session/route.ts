@@ -22,6 +22,10 @@ export async function GET(request: NextRequest) {
       firstName: true,
       lastName: true,
       role: true,
+      customRoleId: true,
+      customRole: {
+        select: { id: true, name: true, color: true, modulePermissions: true, sectionAccess: true, baseRole: true },
+      },
       avatarUrl: true,
       sectionAccess: true,
       bio: true,

@@ -32,6 +32,8 @@ interface Lead {
   notes: string | null
   assigneeId: string | null
   assignee: { id: string; firstName: string; lastName: string } | null
+  convertedClientId: string | null
+  convertedClient: { id: string; companyName: string } | null
   createdAt: string
   updatedAt: string
 }
@@ -71,8 +73,10 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [assigneeFilter, setAssigneeFilter] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({})
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [staffUsers, setStaffUsers] = useState<StaffUser[]>([])
   const limit = 20
@@ -95,11 +99,13 @@ export default function LeadsPage() {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) })
       if (search) params.set('search', search)
       if (statusFilter) params.set('status', statusFilter)
+      if (assigneeFilter) params.set('assigneeId', assigneeFilter)
       const res = await fetch(`/api/leads?${params}`)
       if (res.ok) {
         const data = await res.json()
         setLeads(data.items || [])
         setTotal(data.total || 0)
+        if (data.statusCounts) setStatusCounts(data.statusCounts)
       } else {
         setFetchError('Errore nel caricamento dei lead')
       }
@@ -108,14 +114,14 @@ export default function LeadsPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, statusFilter])
+  }, [page, search, statusFilter, assigneeFilter])
 
   useEffect(() => { fetchLeads() }, [fetchLeads])
-  useEffect(() => { setPage(1) }, [search, statusFilter])
+  useEffect(() => { setPage(1) }, [search, statusFilter, assigneeFilter])
   useEffect(() => {
     fetch('/api/users').then(r => r.json()).then(data => {
       const users = (data.items || data.data || []).filter((u: StaffUser & { isActive?: boolean }) =>
-        u.isActive !== false && ['ADMIN', 'MANAGER', 'SALES', 'PM'].includes(u.role)
+        u.isActive !== false && ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM'].includes(u.role)
       )
       setStaffUsers(users)
     }).catch(() => {})
@@ -250,6 +256,17 @@ export default function LeadsPage() {
 
   const convertLead = convertLeadId ? leads.find((l) => l.id === convertLeadId) : null
 
+  const handleQuickStatusChange = async (leadId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (res.ok) fetchLeads()
+    } catch { /* ignore */ }
+  }
+
   return (
     <div className="animate-fade-in">
       {/* Header */}
@@ -269,6 +286,19 @@ export default function LeadsPage() {
         </Button>
       </div>
 
+      {/* Stats Bar */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-6">
+        {['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'CONVERTED', 'LOST'].map(s => {
+          const count = statusCounts[s] || 0
+          return (
+            <div key={s} className="bg-card border border-border/40 rounded-lg p-2.5 text-center">
+              <p className="text-lg font-bold">{count}</p>
+              <p className="text-[10px] text-muted">{LEAD_STATUS_LABELS[s]}</p>
+            </div>
+          )
+        })}
+      </div>
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
@@ -280,11 +310,20 @@ export default function LeadsPage() {
             className="pl-10"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Select
             options={LEAD_STATUS_OPTIONS}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-44"
+          />
+          <Select
+            options={[
+              { value: '', label: 'Tutti gli assegnati' },
+              ...staffUsers.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))
+            ]}
+            value={assigneeFilter}
+            onChange={(e) => setAssigneeFilter(e.target.value)}
             className="w-44"
           />
           <span className="text-sm text-muted whitespace-nowrap">{total} totali</span>
@@ -380,6 +419,7 @@ export default function LeadsPage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider hidden xl:table-cell">Servizio</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider hidden lg:table-cell">Fonte</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider">Stato</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider hidden lg:table-cell">Collegato a</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider hidden xl:table-cell">Assegnato a</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-muted/80 uppercase tracking-wider">Data</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-muted/80 uppercase tracking-wider">Azioni</th>
@@ -404,7 +444,24 @@ export default function LeadsPage() {
                     <td className="px-4 py-3 text-muted hidden xl:table-cell">{lead.service || '—'}</td>
                     <td className="px-4 py-3 text-muted hidden lg:table-cell">{lead.source}</td>
                     <td className="px-4 py-3">
-                      <Badge status={lead.status}>{LEAD_STATUS_LABELS[lead.status] || lead.status}</Badge>
+                      <select
+                        value={lead.status}
+                        onChange={(e) => handleQuickStatusChange(lead.id, e.target.value)}
+                        className="text-xs font-medium rounded-md border border-border/40 bg-card/50 px-1.5 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/30"
+                      >
+                        {LEAD_STATUS_OPTIONS.filter(o => o.value !== '').map(o => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      {lead.convertedClient ? (
+                        <a href={`/crm/${lead.convertedClient.id}`} className="text-primary hover:underline text-sm">
+                          {lead.convertedClient.companyName}
+                        </a>
+                      ) : lead.status === 'CONVERTED' ? (
+                        <span className="text-muted text-sm">&mdash;</span>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3 hidden xl:table-cell">
                       {lead.assignee ? (

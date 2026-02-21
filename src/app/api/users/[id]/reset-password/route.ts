@@ -28,9 +28,9 @@ export async function POST(
       return NextResponse.json({ error: 'Utente non trovato' }, { status: 404 })
     }
 
-    // Managers cannot reset admin passwords
-    if (role === 'MANAGER' && user.role === 'ADMIN') {
-      return NextResponse.json({ error: 'Un Manager non puo\' resettare la password di un Admin' }, { status: 403 })
+    // Only ADMIN can reset other admin passwords
+    if (role !== 'ADMIN' && user.role === 'ADMIN') {
+      return NextResponse.json({ error: 'Solo un Admin puo\' resettare la password di un altro Admin' }, { status: 403 })
     }
 
     const tempPassword = generateTempPassword()

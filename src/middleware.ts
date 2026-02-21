@@ -21,7 +21,7 @@ function isApi(pathname: string): boolean {
 async function verifyToken(token: string) {
   try {
     const { payload } = await jwtVerify(token, ACCESS_SECRET)
-    return payload as { sub: string; role: string; email: string; name?: string }
+    return payload as { sub: string; role: string; email: string; name?: string; customRoleId?: string | null }
   } catch {
     return null
   }
@@ -53,7 +53,7 @@ function setSecurityHeaders(response: NextResponse, isHtmlPage = false): NextRes
   const scriptSrc = process.env.NODE_ENV === 'production'
     ? "'self' 'unsafe-inline'"
     : "'self' 'unsafe-inline' 'unsafe-eval'"
-  response.headers.set('Content-Security-Policy', `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://apis.google.com https://accounts.google.com https://*.googleusercontent.com https://*.googleapis.com; frame-src 'self' https://meet.google.com https://accounts.google.com https://drive.google.com; media-src 'self' blob:; worker-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`)
+  response.headers.set('Content-Security-Policy', `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://apis.google.com https://accounts.google.com https://*.googleusercontent.com https://*.googleapis.com; frame-src 'self' https://meet.google.com https://accounts.google.com https://drive.google.com; media-src 'self' blob: https://storage.fodivps2.cloud; worker-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`)
   return response
 }
 
@@ -119,22 +119,25 @@ export async function middleware(request: NextRequest) {
         let effectiveUserId = payload.sub
         let effectiveRole = payload.role
 
-        // Impersonation: if admin has fodi_impersonate cookie, override user context
+        // Impersonation: if admin has fodi_impersonate cookie, override user context.
+        // Security decision: admin keeps ADMIN role during impersonation so they
+        // retain full permissions (e.g. stop-impersonate). The impersonated user's
+        // data is loaded via x-user-id, but permission checks use the real admin role.
         const impersonateId = request.cookies.get('fodi_impersonate')?.value
         if (impersonateId && payload.role === 'ADMIN') {
           effectiveUserId = impersonateId
-          // Role will be resolved by the session endpoint; set a marker
           response.headers.set('x-impersonating', 'true')
           response.headers.set('x-real-admin-id', payload.sub)
-          // We don't know the target role here (no DB access in middleware),
-          // so we pass the impersonated userId and let API routes handle it
           response.headers.set('x-user-id', effectiveUserId)
-          response.headers.set('x-user-role', payload.role) // keep admin role for permission checks
+          response.headers.set('x-user-role', payload.role) // intentionally keeps ADMIN role
           return setSecurityHeaders(response)
         }
 
         response.headers.set('x-user-id', effectiveUserId)
         response.headers.set('x-user-role', effectiveRole)
+        if (payload.customRoleId) {
+          response.headers.set('x-custom-role-id', payload.customRoleId)
+        }
         // Pass client IP for tracking (Traefik sets x-forwarded-for)
         const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
           || request.headers.get('x-real-ip')

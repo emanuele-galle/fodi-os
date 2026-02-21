@@ -45,11 +45,11 @@ export async function POST() {
           // Another concurrent request already rotated; re-read user and issue new access token only
           const user = await prisma.user.findUnique({
             where: { id: stored.userId },
-            select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
+            select: { id: true, email: true, firstName: true, lastName: true, role: true, customRoleId: true, isActive: true },
           })
           if (user && user.isActive) {
             const accessToken = await createAccessToken({
-              sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role,
+              sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role, customRoleId: user.customRoleId,
             })
             cookieStore.set('fodi_access', accessToken, {
               httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60,
@@ -90,7 +90,7 @@ export async function POST() {
     // Re-read user from DB to get current role/status (not stale JWT data)
     const user = await prisma.user.findUnique({
       where: { id: stored.userId },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, customRoleId: true, isActive: true },
     })
 
     if (!user || !user.isActive) {
@@ -104,6 +104,7 @@ export async function POST() {
       email: user.email,
       name: `${user.firstName} ${user.lastName}`,
       role: user.role,
+      customRoleId: user.customRoleId,
     }
 
     // Generate new access token with fresh DB data

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createTaskSchema } from '@/lib/validation'
-import { notifyUsers } from '@/lib/notifications'
+import { notifyUsers, getProjectMembers } from '@/lib/notifications'
 import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
@@ -48,6 +48,11 @@ export async function GET(request: NextRequest) {
     }
     if (projectId) where.projectId = projectId
 
+    const crmOnly = searchParams.get('crmOnly')
+    if (crmOnly === 'true') {
+      where.clientId = { not: null }
+    }
+
     const clientId = searchParams.get('clientId')
     if (clientId) where.clientId = clientId
 
@@ -80,8 +85,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // scope=all without mine: no user filter (team view)
-    // Already handled: if mine is not 'true', no user filter is applied
+    // Team view: non-ADMIN users should only see tasks from their projects + assigned/created by them
+    if (mine !== 'true' && personal !== 'true' && role !== 'ADMIN' && userId) {
+      const userProjects = await prisma.projectMember.findMany({
+        where: { userId },
+        select: { projectId: true },
+      })
+      const userProjectIds = userProjects.map((p) => p.projectId)
+
+      where.OR = [
+        ...(Array.isArray(where.OR) ? where.OR : []),
+        { projectId: { in: userProjectIds } },
+        { assigneeId: userId },
+        { assignments: { some: { userId } } },
+        { creatorId: userId },
+        { isPersonal: true, creatorId: userId },
+      ]
+    }
 
     if (personal === 'true') {
       where.isPersonal = true
@@ -196,6 +216,7 @@ export async function POST(request: NextRequest) {
         projectName = proj?.name ?? undefined
       }
 
+      // Notify assignees about task assignment
       await notifyUsers(
         Array.from(allAssigneeIds),
         userId,
@@ -205,8 +226,30 @@ export async function POST(request: NextRequest) {
           message: `Ti è stato assegnato il task "${title}"`,
           link: `/tasks?taskId=${task.id}`,
           metadata: { projectName, priority: priority || 'MEDIUM' },
+          projectId: task.projectId ?? undefined,
         }
       )
+
+      // Notify all project members (excluding assignees already notified and creator)
+      if (task.projectId) {
+        const projectMembers = await getProjectMembers(task.projectId)
+        const alreadyNotified = new Set([...allAssigneeIds, userId])
+        const remainingMembers = projectMembers.filter((id) => !alreadyNotified.has(id))
+        if (remainingMembers.length > 0) {
+          await notifyUsers(
+            remainingMembers,
+            null,
+            {
+              type: 'task_created',
+              title: 'Nuovo task nel progetto',
+              message: `Nuovo task "${title}" creato nel progetto ${projectName || ''}`.trim(),
+              link: `/tasks?taskId=${task.id}`,
+              metadata: { projectName, priority: priority || 'MEDIUM' },
+              projectId: task.projectId,
+            }
+          )
+        }
+      }
     }
 
     // Send badge_update for assignees with fresh task count

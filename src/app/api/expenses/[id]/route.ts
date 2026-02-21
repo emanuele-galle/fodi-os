@@ -49,6 +49,9 @@ export async function PUT(
     if (adv.businessEntityId !== undefined) data.businessEntityId = adv.businessEntityId || null
     if (adv.vatRate !== undefined) data.vatRate = adv.vatRate || null
     if (adv.deductibility !== undefined) data.deductibility = adv.deductibility || null
+    if (adv.invoiceNumber !== undefined) data.invoiceNumber = adv.invoiceNumber || null
+    if (adv.dueDate !== undefined) data.dueDate = adv.dueDate ? new Date(adv.dueDate) : null
+    if (adv.paymentMethod !== undefined) data.paymentMethod = adv.paymentMethod || null
 
     // Recalculate VAT if relevant fields changed
     const amt = (d.amount ?? Number(existing.amount)) as number

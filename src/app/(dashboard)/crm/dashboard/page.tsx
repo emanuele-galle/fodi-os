@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
-import { STATUS_LABELS, INTERACTION_ICONS } from '@/lib/crm-constants'
+import { STATUS_LABELS, INTERACTION_ICONS, LEAD_STATUS_LABELS } from '@/lib/crm-constants'
 import {
   Users,
   TrendingUp,
@@ -19,6 +19,7 @@ import {
   ArrowUpRight,
   CheckSquare,
   Target,
+  CalendarClock,
 } from 'lucide-react'
 
 const DealsFunnelChart = dynamic(() => import('@/components/crm/CrmCharts').then(m => ({ default: m.DealsFunnelChart })), { ssr: false })
@@ -57,6 +58,17 @@ interface StatsData {
   interactionsByType: { type: string; count: number }[]
   conversionRate: number
   totalPipelineValue: string
+  leadsByStatus: Record<string, number>
+  avgDealValue: string
+  overdueTasksCount: number
+  dealsClosingSoon: {
+    id: string
+    title: string
+    value: string | number
+    stage: string
+    expectedCloseDate: string
+    client?: { id: string; companyName: string } | null
+  }[]
 }
 
 interface TaskItem {
@@ -149,7 +161,7 @@ export default function CrmDashboardPage() {
       .catch(console.error)
       .finally(() => setLoading(false))
 
-    fetch('/api/tasks?status=PENDING,IN_PROGRESS&limit=5&sort=dueDate&order=asc')
+    fetch('/api/tasks?mine=true&status=TODO,IN_PROGRESS&limit=5&sort=dueDate&order=asc')
       .then((r) => r.json())
       .then((res) => { if (res.success) setMyTasks((res.data || res.items || []).slice(0, 5)) })
       .catch(console.error)
@@ -190,6 +202,22 @@ export default function CrmDashboardPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold">Dashboard CRM</h1>
+
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-2">
+        <Link href="/crm?action=new" className="bg-card border border-border/40 rounded-lg px-3 py-2 text-sm flex items-center hover:bg-secondary/50 transition-colors">
+          <UserPlus className="h-4 w-4 mr-1.5" /> Nuovo Cliente
+        </Link>
+        <Link href="/crm/leads?action=new" className="bg-card border border-border/40 rounded-lg px-3 py-2 text-sm flex items-center hover:bg-secondary/50 transition-colors">
+          <Users className="h-4 w-4 mr-1.5" /> Nuovo Lead
+        </Link>
+        <Link href="/crm/pipeline?action=new" className="bg-card border border-border/40 rounded-lg px-3 py-2 text-sm flex items-center hover:bg-secondary/50 transition-colors">
+          <TrendingUp className="h-4 w-4 mr-1.5" /> Nuova Opportunita
+        </Link>
+        <Link href="/crm/tasks?action=new" className="bg-card border border-border/40 rounded-lg px-3 py-2 text-sm flex items-center hover:bg-secondary/50 transition-colors">
+          <CheckSquare className="h-4 w-4 mr-1.5" /> Nuova Attivita
+        </Link>
+      </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -267,6 +295,30 @@ export default function CrmDashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="flex items-center gap-4">
+            <div className={`flex items-center justify-center h-10 w-10 rounded-lg ${stats.overdueTasksCount > 0 ? 'bg-red-500/10' : 'bg-zinc-500/10'}`}>
+              <AlertTriangle className={`h-5 w-5 ${stats.overdueTasksCount > 0 ? 'text-red-500' : 'text-zinc-400'}`} />
+            </div>
+            <div>
+              <p className="text-xs text-muted">Attivita Scadute</p>
+              <p className={`text-2xl font-bold ${stats.overdueTasksCount > 0 ? 'text-red-500' : ''}`}>{stats.overdueTasksCount}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex items-center gap-4">
+            <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-cyan-500/10">
+              <Euro className="h-5 w-5 text-cyan-500" />
+            </div>
+            <div>
+              <p className="text-xs text-muted">Valore Medio Deal</p>
+              <p className="text-2xl font-bold">{formatCurrency(stats.avgDealValue)}</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Middle Section */}
@@ -328,6 +380,88 @@ export default function CrmDashboardPage() {
                     </div>
                   )
                 })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Leads Overview & Deals Closing Soon */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Leads by Status */}
+        <Card>
+          <CardContent>
+            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Users className="h-4 w-4 text-blue-500" />
+              Lead per Stato
+            </h2>
+            {Object.keys(stats.leadsByStatus).length === 0 ? (
+              <p className="text-xs text-muted">Nessun lead presente.</p>
+            ) : (
+              <div className="space-y-2">
+                {Object.entries(LEAD_STATUS_LABELS).map(([status, label]) => {
+                  const count = stats.leadsByStatus[status] || 0
+                  if (count === 0) return null
+                  const colors: Record<string, string> = {
+                    NEW: 'bg-blue-500/15 text-blue-500',
+                    CONTACTED: 'bg-amber-500/15 text-amber-500',
+                    QUALIFIED: 'bg-emerald-500/15 text-emerald-500',
+                    PROPOSAL_SENT: 'bg-purple-500/15 text-purple-500',
+                    CONVERTED: 'bg-green-500/15 text-green-500',
+                    LOST: 'bg-red-500/15 text-red-500',
+                  }
+                  return (
+                    <div key={status} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-muted/10">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${colors[status] || 'bg-zinc-500/15 text-zinc-400'}`}>
+                          {label}
+                        </span>
+                      </div>
+                      <span className="text-sm font-semibold">{count}</span>
+                    </div>
+                  )
+                })}
+                <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                  <span className="text-xs text-muted">Totale Lead</span>
+                  <span className="text-sm font-bold">{Object.values(stats.leadsByStatus).reduce((a, b) => a + b, 0)}</span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Deals Closing Soon */}
+        <Card>
+          <CardContent>
+            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-amber-500" />
+              Opportunita in Scadenza (7gg)
+            </h2>
+            {stats.dealsClosingSoon.length === 0 ? (
+              <p className="text-xs text-muted">Nessuna opportunita in scadenza nei prossimi 7 giorni.</p>
+            ) : (
+              <div className="space-y-2">
+                {stats.dealsClosingSoon.map((deal) => (
+                  <Link
+                    key={deal.id}
+                    href={`/crm/pipeline`}
+                    className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/10 transition-colors group"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{deal.title}</p>
+                      {deal.client && (
+                        <p className="text-[11px] text-muted truncate">{deal.client.companyName}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-sm font-semibold text-emerald-500">{formatCurrency(deal.value)}</span>
+                      <span className="text-[11px] text-muted">
+                        {new Date(deal.expectedCloseDate).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
+                      </span>
+                      <ArrowUpRight className="h-3.5 w-3.5 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
           </CardContent>
@@ -396,7 +530,7 @@ export default function CrmDashboardPage() {
                 <Target className="h-4 w-4 text-purple-500" />
                 Pipeline Opportunità
               </h2>
-              <Link href="/crm/deals" className="text-xs text-blue-500 hover:underline">Vedi tutte</Link>
+              <Link href="/crm/pipeline" className="text-xs text-blue-500 hover:underline">Vedi tutte</Link>
             </div>
             {deals.length === 0 ? (
               <p className="text-xs text-muted">Nessuna opportunità attiva.</p>

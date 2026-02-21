@@ -85,7 +85,7 @@ export default function KbDetailPage() {
 
   useEffect(() => { fetchPage() }, [fetchPage])
 
-  const canWrite = ['ADMIN', 'MANAGER'].includes(userRole)
+  const canWrite = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT'].includes(userRole)
   const canDelete = ['ADMIN'].includes(userRole)
 
   async function handleSave() {

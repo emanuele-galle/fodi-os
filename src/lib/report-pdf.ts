@@ -292,7 +292,7 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
   let page = doc.addPage([PAGE_W, PAGE_H])
   let y = PAGE_H
 
-  const roleLabels: Record<string, string> = { ADMIN: 'Amministratore', PM: 'Project Manager', MANAGER: 'Manager', EMPLOYEE: 'Dipendente', COLLABORATOR: 'Collaboratore' }
+  const roleLabels: Record<string, string> = { ADMIN: 'Amministratore', DIR_COMMERCIALE: 'Dir. Commerciale', DIR_TECNICO: 'Dir. Tecnico', DIR_SUPPORT: 'Dir. Supporto', COMMERCIALE: 'Commerciale', PM: 'Project Manager', DEVELOPER: 'Sviluppatore', CONTENT: 'Contenuti', SUPPORT: 'Assistenza' }
 
   // ─── Layout constants ──────────────────────────────────────
   const HEADER_H = 40

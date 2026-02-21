@@ -41,14 +41,14 @@ interface MenuItem {
 }
 
 const MENU_ITEMS: MenuItem[] = [
-  { label: 'CRM', href: '/crm', icon: Users, roles: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'SUPPORT'] as Role[], category: 'indigo' },
-  { label: 'Progetti Clienti', href: '/projects', icon: FolderKanban, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT'] as Role[], category: 'emerald' },
+  { label: 'CRM', href: '/crm', icon: Users, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'SUPPORT'] as Role[], category: 'indigo' },
+  { label: 'Progetti Clienti', href: '/projects', icon: FolderKanban, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT'] as Role[], category: 'emerald' },
   { label: 'Calendario', href: '/calendar', icon: CalendarDays, category: 'violet' },
-  { label: 'Contabilita', href: '/erp', icon: Euro, roles: ['ADMIN', 'MANAGER', 'SALES'] as Role[], category: 'amber' },
-{ label: 'Contenuti', href: '/content', icon: Film, roles: ['ADMIN', 'MANAGER', 'CONTENT'] as Role[], category: 'violet' },
-  { label: 'Supporto', href: '/support', icon: LifeBuoy, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT'] as Role[], category: 'rose' },
+  { label: 'Contabilita', href: '/erp', icon: Euro, roles: ['ADMIN', 'DIR_COMMERCIALE', 'COMMERCIALE'] as Role[], category: 'amber' },
+  { label: 'Contenuti', href: '/content', icon: Film, roles: ['ADMIN', 'DIR_TECNICO', 'CONTENT'] as Role[], category: 'violet' },
+  { label: 'Supporto', href: '/support', icon: LifeBuoy, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM', 'DEVELOPER', 'SUPPORT'] as Role[], category: 'rose' },
   { label: 'Team', href: '/team', icon: UsersRound, category: 'indigo' },
-  { label: 'Azienda', href: '/internal', icon: Building2, roles: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT', 'SUPPORT'] as Role[], category: 'amber' },
+  { label: 'Azienda', href: '/internal', icon: Building2, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'] as Role[], category: 'amber' },
   { label: 'Impostazioni', href: '/settings', icon: Settings, category: 'slate' },
 ]
 
@@ -64,10 +64,11 @@ const CATEGORY_STYLES: Record<CategoryColor, string> = {
 interface BottomNavProps {
   userRole: Role
   sectionAccess?: SectionAccessMap | null
+  customRoleSectionAccess?: SectionAccessMap | null
   unreadChat?: number
 }
 
-export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNavProps) {
+export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, unreadChat = 0 }: BottomNavProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -98,7 +99,7 @@ export function BottomNav({ userRole, sectionAccess, unreadChat = 0 }: BottomNav
     }, 250)
   }, [])
 
-  const effective = getEffectiveSectionAccess(userRole, sectionAccess)
+  const effective = getEffectiveSectionAccess(userRole, sectionAccess, customRoleSectionAccess)
   const filteredMenu = MENU_ITEMS.filter((item) => {
     const section = HREF_TO_SECTION[item.href]
     if (section) return effective[section]?.view

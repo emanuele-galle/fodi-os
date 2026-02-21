@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { createIncomeSchema } from '@/lib/validation'
-import { calculateVat } from '@/lib/accounting'
+import { calculateVat, generateInvoiceNumber } from '@/lib/accounting'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -69,6 +69,9 @@ export async function POST(request: NextRequest) {
     const d = parsed.data
     const { net, vat } = calculateVat(d.amount, d.vatRate ?? '22')
 
+    // Auto-generate invoice number if not provided
+    const invoiceNumber = d.invoiceNumber || await generateInvoiceNumber(prisma)
+
     const income = await prisma.income.create({
       data: {
         isPaid: d.isPaid ?? false,
@@ -81,6 +84,9 @@ export async function POST(request: NextRequest) {
         vatRate: d.vatRate ?? '22',
         netAmount: net,
         vatAmount: vat,
+        invoiceNumber,
+        dueDate: d.dueDate ? new Date(d.dueDate) : null,
+        paymentMethod: d.paymentMethod || null,
         notes: d.notes || null,
         clientId: d.clientId || null,
       },

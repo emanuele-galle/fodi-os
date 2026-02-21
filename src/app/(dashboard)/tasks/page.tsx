@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronRight,
   Flame,
+  Search,
 } from 'lucide-react'
 import {
   DndContext,
@@ -38,6 +39,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import { getDueUrgency, URGENCY_STYLES, type DueUrgency } from '@/lib/task-utils'
 import { Select } from '@/components/ui/Select'
+import { Input } from '@/components/ui/Input'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -180,6 +182,13 @@ export default function TasksPage() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [projectFilter, setProjectFilter] = useState('')
+  const [assigneeFilter, setAssigneeFilter] = useState('')
+  const [sortBy, setSortBy] = useState('createdAt')
+  const [sortOrder, setSortOrder] = useState('desc')
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
+  const [users, setUsers] = useState<{ id: string; firstName: string; lastName: string }[]>([])
   const [activeTab, setActiveTab] = useState<TabKey>('mine')
   const [view, setView] = useState<ViewMode>('list')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
@@ -200,6 +209,15 @@ export default function TasksPage() {
         }
       })
       .catch(() => {})
+  }, [])
+
+  // Fetch projects and users for filter dropdowns
+  useEffect(() => {
+    fetch('/api/projects?limit=200').then(r => r.json()).then(d => setProjects(d.items || []))
+    fetch('/api/users').then(r => r.ok ? r.json() : null).then(d => {
+      const list = d?.items || d?.users || (Array.isArray(d) ? d : [])
+      setUsers(list)
+    })
   }, [])
 
   // Open task from URL ?taskId=xxx&commentId=yyy (e.g. from notification links)
@@ -224,6 +242,11 @@ export default function TasksPage() {
       const params = new URLSearchParams({ limit: '100' })
       if (statusFilter) params.set('status', statusFilter)
       if (priorityFilter) params.set('priority', priorityFilter)
+      if (searchQuery) params.set('search', searchQuery)
+      if (projectFilter) params.set('projectId', projectFilter)
+      if (assigneeFilter) params.set('assigneeId', assigneeFilter)
+      if (sortBy) params.set('sort', sortBy)
+      if (sortOrder) params.set('order', sortOrder)
 
       if (activeTab === 'mine') {
         params.set('mine', 'true')
@@ -246,7 +269,7 @@ export default function TasksPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, priorityFilter, activeTab])
+  }, [statusFilter, priorityFilter, activeTab, searchQuery, projectFilter, assigneeFilter, sortBy, sortOrder])
 
   // Fetch tab counts (lightweight, no filters applied)
   const fetchTabCounts = useCallback(async () => {
@@ -356,7 +379,7 @@ export default function TasksPage() {
     }
   }
 
-  const canSeeTeam = ['ADMIN', 'MANAGER'].includes(userRole)
+  const canSeeTeam = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM'].includes(userRole)
   const visibleTabs = TABS.filter((t) => !t.adminOnly || canSeeTeam)
 
   return (
@@ -512,7 +535,16 @@ export default function TasksPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+          <Input
+            placeholder="Cerca task..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
         <Select
           options={STATUS_OPTIONS}
           value={statusFilter}
@@ -524,6 +556,28 @@ export default function TasksPage() {
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
           className="w-full sm:w-48"
+        />
+        <Select
+          options={[{ value: '', label: 'Tutti i progetti' }, ...projects.map(p => ({ value: p.id, label: p.name }))]}
+          value={projectFilter}
+          onChange={(e) => setProjectFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+        <Select
+          options={[{ value: '', label: 'Tutti gli assegnatari' }, ...users.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))]}
+          value={assigneeFilter}
+          onChange={(e) => setAssigneeFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+        <Select
+          options={[
+            { value: 'createdAt', label: 'Data creazione' },
+            { value: 'priority', label: 'Priorità' },
+            { value: 'dueDate', label: 'Scadenza' },
+          ]}
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="w-full sm:w-44"
         />
       </div>
 
@@ -549,7 +603,7 @@ export default function TasksPage() {
           icon={CheckSquare}
           title="Nessun task trovato"
           description={
-            statusFilter || priorityFilter
+            statusFilter || priorityFilter || searchQuery || projectFilter || assigneeFilter
               ? 'Prova a modificare i filtri.'
               : activeTab === 'delegated'
                 ? 'Non hai ancora delegato task ad altri.'

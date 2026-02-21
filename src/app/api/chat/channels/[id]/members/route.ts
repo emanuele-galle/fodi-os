@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { hasPermission, requirePermission } from '@/lib/permissions'
 import { addMembersSchema } from '@/lib/validation'
 import type { Role } from '@/generated/prisma/client'
+import { z } from 'zod'
+
+const removeMemberSchema = z.object({ userId: z.string().min(1) })
 
 export async function POST(
   request: NextRequest,
@@ -60,6 +63,60 @@ export async function POST(
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })
     }
     console.error('[chat/channels/:id/members]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: channelId } = await params
+    const userId = request.headers.get('x-user-id')!
+    const role = request.headers.get('x-user-role') as Role
+    requirePermission(role, 'chat', 'write')
+
+    const body = await request.json()
+    const parsed = removeMemberSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'userId richiesto' }, { status: 400 })
+    }
+
+    const targetUserId = parsed.data.userId
+
+    // Cannot remove the channel OWNER
+    const targetMember = await prisma.chatMember.findFirst({
+      where: { channelId, userId: targetUserId },
+    })
+    if (!targetMember) {
+      return NextResponse.json({ error: 'Membro non trovato nel canale' }, { status: 404 })
+    }
+    if (targetMember.role === 'OWNER') {
+      return NextResponse.json({ error: 'Non è possibile rimuovere il proprietario del canale' }, { status: 403 })
+    }
+
+    // Check permission: system ADMIN or channel OWNER/ADMIN
+    if (!hasPermission(role, 'chat', 'admin')) {
+      const membership = await prisma.chatMember.findFirst({
+        where: { channelId, userId, role: { in: ['OWNER', 'ADMIN'] } },
+      })
+      if (!membership) {
+        return NextResponse.json(
+          { error: 'Solo admin o owner/admin del canale possono rimuovere membri' },
+          { status: 403 }
+        )
+      }
+    }
+
+    await prisma.chatMember.delete({ where: { id: targetMember.id } })
+
+    return NextResponse.json({ removed: true })
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[chat/channels/:id/members DELETE]', e)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 }

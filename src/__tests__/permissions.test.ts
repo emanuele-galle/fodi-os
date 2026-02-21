@@ -3,7 +3,7 @@ import { hasPermission, requirePermission } from '@/lib/permissions'
 import type { Module, Permission } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
 
-const ALL_ROLES: Role[] = ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT']
+const ALL_ROLES: Role[] = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT']
 const ALL_MODULES: Module[] = ['crm', 'erp', 'pm', 'kb', 'content', 'support', 'admin', 'portal', 'chat']
 
 describe('Permissions - hasPermission', () => {
@@ -20,60 +20,106 @@ describe('Permissions - hasPermission', () => {
     }
   })
 
-  describe('MANAGER ha accesso ampio ma non admin completo', () => {
-    it('MANAGER ha read/write/delete/approve su crm', () => {
-      expect(hasPermission('MANAGER', 'crm', 'read')).toBe(true)
-      expect(hasPermission('MANAGER', 'crm', 'write')).toBe(true)
-      expect(hasPermission('MANAGER', 'crm', 'delete')).toBe(true)
-      expect(hasPermission('MANAGER', 'crm', 'approve')).toBe(true)
+  describe('DIR_COMMERCIALE ha admin su CRM/ERP, readonly su altri', () => {
+    it('DIR_COMMERCIALE ha tutti i permessi su crm', () => {
+      expect(hasPermission('DIR_COMMERCIALE', 'crm', 'read')).toBe(true)
+      expect(hasPermission('DIR_COMMERCIALE', 'crm', 'write')).toBe(true)
+      expect(hasPermission('DIR_COMMERCIALE', 'crm', 'delete')).toBe(true)
+      expect(hasPermission('DIR_COMMERCIALE', 'crm', 'approve')).toBe(true)
+      expect(hasPermission('DIR_COMMERCIALE', 'crm', 'admin')).toBe(true)
     })
 
-    it('MANAGER ha read/write/delete/approve su erp', () => {
-      expect(hasPermission('MANAGER', 'erp', 'read')).toBe(true)
-      expect(hasPermission('MANAGER', 'erp', 'write')).toBe(true)
+    it('DIR_COMMERCIALE ha tutti i permessi su erp', () => {
+      expect(hasPermission('DIR_COMMERCIALE', 'erp', 'read')).toBe(true)
+      expect(hasPermission('DIR_COMMERCIALE', 'erp', 'admin')).toBe(true)
     })
 
-    it('MANAGER ha solo read su admin', () => {
-      expect(hasPermission('MANAGER', 'admin', 'read')).toBe(true)
-      expect(hasPermission('MANAGER', 'admin', 'write')).toBe(false)
+    it('DIR_COMMERCIALE ha solo read su pm', () => {
+      expect(hasPermission('DIR_COMMERCIALE', 'pm', 'read')).toBe(true)
+      expect(hasPermission('DIR_COMMERCIALE', 'pm', 'write')).toBe(false)
     })
 
-    it('MANAGER NON ha accesso a portal', () => {
-      expect(hasPermission('MANAGER', 'portal', 'read')).toBe(false)
+    it('DIR_COMMERCIALE ha solo read su admin', () => {
+      expect(hasPermission('DIR_COMMERCIALE', 'admin', 'read')).toBe(true)
+      expect(hasPermission('DIR_COMMERCIALE', 'admin', 'write')).toBe(false)
+    })
+
+    it('DIR_COMMERCIALE NON ha accesso a portal', () => {
+      expect(hasPermission('DIR_COMMERCIALE', 'portal', 'read')).toBe(false)
     })
   })
 
-  describe('SALES ha accesso a CRM, ERP, PM, KB, Support, Chat', () => {
-    it('SALES ha read/write su crm', () => {
-      expect(hasPermission('SALES', 'crm', 'read')).toBe(true)
-      expect(hasPermission('SALES', 'crm', 'write')).toBe(true)
+  describe('DIR_TECNICO ha admin su PM/Content, readonly su altri', () => {
+    it('DIR_TECNICO ha tutti i permessi su pm', () => {
+      expect(hasPermission('DIR_TECNICO', 'pm', 'read')).toBe(true)
+      expect(hasPermission('DIR_TECNICO', 'pm', 'admin')).toBe(true)
     })
 
-    it('SALES ha read/write su erp', () => {
-      expect(hasPermission('SALES', 'erp', 'read')).toBe(true)
-      expect(hasPermission('SALES', 'erp', 'write')).toBe(true)
+    it('DIR_TECNICO ha tutti i permessi su content', () => {
+      expect(hasPermission('DIR_TECNICO', 'content', 'read')).toBe(true)
+      expect(hasPermission('DIR_TECNICO', 'content', 'admin')).toBe(true)
     })
 
-    it('SALES ha read/write/delete su pm', () => {
-      expect(hasPermission('SALES', 'pm', 'read')).toBe(true)
-      expect(hasPermission('SALES', 'pm', 'write')).toBe(true)
-      expect(hasPermission('SALES', 'pm', 'delete')).toBe(true)
+    it('DIR_TECNICO ha solo read su crm', () => {
+      expect(hasPermission('DIR_TECNICO', 'crm', 'read')).toBe(true)
+      expect(hasPermission('DIR_TECNICO', 'crm', 'write')).toBe(false)
     })
 
-    it('SALES ha read su kb', () => {
-      expect(hasPermission('SALES', 'kb', 'read')).toBe(true)
-      expect(hasPermission('SALES', 'kb', 'write')).toBe(false)
+    it('DIR_TECNICO ha solo read su erp', () => {
+      expect(hasPermission('DIR_TECNICO', 'erp', 'read')).toBe(true)
+      expect(hasPermission('DIR_TECNICO', 'erp', 'write')).toBe(false)
+    })
+  })
+
+  describe('DIR_SUPPORT ha admin su Support, read/write su CRM', () => {
+    it('DIR_SUPPORT ha tutti i permessi su support', () => {
+      expect(hasPermission('DIR_SUPPORT', 'support', 'read')).toBe(true)
+      expect(hasPermission('DIR_SUPPORT', 'support', 'admin')).toBe(true)
     })
 
-    it('SALES ha read su support', () => {
-      expect(hasPermission('SALES', 'support', 'read')).toBe(true)
-      expect(hasPermission('SALES', 'support', 'write')).toBe(false)
+    it('DIR_SUPPORT ha read/write su crm', () => {
+      expect(hasPermission('DIR_SUPPORT', 'crm', 'read')).toBe(true)
+      expect(hasPermission('DIR_SUPPORT', 'crm', 'write')).toBe(true)
+      expect(hasPermission('DIR_SUPPORT', 'crm', 'delete')).toBe(false)
     })
 
-    it('SALES NON ha accesso a content, admin, portal', () => {
-      expect(hasPermission('SALES', 'content', 'read')).toBe(false)
-      expect(hasPermission('SALES', 'admin', 'read')).toBe(false)
-      expect(hasPermission('SALES', 'portal', 'read')).toBe(false)
+    it('DIR_SUPPORT ha solo read su pm', () => {
+      expect(hasPermission('DIR_SUPPORT', 'pm', 'read')).toBe(true)
+      expect(hasPermission('DIR_SUPPORT', 'pm', 'write')).toBe(false)
+    })
+  })
+
+  describe('COMMERCIALE ha accesso a CRM, ERP, PM, KB, Support, Chat', () => {
+    it('COMMERCIALE ha read/write su crm', () => {
+      expect(hasPermission('COMMERCIALE', 'crm', 'read')).toBe(true)
+      expect(hasPermission('COMMERCIALE', 'crm', 'write')).toBe(true)
+    })
+
+    it('COMMERCIALE ha read/write su erp', () => {
+      expect(hasPermission('COMMERCIALE', 'erp', 'read')).toBe(true)
+      expect(hasPermission('COMMERCIALE', 'erp', 'write')).toBe(true)
+    })
+
+    it('COMMERCIALE ha read/write/delete su pm', () => {
+      expect(hasPermission('COMMERCIALE', 'pm', 'read')).toBe(true)
+      expect(hasPermission('COMMERCIALE', 'pm', 'write')).toBe(true)
+      expect(hasPermission('COMMERCIALE', 'pm', 'delete')).toBe(true)
+    })
+
+    it('COMMERCIALE ha read su kb', () => {
+      expect(hasPermission('COMMERCIALE', 'kb', 'read')).toBe(true)
+      expect(hasPermission('COMMERCIALE', 'kb', 'write')).toBe(false)
+    })
+
+    it('COMMERCIALE ha read su support', () => {
+      expect(hasPermission('COMMERCIALE', 'support', 'read')).toBe(true)
+      expect(hasPermission('COMMERCIALE', 'support', 'write')).toBe(false)
+    })
+
+    it('COMMERCIALE NON ha accesso a content, admin, portal', () => {
+      expect(hasPermission('COMMERCIALE', 'content', 'read')).toBe(false)
+      expect(hasPermission('COMMERCIALE', 'admin', 'read')).toBe(false)
+      expect(hasPermission('COMMERCIALE', 'portal', 'read')).toBe(false)
     })
   })
 
@@ -201,14 +247,14 @@ describe('Permissions - requirePermission', () => {
     expect(() => requirePermission('DEVELOPER', 'erp', 'write'))
       .toThrow('Permission denied: DEVELOPER cannot write on erp')
 
-    expect(() => requirePermission('SALES', 'admin', 'read'))
-      .toThrow('Permission denied: SALES cannot read on admin')
+    expect(() => requirePermission('COMMERCIALE', 'admin', 'read'))
+      .toThrow('Permission denied: COMMERCIALE cannot read on admin')
   })
 })
 
 describe('Permissions - Chat per ruolo', () => {
   it('tutti i ruoli tranne CLIENT hanno accesso alla chat', () => {
-    const chatRoles: Role[] = ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT']
+    const chatRoles: Role[] = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT']
     for (const role of chatRoles) {
       expect(hasPermission(role, 'chat', 'read')).toBe(true)
       expect(hasPermission(role, 'chat', 'write')).toBe(true)
@@ -220,46 +266,47 @@ describe('Permissions - Chat per ruolo', () => {
     expect(hasPermission('CLIENT', 'chat', 'write')).toBe(false)
   })
 
-  it('solo ADMIN e MANAGER hanno admin sulla chat', () => {
+  it('solo ADMIN e Direttori hanno admin sulla chat', () => {
     expect(hasPermission('ADMIN', 'chat', 'admin')).toBe(true)
-    expect(hasPermission('MANAGER', 'chat', 'admin')).toBe(true)
-    expect(hasPermission('SALES', 'chat', 'admin')).toBe(false)
+    expect(hasPermission('DIR_COMMERCIALE', 'chat', 'admin')).toBe(true)
+    expect(hasPermission('DIR_TECNICO', 'chat', 'admin')).toBe(true)
+    expect(hasPermission('DIR_SUPPORT', 'chat', 'admin')).toBe(true)
+    expect(hasPermission('COMMERCIALE', 'chat', 'admin')).toBe(false)
     expect(hasPermission('PM', 'chat', 'admin')).toBe(false)
     expect(hasPermission('DEVELOPER', 'chat', 'admin')).toBe(false)
   })
 })
 
 describe('Permissions - Matrice accesso moduli per API', () => {
-  // Questa tabella verifica quale ruolo ha accesso a quale modulo API
   const accessMatrix: Record<string, { module: Module; rolesAllowed: Role[]; rolesDenied: Role[] }> = {
     'Tasks API (pm:read)': {
       module: 'pm',
-      rolesAllowed: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SALES', 'CONTENT', 'SUPPORT'],
+      rolesAllowed: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
       rolesDenied: ['CLIENT'],
     },
     'Chat API (chat:read)': {
       module: 'chat',
-      rolesAllowed: ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
+      rolesAllowed: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
       rolesDenied: ['CLIENT'],
     },
     'Wiki API (kb:read)': {
       module: 'kb',
-      rolesAllowed: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'CONTENT', 'SALES', 'SUPPORT'],
+      rolesAllowed: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
       rolesDenied: ['CLIENT'],
     },
     'CRM API (crm:read)': {
       module: 'crm',
-      rolesAllowed: ['ADMIN', 'MANAGER', 'SALES', 'SUPPORT', 'PM'],
+      rolesAllowed: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'SUPPORT', 'PM'],
       rolesDenied: ['DEVELOPER', 'CONTENT', 'CLIENT'],
     },
     'ERP API (erp:read)': {
       module: 'erp',
-      rolesAllowed: ['ADMIN', 'MANAGER', 'SALES'],
+      rolesAllowed: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE'],
       rolesDenied: ['PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT'],
     },
     'Support API (support:read)': {
       module: 'support',
-      rolesAllowed: ['ADMIN', 'MANAGER', 'PM', 'DEVELOPER', 'SUPPORT', 'SALES'],
+      rolesAllowed: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'SUPPORT'],
       rolesDenied: ['CONTENT', 'CLIENT'],
     },
   }

@@ -18,22 +18,43 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     chat: ['read', 'write', 'admin'],
     training: ['read', 'write', 'delete', 'approve', 'admin'],
   },
-  MANAGER: {
-    crm: ['read', 'write', 'delete', 'approve'],
-    erp: ['read', 'write', 'delete', 'approve'],
-    pm: ['read', 'write', 'delete', 'approve'],
+  DIR_COMMERCIALE: {
+    crm: ['read', 'write', 'delete', 'approve', 'admin'],
+    erp: ['read', 'write', 'delete', 'approve', 'admin'],
+    pm: ['read', 'write'],
     kb: ['read', 'write', 'approve'],
-    content: ['read', 'write', 'approve'],
-    support: ['read', 'write', 'approve'],
+    content: ['read', 'write'],
+    support: ['read'],
     admin: ['read'],
     chat: ['read', 'write', 'admin'],
     training: ['read', 'write'],
   },
-  SALES: {
+  DIR_TECNICO: {
+    pm: ['read', 'write', 'delete', 'approve', 'admin'],
+    content: ['read', 'write', 'delete', 'approve', 'admin'],
+    crm: ['read'],
+    erp: ['read'],
+    kb: ['read', 'write', 'approve'],
+    support: ['read', 'write'],
+    chat: ['read', 'write', 'admin'],
+    training: ['read', 'write'],
+  },
+  DIR_SUPPORT: {
+    support: ['read', 'write', 'delete', 'approve', 'admin'],
+    crm: ['read', 'write'],
+    pm: ['read', 'write'],
+    erp: ['read'],
+    kb: ['read', 'write', 'approve'],
+    content: ['read', 'write'],
+    chat: ['read', 'write', 'admin'],
+    training: ['read', 'write'],
+  },
+  COMMERCIALE: {
     crm: ['read', 'write', 'delete', 'approve'],
     erp: ['read', 'write'],
     pm: ['read', 'write', 'delete'],
     kb: ['read'],
+    content: ['read', 'write'],
     support: ['read'],
     chat: ['read', 'write'],
     training: ['read'],
@@ -42,6 +63,7 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     crm: ['read'],
     pm: ['read', 'write', 'approve'],
     kb: ['read'],
+    content: ['read', 'write'],
     support: ['read'],
     chat: ['read', 'write'],
     training: ['read'],
@@ -49,6 +71,7 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
   DEVELOPER: {
     pm: ['read', 'write'],
     kb: ['read'],
+    content: ['read', 'write'],
     support: ['read'],
     chat: ['read', 'write'],
     training: ['read'],
@@ -65,6 +88,7 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
     crm: ['read'],
     pm: ['read', 'write'],
     kb: ['read'],
+    content: ['read', 'write'],
     chat: ['read', 'write'],
     training: ['read'],
   },
@@ -73,16 +97,35 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
   },
 }
 
-export const ADMIN_ROLES: Role[] = ['ADMIN', 'MANAGER']
+export const ADMIN_ROLES: Role[] = ['ADMIN']
+export const DIRECTOR_ROLES: Role[] = ['DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT']
 
-export function hasPermission(role: Role, module: Module, permission: Permission): boolean {
+export function hasPermission(
+  role: Role,
+  module: Module,
+  permission: Permission,
+  customModulePermissions?: Record<string, string[]> | null,
+): boolean {
+  // If custom permissions provided, use those instead of static map
+  if (customModulePermissions) {
+    const perms = customModulePermissions[module]
+    if (!perms) return false
+    return perms.includes(permission)
+  }
   const perms = ROLE_PERMISSIONS[role]?.[module]
   if (!perms) return false
   return perms.includes(permission)
 }
 
-export function requirePermission(role: Role, module: Module, permission: Permission): void {
-  if (!hasPermission(role, module, permission)) {
+export function requirePermission(
+  role: Role,
+  module: Module,
+  permission: Permission,
+  customModulePermissions?: Record<string, string[]> | null,
+): void {
+  if (!hasPermission(role, module, permission, customModulePermissions)) {
     throw new Error(`Permission denied: ${role} cannot ${permission} on ${module}`)
   }
 }
+
+export { ROLE_PERMISSIONS }

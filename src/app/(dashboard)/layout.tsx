@@ -29,6 +29,15 @@ interface UserSession {
   lastName: string
   email: string
   role: Role
+  customRoleId?: string | null
+  customRole?: {
+    id: string
+    name: string
+    color: string | null
+    modulePermissions: Record<string, string[]>
+    sectionAccess: SectionAccessMap
+    baseRole: Role
+  } | null
   avatarUrl?: string | null
   sectionAccess?: SectionAccessMap | null
   isImpersonating?: boolean
@@ -55,35 +64,39 @@ export default function DashboardLayout({
   useAuthRefresh()
 
   useEffect(() => {
+    let cancelled = false
     let retried = false
+
     async function loadSession() {
       const res = await fetch('/api/auth/session')
+
+      if (cancelled) return
 
       if (res.ok) {
         const data = await res.json()
         if (data?.user) {
           setUser(data.user)
-          // Check onboarding status
           fetch('/api/onboarding')
             .then(r => r.ok ? r.json() : null)
             .then(data => {
-              if (data && !data.completed) setShowOnboarding(true)
+              if (!cancelled && data && !data.completed) setShowOnboarding(true)
             })
             .catch(() => {})
           return
         }
       }
 
-      // If 401, wait briefly for useAuthRefresh to complete, then retry once
       if (res.status === 401 && !retried) {
         retried = true
         await new Promise((r) => setTimeout(r, 1500))
-        return loadSession()
+        if (!cancelled) return loadSession()
+        return
       }
 
-      window.location.href = '/login'
+      if (!cancelled) window.location.href = '/login'
     }
     loadSession()
+    return () => { cancelled = true }
   }, [])
 
   // Fetch unread counts - initial load + fallback polling every 120s (SSE handles real-time)
@@ -127,25 +140,6 @@ export default function DashboardLayout({
     return () => clearInterval(interval)
   }, [fetchCounts])
 
-  // Real-time badge updates via SSE
-  useSSE(useCallback((event) => {
-    if (event.type === 'badge_update') {
-      const badge = event.data as { notifications?: number; chat?: number; tasks?: number }
-      if (badge.notifications !== undefined) {
-        setUnreadNotifications(badge.notifications)
-        if ('setAppBadge' in navigator) {
-          if (badge.notifications > 0) {
-            navigator.setAppBadge(badge.notifications).catch(() => {})
-          } else {
-            navigator.clearAppBadge?.().catch(() => {})
-          }
-        }
-      }
-      if (badge.chat !== undefined) setUnreadChat(badge.chat)
-      if (badge.tasks !== undefined) setPendingTaskCount(badge.tasks)
-    }
-  }, []))
-
   // Heartbeat: update lastActiveAt every 60s, pause when tab hidden
   useEffect(() => {
     function sendHeartbeat() {
@@ -180,10 +174,15 @@ export default function DashboardLayout({
 
   return (
     <SSEProvider>
+    <BadgeUpdater
+      setUnreadNotifications={setUnreadNotifications}
+      setUnreadChat={setUnreadChat}
+      setPendingTaskCount={setPendingTaskCount}
+    />
     <div className="h-screen flex bg-background overflow-hidden">
       {/* Sidebar: hidden on mobile, visible on md+ */}
       <div className="hidden md:block flex-shrink-0">
-        <Sidebar userRole={user.role} sectionAccess={user.sectionAccess} unreadChat={unreadChat} pendingTaskCount={pendingTaskCount} unreadNotifications={unreadNotifications} />
+        <Sidebar userRole={user.role} sectionAccess={user.sectionAccess} customRoleSectionAccess={user.customRole?.sectionAccess as SectionAccessMap | null | undefined} unreadChat={unreadChat} pendingTaskCount={pendingTaskCount} unreadNotifications={unreadNotifications} />
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-x-hidden">
@@ -237,7 +236,7 @@ export default function DashboardLayout({
       </div>
 
       {/* BottomNav: visible only on mobile */}
-      <BottomNav userRole={user.role} sectionAccess={user.sectionAccess} unreadChat={unreadChat} />
+      <BottomNav userRole={user.role} sectionAccess={user.sectionAccess} customRoleSectionAccess={user.customRole?.sectionAccess as SectionAccessMap | null | undefined} unreadChat={unreadChat} />
 
       {commandPaletteOpen && (
         <CommandPalette
@@ -264,4 +263,34 @@ export default function DashboardLayout({
     </div>
     </SSEProvider>
   )
+}
+
+function BadgeUpdater({
+  setUnreadNotifications,
+  setUnreadChat,
+  setPendingTaskCount,
+}: {
+  setUnreadNotifications: (n: number) => void
+  setUnreadChat: (n: number) => void
+  setPendingTaskCount: (n: number) => void
+}) {
+  useSSE(useCallback((event) => {
+    if (event.type === 'badge_update') {
+      const badge = event.data as { notifications?: number; chat?: number; tasks?: number }
+      if (badge.notifications !== undefined) {
+        setUnreadNotifications(badge.notifications)
+        if ('setAppBadge' in navigator) {
+          if (badge.notifications > 0) {
+            navigator.setAppBadge(badge.notifications).catch(() => {})
+          } else {
+            navigator.clearAppBadge?.().catch(() => {})
+          }
+        }
+      }
+      if (badge.chat !== undefined) setUnreadChat(badge.chat)
+      if (badge.tasks !== undefined) setPendingTaskCount(badge.tasks)
+    }
+  }, [setUnreadNotifications, setUnreadChat, setPendingTaskCount]))
+
+  return null
 }

@@ -9,6 +9,7 @@ export interface SessionPayload {
   email: string
   name: string
   role: Role
+  customRoleId?: string | null
   type: 'access' | 'refresh'
 }
 

@@ -10,9 +10,10 @@ export async function GET(request: NextRequest) {
     }
 
     // CLIENT role gets limited team view (no email, phone, login details)
-    // Only ADMIN/MANAGER can see login times, IPs, and detailed activity
+    // Only ADMIN can see login times, IPs, and detailed activity
     const isClient = role === 'CLIENT'
-    const isAdminOrManager = role === 'ADMIN' || role === 'MANAGER'
+    const isAdminOrManager = role === 'ADMIN'
+    const isCalendarViewer = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM'].includes(role)
 
     const workspaceId = request.nextUrl.searchParams.get('workspace') || undefined
 
@@ -46,6 +47,9 @@ export async function GET(request: NextRequest) {
         digitalCard: {
           select: { slug: true, isEnabled: true },
         },
+        ...(isCalendarViewer && {
+          googleToken: { select: { id: true } },
+        }),
         _count: {
           select: {
             assignedTasks: { where: { status: { in: ['TODO', 'IN_PROGRESS'] } } },
@@ -113,6 +117,7 @@ export async function GET(request: NextRequest) {
       completedThisWeek: weeklyCompletedMap.get(u.id) || 0,
       activeTasks: (u as Record<string, unknown>).assignedTasks || [],
       digitalCardSlug: u.digitalCard?.isEnabled ? u.digitalCard.slug : null,
+      ...(isCalendarViewer && { hasGoogleCalendar: !!(u as any).googleToken }),
     }))
 
     return NextResponse.json({ items, total: items.length })

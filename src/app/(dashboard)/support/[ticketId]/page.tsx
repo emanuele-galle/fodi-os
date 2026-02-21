@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Send } from 'lucide-react'
+import { ArrowLeft, Send, Trash2, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
+import { Select } from '@/components/ui/Select'
+import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 
 interface TicketComment {
@@ -27,12 +29,11 @@ interface TicketDetail {
   client: { companyName: string } | null
   project: { name: string } | null
   creator: { firstName: string; lastName: string } | null
-  assignee: { firstName: string; lastName: string; avatarUrl?: string | null } | null
+  assignee: { id: string; firstName: string; lastName: string; avatarUrl?: string | null } | null
   comments: TicketComment[]
   createdAt: string
   resolvedAt: string | null
 }
-
 
 const STATUS_LABELS: Record<string, string> = {
   OPEN: 'Aperto',
@@ -42,7 +43,6 @@ const STATUS_LABELS: Record<string, string> = {
   CLOSED: 'Chiuso',
 }
 
-
 const PRIORITY_LABELS: Record<string, string> = {
   LOW: 'Bassa',
   MEDIUM: 'Media',
@@ -50,12 +50,45 @@ const PRIORITY_LABELS: Record<string, string> = {
   URGENT: 'Urgente',
 }
 
-const STATUS_TRANSITIONS: { label: string; value: string }[] = [
-  { label: 'In Lavorazione', value: 'IN_PROGRESS' },
-  { label: 'In Attesa', value: 'WAITING_CLIENT' },
-  { label: 'Risolto', value: 'RESOLVED' },
-  { label: 'Chiudi', value: 'CLOSED' },
+const PRIORITY_OPTIONS = [
+  { value: 'LOW', label: 'Bassa' },
+  { value: 'MEDIUM', label: 'Media' },
+  { value: 'HIGH', label: 'Alta' },
+  { value: 'URGENT', label: 'Urgente' },
 ]
+
+const CATEGORY_OPTIONS = [
+  { value: 'general', label: 'Generale' },
+  { value: 'bug', label: 'Bug' },
+  { value: 'feature', label: 'Feature' },
+  { value: 'billing', label: 'Fatturazione' },
+  { value: 'other', label: 'Altro' },
+]
+
+const STATUS_TRANSITIONS: Record<string, { label: string; value: string }[]> = {
+  OPEN: [
+    { label: 'In Lavorazione', value: 'IN_PROGRESS' },
+    { label: 'In Attesa', value: 'WAITING_CLIENT' },
+    { label: 'Chiudi', value: 'CLOSED' },
+  ],
+  IN_PROGRESS: [
+    { label: 'In Attesa', value: 'WAITING_CLIENT' },
+    { label: 'Risolto', value: 'RESOLVED' },
+    { label: 'Chiudi', value: 'CLOSED' },
+  ],
+  WAITING_CLIENT: [
+    { label: 'In Lavorazione', value: 'IN_PROGRESS' },
+    { label: 'Risolto', value: 'RESOLVED' },
+    { label: 'Chiudi', value: 'CLOSED' },
+  ],
+  RESOLVED: [
+    { label: 'Riapri', value: 'OPEN' },
+    { label: 'Chiudi', value: 'CLOSED' },
+  ],
+  CLOSED: [
+    { label: 'Riapri', value: 'OPEN' },
+  ],
+}
 
 export default function TicketDetailPage() {
   const params = useParams()
@@ -65,7 +98,11 @@ export default function TicketDetailPage() {
   const [loading, setLoading] = useState(true)
   const [commentText, setCommentText] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [updatingField, setUpdatingField] = useState<string | null>(null)
+  const [teamMembers, setTeamMembers] = useState<{ value: string; label: string }[]>([])
+  const [userRole, setUserRole] = useState('')
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchTicket = useCallback(async () => {
     setLoading(true)
@@ -84,17 +121,38 @@ export default function TicketDetailPage() {
     fetchTicket()
   }, [fetchTicket])
 
-  async function handleStatusChange(newStatus: string) {
-    setUpdatingStatus(true)
+  // Load team members and user role
+  useEffect(() => {
+    fetch('/api/users')
+      .then((res) => (res.ok ? res.json() : { items: [] }))
+      .then((data) => {
+        const members = (data.items || data.users || [])
+          .filter((u: { isActive: boolean }) => u.isActive)
+          .map((u: { id: string; firstName: string; lastName: string }) => ({
+            value: u.id,
+            label: `${u.firstName} ${u.lastName}`,
+          }))
+        setTeamMembers(members)
+      })
+    fetch('/api/auth/session')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user?.role) setUserRole(data.user.role)
+      })
+      .catch(() => {})
+  }, [])
+
+  async function handleFieldUpdate(field: string, value: string | null) {
+    setUpdatingField(field)
     try {
       const res = await fetch(`/api/tickets/${ticketId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ [field]: value }),
       })
       if (res.ok) fetchTicket()
     } finally {
-      setUpdatingStatus(false)
+      setUpdatingField(null)
     }
   }
 
@@ -114,6 +172,18 @@ export default function TicketDetailPage() {
       }
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.push('/support')
+      }
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -138,6 +208,8 @@ export default function TicketDetailPage() {
     )
   }
 
+  const transitions = STATUS_TRANSITIONS[ticket.status] || []
+
   return (
     <div className="animate-fade-in">
       {/* Header */}
@@ -155,15 +227,13 @@ export default function TicketDetailPage() {
             <Badge status={ticket.priority}>
               {PRIORITY_LABELS[ticket.priority] || ticket.priority}
             </Badge>
-            {ticket.assignee && (
-              <Avatar
-                name={`${ticket.assignee.firstName} ${ticket.assignee.lastName}`}
-                src={ticket.assignee.avatarUrl}
-                size="sm"
-              />
-            )}
           </div>
         </div>
+        {userRole === 'ADMIN' && (
+          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => setDeleteModalOpen(true)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -178,19 +248,21 @@ export default function TicketDetailPage() {
           )}
 
           {/* Status Actions */}
-          <div className="flex gap-2 flex-wrap">
-            {STATUS_TRANSITIONS.filter((t) => t.value !== ticket.status).map((transition) => (
-              <Button
-                key={transition.value}
-                variant="outline"
-                size="sm"
-                disabled={updatingStatus}
-                onClick={() => handleStatusChange(transition.value)}
-              >
-                {transition.label}
-              </Button>
-            ))}
-          </div>
+          {transitions.length > 0 && (
+            <div className="flex gap-2 flex-wrap">
+              {transitions.map((transition) => (
+                <Button
+                  key={transition.value}
+                  variant="outline"
+                  size="sm"
+                  disabled={updatingField === 'status'}
+                  onClick={() => handleFieldUpdate('status', transition.value)}
+                >
+                  {transition.label}
+                </Button>
+              ))}
+            </div>
+          )}
 
           {/* Comments Thread */}
           <div>
@@ -251,8 +323,8 @@ export default function TicketDetailPage() {
           </div>
         </div>
 
-        {/* Sidebar: Info */}
-        <div>
+        {/* Sidebar: Info + Editable fields */}
+        <div className="space-y-4">
           <Card className="p-4">
             <h3 className="text-sm font-medium text-muted mb-3">Dettagli</h3>
             <div className="space-y-3 text-sm">
@@ -273,18 +345,6 @@ export default function TicketDetailPage() {
                 </p>
               </div>
               <div>
-                <p className="text-muted">Assegnato a</p>
-                <p className="font-medium">
-                  {ticket.assignee
-                    ? `${ticket.assignee.firstName} ${ticket.assignee.lastName}`
-                    : 'Non assegnato'}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted">Categoria</p>
-                <p className="font-medium capitalize">{ticket.category || '—'}</p>
-              </div>
-              <div>
                 <p className="text-muted">Creato il</p>
                 <p className="font-medium">
                   {new Date(ticket.createdAt).toLocaleDateString('it-IT')}
@@ -300,8 +360,63 @@ export default function TicketDetailPage() {
               )}
             </div>
           </Card>
+
+          <Card className="p-4">
+            <h3 className="text-sm font-medium text-muted mb-3">Gestione</h3>
+            <div className="space-y-4">
+              {/* Assignee */}
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">
+                  <UserPlus className="h-3 w-3 inline mr-1" />
+                  Assegnato a
+                </label>
+                <Select
+                  options={[{ value: '', label: 'Non assegnato' }, ...teamMembers]}
+                  value={ticket.assignee?.id || ''}
+                  onChange={(e) => handleFieldUpdate('assigneeId', e.target.value || null)}
+                  disabled={updatingField === 'assigneeId'}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Priority */}
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Priorità</label>
+                <Select
+                  options={PRIORITY_OPTIONS}
+                  value={ticket.priority}
+                  onChange={(e) => handleFieldUpdate('priority', e.target.value)}
+                  disabled={updatingField === 'priority'}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Categoria</label>
+                <Select
+                  options={CATEGORY_OPTIONS}
+                  value={ticket.category}
+                  onChange={(e) => handleFieldUpdate('category', e.target.value)}
+                  disabled={updatingField === 'category'}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
+
+      {/* Delete confirmation modal */}
+      <Modal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Elimina Ticket">
+        <p className="text-sm text-muted mb-4">
+          Sei sicuro di voler eliminare il ticket <strong>#{ticket.number}</strong>? Questa azione è irreversibile.
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Annulla</Button>
+          <Button variant="destructive" loading={deleting} onClick={handleDelete}>Elimina</Button>
+        </div>
+      </Modal>
     </div>
   )
 }

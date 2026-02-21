@@ -50,13 +50,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Non puoi modificare i tuoi permessi' }, { status: 400 })
     }
 
-    // Managers cannot modify admin permissions
+    // Only ADMIN can modify admin permissions
     const targetUser = await prisma.user.findUnique({ where: { id }, select: { role: true } })
     if (!targetUser) {
       return NextResponse.json({ error: 'Utente non trovato' }, { status: 404 })
     }
-    if (role === 'MANAGER' && targetUser.role === 'ADMIN') {
-      return NextResponse.json({ error: 'Un Manager non puo modificare i permessi di un Admin' }, { status: 403 })
+    if (role !== 'ADMIN' && targetUser.role === 'ADMIN') {
+      return NextResponse.json({ error: 'Solo un Admin puo modificare i permessi di un altro Admin' }, { status: 403 })
     }
 
     const body = await request.json()

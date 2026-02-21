@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const VALID_ROLES = ['ADMIN', 'MANAGER', 'SALES', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT'] as const
+const VALID_ROLES = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT'] as const
 
 export const updateProfileSchema = z.object({
   firstName: z.string().min(1, 'Nome obbligatorio').max(100).optional(),
@@ -18,6 +18,7 @@ export const updateUserSchema = z.object({
   lastName: z.string().min(1).max(100).optional(),
   email: z.string().email('Email non valida').max(255).optional(),
   role: z.enum(VALID_ROLES).optional(),
+  customRoleId: z.string().uuid().optional().nullable(),
   isActive: z.boolean().optional(),
   phone: z.string().max(30).optional().nullable(),
   avatarUrl: z.string().url().max(500).optional().nullable(),
@@ -29,5 +30,6 @@ export const inviteUserSchema = z.object({
   firstName: z.string().min(1, 'Nome obbligatorio').max(100),
   lastName: z.string().min(1, 'Cognome obbligatorio').max(100),
   userRole: z.enum(VALID_ROLES).optional(),
+  customRoleId: z.string().uuid().optional().nullable(),
   phone: z.string().max(30).optional().nullable(),
 })

@@ -268,8 +268,14 @@ a{text-decoration:none}
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 
 export async function POST(req: NextRequest) {
+  const DIGEST_SECRET = process.env.DIGEST_SECRET
+  if (!DIGEST_SECRET) {
+    console.error('[digest] DIGEST_SECRET env var not configured')
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+  }
+
   const secret = req.headers.get('x-digest-secret')
-  if (!secret || secret !== process.env.DIGEST_SECRET) {
+  if (!secret || secret !== DIGEST_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

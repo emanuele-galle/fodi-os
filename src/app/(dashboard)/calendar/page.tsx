@@ -19,6 +19,7 @@ import {
   CalendarDays,
   Check,
   X,
+  Mail,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -40,6 +41,8 @@ interface CalendarEvent {
   conferenceData?: {
     entryPoints?: { entryPointType: string; uri: string }[]
   }
+  _ownerUserId?: string
+  _ownerName?: string
 }
 
 interface CalendarInfo {
@@ -55,6 +58,7 @@ interface TeamMember {
   lastName: string
   email: string
   avatarUrl: string | null
+  hasGoogleCalendar?: boolean
 }
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
@@ -125,6 +129,20 @@ const EVENT_COLORS = [
   '#0B8043', '#D50000',
 ]
 
+const TEAM_COLORS = [
+  '#039BE5', // blue (utente corrente)
+  '#E67C73', // red
+  '#33B679', // green
+  '#8E24AA', // purple
+  '#F6BF26', // yellow
+  '#F4511E', // orange
+  '#7986CB', // indigo
+  '#616161', // gray
+]
+
+const CALENDAR_VIEWER_ROLES = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM']
+const LS_KEY = 'fodi-calendar-team'
+
 type DesktopView = 'month' | 'week'
 
 export default function CalendarPage() {
@@ -162,6 +180,31 @@ export default function CalendarPage() {
 
   const [fodiCalendarId, setFodiCalendarId] = useState<string | null>(null)
 
+  // Team calendar state
+  const [userRole, setUserRole] = useState('')
+  const [userId, setUserId] = useState('')
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([])
+  const [showTeamPanel, setShowTeamPanel] = useState(false)
+
+  const canViewTeam = CALENDAR_VIEWER_ROLES.includes(userRole)
+  const isMultiUser = canViewTeam && selectedTeamIds.length > 0
+
+  // Map userId -> color for team members
+  const teamColorMap = useMemo(() => {
+    const map = new Map<string, string>()
+    if (!userId) return map
+    map.set(userId, TEAM_COLORS[0])
+    let colorIdx = 1
+    for (const m of teamMembers) {
+      if (m.id === userId) continue
+      if (!map.has(m.id)) {
+        map.set(m.id, TEAM_COLORS[colorIdx % TEAM_COLORS.length])
+        colorIdx++
+      }
+    }
+    return map
+  }, [userId, teamMembers])
+
   const fetchCalendars = useCallback(async () => {
     try {
       const res = await fetch('/api/calendar')
@@ -189,12 +232,27 @@ export default function CalendarPage() {
     const baseParams = `timeMin=${timeMin}&timeMax=${timeMax}`
 
     try {
-      // Fetch from primary calendar always
+      // Multi-user mode: fetch all selected team members' events
+      if (selectedTeamIds.length > 0 && canViewTeam) {
+        const userIdsParam = selectedTeamIds.join(',')
+        const calParam = fodiCalendarId ? `&calendarId=${encodeURIComponent(fodiCalendarId)}` : ''
+        const res = await fetch(`/api/calendar/events?${baseParams}&userIds=${userIdsParam}${calParam}`)
+        const data = await res.json()
+
+        if (data?.connected === false) {
+          setConnected(false)
+          return
+        }
+        setConnected(true)
+        setEvents(data.events || [])
+        return
+      }
+
+      // Single-user mode (default)
       const primaryPromise = fetch(`/api/calendar/events?${baseParams}`)
         .then((r) => r.json())
         .catch(() => null)
 
-      // If a shared Fodi calendar exists, fetch from it too
       const sharedPromise = fodiCalendarId
         ? fetch(`/api/calendar/events?${baseParams}&calendarId=${encodeURIComponent(fodiCalendarId)}`)
             .then((r) => r.json())
@@ -209,7 +267,6 @@ export default function CalendarPage() {
       }
       setConnected(true)
 
-      // Merge events from both calendars, deduplicate by event id
       const allEvents: CalendarEvent[] = []
       const seenIds = new Set<string>()
       for (const data of [sharedData, primaryData]) {
@@ -228,7 +285,7 @@ export default function CalendarPage() {
     } finally {
       setLoading(false)
     }
-  }, [year, month, fodiCalendarId])
+  }, [year, month, fodiCalendarId, selectedTeamIds, canViewTeam])
 
   // Keep today in sync (update at midnight or when tab regains focus)
   useEffect(() => {
@@ -246,6 +303,40 @@ export default function CalendarPage() {
     document.addEventListener('visibilitychange', onVisibility)
     return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisibility) }
   }, [])
+
+  // Load user session for role check
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.user) {
+          setUserRole(data.user.role)
+          setUserId(data.user.id)
+          // Restore team selection from localStorage
+          try {
+            const saved = localStorage.getItem(LS_KEY)
+            if (saved) {
+              const ids = JSON.parse(saved) as string[]
+              if (Array.isArray(ids) && ids.length > 0) {
+                // Always include current user
+                const withSelf = ids.includes(data.user.id) ? ids : [data.user.id, ...ids]
+                setSelectedTeamIds(withSelf)
+              }
+            }
+          } catch { /* ignore */ }
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // Persist team selection
+  useEffect(() => {
+    if (selectedTeamIds.length > 0) {
+      localStorage.setItem(LS_KEY, JSON.stringify(selectedTeamIds))
+    } else {
+      localStorage.removeItem(LS_KEY)
+    }
+  }, [selectedTeamIds])
 
   // Fetch calendars first, then events depend on fodiCalendarId
   useEffect(() => {
@@ -309,6 +400,8 @@ export default function CalendarPage() {
       endTime: eTime,
       withMeet: false,
     })
+    setSelectedAttendees(ev.attendees?.map((a) => a.email) || [])
+    setAttendeeSearch('')
     setEditingEvent(ev)
     setCreateError(null)
     setSelectedEvent(null)
@@ -328,8 +421,6 @@ export default function CalendarPage() {
     const end = `${effectiveEndDate}T${effectiveEndTime}:00`
 
     const attendeeEmails = selectedAttendees
-      .map((id) => teamMembers.find((m) => m.id === id)?.email)
-      .filter(Boolean) as string[]
 
     try {
       if (editingEvent) {
@@ -343,6 +434,7 @@ export default function CalendarPage() {
             location: newEvent.location,
             start,
             end,
+            attendees: attendeeEmails,
             ...(fodiCalendarId && { calendarId: fodiCalendarId }),
           }),
         })
@@ -434,6 +526,15 @@ export default function CalendarPage() {
     })
     return map
   }, [events])
+
+  // Get event color: use team color if multi-user, otherwise use Google colorId
+  const getEventColor = useCallback((ev: CalendarEvent) => {
+    if (isMultiUser && ev._ownerUserId) {
+      return teamColorMap.get(ev._ownerUserId) || TEAM_COLORS[0]
+    }
+    const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
+    return EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
+  }, [isMultiUser, teamColorMap])
 
   const todayKey = today.toISOString().split('T')[0]
   const isCurrentMonth = year === today.getFullYear() && month === today.getMonth()
@@ -556,8 +657,27 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* Mobile view toggle */}
-      <div className="md:hidden flex rounded-lg border border-border bg-secondary/30 p-1 mb-4">
+      {/* Mobile: Team button + view toggle */}
+      <div className="md:hidden flex items-center gap-2 mb-4">
+        {canViewTeam && (
+          <button
+            onClick={() => setShowTeamPanel(!showTeamPanel)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+              isMultiUser
+                ? 'border-primary/30 bg-primary/10 text-primary'
+                : 'border-border bg-secondary/30 text-muted'
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            Team
+            {isMultiUser && selectedTeamIds.length > 1 && (
+              <span className="ml-0.5 text-xs bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center">
+                {selectedTeamIds.length}
+              </span>
+            )}
+          </button>
+        )}
+        <div className="flex-1 flex rounded-lg border border-border bg-secondary/30 p-1">
         <button
           onClick={() => setMobileView('agenda')}
           className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${
@@ -574,10 +694,141 @@ export default function CalendarPage() {
         >
           Mese
         </button>
+        </div>
       </div>
 
+      {/* Mobile team panel dropdown */}
+      {canViewTeam && showTeamPanel && (
+        <div className="md:hidden mb-4 p-3 rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold">Calendari Team</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const allIds = teamMembers.filter((m) => m.hasGoogleCalendar).map((m) => m.id)
+                  setSelectedTeamIds(allIds)
+                }}
+                className="text-xs text-primary hover:underline"
+              >
+                Tutti
+              </button>
+              <button
+                onClick={() => setSelectedTeamIds(userId ? [userId] : [])}
+                className="text-xs text-muted hover:underline"
+              >
+                Solo io
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1 max-h-48 overflow-y-auto">
+            {teamMembers
+              .filter((m) => m.hasGoogleCalendar)
+              .map((m) => {
+                const isSelected = selectedTeamIds.includes(m.id)
+                const isSelf = m.id === userId
+                const color = teamColorMap.get(m.id) || TEAM_COLORS[0]
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      if (isSelf) return
+                      setSelectedTeamIds((prev) =>
+                        isSelected ? prev.filter((id) => id !== m.id) : [...prev, m.id]
+                      )
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-left transition-colors ${
+                      isSelected ? 'bg-secondary/50' : 'hover:bg-secondary/30'
+                    } ${isSelf ? 'opacity-70 cursor-default' : ''}`}
+                  >
+                    <div
+                      className={`w-3 h-3 rounded-sm border-2 flex items-center justify-center ${
+                        isSelected ? '' : 'border-border'
+                      }`}
+                      style={isSelected ? { backgroundColor: color, borderColor: color } : {}}
+                    >
+                      {isSelected && <Check className="h-2 w-2 text-white" />}
+                    </div>
+                    <Avatar src={m.avatarUrl} name={`${m.firstName} ${m.lastName}`} size="xs" />
+                    <span className="text-sm truncate">{m.firstName} {m.lastName}</span>
+                    {isSelf && <span className="text-xs text-muted ml-auto">(tu)</span>}
+                  </button>
+                )
+              })}
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-4">
+        {/* Desktop team sidebar */}
+        {canViewTeam && (
+          <div className="hidden md:block w-52 flex-shrink-0">
+            <Card className="sticky top-4">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-semibold flex items-center gap-1.5">
+                    <Users className="h-4 w-4 text-muted" />
+                    Calendari Team
+                  </p>
+                </div>
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => {
+                      const allIds = teamMembers.filter((m) => m.hasGoogleCalendar).map((m) => m.id)
+                      setSelectedTeamIds(allIds)
+                    }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Tutti
+                  </button>
+                  <button
+                    onClick={() => setSelectedTeamIds(userId ? [userId] : [])}
+                    className="text-xs text-muted hover:underline"
+                  >
+                    Solo io
+                  </button>
+                </div>
+                <div className="space-y-0.5">
+                  {teamMembers
+                    .filter((m) => m.hasGoogleCalendar)
+                    .map((m) => {
+                      const isSelected = selectedTeamIds.includes(m.id)
+                      const isSelf = m.id === userId
+                      const color = teamColorMap.get(m.id) || TEAM_COLORS[0]
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => {
+                            if (isSelf) return
+                            setSelectedTeamIds((prev) =>
+                              isSelected ? prev.filter((id) => id !== m.id) : [...prev, m.id]
+                            )
+                          }}
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors ${
+                            isSelected ? 'bg-secondary/50' : 'hover:bg-secondary/30'
+                          } ${isSelf ? 'opacity-70 cursor-default' : ''}`}
+                        >
+                          <div
+                            className={`w-3 h-3 rounded-sm border-2 flex-shrink-0 flex items-center justify-center ${
+                              isSelected ? '' : 'border-border'
+                            }`}
+                            style={isSelected ? { backgroundColor: color, borderColor: color } : {}}
+                          >
+                            {isSelected && <Check className="h-2 w-2 text-white" />}
+                          </div>
+                          <Avatar src={m.avatarUrl} name={`${m.firstName} ${m.lastName}`} size="xs" />
+                          <span className="text-xs truncate">{m.firstName} {m.lastName}</span>
+                        </button>
+                      )
+                    })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Calendar content */}
+        <div className="flex-1 min-w-0">
       {loading ? (
-        /* Skeleton loading - calendar-like rows */
         <div className="space-y-1">
           <div className="grid grid-cols-7 gap-1">
             {DAYS.map((d) => (
@@ -622,8 +873,7 @@ export default function CalendarPage() {
                       </div>
                       <div className="space-y-1.5 mb-3">
                         {dayEvents.map((ev) => {
-                          const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
-                          const color = EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
+                          const color = getEventColor(ev)
                           const isAllDay = !!ev.start.date
                           return (
                             <button
@@ -637,6 +887,11 @@ export default function CalendarPage() {
                                 <p className="text-xs text-muted mt-0.5">
                                   {isAllDay ? 'Tutto il giorno' : formatDateRange(ev.start, ev.end)}
                                 </p>
+                                {isMultiUser && ev._ownerName && (
+                                  <p className="text-xs mt-0.5 font-medium" style={{ color }}>
+                                    {ev._ownerName}
+                                  </p>
+                                )}
                                 {ev.location && (
                                   <p className="text-xs text-muted truncate mt-0.5">
                                     <MapPin className="inline h-3 w-3 mr-0.5" />{ev.location}
@@ -718,8 +973,7 @@ export default function CalendarPage() {
                             }}
                           >
                             {hourEvents.map((ev) => {
-                              const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
-                              const color = EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
+                              const color = getEventColor(ev)
                               return (
                                 <button
                                   key={ev.id}
@@ -790,8 +1044,7 @@ export default function CalendarPage() {
                             {/* Mobile: show dots only */}
                             <div className="md:hidden flex gap-0.5 flex-wrap">
                               {dayEvents.slice(0, 4).map((ev) => {
-                                const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
-                                const color = EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
+                                const color = getEventColor(ev)
                                 return (
                                   <div
                                     key={ev.id}
@@ -804,8 +1057,7 @@ export default function CalendarPage() {
                             {/* Desktop: event pills with border-left style */}
                             <div className="hidden md:block space-y-0.5">
                               {dayEvents.slice(0, 3).map((ev) => {
-                                const colorIdx = ev.colorId ? parseInt(ev.colorId) - 1 : 0
-                                const color = EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
+                                const color = getEventColor(ev)
                                 const isAllDay = !!ev.start.date
 
                                 return (
@@ -818,7 +1070,7 @@ export default function CalendarPage() {
                                       backgroundColor: color + '15',
                                       color: 'inherit',
                                     }}
-                                    title={`${isAllDay ? '' : formatTime(ev.start.dateTime) + ' '}${ev.summary}`}
+                                    title={`${isAllDay ? '' : formatTime(ev.start.dateTime) + ' '}${ev.summary}${ev._ownerName ? ` (${ev._ownerName})` : ''}`}
                                   >
                                     {!isAllDay && (
                                       <span className="font-semibold mr-0.5" style={{ color }}>{formatTime(ev.start.dateTime)}</span>
@@ -850,6 +1102,8 @@ export default function CalendarPage() {
           )}
         </>
       )}
+      </div>{/* end calendar content */}
+      </div>{/* end flex sidebar+content */}
 
       {/* Event detail modal */}
       <Modal
@@ -859,6 +1113,17 @@ export default function CalendarPage() {
       >
         {selectedEvent && (
           <div className="space-y-4">
+            {/* Owner indicator (multi-user mode) */}
+            {isMultiUser && selectedEvent._ownerName && (
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-secondary/30">
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: teamColorMap.get(selectedEvent._ownerUserId || '') || TEAM_COLORS[0] }}
+                />
+                <span className="text-sm font-medium">Calendario di {selectedEvent._ownerName}</span>
+              </div>
+            )}
+
             {/* Date/time with icon */}
             <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
               <Clock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
@@ -934,14 +1199,18 @@ export default function CalendarPage() {
                 </a>
               )}
               <div className="flex-1" />
-              <Button variant="outline" size="sm" onClick={() => openEditEvent(selectedEvent)}>
-                <Pencil className="h-3.5 w-3.5 mr-1" />
-                Modifica
-              </Button>
-              <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
-                <Trash2 className="h-3.5 w-3.5 mr-1" />
+              {(!selectedEvent._ownerUserId || selectedEvent._ownerUserId === userId) && (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => openEditEvent(selectedEvent)}>
+                    <Pencil className="h-3.5 w-3.5 mr-1" />
+                    Modifica
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
                 Elimina
               </Button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -1053,74 +1322,105 @@ export default function CalendarPage() {
             />
           </div>
 
-          {/* Team members selection - only for new events */}
-          {!editingEvent && (
-            <div>
-              <label className="flex items-center gap-1.5 text-sm font-medium mb-2">
-                <Users className="h-4 w-4 text-muted" />
-                Partecipanti
-              </label>
-              <input
-                type="text"
-                placeholder="Cerca membro del team..."
-                value={attendeeSearch}
-                onChange={(e) => setAttendeeSearch(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm mb-2 placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
-              />
-              {selectedAttendees.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {selectedAttendees.map((id) => {
-                    const member = teamMembers.find((m) => m.id === id)
-                    if (!member) return null
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => setSelectedAttendees((prev) => prev.filter((a) => a !== id))}
-                        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
-                      >
-                        <Avatar src={member.avatarUrl} name={`${member.firstName} ${member.lastName}`} size="xs" />
-                        {member.firstName} {member.lastName}
-                        <span className="text-primary/60 ml-0.5">x</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-              <div className="max-h-32 overflow-y-auto border border-border/50 rounded-lg">
-                {teamMembers
-                  .filter((m) => {
-                    if (selectedAttendees.includes(m.id)) return false
-                    if (!attendeeSearch) return true
-                    const query = attendeeSearch.toLowerCase()
-                    return (
-                      `${m.firstName} ${m.lastName}`.toLowerCase().includes(query) ||
-                      m.email.toLowerCase().includes(query)
-                    )
-                  })
-                  .slice(0, 8)
-                  .map((member) => (
+          {/* Participants selection - team members + external emails */}
+          <div>
+            <label className="flex items-center gap-1.5 text-sm font-medium mb-2">
+              <Users className="h-4 w-4 text-muted" />
+              Partecipanti
+            </label>
+            <input
+              type="text"
+              placeholder="Cerca membro del team o inserisci email..."
+              value={attendeeSearch}
+              onChange={(e) => setAttendeeSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  const val = attendeeSearch.trim()
+                  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) && !selectedAttendees.includes(val)) {
+                    setSelectedAttendees((prev) => [...prev, val])
+                    setAttendeeSearch('')
+                  }
+                }
+              }}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm mb-2 placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+            />
+            {selectedAttendees.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {selectedAttendees.map((email) => {
+                  const member = teamMembers.find((m) => m.email === email)
+                  return (
                     <button
-                      key={member.id}
+                      key={email}
                       type="button"
-                      onClick={() => {
-                        setSelectedAttendees((prev) => [...prev, member.id])
-                        setAttendeeSearch('')
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-secondary/50 transition-colors text-sm"
+                      onClick={() => setSelectedAttendees((prev) => prev.filter((a) => a !== email))}
+                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
                     >
-                      <Avatar src={member.avatarUrl} name={`${member.firstName} ${member.lastName}`} size="xs" />
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{member.firstName} {member.lastName}</p>
-                        <p className="text-xs text-muted truncate">{member.email}</p>
-                      </div>
+                      {member ? (
+                        <Avatar src={member.avatarUrl} name={`${member.firstName} ${member.lastName}`} size="xs" />
+                      ) : (
+                        <Mail className="h-3 w-3" />
+                      )}
+                      {member ? `${member.firstName} ${member.lastName}` : email}
+                      <span className="text-primary/60 ml-0.5">x</span>
                     </button>
-                  ))}
+                  )
+                })}
               </div>
+            )}
+            <div className="max-h-32 overflow-y-auto border border-border/50 rounded-lg">
+              {teamMembers
+                .filter((m) => {
+                  if (selectedAttendees.includes(m.email)) return false
+                  if (!attendeeSearch) return true
+                  const query = attendeeSearch.toLowerCase()
+                  return (
+                    `${m.firstName} ${m.lastName}`.toLowerCase().includes(query) ||
+                    m.email.toLowerCase().includes(query)
+                  )
+                })
+                .slice(0, 8)
+                .map((member) => (
+                  <button
+                    key={member.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAttendees((prev) => [...prev, member.email])
+                      setAttendeeSearch('')
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-secondary/50 transition-colors text-sm"
+                  >
+                    <Avatar src={member.avatarUrl} name={`${member.firstName} ${member.lastName}`} size="xs" />
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{member.firstName} {member.lastName}</p>
+                      <p className="text-xs text-muted truncate">{member.email}</p>
+                    </div>
+                  </button>
+                ))}
+              {/* Show "Invite external email" option */}
+              {attendeeSearch.trim() &&
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(attendeeSearch.trim()) &&
+                !selectedAttendees.includes(attendeeSearch.trim()) &&
+                !teamMembers.some((m) => m.email === attendeeSearch.trim()) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedAttendees((prev) => [...prev, attendeeSearch.trim()])
+                    setAttendeeSearch('')
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-secondary/50 transition-colors text-sm border-t border-border/50"
+                >
+                  <Mail className="h-4 w-4 text-primary" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-primary">Invita {attendeeSearch.trim()}</p>
+                    <p className="text-xs text-muted">Partecipante esterno</p>
+                  </div>
+                </button>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* Meet toggle - only for new events */}
+          {/* Meet toggle */}
           {!editingEvent && (
             <label className="flex items-center gap-3 text-sm p-3 rounded-lg bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors">
               <div className="relative">

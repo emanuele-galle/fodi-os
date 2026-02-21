@@ -83,19 +83,29 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
 
   // Load initial messages
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
     setMessages([])
     setCursor(null)
     shouldAutoScroll.current = true
 
-    fetchMessages().then((data) => {
-      if (data) {
-        setMessages(data.items || [])
-        setCursor(data.nextCursor)
-        if (data.readStatus) setLocalReadStatus(data.readStatus)
-      }
-      setLoading(false)
-    })
+    fetchMessages()
+      .then((data) => {
+        if (cancelled) return
+        if (data) {
+          setMessages(data.items || [])
+          setCursor(data.nextCursor)
+          if (data.readStatus) setLocalReadStatus(data.readStatus)
+        }
+      })
+      .catch(() => {
+        // Network error - stop loading to avoid infinite skeleton
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => { cancelled = true }
   }, [channelId, fetchMessages])
 
   // Handle new SSE messages (new, edited, deleted, reactions)
@@ -130,7 +140,7 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
     if (!loading && messages.length > 0) {
       bottomRef.current?.scrollIntoView()
     }
-  }, [loading, messages.length > 0]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loading, messages.length])
 
   // Infinite scroll: load older messages
   function handleScroll() {
@@ -218,8 +228,8 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
             <div className="flex-1 border-t border-border/10" />
           </div>
           {group.messages.map((msg) => (
-            <div key={msg.id} className={cn('flex items-start', selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN' || userRole === 'MANAGER') && 'pl-2')}>
-              {selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN' || userRole === 'MANAGER') && (
+            <div key={msg.id} className={cn('flex items-start', selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN') && 'pl-2')}>
+              {selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN') && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onToggleSelection?.(msg.id) }}
                   className={cn(
