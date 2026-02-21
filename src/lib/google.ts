@@ -7,6 +7,8 @@ const SCOPES = [
   'https://www.googleapis.com/auth/drive',
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/meetings.space.settings',
+  'https://www.googleapis.com/auth/meetings.space.created',
 ]
 
 export function createOAuth2Client() {
@@ -70,6 +72,10 @@ export function getCalendarService(auth: InstanceType<typeof google.auth.OAuth2>
 
 export function getDriveService(auth: InstanceType<typeof google.auth.OAuth2>) {
   return google.drive({ version: 'v3', auth })
+}
+
+export function getMeetService(auth: InstanceType<typeof google.auth.OAuth2>) {
+  return google.meet({ version: 'v2', auth })
 }
 
 /**

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
+import { configureMeetSpace } from '@/lib/meet'
 import { prisma } from '@/lib/prisma'
 import { sseManager } from '@/lib/sse'
 import { sendPush } from '@/lib/push'
@@ -66,6 +67,27 @@ export async function POST(request: NextRequest) {
 
     if (!meetLink) {
       return NextResponse.json({ error: 'Meet link non generato' }, { status: 500 })
+    }
+
+    // Configure Meet space: co-host for staff attendees + auto-recording
+    const conferenceId = res.data.conferenceData?.conferenceId
+    if (conferenceId && attendeeEmails.length > 0) {
+      try {
+        const staffUsers = await prisma.user.findMany({
+          where: { email: { in: attendeeEmails }, role: { not: 'CLIENT' }, isActive: true },
+          select: { email: true },
+        })
+        const staffEmails = staffUsers.map((u) => u.email).filter(Boolean) as string[]
+
+        if (staffEmails.length > 0) {
+          await configureMeetSpace(auth, conferenceId, {
+            coHostEmails: staffEmails,
+            enableRecording: true,
+          })
+        }
+      } catch (e) {
+        console.warn('[meetings/quick] Meet space configuration failed (non-blocking):', e)
+      }
     }
 
     // Get creator info for notifications

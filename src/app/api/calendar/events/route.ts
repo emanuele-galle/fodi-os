@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { prisma } from '@/lib/prisma'
 import { notifyUsers } from '@/lib/notifications'
 import { sendDataChanged } from '@/lib/sse'
+import { configureMeetSpace } from '@/lib/meet'
 import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
 
@@ -17,6 +18,8 @@ const createEventSchema = z.object({
   calendarId: z.string().optional(),
   withMeet: z.boolean().optional(),
 })
+
+const CALENDAR_VIEWER_ROLES: Role[] = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM']
 
 // GET /api/calendar/events - List Google Calendar events
 export async function GET(request: NextRequest) {
@@ -36,16 +39,76 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
   }
 
-  const auth = await getAuthenticatedClient(userId)
-  if (!auth) {
-    return NextResponse.json({ error: 'Google non connesso', connected: false }, { status: 403 })
-  }
-
   const { searchParams } = request.nextUrl
   const timeMin = searchParams.get('timeMin') || new Date().toISOString()
   const timeMax = searchParams.get('timeMax')
   const calendarId = searchParams.get('calendarId') || 'primary'
   const maxResults = Math.min(250, parseInt(searchParams.get('maxResults') || '100'))
+  const userIdsParam = searchParams.get('userIds')
+  const role = request.headers.get('x-user-role') as Role
+
+  // Multi-user mode: fetch events from multiple team members' calendars
+  if (userIdsParam && CALENDAR_VIEWER_ROLES.includes(role)) {
+    const targetIds = [...new Set(userIdsParam.split(',').filter(Boolean))]
+
+    try {
+      const targetUsers = await prisma.user.findMany({
+        where: { id: { in: targetIds }, isActive: true },
+        select: { id: true, firstName: true, lastName: true },
+      })
+
+      const results = await Promise.allSettled(
+        targetUsers.map(async (user) => {
+          const userAuth = await getAuthenticatedClient(user.id)
+          if (!userAuth) return { userId: user.id, events: [] }
+
+          const cal = getCalendarService(userAuth)
+          const res = await cal.events.list({
+            calendarId,
+            timeMin,
+            ...(timeMax && { timeMax }),
+            maxResults,
+            singleEvents: true,
+            orderBy: 'startTime',
+          })
+
+          return {
+            userId: user.id,
+            events: (res.data.items || []).map((ev) => ({
+              ...ev,
+              _ownerUserId: user.id,
+              _ownerName: `${user.firstName} ${user.lastName}`,
+            })),
+          }
+        })
+      )
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const allEvents: any[] = results
+        .filter((r) => r.status === 'fulfilled')
+        .flatMap((r: any) => r.value.events)
+
+      // Deduplicate by eventId + ownerUserId
+      const seen = new Set<string>()
+      const unique = allEvents.filter((ev) => {
+        const key = `${ev.id}_${ev._ownerUserId}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+
+      return NextResponse.json({ events: unique, multi: true })
+    } catch (e) {
+      console.error('Calendar multi-user error:', e)
+      return NextResponse.json({ error: 'Errore nel recupero eventi team' }, { status: 500 })
+    }
+  }
+
+  // Single-user mode (default)
+  const auth = await getAuthenticatedClient(userId)
+  if (!auth) {
+    return NextResponse.json({ error: 'Google non connesso', connected: false }, { status: 403 })
+  }
 
   try {
     const calendar = getCalendarService(auth)
@@ -131,6 +194,27 @@ export async function POST(request: NextRequest) {
     const meetLink = res.data.conferenceData?.entryPoints?.find(
       (ep) => ep.entryPointType === 'video'
     )?.uri || null
+
+    // Configure Meet space: co-host for staff attendees + auto-recording
+    const conferenceId = res.data.conferenceData?.conferenceId
+    if (withMeet && conferenceId && attendees?.length) {
+      try {
+        const staffUsers = await prisma.user.findMany({
+          where: { email: { in: attendees }, role: { not: 'CLIENT' }, isActive: true },
+          select: { email: true },
+        })
+        const staffEmails = staffUsers.map((u) => u.email).filter(Boolean) as string[]
+
+        if (staffEmails.length > 0) {
+          await configureMeetSpace(auth, conferenceId, {
+            coHostEmails: staffEmails,
+            enableRecording: true,
+          })
+        }
+      } catch (e) {
+        console.warn('[calendar/events] Meet space configuration failed (non-blocking):', e)
+      }
+    }
 
     // Send FODI OS notification to attendees
     if (attendees && attendees.length > 0) {
