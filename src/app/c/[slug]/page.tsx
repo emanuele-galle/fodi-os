@@ -124,7 +124,7 @@ export default async function CardPage({ params }: Props) {
         {/* Company logo top */}
         <div className="card-fade-in card-delay-1 flex justify-center mb-12">
           <img
-            src="/logo-dark.png"
+            src={brand.logo.dark}
             alt={brand.slug.toUpperCase()}
             className="h-10 w-auto opacity-70"
           />

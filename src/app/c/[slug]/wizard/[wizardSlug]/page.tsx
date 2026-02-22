@@ -72,7 +72,7 @@ export default async function WizardPage({ params }: PageProps) {
         {/* Header */}
         <div className="flex flex-col items-center mb-8 card-fade-in card-delay-1">
           <img
-            src="/logo-dark.png"
+            src={brand.logo.dark}
             alt={companyName}
             className="h-9 w-auto opacity-60 mb-3"
           />
