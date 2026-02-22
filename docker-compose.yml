@@ -10,6 +10,8 @@ services:
         - NEXT_PUBLIC_BRAND_NAME=${NEXT_PUBLIC_BRAND_NAME:-FODI OS}
         - NEXT_PUBLIC_BRAND_SLUG=${NEXT_PUBLIC_BRAND_SLUG:-fodi}
         - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://os.fodisrl.it}
+        - BRAND_NAME=${BRAND_NAME:-FODI OS}
+        - BRAND_SLUG=${BRAND_SLUG:-fodi}
     restart: unless-stopped
     env_file:
       - .env.docker
