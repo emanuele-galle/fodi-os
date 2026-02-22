@@ -49,3 +49,6 @@ remotion/
 
 # wallet certificates
 /certs/
+
+# per-VPS docker overrides
+docker-compose.override.yml
