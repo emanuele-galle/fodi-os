@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { hasPermission, requirePermission, ADMIN_ROLES } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { updateTaskSchema } from '@/lib/validation'
-import { getTaskParticipants, getProjectMembers, notifyUsers } from '@/lib/notifications'
+import { getTaskParticipants, dispatchNotification, NotificationBatch } from '@/lib/notifications'
 import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
@@ -202,7 +202,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Auto-log TimeEntry disabled: presenze tracked via WorkSession/heartbeat
 
-    // --- Notifications ---
+    // --- Notifications (batched to merge multiple changes into 1 notification) ---
     const currentUser = await prisma.user.findUnique({
       where: { id: currentUserId! },
       select: { firstName: true, lastName: true },
@@ -210,7 +210,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const actorName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Qualcuno'
     const taskLink = `/tasks?taskId=${taskId}`
 
-    // Fetch project name for metadata (use previousTask if available, otherwise fetch)
+    // Fetch project name for metadata
     let taskProjectName: string | undefined
     if (previousTask?.project?.name) {
       taskProjectName = previousTask.project.name
@@ -218,15 +218,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const proj = await prisma.project.findUnique({ where: { id: task.projectId as string }, select: { name: true } })
       taskProjectName = proj?.name ?? undefined
     }
+    const effectiveProjectId = task.projectId as string | null
     const notifMetadata = { projectName: taskProjectName, taskStatus: status || (previousTask?.status ?? undefined), priority: previousTask?.priority ?? task.priority }
 
-    // Fetch notification recipients: project members if task belongs to a project, otherwise task participants
+    // Use task participants (not all project members) for reduced audience
     const needsNotification = (status !== undefined && previousTask && status !== previousTask.status)
       || priority !== undefined || dueDate !== undefined || description !== undefined
-    const effectiveProjectId = task.projectId as string | null
-    const participants = needsNotification
-      ? (effectiveProjectId ? await getProjectMembers(effectiveProjectId) : await getTaskParticipants(taskId))
-      : []
+    const participants = needsNotification ? await getTaskParticipants(taskId) : []
+
+    const batch = new NotificationBatch()
 
     // Status change notification
     if (status !== undefined && previousTask && status !== previousTask.status) {
@@ -239,79 +239,32 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
       const newLabel = statusLabels[status] || status
 
-      // If completed, special notification to creator + assigners
       if (status === 'DONE') {
-        // Get assignedBy users from task assignments
-        const assignments = await prisma.taskAssignment.findMany({
-          where: { taskId },
-          select: { assignedBy: true },
+        batch.add({
+          type: 'task_completed',
+          title: 'Task completata',
+          message: `${actorName} ha completato "${task.title}"`,
+          link: taskLink,
+          metadata: notifMetadata,
+          projectId: effectiveProjectId ?? undefined,
+          groupKey: `task_update:${taskId}`,
+          actorName,
+          recipientIds: participants,
+          excludeUserId: currentUserId,
         })
-        const assignerIds = [...new Set(
-          assignments
-            .map((a) => a.assignedBy)
-            .filter((id): id is string => id != null && id !== currentUserId && id !== task.creatorId)
-        )]
-
-        // Notify creator
-        await notifyUsers(
-          [task.creatorId],
-          currentUserId,
-          {
-            type: 'task_completed',
-            title: 'Task completata',
-            message: `${actorName} ha completato "${task.title}"`,
-            link: taskLink,
-            metadata: notifMetadata,
-            projectId: effectiveProjectId ?? undefined,
-          }
-        )
-
-        // Notify assigners (who assigned this task to someone)
-        if (assignerIds.length > 0) {
-          await notifyUsers(
-            assignerIds,
-            currentUserId,
-            {
-              type: 'task_completed',
-              title: 'Task completata',
-              message: `${actorName} ha completato "${task.title}"`,
-              link: taskLink,
-              metadata: notifMetadata,
-              projectId: effectiveProjectId ?? undefined,
-            }
-          )
-        }
-
-        // Notify other members/participants (excluding creator and assigners, already notified above)
-        const alreadyNotified = new Set([task.creatorId, ...assignerIds])
-        const others = participants.filter((id) => !alreadyNotified.has(id))
-        if (others.length > 0) {
-          await notifyUsers(
-            others,
-            currentUserId,
-            {
-              type: 'task_status_changed',
-              title: 'Stato task cambiato',
-              message: `${actorName} ha completato "${task.title}"`,
-              link: taskLink,
-              metadata: notifMetadata,
-              projectId: effectiveProjectId ?? undefined,
-            }
-          )
-        }
       } else {
-        await notifyUsers(
-          participants,
-          currentUserId,
-          {
-            type: 'task_status_changed',
-            title: 'Stato task cambiato',
-            message: `${actorName} ha cambiato lo stato di "${task.title}" in "${newLabel}"`,
-            link: taskLink,
-            metadata: notifMetadata,
-            projectId: effectiveProjectId ?? undefined,
-          }
-        )
+        batch.add({
+          type: 'task_status_changed',
+          title: 'Stato task cambiato',
+          message: `${actorName} ha cambiato lo stato di "${task.title}" in "${newLabel}"`,
+          link: taskLink,
+          metadata: notifMetadata,
+          projectId: effectiveProjectId ?? undefined,
+          groupKey: `task_update:${taskId}`,
+          actorName,
+          recipientIds: participants,
+          excludeUserId: currentUserId,
+        })
       }
     }
 
@@ -323,20 +276,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (description !== undefined) changes.push('descrizione')
 
       if (changes.length > 0) {
-        await notifyUsers(
-          participants,
-          currentUserId,
-          {
-            type: 'task_updated',
-            title: 'Task modificata',
-            message: `${actorName} ha modificato ${changes.join(', ')} di "${task.title}"`,
-            link: taskLink,
-            metadata: notifMetadata,
-            projectId: effectiveProjectId ?? undefined,
-          }
-        )
+        batch.add({
+          type: 'task_updated',
+          title: 'Task modificata',
+          message: `${actorName} ha modificato ${changes.join(', ')} di "${task.title}"`,
+          link: taskLink,
+          metadata: notifMetadata,
+          projectId: effectiveProjectId ?? undefined,
+          groupKey: `task_update:${taskId}`,
+          actorName,
+          recipientIds: participants,
+          excludeUserId: currentUserId,
+        })
       }
     }
+
+    // Flush batch: merges status+priority+etc into 1 notification per user
+    await batch.flush()
 
     // Handle multi-assignee updates
     if (assigneeIds !== undefined) {

@@ -64,8 +64,20 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
   useSSE(useCallback((event) => {
     if (event.type === 'notification') {
       const notif = event.data as Notification
-      setNotifications((prev) => [notif, ...prev].slice(0, 20))
+      setNotifications((prev) => [{ ...notif, groupCount: notif.groupCount ?? 1, updatedAt: notif.updatedAt ?? new Date().toISOString() }, ...prev].slice(0, 20))
       setUnreadCount((c) => c + 1)
+    } else if (event.type === 'update_notification') {
+      // Update existing grouped notification in-place and move to top
+      const update = event.data as Notification
+      setNotifications((prev) => {
+        const idx = prev.findIndex((n) => update.groupKey && n.groupKey === update.groupKey && !n.isRead)
+        if (idx >= 0) {
+          const updated = { ...prev[idx], ...update, updatedAt: update.updatedAt ?? new Date().toISOString() }
+          const rest = prev.filter((_, i) => i !== idx)
+          return [updated, ...rest].slice(0, 20)
+        }
+        return [{ ...update, groupCount: update.groupCount ?? 1, updatedAt: update.updatedAt ?? new Date().toISOString() }, ...prev].slice(0, 20)
+      })
     }
   }, []))
 
@@ -198,7 +210,14 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
-                              <p className="text-sm font-medium">{notif.title}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium">{notif.title}</p>
+                                {notif.groupCount > 1 && (
+                                  <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded-full font-medium text-muted">
+                                    {notif.groupCount}
+                                  </span>
+                                )}
+                              </div>
                               {!notif.isRead && (
                                 <span className="mt-1 h-2 w-2 shrink-0 bg-primary rounded-full" />
                               )}
@@ -226,7 +245,7 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
                               </div>
                             )}
                             <p className="text-xs text-muted mt-1">
-                              {formatDistanceToNow(new Date(notif.createdAt), { locale: it, addSuffix: true })}
+                              {formatDistanceToNow(new Date(notif.updatedAt || notif.createdAt), { locale: it, addSuffix: true })}
                             </p>
                           </div>
                         </div>

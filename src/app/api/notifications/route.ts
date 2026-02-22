@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         userId,
         ...(unread === 'true' && { isRead: false }),
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
       take: limit,
     })
 

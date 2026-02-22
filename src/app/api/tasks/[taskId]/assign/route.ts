@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
-import { notifyUsers } from '@/lib/notifications'
+import { dispatchNotification } from '@/lib/notifications'
 import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
@@ -83,17 +83,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     if (task && toAdd.length > 0) {
-      await notifyUsers(
-        toAdd,
-        currentUserId,
-        {
-          type: 'task_assigned',
-          title: 'Task assegnato',
-          message: `Ti è stato assegnato il task "${task.title}"`,
-          link: `/tasks?taskId=${taskId}`,
-          metadata: { projectName: task.project?.name },
-        }
-      )
+      await dispatchNotification({
+        type: 'task_assigned',
+        title: 'Task assegnato',
+        message: `Ti è stato assegnato il task "${task.title}"`,
+        link: `/tasks?taskId=${taskId}`,
+        metadata: { projectName: task.project?.name },
+        groupKey: `task_assigned:${taskId}`,
+        recipientIds: toAdd,
+        excludeUserId: currentUserId,
+      })
     }
 
     // Badge update for new and removed assignees

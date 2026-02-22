@@ -185,10 +185,17 @@ export default function NotificationsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium">{notif.title}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium">{notif.title}</p>
+                        {notif.groupCount > 1 && (
+                          <span className="text-[10px] bg-secondary px-1.5 py-0.5 rounded-full font-medium text-muted">
+                            {notif.groupCount}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-xs text-muted whitespace-nowrap">
-                          {formatDistanceToNow(new Date(notif.createdAt), { locale: it, addSuffix: true })}
+                          {formatDistanceToNow(new Date(notif.updatedAt || notif.createdAt), { locale: it, addSuffix: true })}
                         </span>
                         {!notif.isRead && (
                           <span className="h-2 w-2 bg-primary rounded-full" />

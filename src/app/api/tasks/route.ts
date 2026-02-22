@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createTaskSchema } from '@/lib/validation'
-import { notifyUsers, getProjectMembers } from '@/lib/notifications'
+import { dispatchNotification } from '@/lib/notifications'
 import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
@@ -216,40 +216,18 @@ export async function POST(request: NextRequest) {
         projectName = proj?.name ?? undefined
       }
 
-      // Notify assignees about task assignment
-      await notifyUsers(
-        Array.from(allAssigneeIds),
-        userId,
-        {
-          type: 'task_assigned',
-          title: 'Task assegnato',
-          message: `Ti è stato assegnato il task "${title}"`,
-          link: `/tasks?taskId=${task.id}`,
-          metadata: { projectName, priority: priority || 'MEDIUM' },
-          projectId: task.projectId ?? undefined,
-        }
-      )
-
-      // Notify all project members (excluding assignees already notified and creator)
-      if (task.projectId) {
-        const projectMembers = await getProjectMembers(task.projectId)
-        const alreadyNotified = new Set([...allAssigneeIds, userId])
-        const remainingMembers = projectMembers.filter((id) => !alreadyNotified.has(id))
-        if (remainingMembers.length > 0) {
-          await notifyUsers(
-            remainingMembers,
-            null,
-            {
-              type: 'task_created',
-              title: 'Nuovo task nel progetto',
-              message: `Nuovo task "${title}" creato nel progetto ${projectName || ''}`.trim(),
-              link: `/tasks?taskId=${task.id}`,
-              metadata: { projectName, priority: priority || 'MEDIUM' },
-              projectId: task.projectId,
-            }
-          )
-        }
-      }
+      // Notify assignees about task assignment (no more task_created to entire project)
+      await dispatchNotification({
+        type: 'task_assigned',
+        title: 'Task assegnato',
+        message: `Ti è stato assegnato il task "${title}"`,
+        link: `/tasks?taskId=${task.id}`,
+        metadata: { projectName, priority: priority || 'MEDIUM' },
+        projectId: task.projectId ?? undefined,
+        groupKey: `task_assigned:${task.id}`,
+        recipientIds: Array.from(allAssigneeIds),
+        excludeUserId: userId,
+      })
     }
 
     // Send badge_update for assignees with fresh task count

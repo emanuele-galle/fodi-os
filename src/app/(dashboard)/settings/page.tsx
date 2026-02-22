@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/Button'
 import { AvatarUpload } from '@/components/ui/AvatarUpload'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { Settings, Bell, Lock, Sun, Moon, User, Palette, Shield, Globe, Languages, Calendar, Info, CreditCard, ArrowRight, Mail } from 'lucide-react'
+import { Settings, Bell, Lock, Sun, Moon, User, Palette, Shield, Globe, Languages, Calendar, Info, CreditCard, ArrowRight, Mail, BellOff } from 'lucide-react'
+import { CONFIGURABLE_NOTIF_TYPES } from '@/lib/notification-constants'
 import { cn } from '@/lib/utils'
 
 type Theme = 'light' | 'dark'
@@ -87,6 +88,9 @@ export default function SettingsPage() {
   const [pushSupported, setPushSupported] = useState(false)
   const [isIOSNotPWA, setIsIOSNotPWA] = useState(false)
   const [digestSaving, setDigestSaving] = useState(false)
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, { in_app: boolean; push: boolean }>>({})
+  const [notifPrefsLoading, setNotifPrefsLoading] = useState(true)
+  const [notifPrefsSaving, setNotifPrefsSaving] = useState(false)
 
   // Theme
   const [currentTheme, setCurrentTheme] = useState<Theme>('light')
@@ -212,6 +216,53 @@ export default function SettingsPage() {
         if (data?.user) setUser(data.user)
       })
   }, [])
+
+  // Load notification preferences
+  useEffect(() => {
+    setNotifPrefsLoading(true)
+    fetch('/api/notifications/preferences')
+      .then((res) => res.json())
+      .then((data) => {
+        const prefs: Record<string, { in_app: boolean; push: boolean }> = {}
+        // Initialize defaults: all enabled except task_created
+        for (const t of CONFIGURABLE_NOTIF_TYPES) {
+          prefs[t.type] = { in_app: true, push: true }
+        }
+        // Override with saved preferences
+        if (data?.items) {
+          for (const item of data.items as { type: string; channel: string; enabled: boolean }[]) {
+            if (prefs[item.type]) {
+              if (item.channel === 'in_app') prefs[item.type].in_app = item.enabled
+              if (item.channel === 'push') prefs[item.type].push = item.enabled
+            }
+          }
+        }
+        setNotifPrefs(prefs)
+      })
+      .catch(() => {})
+      .finally(() => setNotifPrefsLoading(false))
+  }, [])
+
+  const handleToggleNotifPref = async (type: string, channel: 'in_app' | 'push') => {
+    const current = notifPrefs[type]?.[channel] ?? true
+    const newPrefs = { ...notifPrefs, [type]: { ...notifPrefs[type], [channel]: !current } }
+    setNotifPrefs(newPrefs)
+    setNotifPrefsSaving(true)
+    try {
+      await fetch('/api/notifications/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preferences: [{ type, channel, enabled: !current }],
+        }),
+      })
+    } catch {
+      // Revert on error
+      setNotifPrefs({ ...notifPrefs, [type]: { ...notifPrefs[type], [channel]: current } })
+    } finally {
+      setNotifPrefsSaving(false)
+    }
+  }
 
   useEffect(() => {
     setGoogleLoading(true)
@@ -800,6 +851,82 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
             )}
+
+            {/* Notification Preferences by Type */}
+            <Card className="rounded-xl border border-border/20">
+              <CardTitle className="flex items-center gap-2">
+                <BellOff className="h-4 w-4 text-muted" />
+                Preferenze per tipo
+              </CardTitle>
+              <CardContent>
+                <p className="text-sm text-muted mb-4">
+                  Scegli quali notifiche ricevere per ogni canale.
+                </p>
+                {notifPrefsLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-10 w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="border border-border/30 rounded-lg overflow-hidden">
+                    {/* Header */}
+                    <div className="grid grid-cols-[1fr_70px_70px] gap-2 px-4 py-2.5 bg-secondary/30 border-b border-border/30">
+                      <span className="text-xs font-medium text-muted uppercase tracking-wide">Tipo</span>
+                      <span className="text-xs font-medium text-muted uppercase tracking-wide text-center">In-app</span>
+                      <span className="text-xs font-medium text-muted uppercase tracking-wide text-center">Push</span>
+                    </div>
+                    {/* Rows */}
+                    {CONFIGURABLE_NOTIF_TYPES.map((t) => (
+                      <div
+                        key={t.type}
+                        className="grid grid-cols-[1fr_70px_70px] gap-2 px-4 py-3 border-b border-border/20 last:border-b-0 hover:bg-secondary/20 transition-colors"
+                      >
+                        <span className="text-sm text-foreground">{t.label}</span>
+                        <div className="flex justify-center">
+                          <button
+                            onClick={() => handleToggleNotifPref(t.type, 'in_app')}
+                            disabled={notifPrefsSaving}
+                            className={cn(
+                              'w-10 h-6 rounded-full relative transition-colors',
+                              notifPrefs[t.type]?.in_app !== false
+                                ? 'bg-primary'
+                                : 'bg-secondary border border-border/50'
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                                notifPrefs[t.type]?.in_app !== false ? 'left-[18px]' : 'left-0.5'
+                              )}
+                            />
+                          </button>
+                        </div>
+                        <div className="flex justify-center">
+                          <button
+                            onClick={() => handleToggleNotifPref(t.type, 'push')}
+                            disabled={notifPrefsSaving}
+                            className={cn(
+                              'w-10 h-6 rounded-full relative transition-colors',
+                              notifPrefs[t.type]?.push !== false
+                                ? 'bg-primary'
+                                : 'bg-secondary border border-border/50'
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                                notifPrefs[t.type]?.push !== false ? 'left-[18px]' : 'left-0.5'
+                              )}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
             </>
           )}
 

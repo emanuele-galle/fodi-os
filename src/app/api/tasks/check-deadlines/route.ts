@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { createNotification } from '@/lib/notifications'
+import { dispatchNotification } from '@/lib/notifications'
 
 export async function POST(req: NextRequest) {
   const auth = req.headers.get('authorization')
@@ -42,16 +42,17 @@ export async function POST(req: NextRequest) {
       userIds.add(task.creatorId)
       for (const a of task.assignments) userIds.add(a.userId)
 
-      for (const userId of userIds) {
-        await createNotification({
-          userId,
-          type,
-          title: titleFn(task.title),
-          message: messageFn(task.title),
-          link: `/tasks?taskId=${task.id}`,
-        })
-        notifCount++
-      }
+      // Use groupKey for dedup: same task won't generate duplicate deadline notifications
+      await dispatchNotification({
+        type,
+        title: titleFn(task.title),
+        message: messageFn(task.title),
+        link: `/tasks?taskId=${task.id}`,
+        groupKey: `deadline:${task.id}`,
+        recipientIds: Array.from(userIds),
+        excludeUserId: null,
+      })
+      notifCount += userIds.size
     }
   }
 
