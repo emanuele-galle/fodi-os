@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedClient, getDriveService, getDriveRootFolderId, isInsideAllowedFolder } from '@/lib/google'
 import { getAdminDriveClient } from '@/lib/storage'
@@ -5,7 +6,7 @@ import { requirePermission } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
 import { Readable } from 'stream'
 
-// POST /api/drive/upload - Upload a file to Google Drive (restricted to FODI OS)
+// POST /api/drive/upload - Upload a file to Google Drive (restricted to brand folder)
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
     if (rootFolderId !== 'root' && folderId !== rootFolderId) {
       const allowed = await isInsideAllowedFolder(drive, folderId, rootFolderId)
       if (!allowed) {
-        return NextResponse.json({ error: 'Non puoi caricare file fuori dalla cartella FODI OS' }, { status: 403 })
+        return NextResponse.json({ error: 'Non puoi caricare file fuori dalla cartella ${brand.driveFolderName}' }, { status: 403 })
       }
     }
 

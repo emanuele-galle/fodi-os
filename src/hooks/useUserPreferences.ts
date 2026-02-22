@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect, useCallback } from 'react'
 
@@ -8,7 +9,7 @@ interface UserPreferences {
   defaultView: 'list' | 'kanban'
 }
 
-const STORAGE_KEY = 'fodi-user-preferences'
+const STORAGE_KEY = brandClient.storageKeys.userPreferences
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   theme: 'light',

@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
@@ -17,7 +18,7 @@ export function Logo({ variant = 'light', width = 120, height = 42, className }:
       <>
         <Image
           src="/logo-dark.png"
-          alt="FODI"
+          alt={brandClient.name}
           width={width}
           height={height}
           priority
@@ -25,7 +26,7 @@ export function Logo({ variant = 'light', width = 120, height = 42, className }:
         />
         <Image
           src="/logo-light.png"
-          alt="FODI"
+          alt={brandClient.name}
           width={width}
           height={height}
           priority
@@ -38,7 +39,7 @@ export function Logo({ variant = 'light', width = 120, height = 42, className }:
   return (
     <Image
       src={variant === 'light' ? '/logo-dark.png' : '/logo-light.png'}
-      alt="FODI"
+      alt={brandClient.name}
       width={width}
       height={height}
       priority

@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
@@ -185,7 +186,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
                   transition={{ delay: 0.3 }}
                   className="text-sm text-muted max-w-sm"
                 >
-                  Benvenuto in FODI OS. Ti guideremo attraverso le funzionalita principali in pochi secondi.
+                  Benvenuto in {brandClient.name}. Ti guideremo attraverso le funzionalita principali in pochi secondi.
                 </motion.p>
               </motion.div>
             )}

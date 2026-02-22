@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check impersonation directly from cookie + JWT role (no middleware headers needed)
-    const impersonateId = request.cookies.get('fodi_impersonate')?.value
+    const impersonateId = request.cookies.get(brand.cookies.impersonate)?.value
     const isImpersonating = !!(impersonateId && session.role === 'ADMIN' && impersonateId !== session.sub)
 
     const targetUserId = isImpersonating ? impersonateId : session.sub
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
       createdAt: true,
       lastLoginAt: true,
       dailyDigest: true,
+      workSchedule: true,
     }
 
     const user = await prisma.user.findUnique({

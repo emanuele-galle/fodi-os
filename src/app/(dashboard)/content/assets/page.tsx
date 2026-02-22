@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect, useCallback } from 'react'
 import {
@@ -612,7 +613,7 @@ function GoogleDriveTab() {
         }
         setConnected(true)
         const rootId = data.rootFolderId || 'root'
-        setFolderStack([{ id: rootId, name: 'FODI OS' }])
+        setFolderStack([{ id: rootId, name: brandClient.name }])
       } catch {
         setConnected(false)
         setLoading(false)

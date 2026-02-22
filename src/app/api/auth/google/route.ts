@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify, SignJWT } from 'jose'
 import { getAuthUrl } from '@/lib/google'
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
   let userId = request.headers.get('x-user-id')
 
   if (!userId) {
-    const token = request.cookies.get('fodi_access')?.value
+    const token = request.cookies.get(brand.cookies.access)?.value
     if (token) {
       try {
         const { payload } = await jwtVerify(token, ACCESS_SECRET)
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!userId) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://os.fodisrl.it'
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || brand.siteUrl
     return NextResponse.redirect(new URL('/login', siteUrl))
   }
 

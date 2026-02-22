@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { google } from 'googleapis'
 import { prisma } from './prisma'
 
@@ -189,7 +190,7 @@ export function getMeetService(auth: InstanceType<typeof google.auth.OAuth2>) {
 
 /**
  * Get the restricted root folder ID for Drive browsing.
- * Falls back to resolving the "FODI OS" folder from admin account.
+ * Falls back to resolving the brand.driveFolderName folder from admin account.
  */
 let _cachedRootFolderId: string | null = null
 
@@ -202,14 +203,14 @@ export async function getDriveRootFolderId(userId: string): Promise<string> {
   // 2. From cache
   if (_cachedRootFolderId) return _cachedRootFolderId
 
-  // 3. Find the "FODI OS" folder dynamically
+  // 3. Find the brand.driveFolderName folder dynamically
   const auth = await getAuthenticatedClient(userId)
   if (!auth) return 'root'
 
   const drive = getDriveService(auth)
   try {
     const res = await drive.files.list({
-      q: "name = 'FODI OS' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and 'root' in parents",
+      q: "name = '${brand.driveFolderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and 'root' in parents",
       fields: 'files(id)',
       spaces: 'drive',
     })
@@ -225,7 +226,7 @@ export async function getDriveRootFolderId(userId: string): Promise<string> {
 }
 
 /**
- * Validate that a folder ID is within the allowed "FODI OS" folder tree.
+ * Validate that a folder ID is within the allowed brand.driveFolderName folder tree.
  * Walks up parents until it finds the root folder or reaches Drive root.
  */
 export async function isInsideAllowedFolder(

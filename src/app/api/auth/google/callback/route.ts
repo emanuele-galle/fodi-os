@@ -1,10 +1,11 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 import { createOAuth2Client, hasRequiredScopes } from '@/lib/google'
 import { prisma } from '@/lib/prisma'
 import { google } from 'googleapis'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://os.fodisrl.it'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || brand.siteUrl
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
 function siteRedirect(path: string) {

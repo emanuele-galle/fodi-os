@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifySignatureToken } from '@/lib/signature-token'
@@ -150,7 +151,7 @@ export async function POST(
             },
           })
 
-          const bucket = process.env.S3_BUCKET || 'fodi-os'
+          const bucket = process.env.S3_BUCKET || brand.s3Bucket
           const key = `signatures/${requestId}/${signedFilename}`
 
           await s3.send(new PutObjectCommand({
@@ -222,7 +223,7 @@ export async function POST(
         sendViaSMTP(
           r.email,
           `Documento firmato: ${reqWithRequester.documentTitle}`,
-          `<p>Ciao ${r.firstName},</p><p><strong>${reqWithRequester.signerName}</strong> ha firmato il documento "${reqWithRequester.documentTitle}".</p><p>Puoi visualizzare i dettagli nella sezione <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://os.fodisrl.it'}/erp/signatures">Firme</a>.</p>`
+          `<p>Ciao ${r.firstName},</p><p><strong>${reqWithRequester.signerName}</strong> ha firmato il documento "${reqWithRequester.documentTitle}".</p><p>Puoi visualizzare i dettagli nella sezione <a href="${process.env.NEXT_PUBLIC_APP_URL || brand.siteUrl}/erp/signatures">Firme</a>.</p>`
         )
       }
     }

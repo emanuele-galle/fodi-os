@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
       projects: projectsMap,
       recentLogins,
       app: {
-        name: 'FODI OS',
+        name: brand.name,
         version: process.env.APP_VERSION || '0.6.0',
         environment: process.env.NODE_ENV || 'development',
       },

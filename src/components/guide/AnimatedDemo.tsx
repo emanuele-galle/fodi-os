@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useRef, useState } from 'react'
 import { motion } from 'motion/react'
@@ -414,7 +415,7 @@ function MobileDemo({ color }: { color: string }) {
         className="w-28 h-44 rounded-2xl border-2 border-border/40 bg-background relative overflow-hidden"
       >
         <div className="h-4 bg-muted/10 flex items-center justify-center">
-          <div className="text-[6px] text-muted">FODI OS</div>
+          <div className="text-[6px] text-muted">{brandClient.name}</div>
         </div>
         <div className="p-2 space-y-1.5">
           {['Dashboard', 'CRM', 'Progetti', 'Chat'].map((item, i) => (

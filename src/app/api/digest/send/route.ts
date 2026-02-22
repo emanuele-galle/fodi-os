@@ -1,8 +1,9 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendViaSMTP } from '@/lib/email'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://os.fodisrl.it'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || brand.siteUrl
 const LOGO_URL = `${SITE_URL}/logo-light.png`
 
 const PRIORITY = {
@@ -164,7 +165,7 @@ function buildEmail(firstName: string, data: Data): string {
 <meta name="x-apple-disable-message-reformatting">
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
-<title>Riepilogo — FODI OS</title>
+<title>Riepilogo — ${brand.name}</title>
 <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
 <style>
 *{box-sizing:border-box}
@@ -189,7 +190,7 @@ a{text-decoration:none}
 
   <!-- LOGO -->
   <tr><td style="padding:0 0 32px;text-align:center;">
-    <img src="${LOGO_URL}" alt="FODI" width="120" height="42" style="display:inline-block;" />
+    <img src="${LOGO_URL}" alt="${brand.name}" width="120" height="42" style="display:inline-block;" />
   </td></tr>
 
   <!-- MAIN CARD -->
@@ -255,7 +256,7 @@ a{text-decoration:none}
       <span style="color:#D1D5DB;padding:0 8px;">&#183;</span>
       <a href="${SITE_URL}/dashboard" style="color:#6B7280;text-decoration:underline;">Dashboard</a>
     </p>
-    <p style="margin:0;font-size:11px;color:#D1D5DB;">FODI S.r.l. &middot; Sistema Gestionale</p>
+    <p style="margin:0;font-size:11px;color:#D1D5DB;">${brand.email.footerText} &middot; Sistema Gestionale</p>
   </td></tr>
 
 </table>
@@ -340,7 +341,7 @@ export async function POST(req: NextRequest) {
       if (!overdue.length && !dueToday.length && !dueTomorrow.length && !completedYesterday.length && !recentComments.length) { skipped++; continue }
 
       const html = buildEmail(u.firstName, { overdue, dueToday, dueTomorrow, completedYesterday, recentComments })
-      const ok = await sendViaSMTP(u.email, `Riepilogo del ${fmtDate(now)} — FODI OS`, html)
+      const ok = await sendViaSMTP(u.email, `Riepilogo del ${fmtDate(now)} — ${brand.name}`, html)
       ok ? sent++ : errors++
       await sleep(500)
     } catch (err) {

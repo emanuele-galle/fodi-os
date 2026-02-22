@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 import { prisma } from '@/lib/prisma'
@@ -8,7 +9,7 @@ async function getUserId(request: NextRequest): Promise<string | null> {
   const fromHeader = request.headers.get('x-user-id')
   if (fromHeader) return fromHeader
 
-  const token = request.cookies.get('fodi_access')?.value
+  const token = request.cookies.get(brand.cookies.access)?.value
   if (!token) return null
   try {
     const { payload } = await jwtVerify(token, ACCESS_SECRET)

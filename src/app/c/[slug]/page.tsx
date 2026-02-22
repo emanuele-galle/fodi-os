@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
@@ -37,8 +38,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const fullName = `${card.user.firstName} ${card.user.lastName}`
   const title = card.jobTitle
-    ? `${fullName} - ${card.jobTitle} | FODI`
-    : `${fullName} | FODI`
+    ? `${fullName} - ${card.jobTitle} | ${brand.slug.toUpperCase()}`
+    : `${fullName} | ${brand.slug.toUpperCase()}`
 
   const description = card.cardBio || `Biglietto da visita digitale di ${fullName}`
 
@@ -124,7 +125,7 @@ export default async function CardPage({ params }: Props) {
         <div className="card-fade-in card-delay-1 flex justify-center mb-12">
           <img
             src="/logo-dark.png"
-            alt="FODI"
+            alt={brand.slug.toUpperCase()}
             className="h-10 w-auto opacity-70"
           />
         </div>
@@ -191,7 +192,7 @@ export default async function CardPage({ params }: Props) {
         <div className="mt-16 card-fade-in card-delay-7 flex justify-center">
           <div className="flex items-center gap-2 text-[12px] text-white/25 tracking-wider uppercase">
             <div className="w-8 h-px bg-white/10" />
-            <span>FODI Digital Card</span>
+            <span>{brand.slug.toUpperCase()} Digital Card</span>
             <div className="w-8 h-px bg-white/10" />
           </div>
         </div>

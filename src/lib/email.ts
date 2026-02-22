@@ -1,10 +1,11 @@
+import { brand } from '@/lib/branding'
 import { randomInt } from 'crypto'
 
 const SMTP_HOST = process.env.SMTP_HOST
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587')
 const SMTP_USER = process.env.SMTP_USER
 const SMTP_PASS = process.env.SMTP_PASS
-const SMTP_FROM = process.env.SMTP_FROM || 'noreply@fodisrl.it'
+const SMTP_FROM = process.env.SMTP_FROM || brand.email.from
 
 function stripHtml(html: string): string {
   return html
@@ -68,7 +69,7 @@ export function maskEmail(email: string): string {
 }
 
 export async function sendLoginOtpEmail(to: string, otpCode: string, ipAddress: string): Promise<boolean> {
-  const subject = 'Codice di verifica - FODI OS'
+  const subject = 'Codice di verifica - ${brand.name}'
 
   const html = `
 <!DOCTYPE html>
@@ -99,7 +100,7 @@ export async function sendLoginOtpEmail(to: string, otpCode: string, ipAddress: 
       <strong>⚠️ Se non sei stato tu</strong>, cambia immediatamente la tua password e contatta l'amministratore.
     </p>
     <p style="color: #94a3b8; font-size: 11px; margin: 0;">
-      FODI S.r.l. - Sistema Gestionale<br/>
+      ${brand.email.footerText} - Sistema Gestionale<br/>
       Questa è un'email automatica, non rispondere.
     </p>
   </div>

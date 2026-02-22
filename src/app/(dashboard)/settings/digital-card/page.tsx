@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect } from 'react'
 import { CreditCard } from 'lucide-react'
@@ -86,7 +87,7 @@ export default function DigitalCardPage() {
     }
   }
 
-  const cardUrl = card ? `https://os.fodisrl.it/c/${card.slug}` : ''
+  const cardUrl = card ? `${brandClient.siteUrl}/c/${card.slug}` : ''
 
   return (
     <div className="animate-fade-in">

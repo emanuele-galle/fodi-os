@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { SignJWT, jwtVerify } from 'jose'
 import { randomUUID } from 'crypto'
 import bcrypt from 'bcryptjs'
@@ -57,7 +58,7 @@ export async function verifyRefreshToken(token: string): Promise<SessionPayload>
 export async function setAuthCookies(accessToken: string, refreshToken: string): Promise<void> {
   const cookieStore = await cookies()
 
-  cookieStore.set('fodi_access', accessToken, {
+  cookieStore.set(brand.cookies.access, accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -65,7 +66,7 @@ export async function setAuthCookies(accessToken: string, refreshToken: string):
     maxAge: 30 * 60, // 30 minutes
   })
 
-  cookieStore.set('fodi_refresh', refreshToken, {
+  cookieStore.set(brand.cookies.refresh, refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -76,8 +77,8 @@ export async function setAuthCookies(accessToken: string, refreshToken: string):
 
 export async function clearAuthCookies(): Promise<void> {
   const cookieStore = await cookies()
-  cookieStore.delete('fodi_access')
-  cookieStore.delete('fodi_refresh')
+  cookieStore.delete(brand.cookies.access)
+  cookieStore.delete(brand.cookies.refresh)
 }
 
 export function generateTempPassword(): string {
@@ -89,7 +90,7 @@ export function generateTempPassword(): string {
 
 export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies()
-  const token = cookieStore.get('fodi_access')?.value
+  const token = cookieStore.get(brand.cookies.access)?.value
   if (!token) return null
 
   try {

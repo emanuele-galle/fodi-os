@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -254,7 +255,7 @@ export default function InternalPage() {
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight">Azienda</h1>
-            <p className="text-xs md:text-sm text-muted">Gestione interna e operazioni FODI</p>
+            <p className="text-xs md:text-sm text-muted">Gestione interna e operazioni {brandClient.slug.toUpperCase()}</p>
           </div>
         </div>
         <Button onClick={() => setModalOpen(true)}>

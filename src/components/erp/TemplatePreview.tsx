@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { formatCurrency } from '@/lib/utils'
 import type { TemplateLineItem } from './TemplateLineItemsEditor'
@@ -42,7 +43,7 @@ export function TemplatePreview({
   defaultNotes,
   termsAndConditions,
   lineItems,
-  companyName = 'FODI S.R.L.',
+  companyName = brandClient.name,
   companyProfile,
 }: TemplatePreviewProps) {
   const year = new Date().getFullYear()
@@ -67,7 +68,7 @@ export function TemplatePreview({
   const citta = companyProfile?.citta || 'Serra San Bruno'
   const provincia = companyProfile?.provincia || 'VV'
   const telefono = companyProfile?.telefono || '+39 0963 576433'
-  const email = companyProfile?.email || 'info@fodisrl.it'
+  const email = companyProfile?.email || brandClient.contactEmail
   const pec = companyProfile?.pec
   const iban = companyProfile?.iban
 

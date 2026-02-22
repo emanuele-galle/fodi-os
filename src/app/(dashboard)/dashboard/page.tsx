@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -92,7 +93,7 @@ const NOTE_COLORS = [
   { value: 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800', label: 'Rosa' },
 ]
 
-const STORAGE_KEY = 'fodi-os-sticky-notes'
+const STORAGE_KEY = brandClient.storageKeys.stickyNotes
 
 function getGreeting(): string {
   const hour = new Date().getHours()

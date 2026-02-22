@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
@@ -6,7 +7,7 @@ import { verifyRefreshToken, createAccessToken, createRefreshToken } from '@/lib
 export async function POST() {
   try {
     const cookieStore = await cookies()
-    const refreshToken = cookieStore.get('fodi_refresh')?.value
+    const refreshToken = cookieStore.get(brand.cookies.refresh)?.value
 
     if (!refreshToken) {
       return NextResponse.json({ error: 'Refresh token mancante' }, { status: 401 })
@@ -51,11 +52,11 @@ export async function POST() {
             const accessToken = await createAccessToken({
               sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role, customRoleId: user.customRoleId,
             })
-            cookieStore.set('fodi_access', accessToken, {
+            cookieStore.set(brand.cookies.access, accessToken, {
               httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60,
             })
             // Also set the latest refresh token cookie so next refresh uses the right one
-            cookieStore.set('fodi_refresh', latestToken.token, {
+            cookieStore.set(brand.cookies.refresh, latestToken.token, {
               httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60,
             })
             return NextResponse.json({ success: true })
@@ -122,7 +123,7 @@ export async function POST() {
       },
     })
 
-    cookieStore.set('fodi_access', accessToken, {
+    cookieStore.set(brand.cookies.access, accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -130,7 +131,7 @@ export async function POST() {
       maxAge: 30 * 60,
     })
 
-    cookieStore.set('fodi_refresh', newRefreshTokenJwt, {
+    cookieStore.set(brand.cookies.refresh, newRefreshTokenJwt, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

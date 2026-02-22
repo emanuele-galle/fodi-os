@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
@@ -927,7 +928,7 @@ export default function ProjectsPage() {
         className="flex items-center gap-2 w-full mb-4 px-4 py-2.5 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors text-sm text-primary touch-manipulation"
       >
         <Building2 className="h-4 w-4" />
-        <span>Vedi progetti interni FODI</span>
+        <span>Vedi progetti interni {brandClient.slug.toUpperCase()}</span>
         <ChevronRight className="h-4 w-4 ml-auto" />
       </button>
 

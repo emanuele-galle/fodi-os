@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import * as jose from 'jose'
 import fs from 'fs'
 import path from 'path'
@@ -43,7 +44,7 @@ async function getAccessToken(saKey: { client_email: string; private_key: string
 const API = 'https://walletobjects.googleapis.com/walletobjects/v1'
 
 async function ensureClass(iid: string, company: string, token: string) {
-  const classId = `${iid}.fodi-card`
+  const classId = `${iid}.${brand.walletClassPrefix}`
   const res = await fetch(`${API}/genericClass/${classId}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
@@ -66,7 +67,7 @@ async function createOrUpdateObject(
   fullName: string,
   token: string,
 ): Promise<string> {
-  const objectId = `${iid}.fodi-card-${cardData.slug}`
+  const objectId = `${iid}.${brand.walletClassPrefix}-${cardData.slug}`
 
   const textModulesData: Array<{ id: string; header: string; body: string }> = []
   if (cardData.jobTitle) textModulesData.push({ id: 'title', header: 'RUOLO', body: cardData.jobTitle })
@@ -133,7 +134,7 @@ export async function generateGoogleWalletUrl(cardData: CardData): Promise<strin
 
   const saKeyPath = path.resolve(GOOGLE_WALLET_SA_KEY_PATH)
   const saKey = JSON.parse(fs.readFileSync(saKeyPath, 'utf8'))
-  const siteUrl = NEXT_PUBLIC_SITE_URL || 'https://os.fodisrl.it'
+  const siteUrl = NEXT_PUBLIC_SITE_URL || brand.siteUrl
   const cardUrl = `${siteUrl}/c/${cardData.slug}`
   const fullName = `${cardData.firstName} ${cardData.lastName}`
   const iid = GOOGLE_WALLET_ISSUER_ID

@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 
@@ -32,7 +33,7 @@ async function verifyToken(token: string) {
  * The actual refresh (with DB revocation check) happens via /api/auth/refresh.
  */
 function hasValidRefreshToken(request: NextRequest): boolean {
-  const refreshToken = request.cookies.get('fodi_refresh')?.value
+  const refreshToken = request.cookies.get(brand.cookies.refresh)?.value
   return !!refreshToken
 }
 
@@ -78,7 +79,7 @@ export async function middleware(request: NextRequest) {
 
   // Portal paths - check portal cookie
   if (isPortal(pathname)) {
-    const portalToken = request.cookies.get('fodi_portal')?.value
+    const portalToken = request.cookies.get(brand.cookies.portal)?.value
     if (!portalToken) {
       return setSecurityHeaders(NextResponse.redirect(buildUrl(request, '/login')), true)
     }
@@ -108,7 +109,7 @@ export async function middleware(request: NextRequest) {
 
     const authHeader = request.headers.get('authorization')
     const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
-    const cookieToken = request.cookies.get('fodi_access')?.value
+    const cookieToken = request.cookies.get(brand.cookies.access)?.value
     const token = bearerToken || cookieToken
 
     // Try to verify existing access token
@@ -119,11 +120,11 @@ export async function middleware(request: NextRequest) {
         let effectiveUserId = payload.sub
         let effectiveRole = payload.role
 
-        // Impersonation: if admin has fodi_impersonate cookie, override user context.
+        // Impersonation: if admin has impersonate cookie, override user context.
         // Security decision: admin keeps ADMIN role during impersonation so they
         // retain full permissions (e.g. stop-impersonate). The impersonated user's
         // data is loaded via x-user-id, but permission checks use the real admin role.
-        const impersonateId = request.cookies.get('fodi_impersonate')?.value
+        const impersonateId = request.cookies.get(brand.cookies.impersonate)?.value
         if (impersonateId && payload.role === 'ADMIN') {
           effectiveUserId = impersonateId
           response.headers.set('x-impersonating', 'true')
@@ -156,7 +157,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Dashboard paths (everything else) - verify access cookie with auto-refresh
-  const accessToken = request.cookies.get('fodi_access')?.value
+  const accessToken = request.cookies.get(brand.cookies.access)?.value
 
   // Try existing access token
   if (accessToken) {

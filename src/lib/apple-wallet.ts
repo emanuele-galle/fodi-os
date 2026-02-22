@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { PKPass } from 'passkit-generator'
 import fs from 'fs'
 import path from 'path'
@@ -31,7 +32,7 @@ export async function generateApplePass(cardData: CardData): Promise<Buffer> {
   const signerKey = fs.readFileSync(path.resolve(APPLE_PASS_KEY_PATH))
   const wwdr = fs.readFileSync(path.resolve(APPLE_WWDR_CERT_PATH))
 
-  const cardUrl = `${NEXT_PUBLIC_SITE_URL || 'https://os.fodisrl.it'}/c/${cardData.slug}`
+  const cardUrl = `${NEXT_PUBLIC_SITE_URL || brand.siteUrl}/c/${cardData.slug}`
   const fullName = `${cardData.firstName} ${cardData.lastName}`
 
   const pass = new PKPass(
@@ -45,7 +46,7 @@ export async function generateApplePass(cardData: CardData): Promise<Buffer> {
       formatVersion: 1,
       passTypeIdentifier: APPLE_PASS_TYPE_ID,
       teamIdentifier: APPLE_TEAM_ID,
-      serialNumber: `fodi-card-${cardData.slug}-${Date.now()}`,
+      serialNumber: `${brand.walletClassPrefix}-${cardData.slug}-${Date.now()}`,
       organizationName: cardData.company,
       description: `Business Card - ${fullName}`,
       foregroundColor: 'rgb(255, 255, 255)',

@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
@@ -7,7 +8,7 @@ import type { Role } from '@/generated/prisma/client'
 const TERMS_AND_CONDITIONS = `TERMINI E CONDIZIONI GENERALI
 
 1. OGGETTO
-Il presente preventivo descrive i servizi che FODI S.R.L. si impegna a fornire al Cliente alle condizioni qui specificate.
+Il presente preventivo descrive i servizi che ${brand.companyUpper} si impegna a fornire al Cliente alle condizioni qui specificate.
 
 2. MODALITÀ DI PAGAMENTO
 - 30% alla firma del contratto (anticipo)
@@ -22,10 +23,10 @@ I tempi indicati sono stimati e decorrono dalla data di ricezione dell'anticipo 
 Sono incluse fino a 2 revisioni per ogni fase del progetto. Revisioni aggiuntive saranno quotate separatamente. Modifiche sostanziali al brief originale saranno oggetto di nuovo preventivo.
 
 5. PROPRIETÀ INTELLETTUALE
-Al saldo completo, tutti i diritti di proprietà intellettuale sui deliverable vengono trasferiti al Cliente. FODI S.R.L. si riserva il diritto di utilizzare il progetto nel proprio portfolio.
+Al saldo completo, tutti i diritti di proprietà intellettuale sui deliverable vengono trasferiti al Cliente. ${brand.companyUpper} si riserva il diritto di utilizzare il progetto nel proprio portfolio.
 
 6. GARANZIA E MANUTENZIONE
-FODI S.R.L. garantisce la correzione di bug e malfunzionamenti per 90 giorni dalla consegna, senza costi aggiuntivi. La manutenzione ordinaria (aggiornamenti, backup, monitoraggio) è soggetta a contratto separato.
+${brand.companyUpper} garantisce la correzione di bug e malfunzionamenti per 90 giorni dalla consegna, senza costi aggiuntivi. La manutenzione ordinaria (aggiornamenti, backup, monitoraggio) è soggetta a contratto separato.
 
 7. RISERVATEZZA
 Entrambe le parti si impegnano a mantenere riservate le informazioni confidenziali scambiate durante il progetto.
@@ -34,7 +35,7 @@ Entrambe le parti si impegnano a mantenere riservate le informazioni confidenzia
 Il Cliente può recedere dal contratto con preavviso scritto di 15 giorni. In caso di recesso, saranno fatturate le attività già svolte.
 
 9. LIMITAZIONE DI RESPONSABILITÀ
-La responsabilità di FODI S.R.L. è limitata all'importo del preventivo. FODI S.R.L. non è responsabile per danni indiretti o consequenziali.
+La responsabilità di ${brand.companyUpper} è limitata all'importo del preventivo. ${brand.companyUpper} non è responsabile per danni indiretti o consequenziali.
 
 10. FORO COMPETENTE
 Per qualsiasi controversia è competente il Foro di Vibo Valentia.

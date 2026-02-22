@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont, PDFImage } from 'pdf-lib'
 
 // ─── Types ──────────────────────────────────────────────────
@@ -325,7 +326,7 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
       page.drawImage(logoImage, { x: MARGIN, y: PAGE_H - HEADER_H + (HEADER_H - lh) / 2, width: lw, height: lh })
       hx = MARGIN + lw + 10
     }
-    draw(page, company?.ragioneSociale || 'FODI S.r.l.', hx, PAGE_H - HEADER_H + 14, bold, 12, white)
+    draw(page, company?.ragioneSociale || brand.company, hx, PAGE_H - HEADER_H + 14, bold, 12, white)
 
     // Badge + date on right
     const badgeText = 'REPORT GIORNALIERO'
@@ -695,7 +696,7 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
     p.drawLine({ start: { x: MARGIN, y: footY }, end: { x: PAGE_W - MARGIN, y: footY }, thickness: 0.4, color: borderColor })
 
     // Single line: company info
-    const footParts: string[] = [company?.ragioneSociale || 'FODI S.r.l.']
+    const footParts: string[] = [company?.ragioneSociale || brand.company]
     if (company?.indirizzo && company?.cap && company?.citta && company?.provincia) {
       footParts.push(`${company.indirizzo}, ${company.cap} ${company.citta} (${company.provincia})`)
     }

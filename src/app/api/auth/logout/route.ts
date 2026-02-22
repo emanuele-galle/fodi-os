@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
@@ -8,7 +9,7 @@ export async function POST() {
   try {
     const session = await getSession()
     const cookieStore = await cookies()
-    const refreshToken = cookieStore.get('fodi_refresh')?.value
+    const refreshToken = cookieStore.get(brand.cookies.refresh)?.value
 
     // Invalidate ALL refresh tokens for this user
     if (session) {

@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -203,7 +204,7 @@ export default function VerifyIpPage() {
 
           <div className="mt-12 text-center">
             <p className="text-xs text-muted">
-              &copy; 2026 FODI S.r.l. - Tutti i diritti riservati
+              &copy; {new Date().getFullYear()} {brandClient.name} - Tutti i diritti riservati
             </p>
           </div>
         </div>

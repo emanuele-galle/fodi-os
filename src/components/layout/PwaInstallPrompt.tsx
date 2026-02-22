@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect } from 'react'
 import { Download, X, Share } from 'lucide-react'
@@ -73,7 +74,7 @@ export function PwaInstallPrompt() {
         {showIOSGuide ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Installa FODI OS</h3>
+              <h3 className="text-sm font-semibold">Installa {brandClient.name}</h3>
               <button onClick={handleDismiss} className="p-1 rounded-lg hover:bg-secondary/60">
                 <X className="h-4 w-4 text-muted" />
               </button>
@@ -99,7 +100,7 @@ export function PwaInstallPrompt() {
               <Download className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold">Installa FODI OS</h3>
+              <h3 className="text-sm font-semibold">Installa {brandClient.name}</h3>
               <p className="text-xs text-muted mt-0.5">Accesso rapido dalla home del tuo dispositivo</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">

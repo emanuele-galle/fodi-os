@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -59,7 +60,7 @@ export default function ForgotPasswordPage() {
               id="email"
               label="Email"
               type="email"
-              placeholder="nome@fodisrl.it"
+              placeholder={`${brandClient.slug}@example.com`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

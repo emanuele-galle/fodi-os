@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { google } from 'googleapis'
 import { prisma } from './prisma'
 import { getAuthenticatedClient, getDriveService } from './google'
@@ -66,9 +67,9 @@ export async function ensureGDriveFolder(
 
 /**
  * Upload a file to Google Drive in the project folder structure:
- * FODI OS / Progetti / {projectName} / file
+ * ${brand.driveFolderName} / Progetti / {projectName} / file
  * OR
- * FODI OS / CRM / {companyName} / file
+ * ${brand.driveFolderName} / CRM / {companyName} / file
  *
  * Sets the file as publicly viewable (anyone with the link).
  *
@@ -83,19 +84,19 @@ export async function uploadToGDrive(
 ): Promise<{ fileId: string; webViewLink: string }> {
   const drive = await getAdminDriveClient()
 
-  // Ensure folder structure: FODI OS / [folder structure]
-  const rootFolderId = await ensureGDriveFolder(drive, 'FODI OS')
+  // Ensure folder structure: ${brand.driveFolderName} / [folder structure]
+  const rootFolderId = await ensureGDriveFolder(drive, brand.driveFolderName)
 
   // Parse folder path (e.g., "CRM/CompanyName" or "ProjectName")
   const pathParts = folderPath.split('/')
   let currentParentId = rootFolderId
 
   if (pathParts.length === 1) {
-    // Default: FODI OS / Progetti / {projectName}
+    // Default: ${brand.driveFolderName} / Progetti / {projectName}
     const projectsFolderId = await ensureGDriveFolder(drive, 'Progetti', rootFolderId)
     currentParentId = await ensureGDriveFolder(drive, pathParts[0], projectsFolderId)
   } else {
-    // Custom path: FODI OS / {part1} / {part2} / ...
+    // Custom path: ${brand.driveFolderName} / {part1} / {part2} / ...
     for (const part of pathParts) {
       currentParentId = await ensureGDriveFolder(drive, part, currentParentId)
     }

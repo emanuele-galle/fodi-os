@@ -1,4 +1,6 @@
+
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
@@ -160,7 +162,7 @@ export default function SignPage() {
             </div>
           )}
           <div>
-            <p className="text-sm font-semibold text-slate-900">{company?.ragioneSociale || 'FODI OS'}</p>
+            <p className="text-sm font-semibold text-slate-900">{company?.ragioneSociale || brandClient.name}</p>
             <p className="text-xs text-slate-500">Firma Digitale Sicura</p>
           </div>
         </div>

@@ -1,21 +1,22 @@
+import { brand } from '@/lib/branding'
 import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'FODI OS - Piattaforma Gestionale',
-  description: 'Piattaforma di gestione aziendale FODI Srl - CRM, Progetti, Contabilita, Team',
-  metadataBase: new URL('https://os.fodisrl.it'),
+  title: `${brand.name} - Piattaforma Gestionale`,
+  description: brand.description,
+  metadataBase: new URL(brand.siteUrl),
   openGraph: {
-    title: 'FODI OS - Piattaforma Gestionale',
+    title: `${brand.name} - Piattaforma Gestionale`,
     description: 'Gestionale aziendale completo: CRM, Project Management, Contabilita, Team e molto altro.',
-    url: 'https://os.fodisrl.it',
-    siteName: 'FODI OS',
+    url: brand.siteUrl,
+    siteName: brand.name,
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'FODI OS - Piattaforma Gestionale Aziendale',
+        alt: `${brand.name} - Piattaforma Gestionale Aziendale`,
       },
     ],
     locale: 'it_IT',
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'FODI OS - Piattaforma Gestionale',
+    title: `${brand.name} - Piattaforma Gestionale`,
     description: 'Gestionale aziendale completo: CRM, Project Management, Contabilita, Team e molto altro.',
     images: ['/og-image.png'],
   },

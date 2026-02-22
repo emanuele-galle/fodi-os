@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const cookieStore = await cookies()
-    cookieStore.set('fodi_impersonate', targetUserId, {
+    cookieStore.set(brand.cookies.impersonate, targetUserId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role')
-    const impersonateCookie = request.cookies.get('fodi_impersonate')?.value
+    const impersonateCookie = request.cookies.get(brand.cookies.impersonate)?.value
 
     // Allow if currently impersonating (cookie exists) or if admin
     if (role !== 'ADMIN' && !impersonateCookie) {
@@ -65,7 +66,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const cookieStore = await cookies()
-    cookieStore.delete('fodi_impersonate')
+    cookieStore.delete(brand.cookies.impersonate)
 
     return NextResponse.json({ success: true })
   } catch (error) {

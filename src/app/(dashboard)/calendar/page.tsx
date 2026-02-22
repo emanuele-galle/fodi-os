@@ -1,7 +1,9 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
+import Link from 'next/link'
 import {
   ChevronLeft,
   ChevronRight,
@@ -22,6 +24,7 @@ import {
   Mail,
   Repeat,
   RefreshCw,
+  Settings2,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -197,8 +200,8 @@ const TEAM_COLORS = [
 ]
 
 const CALENDAR_VIEWER_ROLES = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM']
-const LS_KEY = 'fodi-calendar-team'
-const LS_CALENDARS_KEY = 'fodi-calendar-selected'
+const LS_KEY = brandClient.storageKeys.calendarTeam
+const LS_CALENDARS_KEY = brandClient.storageKeys.calendarSelected
 
 type DesktopView = 'month' | 'week'
 
@@ -723,7 +726,7 @@ export default function CalendarPage() {
         <EmptyState
           icon={Link2Off}
           title="Google Calendar non connesso"
-          description="Collega il tuo account Google per visualizzare e gestire i tuoi eventi direttamente da FODI OS. Assicurati di accettare tutti i permessi richiesti (Calendario, Drive, Meet)."
+          description={`Collega il tuo account Google per visualizzare e gestire i tuoi eventi direttamente da ${brandClient.name}. Assicurati di accettare tutti i permessi richiesti (Calendario, Drive, Meet).`}
           action={
             <Button onClick={() => window.location.href = '/api/auth/google'}>
               <img src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png" alt="" className="h-5 w-5 mr-2" />
@@ -794,6 +797,12 @@ export default function CalendarPage() {
             </button>
           </div>
 
+          <Link href="/calendar/availability">
+            <Button variant="outline" size="sm">
+              <Settings2 className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Disponibilità</span>
+            </Button>
+          </Link>
           <Button size="sm" className="ml-auto sm:ml-0" onClick={() => openNewEventForDate(todayKey)}>
             <Plus className="h-4 w-4 mr-1" />
             <span className="hidden sm:inline">Nuovo Evento</span>

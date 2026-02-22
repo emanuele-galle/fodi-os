@@ -1,3 +1,4 @@
+import { brandClient } from '@/lib/branding-client'
 import Link from 'next/link'
 
 interface WizardSuccessProps {
@@ -15,7 +16,7 @@ export function WizardSuccess({ message, companyName, cardSlug, phone }: WizardS
       {/* Logo */}
       <img
         src="/logo-dark.png"
-        alt={companyName || 'FODI'}
+        alt={companyName || brandClient.slug.toUpperCase()}
         className="h-10 w-auto opacity-50 mb-8"
       />
 

@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
   }
   const companyInfo: ReportCompanyInfo = {
-    ragioneSociale: companyProfile?.ragioneSociale || 'FODI S.r.l.',
+    ragioneSociale: companyProfile?.ragioneSociale || brand.company,
     partitaIva: companyProfile?.partitaIva || '',
     indirizzo: companyProfile?.indirizzo,
     cap: companyProfile?.cap,
@@ -317,7 +318,7 @@ export async function POST(req: NextRequest) {
         const individualHtml = buildIndividualEmail(dateFormatted, userName, totalHours, completedTasks.length)
         await sendReportEmail(
           user.email,
-          `Il tuo Report Giornaliero ${dateFormatted} — FODI OS`,
+          `Il tuo Report Giornaliero ${dateFormatted} — ${brand.name}`,
           individualHtml,
           [{ name: pdfFileName, content: pdfBuffer }]
         )
@@ -340,7 +341,7 @@ export async function POST(req: NextRequest) {
 
     for (const r of recipients) {
       try {
-        await sendReportEmail(r.email, `Riepilogo Report Giornalieri ${dateFormatted} — FODI OS`, html, pdfAttachments)
+        await sendReportEmail(r.email, `Riepilogo Report Giornalieri ${dateFormatted} — ${brand.name}`, html, pdfAttachments)
         emailed++
       } catch (err) {
         console.error(`[daily-reports] Error emailing summary ${r.email}:`, err)
@@ -363,7 +364,7 @@ async function sendReportEmail(
   const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587')
   const SMTP_USER = process.env.SMTP_USER
   const SMTP_PASS = process.env.SMTP_PASS
-  const SMTP_FROM = process.env.SMTP_FROM || 'noreply@fodisrl.it'
+  const SMTP_FROM = process.env.SMTP_FROM || brand.email.from
 
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
     console.log(`[daily-reports] SMTP non configurato, email simulata a ${to}`)
@@ -420,7 +421,7 @@ function buildIndividualEmail(dateFormatted: string, userName: string, totalHour
       Il report completo è allegato in formato PDF.
     </p>
     <p style="color:#94a3b8;font-size:11px;margin:0;">
-      FODI S.r.l. — Generato automaticamente da FODI OS
+      ${brand.email.footerText} — Generato automaticamente da ${brand.name}
     </p>
   </div>
 </body>
@@ -444,7 +445,7 @@ function buildNotificationEmail(dateFormatted: string, reportCount: number, file
       <ul style="margin:0;padding:0 0 0 16px;">${fileList}</ul>
     </div>
     <p style="color:#94a3b8;font-size:11px;margin:0;">
-      FODI S.r.l. — Generato automaticamente da FODI OS
+      ${brand.email.footerText} — Generato automaticamente da ${brand.name}
     </p>
   </div>
 </body>

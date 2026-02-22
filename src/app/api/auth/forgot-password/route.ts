@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { forgotPasswordSchema } from '@/lib/validation'
@@ -38,10 +39,10 @@ export async function POST(request: NextRequest) {
         .setIssuedAt()
         .sign(secret)
 
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://os.fodisrl.it'
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || brand.siteUrl
       const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`
 
-      await sendViaSMTP(email, 'Reset password - FODI OS', `
+      await sendViaSMTP(email, `Reset password - ${brand.name}`, `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
   <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
     <h2 style="color: #1e293b; margin: 0 0 8px;">Reset Password</h2>
     <p style="color: #64748b; margin: 0 0 24px; font-size: 14px;">
-      Ciao <strong>${user.firstName}</strong>, hai richiesto il reset della password del tuo account FODI OS.
+      Ciao <strong>${user.firstName}</strong>, hai richiesto il reset della password del tuo account ${brand.name}.
     </p>
     <div style="text-align: center; margin-bottom: 24px;">
       <a href="${resetUrl}" style="display: inline-block; background: #3B82F6; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
     </p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
     <p style="color: #94a3b8; font-size: 11px; margin: 0;">
-      FODI S.r.l. - Sistema Gestionale<br/>
+      ${brand.email.footerText} - Sistema Gestionale<br/>
       Questa è un'email automatica, non rispondere.
     </p>
   </div>

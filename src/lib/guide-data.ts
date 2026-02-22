@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import {
   LayoutDashboard, Users, FolderKanban, Euro, Film, MessageCircle,
   LifeBuoy, Smartphone, Shield, type LucideIcon,
@@ -43,7 +44,7 @@ export interface GuideModule {
   relatedModules: string[]
 }
 
-const STORAGE_URL = 'https://storage.fodivps2.cloud/fodi-os-assets/tutorials'
+const STORAGE_URL = brand.storageUrl
 
 export const GUIDE_MODULES: GuideModule[] = [
   {
@@ -52,7 +53,7 @@ export const GUIDE_MODULES: GuideModule[] = [
     icon: LayoutDashboard,
     title: 'Panoramica Generale',
     subtitle: 'Dashboard e primo accesso',
-    description: 'La dashboard è il cuore di FODI OS: una panoramica in tempo reale su tutte le attività della tua azienda. Widget personalizzabili, KPI sempre aggiornati e accesso rapido a ogni sezione ti permettono di avere il controllo completo senza perdere tempo.',
+    description: 'La dashboard è il cuore di ${brand.name}: una panoramica in tempo reale su tutte le attività della tua azienda. Widget personalizzabili, KPI sempre aggiornati e accesso rapido a ogni sezione ti permettono di avere il controllo completo senza perdere tempo.',
     heroColor: '#6366f1',
     videoUrl: `${STORAGE_URL}/01-overview.mp4`,
     features: [
@@ -88,7 +89,7 @@ export const GUIDE_MODULES: GuideModule[] = [
     icon: Users,
     title: 'CRM & Pipeline',
     subtitle: 'Gestione clienti e opportunità',
-    description: 'Il CRM di FODI OS ti permette di gestire l\'intero ciclo di vita del cliente: dal primo contatto alla chiusura del deal. Pipeline visuale, tracking delle interazioni e dashboard CRM dedicata ti aiutano a non perdere mai un\'opportunità.',
+    description: 'Il CRM di ${brand.name} ti permette di gestire l\'intero ciclo di vita del cliente: dal primo contatto alla chiusura del deal. Pipeline visuale, tracking delle interazioni e dashboard CRM dedicata ti aiutano a non perdere mai un\'opportunità.',
     heroColor: '#10b981',
     videoUrl: `${STORAGE_URL}/02-crm.mp4`,
     features: [
@@ -166,7 +167,7 @@ export const GUIDE_MODULES: GuideModule[] = [
     icon: Euro,
     title: 'ERP Finanziario',
     subtitle: 'Preventivi, spese e contabilità',
-    description: 'L\'ERP di FODI OS copre tutto il ciclo finanziario: dalla creazione di preventivi professionali alla gestione delle spese e degli abbonamenti ricorrenti. Template personalizzabili, firme digitali e report dettagliati per tenere sotto controllo le finanze.',
+    description: 'L\'ERP di ${brand.name} copre tutto il ciclo finanziario: dalla creazione di preventivi professionali alla gestione delle spese e degli abbonamenti ricorrenti. Template personalizzabili, firme digitali e report dettagliati per tenere sotto controllo le finanze.',
     heroColor: '#8b5cf6',
     videoUrl: `${STORAGE_URL}/04-erp.mp4`,
     features: [
@@ -195,7 +196,7 @@ export const GUIDE_MODULES: GuideModule[] = [
     faq: [
       { question: 'Posso personalizzare il layout dei preventivi?', answer: 'Sì, i preventivi usano il tuo logo e i colori aziendali. Puoi personalizzare intestazione, piè di pagina e condizioni.' },
       { question: 'Come funziona la firma digitale?', answer: 'Il cliente riceve un link via email. Può visualizzare il preventivo e firmarlo disegnando la firma sul touch screen o con il mouse.' },
-      { question: 'Posso gestire più valute?', answer: 'Attualmente FODI OS supporta l\'Euro come valuta principale. Il supporto multi-valuta è in roadmap.' },
+      { question: 'Posso gestire più valute?', answer: 'Attualmente ${brand.name} supporta l\'Euro come valuta principale. Il supporto multi-valuta è in roadmap.' },
       { question: 'Come traccio gli abbonamenti ricorrenti?', answer: 'Dalla sezione Abbonamenti puoi aggiungere ogni servizio con importo, frequenza e data rinnovo. Riceverai notifiche prima della scadenza.' },
     ],
     relatedModules: ['crm', 'projects', 'overview'],
@@ -206,14 +207,14 @@ export const GUIDE_MODULES: GuideModule[] = [
     icon: Film,
     title: 'Contenuti & Asset',
     subtitle: 'Gestione contenuti e social media',
-    description: 'La sezione Contenuti di FODI OS è il tuo hub per gestire asset digitali, processi di revisione e pubblicazione social. Carica file, organizzali per progetto, gestisci il ciclo di approvazione e pubblica direttamente sui tuoi canali social.',
+    description: 'La sezione Contenuti di ${brand.name} è il tuo hub per gestire asset digitali, processi di revisione e pubblicazione social. Carica file, organizzali per progetto, gestisci il ciclo di approvazione e pubblica direttamente sui tuoi canali social.',
     heroColor: '#ec4899',
     videoUrl: `${STORAGE_URL}/07-assets.mp4`,
     features: [
       { icon: Upload, title: 'Upload & libreria', description: 'Carica immagini, video, documenti e file di ogni tipo. Organizza per progetto e tag.' },
       { icon: FolderOpen, title: 'Google Drive sync', description: 'Collega le cartelle Google Drive per sincronizzare automaticamente gli asset.' },
       { icon: CheckCircle2, title: 'Workflow di revisione', description: 'Invia asset in revisione al team o al cliente. Commenti, approvazioni e richieste di modifica.' },
-      { icon: Share2, title: 'Social media', description: 'Pianifica e pubblica contenuti sui canali social direttamente da FODI OS.' },
+      { icon: Share2, title: 'Social media', description: 'Pianifica e pubblica contenuti sui canali social direttamente da ${brand.name}.' },
     ],
     workflow: [
       { step: 1, title: 'Carica gli asset', description: 'Trascina i file nella libreria o usa il pulsante upload. Puoi caricare più file contemporaneamente.', tip: 'Supportati: immagini, video, PDF, documenti Office e file compressi.' },
@@ -241,7 +242,7 @@ export const GUIDE_MODULES: GuideModule[] = [
     icon: MessageCircle,
     title: 'Chat Team',
     subtitle: 'Comunicazione in tempo reale',
-    description: 'La chat di FODI OS è pensata per la comunicazione del team: canali dedicati per progetto, messaggi diretti, reazioni, thread e condivisione file. Tutto integrato con le notifiche e le menzioni per non perdere mai un messaggio importante.',
+    description: 'La chat di ${brand.name} è pensata per la comunicazione del team: canali dedicati per progetto, messaggi diretti, reazioni, thread e condivisione file. Tutto integrato con le notifiche e le menzioni per non perdere mai un messaggio importante.',
     heroColor: '#06b6d4',
     videoUrl: `${STORAGE_URL}/06-chat.mp4`,
     features: [
@@ -277,7 +278,7 @@ export const GUIDE_MODULES: GuideModule[] = [
     icon: LifeBuoy,
     title: 'Supporto & Ticket',
     subtitle: 'Gestione richieste di assistenza',
-    description: 'Il sistema di ticketing di FODI OS ti permette di gestire tutte le richieste di assistenza dei clienti in modo strutturato. Priorità, assegnazioni, workflow di risoluzione e storico completo per un supporto professionale ed efficiente.',
+    description: 'Il sistema di ticketing di ${brand.name} ti permette di gestire tutte le richieste di assistenza dei clienti in modo strutturato. Priorità, assegnazioni, workflow di risoluzione e storico completo per un supporto professionale ed efficiente.',
     heroColor: '#f97316',
     videoUrl: `${STORAGE_URL}/08-support.mp4`,
     features: [
@@ -311,20 +312,20 @@ export const GUIDE_MODULES: GuideModule[] = [
     number: 8,
     icon: Smartphone,
     title: 'Mobile & PWA',
-    subtitle: 'FODI OS ovunque',
-    description: 'FODI OS è completamente responsive e installabile come app sul tuo telefono grazie alla tecnologia PWA (Progressive Web App). Lavora ovunque: in ufficio dal desktop, in viaggio dal telefono, offline quando non hai connessione.',
+    subtitle: '${brand.name} ovunque',
+    description: '${brand.name} è completamente responsive e installabile come app sul tuo telefono grazie alla tecnologia PWA (Progressive Web App). Lavora ovunque: in ufficio dal desktop, in viaggio dal telefono, offline quando non hai connessione.',
     heroColor: '#14b8a6',
     videoUrl: `${STORAGE_URL}/09-mobile.mp4`,
     features: [
       { icon: Smartphone, title: 'Design responsive', description: 'Ogni pagina si adatta perfettamente a schermi di ogni dimensione: desktop, tablet, smartphone.' },
-      { icon: Download, title: 'Installa come app', description: 'Aggiungi FODI OS alla home del telefono come un\'app nativa. Nessun download dallo store.' },
+      { icon: Download, title: 'Installa come app', description: 'Aggiungi ${brand.name} alla home del telefono come un\'app nativa. Nessun download dallo store.' },
       { icon: Menu, title: 'Navigazione mobile', description: 'Menu e sidebar ottimizzati per il touch con gesture naturali e accesso rapido.' },
       { icon: WifiOff, title: 'Supporto offline', description: 'Le pagine visitate di recente restano accessibili anche senza connessione.' },
     ],
     workflow: [
-      { step: 1, title: 'Apri su mobile', description: 'Vai all\'indirizzo FODI OS dal browser del tuo smartphone (Chrome, Safari).', tip: 'Funziona su qualsiasi smartphone moderno.' },
+      { step: 1, title: 'Apri su mobile', description: 'Vai all\'indirizzo ${brand.name} dal browser del tuo smartphone (Chrome, Safari).', tip: 'Funziona su qualsiasi smartphone moderno.' },
       { step: 2, title: 'Installa la PWA', description: 'Il browser ti proporrà di "Aggiungere alla schermata Home". Accetta per installare l\'app.' },
-      { step: 3, title: 'Usa come un\'app', description: 'FODI OS si aprirà a schermo intero come un\'app nativa con icona nella home.' },
+      { step: 3, title: 'Usa come un\'app', description: '${brand.name} si aprirà a schermo intero come un\'app nativa con icona nella home.' },
       { step: 4, title: 'Lavora ovunque', description: 'Accedi a clienti, task, chat e ticket anche in mobilità. Le modifiche si sincronizzano automaticamente.' },
     ],
     tips: [
@@ -335,7 +336,7 @@ export const GUIDE_MODULES: GuideModule[] = [
       'In caso di connessione lenta, le pagine già caricate restano accessibili',
     ],
     faq: [
-      { question: 'Devo scaricare un\'app dallo store?', answer: 'No, FODI OS è una PWA. Si installa direttamente dal browser in pochi secondi, senza passare dall\'App Store o dal Play Store.' },
+      { question: 'Devo scaricare un\'app dallo store?', answer: 'No, ${brand.name} è una PWA. Si installa direttamente dal browser in pochi secondi, senza passare dall\'App Store o dal Play Store.' },
       { question: 'Funziona offline?', answer: 'Le pagine visitate di recente sono disponibili offline grazie alla cache della PWA. Per dati aggiornati serve la connessione.' },
       { question: 'Le notifiche push funzionano su mobile?', answer: 'Sì, dopo aver installato la PWA e concesso i permessi, riceverai notifiche push come un\'app nativa.' },
     ],
@@ -347,7 +348,7 @@ export const GUIDE_MODULES: GuideModule[] = [
     icon: Shield,
     title: 'Admin & Configurazione',
     subtitle: 'Gestione utenti e impostazioni',
-    description: 'La sezione Admin è riservata ai gestori dell\'account FODI OS. Da qui puoi gestire utenti, ruoli, permessi e tutte le impostazioni globali del sistema. Configura l\'ambiente di lavoro perfetto per il tuo team.',
+    description: 'La sezione Admin è riservata ai gestori dell\'account ${brand.name}. Da qui puoi gestire utenti, ruoli, permessi e tutte le impostazioni globali del sistema. Configura l\'ambiente di lavoro perfetto per il tuo team.',
     heroColor: '#ef4444',
     videoUrl: `${STORAGE_URL}/10-admin.mp4`,
     features: [
@@ -367,7 +368,7 @@ export const GUIDE_MODULES: GuideModule[] = [
       'Crea ruoli personalizzati per gestire i permessi in modo granulare',
       'Disattiva gli account invece di eliminarli per mantenere lo storico',
       'Usa le digital card per un networking professionale e moderno',
-      'Configura i webhook per integrare FODI OS con altri strumenti',
+      'Configura i webhook per integrare ${brand.name} con altri strumenti',
       'Controlla periodicamente i log di accesso per la sicurezza',
     ],
     faq: [

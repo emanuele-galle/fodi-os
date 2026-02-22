@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const cookieStore = await cookies()
-    const refreshToken = cookieStore.get('fodi_refresh')?.value
+    const refreshToken = cookieStore.get(brand.cookies.refresh)?.value
 
     if (!refreshToken) {
       return NextResponse.redirect(buildUrl(request, '/login'))
@@ -54,8 +55,8 @@ export async function GET(request: NextRequest) {
             sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role,
           })
           const response = NextResponse.redirect(buildUrl(request, safePath))
-          response.cookies.set('fodi_access', accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60 })
-          response.cookies.set('fodi_refresh', recentToken.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 })
+          response.cookies.set(brand.cookies.access, accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60 })
+          response.cookies.set(brand.cookies.refresh, recentToken.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 })
           return response
         }
       }
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.redirect(buildUrl(request, safePath))
 
-    response.cookies.set('fodi_access', accessToken, {
+    response.cookies.set(brand.cookies.access, accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -114,7 +115,7 @@ export async function GET(request: NextRequest) {
       maxAge: 30 * 60,
     })
 
-    response.cookies.set('fodi_refresh', newRefreshTokenJwt, {
+    response.cookies.set(brand.cookies.refresh, newRefreshTokenJwt, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

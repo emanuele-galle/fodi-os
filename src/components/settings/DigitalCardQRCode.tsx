@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -9,7 +10,7 @@ interface DigitalCardQRCodeProps {
 }
 
 export function DigitalCardQRCode({ slug }: DigitalCardQRCodeProps) {
-  const cardUrl = `https://os.fodisrl.it/c/${slug}`
+  const cardUrl = `${brandClient.siteUrl}/c/${slug}`
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(cardUrl)}`
 
   async function downloadQR() {

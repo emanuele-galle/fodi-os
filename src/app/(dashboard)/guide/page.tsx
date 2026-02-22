@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -36,7 +37,7 @@ export default function GuidePage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Centro Guida</h1>
-            <p className="text-sm text-muted">Scopri tutte le funzionalita di FODI OS</p>
+            <p className="text-sm text-muted">Scopri tutte le funzionalita di {brandClient.name}</p>
           </div>
         </div>
         <button

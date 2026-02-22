@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { sendViaSMTP } from '@/lib/email'
 
 interface CompanyData {
@@ -18,7 +19,7 @@ export async function sendOtpEmail(
   documentTitle: string,
   company?: CompanyData | null
 ): Promise<boolean> {
-  const companyName = company?.ragioneSociale || 'FODI OS'
+  const companyName = company?.ragioneSociale || brand.name
   const subject = `Codice OTP per firma: ${documentTitle}`
 
   const logoHtml = company?.logoUrl

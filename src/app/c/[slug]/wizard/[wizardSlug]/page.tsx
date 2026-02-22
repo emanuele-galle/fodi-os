@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     include: { user: { select: { firstName: true, lastName: true } } }
   })
 
-  const name = card ? `${card.user.firstName} ${card.user.lastName}` : 'FODI'
+  const name = card ? `${card.user.firstName} ${card.user.lastName}` : brand.slug.toUpperCase()
   const title = template?.name || 'Questionario'
 
   return {
@@ -62,7 +63,7 @@ export default async function WizardPage({ params }: PageProps) {
   const company = await prisma.companyProfile.findFirst()
 
   const userName = `${card.user.firstName} ${card.user.lastName}`
-  const companyName = company?.ragioneSociale || 'FODI'
+  const companyName = company?.ragioneSociale || brand.slug.toUpperCase()
   const phone = card.user.phone || null
 
   return (

@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect } from 'react'
 import {
@@ -139,7 +140,7 @@ const CHANGELOG: ChangelogEntry[] = [
           'Selettore tema visuale (Chiaro, Scuro)',
           'Cambio password con validazione',
           'Campo telefono nel profilo utente',
-          'Google Drive: restrizione alla cartella FODI OS',
+          `Google Drive: restrizione alla cartella ${brandClient.name}`,
         ],
       },
       {

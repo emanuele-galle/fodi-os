@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect, useRef } from 'react'
 import { Sun, Moon } from 'lucide-react'
@@ -13,15 +14,15 @@ const THEMES: { value: Theme; label: string; icon: typeof Sun }[] = [
 
 function getStoredTheme(): Theme {
   if (typeof window === 'undefined') return 'light'
-  const stored = localStorage.getItem('fodi-theme')
+  const stored = localStorage.getItem(brandClient.storageKeys.theme)
   if (stored === 'light' || stored === 'dark') return stored
   return 'light'
 }
 
 function applyTheme(theme: Theme) {
   document.documentElement.setAttribute('data-theme', theme)
-  localStorage.setItem('fodi-theme', theme)
-  document.cookie = `fodi-theme=${theme};path=/;max-age=31536000;SameSite=Lax`
+  localStorage.setItem(brandClient.storageKeys.theme, theme)
+  document.cookie = `${brandClient.cookies.theme}=${theme};path=/;max-age=31536000;SameSite=Lax`
 }
 
 export function ThemeSwitcher() {

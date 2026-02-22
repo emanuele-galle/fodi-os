@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifySignatureToken } from '@/lib/signature-token'
@@ -96,7 +97,7 @@ export async function POST(
         sendViaSMTP(
           r.email,
           `Firma rifiutata: ${reqWithRequester.documentTitle}`,
-          `<p>Ciao ${r.firstName},</p><p><strong>${reqWithRequester.signerName}</strong> ha rifiutato di firmare il documento "${reqWithRequester.documentTitle}".</p>${parsed.data.reason ? `<p><strong>Motivo:</strong> ${parsed.data.reason}</p>` : ''}<p>Puoi visualizzare i dettagli nella sezione <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://os.fodisrl.it'}/erp/signatures">Firme</a>.</p>`
+          `<p>Ciao ${r.firstName},</p><p><strong>${reqWithRequester.signerName}</strong> ha rifiutato di firmare il documento "${reqWithRequester.documentTitle}".</p>${parsed.data.reason ? `<p><strong>Motivo:</strong> ${parsed.data.reason}</p>` : ''}<p>Puoi visualizzare i dettagli nella sezione <a href="${process.env.NEXT_PUBLIC_APP_URL || brand.siteUrl}/erp/signatures">Firme</a>.</p>`
         )
       }
     }

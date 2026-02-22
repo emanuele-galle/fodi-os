@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { Card, CardContent } from '@/components/ui/Card'
 import { Linkedin, Instagram, Twitter, Github, Globe, MessageCircle, Facebook, Youtube, Send, Phone, Mail, UserPlus } from 'lucide-react'
@@ -82,7 +83,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
             {/* Card content */}
             <div className="absolute inset-0 flex flex-col items-center pt-12 px-4 overflow-y-auto">
               {/* FODI logo placeholder */}
-              <div className="text-[8px] text-white/20 tracking-[0.2em] uppercase font-medium mb-5">FODI</div>
+              <div className="text-[8px] text-white/20 tracking-[0.2em] uppercase font-medium mb-5">{brandClient.slug.toUpperCase()}</div>
 
               {/* Avatar with ring */}
               <div className="relative w-20 h-20 mb-4">
@@ -186,7 +187,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
               {/* Footer */}
               <div className="mt-4 mb-4 flex items-center gap-1.5">
                 <div className="w-4 h-px bg-white/10" />
-                <span className="text-[6px] text-white/15 tracking-[0.15em] uppercase">FODI Digital Card</span>
+                <span className="text-[6px] text-white/15 tracking-[0.15em] uppercase">{brandClient.slug.toUpperCase()} Digital Card</span>
                 <div className="w-4 h-px bg-white/10" />
               </div>
             </div>

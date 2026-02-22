@@ -1,10 +1,11 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedClient, getDriveService, getDriveRootFolderId, isInsideAllowedFolder } from '@/lib/google'
 import { getAdminDriveClient } from '@/lib/storage'
 import { requirePermission } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
 
-// GET /api/drive/files - List files from Google Drive (restricted to FODI OS folder)
+// GET /api/drive/files - List files from Google Drive (restricted to brand folder folder)
 export async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {

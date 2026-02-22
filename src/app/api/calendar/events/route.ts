@@ -1,3 +1,4 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedClient, getCalendarService, checkAuthStatus, withRetry, isScopeError } from '@/lib/google'
 import { requirePermission } from '@/lib/permissions'
@@ -298,7 +299,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Send FODI OS notification to attendees
+    // Send notification to attendees
     if (attendees && attendees.length > 0) {
       const creator = await prisma.user.findUnique({
         where: { id: userId! },
@@ -306,7 +307,7 @@ export async function POST(request: NextRequest) {
       })
       const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Qualcuno'
 
-      // Resolve attendee emails to FODI OS user IDs
+      // Resolve attendee emails to user IDs
       const attendeeUsers = await prisma.user.findMany({
         where: { email: { in: attendees } },
         select: { id: true },

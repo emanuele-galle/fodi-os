@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -62,15 +63,15 @@ const LANGUAGES = [
 
 function getStoredTheme(): Theme {
   if (typeof window === 'undefined') return 'light'
-  const stored = localStorage.getItem('fodi-theme')
+  const stored = localStorage.getItem(brandClient.storageKeys.theme)
   if (stored === 'light' || stored === 'dark') return stored
   return 'light'
 }
 
 function applyTheme(theme: Theme) {
   document.documentElement.setAttribute('data-theme', theme)
-  localStorage.setItem('fodi-theme', theme)
-  document.cookie = `fodi-theme=${theme};path=/;max-age=31536000;SameSite=Lax`
+  localStorage.setItem(brandClient.storageKeys.theme, theme)
+  document.cookie = `${brandClient.cookies.theme}=${theme};path=/;max-age=31536000;SameSite=Lax`
 }
 
 export default function SettingsPage() {
@@ -181,7 +182,7 @@ export default function SettingsPage() {
       console.error('Push notification error:', err)
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
       if (isIOS) {
-        setMessage('Errore: assicurati di aver aggiunto FODI OS alla schermata Home (Condividi -> Aggiungi alla schermata Home)')
+        setMessage(`Errore: assicurati di aver aggiunto ${brandClient.name} alla schermata Home (Condividi -> Aggiungi alla schermata Home)`)
       } else {
         setMessage('Errore nella gestione delle notifiche push')
       }
@@ -758,7 +759,7 @@ export default function SettingsPage() {
                         </div>
                         <p className="text-sm text-muted">
                           {pushEnabled
-                            ? 'Ricevi notifiche anche quando non sei su FODI OS'
+                            ? `Ricevi notifiche anche quando non sei su ${brandClient.name}`
                             : 'Abilita per ricevere notifiche in tempo reale'}
                         </p>
                       </div>
@@ -783,7 +784,7 @@ export default function SettingsPage() {
                     <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
                       <p className="text-sm text-warning font-medium mb-1.5">Installazione richiesta su iPhone</p>
                       <p className="text-sm text-muted">
-                        Per ricevere notifiche push su iPhone, devi prima aggiungere FODI OS alla schermata Home:
+                        Per ricevere notifiche push su iPhone, devi prima aggiungere {brandClient.name} alla schermata Home:
                         tocca il pulsante <strong>Condividi</strong> (quadrato con freccia) in Safari, poi <strong>Aggiungi alla schermata Home</strong>.
                         Dopo, apri l&apos;app dalla Home e torna qui per abilitare le notifiche.
                       </p>
@@ -857,7 +858,7 @@ export default function SettingsPage() {
                 ) : (
                   <div className="space-y-5 p-1">
                     <p className="text-sm text-muted">
-                      Collega il tuo account Google Workspace per sincronizzare Calendar e Drive con FODI OS.
+                      Collega il tuo account Google Workspace per sincronizzare Calendar e Drive con {brandClient.name}.
                     </p>
                     <div className="rounded-lg border border-border/30 p-4">
                       <p className="text-sm font-medium text-foreground mb-2">Funzionalità disponibili</p>

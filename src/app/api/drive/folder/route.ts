@@ -1,10 +1,11 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedClient, getDriveService, getDriveRootFolderId, isInsideAllowedFolder } from '@/lib/google'
 import { getAdminDriveClient } from '@/lib/storage'
 import { requirePermission } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
 
-// POST /api/drive/folder - Create a folder on Google Drive (restricted to FODI OS)
+// POST /api/drive/folder - Create a folder on Google Drive (restricted to brand folder)
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     if (rootFolderId !== 'root' && targetParent !== rootFolderId) {
       const allowed = await isInsideAllowedFolder(drive, targetParent, rootFolderId)
       if (!allowed) {
-        return NextResponse.json({ error: 'Non puoi creare cartelle fuori dalla cartella FODI OS' }, { status: 403 })
+        return NextResponse.json({ error: 'Non puoi creare cartelle fuori dalla cartella ${brand.driveFolderName}' }, { status: 403 })
       }
     }
 
