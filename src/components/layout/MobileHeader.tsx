@@ -14,7 +14,6 @@ const SECTION_NAMES: Record<string, string> = {
   '/projects': 'Progetti',
   '/calendar': 'Calendario',
   '/erp': 'Contabilità',
-'/content': 'Contenuti',
   '/support': 'Supporto',
   '/team': 'Team',
   '/settings': 'Impostazioni',

@@ -8,7 +8,6 @@ import {
   FolderKanban,
   CalendarDays,
   Euro,
-  Film,
   LifeBuoy,
   UsersRound,
   Settings,
@@ -25,7 +24,6 @@ export type Section =
   | 'projects'
   | 'calendar'
   | 'erp'
-  | 'content'
   | 'support'
   | 'team'
   | 'settings'
@@ -48,7 +46,6 @@ export const SECTIONS: Section[] = [
   'projects',
   'calendar',
   'erp',
-  'content',
   'support',
   'team',
   'settings',
@@ -63,7 +60,6 @@ export const SECTION_LABELS: Record<Section, string> = {
   projects: 'Progetti',
   calendar: 'Calendario',
   erp: 'Contabilità',
-  content: 'Contenuti',
   support: 'Supporto',
   team: 'Team',
   settings: 'Impostazioni',
@@ -78,7 +74,6 @@ export const SECTION_ICONS: Record<Section, typeof LayoutDashboard> = {
   projects: FolderKanban,
   calendar: CalendarDays,
   erp: Euro,
-  content: Film,
   support: LifeBuoy,
   team: UsersRound,
   settings: Settings,
@@ -93,7 +88,6 @@ export const HREF_TO_SECTION: Record<string, Section> = {
   '/projects': 'projects',
   '/calendar': 'calendar',
   '/erp': 'erp',
-  '/content': 'content',
   '/support': 'support',
   '/team': 'team',
   '/settings': 'settings',
@@ -103,12 +97,12 @@ export const HREF_TO_SECTION: Record<string, Section> = {
 const ROLE_SECTION_VIEW: Record<Role, Section[]> = {
   ADMIN: SECTIONS,
   DIR_COMMERCIALE: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'erp', 'support', 'team', 'settings'],
-  DIR_TECNICO: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'content', 'support', 'team', 'settings'],
+  DIR_TECNICO: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'support', 'team', 'settings'],
   DIR_SUPPORT: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'support', 'team', 'settings'],
   COMMERCIALE: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'erp', 'support', 'team', 'settings'],
   PM: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'projects', 'calendar', 'support', 'team', 'settings'],
   DEVELOPER: ['dashboard', 'tasks', 'chat', 'internal', 'projects', 'calendar', 'support', 'team', 'settings'],
-  CONTENT: ['dashboard', 'tasks', 'chat', 'internal', 'projects', 'calendar', 'content', 'team', 'settings'],
+  CONTENT: ['dashboard', 'tasks', 'chat', 'internal', 'projects', 'calendar', 'team', 'settings'],
   SUPPORT: ['dashboard', 'tasks', 'chat', 'internal', 'crm', 'calendar', 'support', 'team', 'settings'],
   CLIENT: ['dashboard', 'tasks', 'chat', 'calendar', 'team', 'settings'],
 }
@@ -116,7 +110,7 @@ const ROLE_SECTION_VIEW: Record<Role, Section[]> = {
 // Director primary sections (edit access)
 const DIRECTOR_PRIMARY_SECTIONS: Partial<Record<Role, Section[]>> = {
   DIR_COMMERCIALE: ['crm', 'erp'],
-  DIR_TECNICO: ['projects', 'content'],
+  DIR_TECNICO: ['projects'],
   DIR_SUPPORT: ['support', 'crm'],
 }
 

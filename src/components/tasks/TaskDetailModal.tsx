@@ -278,14 +278,14 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     setUploading(true)
     try {
       for (const file of Array.from(e.target.files)) {
-        // Upload reale su MinIO via /api/assets (FormData)
+        // Upload file su MinIO via /api/upload (FormData)
         const formData = new FormData()
         formData.append('file', file)
         if (task?.project?.id) {
           formData.append('projectId', task.project.id)
         }
 
-        const assetRes = await fetch('/api/assets', {
+        const assetRes = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
         })

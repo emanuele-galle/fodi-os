@@ -16,7 +16,6 @@ const MENU_ITEMS: MenuItem[] = [
   { label: 'Calendario', href: '/calendar' },
   { label: 'Finanze', href: '/erp', roles: ['ADMIN', 'DIR_COMMERCIALE', 'COMMERCIALE'], apiModule: 'erp' },
   { label: 'Knowledge Base', href: '/kb', apiModule: 'kb' },
-  { label: 'Contenuti', href: '/content', roles: ['ADMIN', 'DIR_TECNICO', 'CONTENT'], apiModule: 'content' },
   { label: 'Supporto', href: '/support', roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM', 'DEVELOPER', 'SUPPORT'], apiModule: 'support' },
   { label: 'Team', href: '/team' },
   { label: 'Impostazioni', href: '/settings' },
@@ -47,9 +46,9 @@ describe('BottomNav - TAB_ITEMS sono fissi per tutti', () => {
 })
 
 describe('BottomNav - MENU_ITEMS filtrati per ruolo', () => {
-  it('ADMIN vede tutti i 9 menu items', () => {
+  it('ADMIN vede tutti gli 8 menu items', () => {
     const items = getVisibleMenuItems('ADMIN')
-    expect(items).toHaveLength(9)
+    expect(items).toHaveLength(8)
   })
 
   it('DIR_COMMERCIALE vede CRM, Progetti, Finanze, KB, Supporto, Team, Impostazioni', () => {
@@ -60,20 +59,18 @@ describe('BottomNav - MENU_ITEMS filtrati per ruolo', () => {
     expect(labels).toContain('Finanze')
     expect(labels).toContain('Knowledge Base')
     expect(labels).toContain('Supporto')
-    expect(labels).not.toContain('Contenuti')
   })
 
-  it('COMMERCIALE vede CRM, Progetti, Finanze, KB ma non Contenuti ne Supporto', () => {
+  it('COMMERCIALE vede CRM, Progetti, Finanze, KB ma non Supporto', () => {
     const items = getVisibleMenuItems('COMMERCIALE')
     const labels = items.map((i) => i.label)
     expect(labels).toContain('CRM')
     expect(labels).toContain('Finanze')
     expect(labels).toContain('Knowledge Base')
-    expect(labels).not.toContain('Contenuti')
     expect(labels).not.toContain('Supporto')
   })
 
-  it('PM vede CRM, Progetti, KB, Supporto ma non Finanze ne Contenuti', () => {
+  it('PM vede CRM, Progetti, KB, Supporto ma non Finanze', () => {
     const items = getVisibleMenuItems('PM')
     const labels = items.map((i) => i.label)
     expect(labels).toContain('CRM')
@@ -81,7 +78,6 @@ describe('BottomNav - MENU_ITEMS filtrati per ruolo', () => {
     expect(labels).toContain('Knowledge Base')
     expect(labels).toContain('Supporto')
     expect(labels).not.toContain('Finanze')
-    expect(labels).not.toContain('Contenuti')
   })
 
   it('DEVELOPER vede Progetti, KB, Supporto ma non CRM ne Finanze', () => {

@@ -13,7 +13,6 @@ import {
   FolderKanban,
   CalendarDays,
   Euro,
-  Film,
   LifeBuoy,
   UsersRound,
   BookOpen,
@@ -78,18 +77,6 @@ const navigation: NavItem[] = [
     children: [
       { label: 'Lista', href: '/projects' },
       { label: 'Analytics', href: '/projects/analytics' },
-    ],
-    group: 'work',
-  },
-  {
-    label: 'Contenuti',
-    href: '/content',
-    icon: Film,
-    roles: ['ADMIN', 'DIR_TECNICO', 'CONTENT'],
-    children: [
-      { label: 'Libreria Asset', href: '/content/assets' },
-      { label: 'Revisioni', href: '/content/reviews' },
-      { label: 'Social', href: '/content/social' },
     ],
     group: 'work',
   },

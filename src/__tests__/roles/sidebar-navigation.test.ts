@@ -34,11 +34,6 @@ const navigation: NavItem[] = [
     roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
   },
   {
-    label: 'Contenuti',
-    href: '/content',
-    roles: ['ADMIN', 'DIR_TECNICO', 'CONTENT'],
-  },
-  {
     label: 'Supporto',
     href: '/support',
     roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM', 'DEVELOPER', 'SUPPORT'],
@@ -58,8 +53,8 @@ describe('Sidebar - Navigazione per ruolo', () => {
 
   describe('ADMIN vede tutte le voci', () => {
     const visible = getVisibleNavItems('ADMIN')
-    it('vede tutte le 12 voci', () => {
-      expect(visible).toHaveLength(12)
+    it('vede tutte le 11 voci', () => {
+      expect(visible).toHaveLength(11)
     })
     it('include tutte le voci universali', () => {
       for (const item of universalItems) {
@@ -68,7 +63,7 @@ describe('Sidebar - Navigazione per ruolo', () => {
     })
   })
 
-  describe('DIR_COMMERCIALE vede CRM, Progetti, Finanze, KB, Supporto ma non Contenuti', () => {
+  describe('DIR_COMMERCIALE vede CRM, Progetti, Finanze, KB, Supporto', () => {
     const visible = getVisibleNavItems('DIR_COMMERCIALE')
     it('include CRM, Progetti, Finanze, KB, Supporto', () => {
       expect(visible).toContain('CRM')
@@ -77,18 +72,14 @@ describe('Sidebar - Navigazione per ruolo', () => {
       expect(visible).toContain('Knowledge Base')
       expect(visible).toContain('Supporto')
     })
-    it('NON include Contenuti', () => {
-      expect(visible).not.toContain('Contenuti')
-    })
   })
 
-  describe('DIR_TECNICO vede CRM, Progetti, KB, Contenuti, Supporto ma non Finanze', () => {
+  describe('DIR_TECNICO vede CRM, Progetti, KB, Supporto ma non Finanze', () => {
     const visible = getVisibleNavItems('DIR_TECNICO')
-    it('include CRM, Progetti, KB, Contenuti, Supporto', () => {
+    it('include CRM, Progetti, KB, Supporto', () => {
       expect(visible).toContain('CRM')
       expect(visible).toContain('Progetti')
       expect(visible).toContain('Knowledge Base')
-      expect(visible).toContain('Contenuti')
       expect(visible).toContain('Supporto')
     })
     it('NON include Finanze', () => {
@@ -103,12 +94,9 @@ describe('Sidebar - Navigazione per ruolo', () => {
       expect(visible).toContain('Finanze')
       expect(visible).toContain('Knowledge Base')
     })
-    it('NON include Contenuti', () => {
-      expect(visible).not.toContain('Contenuti')
-    })
   })
 
-  describe('PM vede CRM, Progetti, KB, Supporto ma non Finanze ne Contenuti', () => {
+  describe('PM vede CRM, Progetti, KB, Supporto ma non Finanze', () => {
     const visible = getVisibleNavItems('PM')
     it('include CRM, Progetti, KB, Supporto', () => {
       expect(visible).toContain('CRM')
@@ -119,12 +107,9 @@ describe('Sidebar - Navigazione per ruolo', () => {
     it('NON include Finanze', () => {
       expect(visible).not.toContain('Finanze')
     })
-    it('NON include Contenuti', () => {
-      expect(visible).not.toContain('Contenuti')
-    })
   })
 
-  describe('DEVELOPER vede Progetti, KB, Supporto ma non CRM ne Finanze ne Contenuti', () => {
+  describe('DEVELOPER vede Progetti, KB, Supporto ma non CRM ne Finanze', () => {
     const visible = getVisibleNavItems('DEVELOPER')
     it('include Progetti, KB, Supporto', () => {
       expect(visible).toContain('Progetti')
@@ -139,12 +124,11 @@ describe('Sidebar - Navigazione per ruolo', () => {
     })
   })
 
-  describe('CONTENT vede Progetti, KB, Contenuti ma non CRM ne Finanze ne Supporto', () => {
+  describe('CONTENT vede Progetti, KB ma non CRM ne Finanze ne Supporto', () => {
     const visible = getVisibleNavItems('CONTENT')
-    it('include Progetti, KB, Contenuti', () => {
+    it('include Progetti, KB', () => {
       expect(visible).toContain('Progetti')
       expect(visible).toContain('Knowledge Base')
-      expect(visible).toContain('Contenuti')
     })
     it('NON include CRM', () => {
       expect(visible).not.toContain('CRM')
@@ -154,7 +138,7 @@ describe('Sidebar - Navigazione per ruolo', () => {
     })
   })
 
-  describe('SUPPORT vede CRM, KB, Supporto ma non Progetti ne Finanze ne Contenuti', () => {
+  describe('SUPPORT vede CRM, KB, Supporto ma non Progetti ne Finanze', () => {
     const visible = getVisibleNavItems('SUPPORT')
     it('include CRM, KB, Supporto', () => {
       expect(visible).toContain('CRM')

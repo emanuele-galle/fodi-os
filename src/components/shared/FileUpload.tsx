@@ -172,7 +172,7 @@ export function FileUpload({
       )
     })
 
-    xhr.open('POST', '/api/assets')
+    xhr.open('POST', '/api/upload')
     xhr.send(formData)
   }
 

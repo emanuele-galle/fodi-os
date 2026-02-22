@@ -52,8 +52,6 @@ model User {
   signatureRequests SignatureRequest[] @relation("SignatureRequester")
   ticketsAssigned  Ticket[]        @relation("TicketAssignee")
   ticketsCreated   Ticket[]        @relation("TicketCreator")
-assetUploads     Asset[]
-  reviewComments   ReviewComment[]
   clientPortal     Client?         @relation("ClientPortalUser")
   assignedLeads    Lead[]          @relation("LeadAssignee")
   ownedDeals       Deal[]          @relation("DealOwner")
@@ -402,7 +400,6 @@ model Project {
   documents    Document[]
   quotes       Quote[]
   tickets      Ticket[]
-  assets       Asset[]
   chatChannels  ChatChannel[]
   folders       Folder[]
   attachments   ProjectAttachment[]
@@ -945,91 +942,6 @@ model VatRate {
   updatedAt   DateTime @updatedAt
 
   @@map("vat_rates")
-}
-
-// ============================================================
-// CONTENT & CREATIVE
-// ============================================================
-
-model Asset {
-  id           String   @id @default(uuid())
-  projectId    String?
-  uploadedById String
-  fileName     String
-  fileUrl      String
-  fileSize     Int
-  mimeType     String
-  category     String   @default("general")
-  tags         String[] @default([])
-  description  String?
-  driveFileId  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  project    Project?      @relation(fields: [projectId], references: [id])
-  uploadedBy User          @relation(fields: [uploadedById], references: [id])
-  reviews    AssetReview[]
-
-  @@index([projectId])
-  @@index([category])
-  @@map("assets")
-}
-
-model AssetReview {
-  id        String       @id @default(uuid())
-  assetId   String
-  status    ReviewStatus @default(PENDING)
-  dueDate   DateTime?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  asset    Asset           @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  comments ReviewComment[]
-
-  @@index([assetId])
-  @@index([status])
-  @@map("asset_reviews")
-}
-
-model ReviewComment {
-  id        String   @id @default(uuid())
-  reviewId  String
-  authorId  String
-  content   String   @db.Text
-  timestamp Float?
-  resolved  Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  review AssetReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  author User        @relation(fields: [authorId], references: [id])
-
-  @@index([reviewId])
-  @@map("review_comments")
-}
-
-enum ReviewStatus {
-  PENDING
-  IN_REVIEW
-  APPROVED
-  CHANGES_REQUESTED
-}
-
-model SocialPost {
-  id          String   @id @default(uuid())
-  projectId   String?
-  platform    String
-  content     String   @db.Text
-  mediaUrls   String[] @default([])
-  scheduledAt DateTime?
-  publishedAt DateTime?
-  status      String   @default("draft")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([platform])
-  @@index([scheduledAt])
-  @@index([status])
-  @@map("social_posts")
 }
 
 // ============================================================
