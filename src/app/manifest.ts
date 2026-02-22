@@ -1,8 +1,8 @@
 import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
-  const name = process.env.BRAND_NAME || 'FODI OS'
-  const slug = process.env.BRAND_SLUG || 'fodi'
+  const name = process.env.BRAND_NAME || 'Muscari OS'
+  const slug = process.env.BRAND_SLUG || 'muscari'
 
   return {
     id: '/',

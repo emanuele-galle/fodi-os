@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fodi-os-v2'
+const CACHE_NAME = 'muscari-os-v3'
 const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.png',
@@ -52,7 +52,7 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'FODI OS', options)
+    self.registration.showNotification(data.title || 'Muscari OS', options)
   )
 })
 

@@ -7,11 +7,12 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   env: {
     APP_VERSION: pkg.version,
-    NEXT_PUBLIC_BRAND_NAME: process.env.NEXT_PUBLIC_BRAND_NAME || process.env.BRAND_NAME || 'FODI OS',
-    NEXT_PUBLIC_BRAND_SLUG: process.env.NEXT_PUBLIC_BRAND_SLUG || process.env.BRAND_SLUG || 'fodi',
+    NEXT_PUBLIC_BRAND_NAME: process.env.NEXT_PUBLIC_BRAND_NAME || process.env.BRAND_NAME || 'Muscari OS',
+    NEXT_PUBLIC_BRAND_SLUG: process.env.NEXT_PUBLIC_BRAND_SLUG || process.env.BRAND_SLUG || 'muscari',
   },
   images: {
     remotePatterns: [
+      { protocol: 'https', hostname: 'storage.fodivps1.cloud' },
       { protocol: 'https', hostname: 'storage.fodivps2.cloud' },
       ...(process.env.ALLOWED_IMAGE_DOMAINS || '')
         .split(',')
