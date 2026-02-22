@@ -1,0 +1,600 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { TrendingUp, Plus, AlertCircle, Pencil, Trash2, Eye, EyeOff, Download } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { Card, CardContent } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { Modal } from '@/components/ui/Modal'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { formatCurrency } from '@/lib/utils'
+import { generateCSV, downloadCSV } from '@/lib/export-csv'
+
+interface BankAccount {
+  id: string
+  name: string
+}
+
+interface BusinessEntity {
+  id: string
+  name: string
+}
+
+interface AccountingCategory {
+  id: string
+  name: string
+}
+
+interface Client {
+  id: string
+  companyName: string
+}
+
+interface Income {
+  id: string
+  isPaid: boolean
+  clientName: string
+  date: string
+  category: string
+  amount: string
+  vatRate: number
+  bankAccountId: string | null
+  businessEntityId: string | null
+  invoiceNumber: string | null
+  dueDate: string | null
+  paymentMethod: string | null
+  notes: string | null
+  clientId: string | null
+  bankAccount: { id: string; name: string } | null
+  businessEntity: { id: string; name: string } | null
+  client: { id: string; companyName: string } | null
+}
+
+interface VatRateOption { value: string; label: string }
+
+const PAYMENT_FILTER_OPTIONS = [
+  { value: '', label: 'Tutte' },
+  { value: 'paid', label: 'Incassate' },
+  { value: 'unpaid', label: 'Non incassate' },
+]
+
+export function EntrateContent() {
+  const [incomes, setIncomes] = useState<Income[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
+  const [businessEntities, setBusinessEntities] = useState<BusinessEntity[]>([])
+  const [categories, setCategories] = useState<AccountingCategory[]>([])
+  const [vatOptions, setVatOptions] = useState<VatRateOption[]>([{ value: '22', label: '22%' }])
+  const [loading, setLoading] = useState(true)
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [paymentFilter, setPaymentFilter] = useState('')
+  const [bankAccountFilter, setBankAccountFilter] = useState('')
+  const [businessEntityFilter, setBusinessEntityFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [advancedView, setAdvancedView] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editItem, setEditItem] = useState<Income | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<Income | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+
+  const fetchIncomes = useCallback(async () => {
+    setLoading(true)
+    setFetchError(null)
+    try {
+      const params = new URLSearchParams({ limit: '100' })
+      if (fromDate) params.set('from', fromDate)
+      if (toDate) params.set('to', toDate)
+      if (paymentFilter === 'paid') params.set('isPaid', 'true')
+      if (paymentFilter === 'unpaid') params.set('isPaid', 'false')
+      if (bankAccountFilter) params.set('bankAccountId', bankAccountFilter)
+      if (businessEntityFilter) params.set('businessEntityId', businessEntityFilter)
+      if (categoryFilter) params.set('category', categoryFilter)
+      const res = await fetch(`/api/incomes?${params}`)
+      if (res.ok) {
+        const data = await res.json()
+        setIncomes(data.items || [])
+      } else {
+        setFetchError('Errore nel caricamento delle entrate')
+      }
+    } catch {
+      setFetchError('Errore di rete nel caricamento delle entrate')
+    } finally {
+      setLoading(false)
+    }
+  }, [fromDate, toDate, paymentFilter, bankAccountFilter, businessEntityFilter, categoryFilter])
+
+  useEffect(() => { fetchIncomes() }, [fetchIncomes])
+
+  useEffect(() => {
+    fetch('/api/clients?limit=200').then(r => r.json()).then(d => setClients(d.items || []))
+    fetch('/api/bank-accounts').then(r => r.json()).then(d => setBankAccounts(d.items || []))
+    fetch('/api/business-entities').then(r => r.json()).then(d => setBusinessEntities(d.items || []))
+    fetch('/api/accounting-categories?type=income').then(r => r.json()).then(d => setCategories(d.items || []))
+    fetch('/api/vat-rates').then(r => r.json()).then(d => {
+      const items = d.items || []
+      if (items.length > 0) {
+        setVatOptions(items.map((v: { code: string; label: string }) => ({ value: v.code, label: v.label })))
+      }
+    })
+  }, [])
+
+  const totalAmount = incomes.reduce((s, e) => s + parseFloat(e.amount), 0)
+
+  function computeNet(amount: string, vatRate: number) {
+    const gross = parseFloat(amount)
+    if (!vatRate) return gross
+    return gross / (1 + vatRate / 100)
+  }
+
+  function computeVat(amount: string, vatRate: number) {
+    const gross = parseFloat(amount)
+    if (!vatRate) return 0
+    return gross - gross / (1 + vatRate / 100)
+  }
+
+  const bankAccountOptions = [
+    { value: '', label: 'Tutti i conti' },
+    ...bankAccounts.map(b => ({ value: b.id, label: b.name })),
+  ]
+
+  const businessEntityOptions = [
+    { value: '', label: 'Tutte le attività' },
+    ...businessEntities.map(b => ({ value: b.id, label: b.name })),
+  ]
+
+  const categoryOptions = [
+    { value: '', label: 'Tutte le categorie' },
+    ...categories.map(c => ({ value: c.name, label: c.name })),
+  ]
+
+  const formBankAccountOptions = [
+    { value: '', label: 'Seleziona conto' },
+    ...bankAccounts.map(b => ({ value: b.id, label: b.name })),
+  ]
+
+  const formBusinessEntityOptions = [
+    { value: '', label: 'Seleziona attività' },
+    ...businessEntities.map(b => ({ value: b.id, label: b.name })),
+  ]
+
+  const formCategoryOptions = [
+    { value: '', label: 'Seleziona categoria' },
+    ...categories.map(c => ({ value: c.name, label: c.name })),
+  ]
+
+  const formClientOptions = [
+    { value: '', label: 'Nessun cliente' },
+    ...clients.map(c => ({ value: c.id, label: c.companyName })),
+  ]
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSubmitting(true)
+    setFormError(null)
+    const form = new FormData(e.currentTarget)
+    const body: Record<string, unknown> = {}
+
+    body.isPaid = form.get('isPaid') === 'on'
+    body.clientName = (form.get('clientName') as string || '').trim()
+    body.date = (form.get('date') as string || '').trim()
+    body.category = (form.get('category') as string || '').trim()
+    body.amount = parseFloat(form.get('amount') as string || '0')
+    body.vatRate = (form.get('vatRate') as string || '22').trim()
+    body.invoiceNumber = (form.get('invoiceNumber') as string || '').trim() || null
+    body.dueDate = (form.get('dueDate') as string || '').trim() || null
+    body.paymentMethod = (form.get('paymentMethod') as string || '').trim() || null
+    body.notes = (form.get('notes') as string || '').trim() || null
+
+    const bankId = (form.get('bankAccountId') as string || '').trim()
+    body.bankAccountId = bankId || null
+
+    const bizId = (form.get('businessEntityId') as string || '').trim()
+    body.businessEntityId = bizId || null
+
+    const cId = (form.get('clientId') as string || '').trim()
+    body.clientId = cId || null
+
+    try {
+      const url = editItem ? `/api/incomes/${editItem.id}` : '/api/incomes'
+      const method = editItem ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) {
+        setFormError(null)
+        setModalOpen(false)
+        setEditItem(null)
+        fetchIncomes()
+      } else {
+        setFormError(editItem ? 'Errore nella modifica dell\'entrata' : 'Errore nella creazione dell\'entrata')
+      }
+    } catch {
+      setFormError('Errore di rete')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteConfirm) return
+    setSubmitting(true)
+    try {
+      const res = await fetch(`/api/incomes/${deleteConfirm.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setDeleteConfirm(null)
+        fetchIncomes()
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function openEdit(inc: Income) {
+    setEditItem(inc)
+    setFormError(null)
+    setModalOpen(true)
+  }
+
+  function openCreate() {
+    setEditItem(null)
+    setFormError(null)
+    setModalOpen(true)
+  }
+
+  function handleExportCSV() {
+    const headers = ['Data', 'N. Fattura', 'Cliente', 'Categoria', 'Importo', 'IVA %', 'Pagata', 'Scadenza', 'Metodo Pagamento', 'Conto', 'Note']
+    const rows = incomes.map((i) => [
+      new Date(i.date).toLocaleDateString('it-IT'),
+      i.invoiceNumber || '',
+      i.clientName,
+      i.category,
+      parseFloat(i.amount).toFixed(2),
+      String(i.vatRate || ''),
+      i.isPaid ? 'Si' : 'No',
+      i.dueDate ? new Date(i.dueDate).toLocaleDateString('it-IT') : '',
+      i.paymentMethod || '',
+      i.bankAccount?.name || '',
+      i.notes || '',
+    ])
+    const csv = generateCSV(headers, rows)
+    downloadCSV(`entrate_${new Date().toISOString().split('T')[0]}.csv`, csv)
+  }
+
+  return (
+    <>
+      {/* Action buttons */}
+      <div className="flex items-center gap-2 mb-6">
+        <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={incomes.length === 0} className="hidden sm:flex">
+          <Download className="h-4 w-4" />
+          CSV
+        </Button>
+        <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={incomes.length === 0} className="sm:hidden">
+          <Download className="h-4 w-4" />
+        </Button>
+        <Button size="sm" onClick={openCreate} className="hidden sm:flex">
+          <Plus className="h-4 w-4" />
+          Nuova Entrata
+        </Button>
+        <Button onClick={openCreate} className="sm:hidden">
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Stats Card */}
+      <Card className="mb-6">
+        <CardContent className="flex items-center gap-4">
+          <div className="p-3 rounded-full bg-secondary text-primary">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs text-muted">Totale Entrate</p>
+            <p className="text-xl font-bold">{formatCurrency(totalAmount)}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <Select
+          label="Stato pagamento"
+          options={PAYMENT_FILTER_OPTIONS}
+          value={paymentFilter}
+          onChange={(e) => setPaymentFilter(e.target.value)}
+          className="w-full sm:w-44"
+        />
+        <Input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          label="Dal"
+          className="w-full sm:w-44"
+        />
+        <Input
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          label="Al"
+          className="w-full sm:w-44"
+        />
+        <Select
+          label="Conto bancario"
+          options={bankAccountOptions}
+          value={bankAccountFilter}
+          onChange={(e) => setBankAccountFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+        <Select
+          label="Attività"
+          options={businessEntityOptions}
+          value={businessEntityFilter}
+          onChange={(e) => setBusinessEntityFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+        <Select
+          label="Categoria"
+          options={categoryOptions}
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="w-full sm:w-48"
+        />
+      </div>
+
+      {/* Advanced View Toggle */}
+      <div className="flex items-center gap-2 mb-6">
+        <button
+          onClick={() => setAdvancedView(!advancedView)}
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border border-border/30 hover:bg-secondary/10 transition-colors"
+        >
+          {advancedView ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          Vista Avanzata
+        </button>
+      </div>
+
+      {/* Error */}
+      {fetchError && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            <p className="text-sm text-destructive">{fetchError}</p>
+          </div>
+          <button onClick={() => fetchIncomes()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+        </div>
+      )}
+
+      {/* Content */}
+      {loading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : incomes.length === 0 ? (
+        <EmptyState
+          icon={TrendingUp}
+          title="Nessuna entrata trovata"
+          description="Registra le entrate per tenere traccia dei ricavi."
+          action={
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuova Entrata
+            </Button>
+          }
+        />
+      ) : (
+        <>
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-2">
+            {incomes.map((inc) => (
+              <div
+                key={inc.id}
+                className="rounded-lg border border-border bg-card p-3"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full flex-shrink-0 ${inc.isPaid ? 'bg-green-500' : 'bg-red-500'}`}
+                      title={inc.isPaid ? 'Incassata' : 'Non incassata'}
+                    />
+                    <Badge variant="default">{inc.category}</Badge>
+                  </div>
+                  <span className="font-bold text-sm">{formatCurrency(inc.amount)}</span>
+                </div>
+                <p className="text-sm truncate">{inc.clientName}</p>
+                {inc.notes && <p className="text-xs text-muted truncate mt-0.5">{inc.notes}</p>}
+                {advancedView && (
+                  <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
+                    {inc.bankAccount && <span>Conto: {inc.bankAccount.name}</span>}
+                    {inc.businessEntity && <span>Attività: {inc.businessEntity.name}</span>}
+                    <span>IVA: {inc.vatRate}%</span>
+                    <span>Netto: {formatCurrency(computeNet(inc.amount, inc.vatRate))}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted">
+                    {new Date(inc.date).toLocaleDateString('it-IT')}
+                  </p>
+                  <div className="flex gap-1">
+                    <button onClick={() => openEdit(inc)} className="p-1 rounded hover:bg-secondary/20"><Pencil className="h-3.5 w-3.5 text-muted" /></button>
+                    <button onClick={() => setDeleteConfirm(inc)} className="p-1 rounded hover:bg-secondary/20"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Data</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Pagato</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Cliente</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Categoria</th>
+                  {advancedView && (
+                    <>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">N° Fattura</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Scadenza</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Conto</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Attività</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">IVA%</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Netto</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">IVA</th>
+                    </>
+                  )}
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Importo</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Note</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Azioni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {incomes.map((inc) => (
+                  <tr key={inc.id} className="border-b border-border/10 hover:bg-secondary/8 transition-colors even:bg-secondary/[0.03]">
+                    <td className="px-4 py-3.5">{new Date(inc.date).toLocaleDateString('it-IT')}</td>
+                    <td className="px-4 py-3.5">
+                      <span
+                        className={`inline-block h-2.5 w-2.5 rounded-full ${inc.isPaid ? 'bg-green-500' : 'bg-red-500'}`}
+                        title={inc.isPaid ? 'Incassata' : 'Non incassata'}
+                      />
+                    </td>
+                    <td className="px-4 py-3.5">{inc.clientName || '\u2014'}</td>
+                    <td className="px-4 py-3.5">
+                      <Badge variant="default">{inc.category}</Badge>
+                    </td>
+                    {advancedView && (
+                      <>
+                        <td className="px-4 py-3.5 text-muted text-xs">{inc.invoiceNumber || '\u2014'}</td>
+                        <td className="px-4 py-3.5">{inc.dueDate ? (() => {
+                          const due = new Date(inc.dueDate)
+                          const now = new Date()
+                          const diff = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                          const dateStr = due.toLocaleDateString('it-IT')
+                          if (inc.isPaid) return <span className="text-xs text-emerald-600">{dateStr}</span>
+                          if (diff < 0) return <span className="text-xs font-medium text-red-500">{dateStr} (scaduta)</span>
+                          if (diff <= 7) return <span className="text-xs font-medium text-amber-600">{dateStr}</span>
+                          return <span className="text-xs text-muted">{dateStr}</span>
+                        })() : '\u2014'}</td>
+                        <td className="px-4 py-3.5 text-muted">{inc.bankAccount?.name || '\u2014'}</td>
+                        <td className="px-4 py-3.5 text-muted">{inc.businessEntity?.name || '\u2014'}</td>
+                        <td className="px-4 py-3.5 text-right tabular-nums">{inc.vatRate}%</td>
+                        <td className="px-4 py-3.5 text-right tabular-nums">{formatCurrency(computeNet(inc.amount, inc.vatRate))}</td>
+                        <td className="px-4 py-3.5 text-right tabular-nums">{formatCurrency(computeVat(inc.amount, inc.vatRate))}</td>
+                      </>
+                    )}
+                    <td className="px-4 py-3.5 font-medium text-right tabular-nums">{formatCurrency(inc.amount)}</td>
+                    <td className="px-4 py-3.5 text-muted max-w-[200px] truncate">{inc.notes || '\u2014'}</td>
+                    <td className="px-4 py-3.5 text-right">
+                      <div className="flex justify-end gap-1">
+                        <button onClick={() => openEdit(inc)} className="p-1.5 rounded hover:bg-secondary/20" title="Modifica"><Pencil className="h-3.5 w-3.5 text-muted" /></button>
+                        <button onClick={() => setDeleteConfirm(inc)} className="p-1.5 rounded hover:bg-secondary/20" title="Elimina"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-border/30 bg-secondary/5 font-semibold">
+                  <td className="px-4 py-3" colSpan={4}>Totale</td>
+                  {advancedView && (
+                    <>
+                      <td className="px-4 py-3" />
+                      <td className="px-4 py-3" />
+                      <td className="px-4 py-3" />
+                      <td className="px-4 py-3" />
+                      <td className="px-4 py-3" />
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {formatCurrency(incomes.reduce((s, e) => s + computeNet(e.amount, e.vatRate), 0))}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {formatCurrency(incomes.reduce((s, e) => s + computeVat(e.amount, e.vatRate), 0))}
+                      </td>
+                    </>
+                  )}
+                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totalAmount)}</td>
+                  <td className="px-4 py-3" />
+                  <td className="px-4 py-3" />
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Modal Crea/Modifica */}
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setEditItem(null) }} title={editItem ? 'Modifica Entrata' : 'Nuova Entrata'} size="lg">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="isPaid"
+              defaultChecked={editItem?.isPaid ?? true}
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+            />
+            <span className="text-sm font-medium">Incassata</span>
+          </label>
+          <Input name="clientName" label="Nome Cliente *" required defaultValue={editItem?.clientName || ''} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input name="date" label="Data *" type="date" required defaultValue={editItem?.date?.split('T')[0] || ''} />
+            <Select name="category" label="Categoria *" options={formCategoryOptions} defaultValue={editItem?.category || ''} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input name="amount" label="Importo (EUR) *" type="number" step="0.01" min="0" required defaultValue={editItem?.amount || ''} />
+            <Select name="vatRate" label="Aliquota IVA" options={vatOptions} defaultValue={String(editItem?.vatRate ?? '22')} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Input name="invoiceNumber" label="N° Fattura" placeholder="FT-2026/001" defaultValue={editItem?.invoiceNumber || ''} />
+            <Input name="dueDate" label="Scadenza" type="date" defaultValue={editItem?.dueDate?.split('T')[0] || ''} />
+            <Select name="paymentMethod" label="Metodo Pagamento" options={[
+              { value: '', label: 'Seleziona' },
+              { value: 'bonifico', label: 'Bonifico' },
+              { value: 'contanti', label: 'Contanti' },
+              { value: 'carta', label: 'Carta' },
+              { value: 'assegno', label: 'Assegno' },
+              { value: 'riba', label: 'Ri.Ba' },
+              { value: 'altro', label: 'Altro' },
+            ]} defaultValue={editItem?.paymentMethod || ''} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select name="bankAccountId" label="Conto Bancario" options={formBankAccountOptions} defaultValue={editItem?.bankAccountId || ''} />
+            <Select name="businessEntityId" label="Attività" options={formBusinessEntityOptions} defaultValue={editItem?.businessEntityId || ''} />
+          </div>
+          <Input name="notes" label="Note" defaultValue={editItem?.notes || ''} />
+          <Select name="clientId" label="Cliente (anagrafica)" options={formClientOptions} defaultValue={editItem?.clientId || ''} />
+          {formError && (
+            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => { setModalOpen(false); setEditItem(null) }}>Annulla</Button>
+            <Button type="submit" loading={submitting}>{editItem ? 'Salva Modifiche' : 'Aggiungi Entrata'}</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Conferma Eliminazione */}
+      <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Elimina Entrata" size="sm">
+        <p className="text-sm text-muted mb-2">Sei sicuro di voler eliminare questa entrata?</p>
+        {deleteConfirm && (
+          <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
+            <p className="font-medium text-sm">{deleteConfirm.clientName}</p>
+            <p className="text-xs text-muted mt-1">
+              {deleteConfirm.category} &middot; {formatCurrency(deleteConfirm.amount)} &middot; {new Date(deleteConfirm.date).toLocaleDateString('it-IT')}
+            </p>
+          </div>
+        )}
+        <p className="text-xs text-destructive mb-4">Questa azione non può essere annullata.</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Annulla</Button>
+          <Button variant="destructive" onClick={handleDelete} loading={submitting}>Elimina</Button>
+        </div>
+      </Modal>
+    </>
+  )
+}

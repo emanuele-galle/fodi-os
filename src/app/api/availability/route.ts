@@ -13,8 +13,8 @@ import { rateLimit } from '@/lib/rate-limit'
  *   userId    - target user to check availability for (required)
  *   duration  - slot duration in minutes (default 30)
  *   daysAhead - how many days ahead to show (default 14)
- *   startHour - earliest slot hour (default 9)
- *   endHour   - latest slot hour (default 18)
+ *   startHour - earliest slot hour (default 9, fallback if no workSchedule)
+ *   endHour   - latest slot hour (default 18, fallback if no workSchedule)
  */
 export async function GET(request: NextRequest) {
   const session = await getSession()
@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
       where: { id: userId },
       select: {
         timezone: true,
+        workSchedule: true,
         googleToken: { select: { id: true } },
       },
     })
@@ -77,6 +78,18 @@ export async function GET(request: NextRequest) {
 
     const busyPeriods = freebusyRes.data.calendars?.primary?.busy || []
 
+    // Parse user's work schedule (per-day hours), fallback to query params
+    const defaultSchedule: Record<string, { start: number; end: number }> = {
+      '1': { start: startHour, end: endHour },
+      '2': { start: startHour, end: endHour },
+      '3': { start: startHour, end: endHour },
+      '4': { start: startHour, end: endHour },
+      '5': { start: startHour, end: endHour },
+    }
+    const workSchedule: Record<string, { start: number; end: number }> = user.workSchedule
+      ? (typeof user.workSchedule === 'string' ? JSON.parse(user.workSchedule) : user.workSchedule as Record<string, { start: number; end: number }>)
+      : defaultSchedule
+
     const slots: Record<string, string[]> = {}
     const durationMs = duration * 60 * 1000
 
@@ -85,12 +98,16 @@ export async function GET(request: NextRequest) {
       date.setDate(date.getDate() + d)
 
       const dayOfWeek = date.getDay()
-      if (dayOfWeek === 0 || dayOfWeek === 6) continue
+      const dayConfig = workSchedule[String(dayOfWeek)]
+      if (!dayConfig) continue // Not a working day
+
+      const dayStartHour = dayConfig.start
+      const dayEndHour = dayConfig.end
 
       const dateStr = date.toLocaleDateString('en-CA')
       const daySlots: string[] = []
 
-      for (let hour = startHour; hour < endHour; hour++) {
+      for (let hour = dayStartHour; hour < dayEndHour; hour++) {
         for (let min = 0; min < 60; min += duration) {
           const slotStart = new Date(date)
           slotStart.setHours(hour, min, 0, 0)
@@ -99,7 +116,7 @@ export async function GET(request: NextRequest) {
           if (slotStart < minTime) continue
 
           const endCheck = new Date(date)
-          endCheck.setHours(endHour, 0, 0, 0)
+          endCheck.setHours(dayEndHour, 0, 0, 0)
           if (slotEnd > endCheck) continue
 
           const isBusy = busyPeriods.some((busy) => {

@@ -28,6 +28,7 @@ export async function GET(
         user: {
           select: {
             timezone: true,
+            workSchedule: true,
             googleToken: { select: { id: true } },
           }
         }
@@ -67,6 +68,18 @@ export async function GET(
 
     const busyPeriods = freebusyRes.data.calendars?.primary?.busy || []
 
+    // Parse user's work schedule (per-day hours)
+    const defaultSchedule: Record<string, { start: number; end: number }> = {
+      '1': { start: card.bookingStartHour, end: card.bookingEndHour },
+      '2': { start: card.bookingStartHour, end: card.bookingEndHour },
+      '3': { start: card.bookingStartHour, end: card.bookingEndHour },
+      '4': { start: card.bookingStartHour, end: card.bookingEndHour },
+      '5': { start: card.bookingStartHour, end: card.bookingEndHour },
+    }
+    const workSchedule: Record<string, { start: number; end: number }> = card.user.workSchedule
+      ? (typeof card.user.workSchedule === 'string' ? JSON.parse(card.user.workSchedule) : card.user.workSchedule as Record<string, { start: number; end: number }>)
+      : defaultSchedule
+
     // Generate available slots
     const slots: Record<string, string[]> = {}
     const durationMs = card.bookingDuration * 60 * 1000
@@ -75,15 +88,18 @@ export async function GET(
       const date = new Date(now)
       date.setDate(date.getDate() + d)
 
-      // Skip weekends
       const dayOfWeek = date.getDay()
-      if (dayOfWeek === 0 || dayOfWeek === 6) continue
+      const dayConfig = workSchedule[String(dayOfWeek)]
+      if (!dayConfig) continue // Not a working day
+
+      const dayStartHour = dayConfig.start
+      const dayEndHour = dayConfig.end
 
       const dateStr = date.toLocaleDateString('en-CA') // YYYY-MM-DD
 
       const daySlots: string[] = []
 
-      for (let hour = card.bookingStartHour; hour < card.bookingEndHour; hour++) {
+      for (let hour = dayStartHour; hour < dayEndHour; hour++) {
         for (let min = 0; min < 60; min += card.bookingDuration) {
           const slotStart = new Date(date)
           slotStart.setHours(hour, min, 0, 0)
@@ -94,7 +110,7 @@ export async function GET(
 
           // Skip if slot extends past working hours
           const endCheck = new Date(date)
-          endCheck.setHours(card.bookingEndHour, 0, 0, 0)
+          endCheck.setHours(dayEndHour, 0, 0, 0)
           if (slotEnd > endCheck) continue
 
           // Check against busy periods

@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, CreditCard, BarChart3, ArrowRight, Landmark, RefreshCw, FileSignature, FileCode, Wand2, TrendingUp, Building2, Calendar, CalendarRange, Settings, FileCheck, BookOpen } from 'lucide-react'
+import { FileText, CreditCard, ArrowRight, Landmark, RefreshCw, FileCode, TrendingUp, Building2, Calendar, Settings, BarChart3 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import dynamic from 'next/dynamic'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -24,9 +23,6 @@ export default function ErpPage() {
     monthExpenses: 0,
     activeSubscriptions: 0,
     monthlySubCost: 0,
-    pendingSignatures: 0,
-    templateCount: 0,
-    publishedWizards: 0,
   })
 
   useEffect(() => {
@@ -34,11 +30,8 @@ export default function ErpPage() {
       fetch('/api/quotes?status=DRAFT&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
       fetch('/api/expenses?limit=100').then((r) => (r.ok ? r.json() : { items: [] })),
       fetch('/api/expenses/subscriptions?status=active&limit=100').then((r) => (r.ok ? r.json() : { items: [] })),
-      fetch('/api/signatures?status=PENDING&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
-      fetch('/api/quote-templates?limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
-      fetch('/api/wizards?status=PUBLISHED&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
     ])
-      .then(([quotesData, expensesData, subsData, sigData, templData, wizData]) => {
+      .then(([quotesData, expensesData, subsData]) => {
         const now = new Date()
         const thisMonth = expensesData.items?.filter((e: { date: string }) => {
           const d = new Date(e.date)
@@ -62,9 +55,6 @@ export default function ErpPage() {
           monthExpenses: monthTotal,
           activeSubscriptions: subs.length,
           monthlySubCost,
-          pendingSignatures: sigData.total || 0,
-          templateCount: templData.total || 0,
-          publishedWizards: wizData.total || 0,
         })
       })
       .finally(() => setLoading(false))
@@ -72,52 +62,31 @@ export default function ErpPage() {
 
   const sections = [
     {
-      title: 'Entrate',
-      description: 'Registro entrate e fatture',
-      icon: TrendingUp,
-      href: '/erp/income',
+      title: 'Panoramica',
+      description: 'Dashboard mensile, annuale e statistiche',
+      icon: BarChart3,
+      href: '/erp/panoramica',
       stat: null,
     },
     {
-      title: 'Spese',
-      description: 'Registrazione e analisi costi',
+      title: 'Movimenti',
+      description: 'Spese, entrate e prima nota',
       icon: CreditCard,
-      href: '/erp/expenses',
+      href: '/erp/movimenti',
       stat: loading ? null : `${formatCurrency(stats.monthExpenses)} questo mese`,
     },
     {
-      title: 'Conti & Giroconti',
+      title: 'Ricorrenti',
+      description: 'Abbonamenti e fatture ricorrenti',
+      icon: RefreshCw,
+      href: '/erp/ricorrenti',
+      stat: loading ? null : `${stats.activeSubscriptions} attivi · ${formatCurrency(stats.monthlySubCost)}/mese`,
+    },
+    {
+      title: 'Conti',
       description: 'Gestione conti bancari e trasferimenti',
       icon: Building2,
       href: '/erp/accounts',
-      stat: null,
-    },
-    {
-      title: 'Prima Nota',
-      description: 'Registro cronologico di tutti i movimenti',
-      icon: BookOpen,
-      href: '/erp/journal',
-      stat: null,
-    },
-    {
-      title: 'Dashboard Mensile',
-      description: 'Panoramica finanziaria del mese',
-      icon: Calendar,
-      href: '/erp/dashboard/monthly',
-      stat: null,
-    },
-    {
-      title: 'Dashboard Annuale',
-      description: 'Panoramica finanziaria annuale',
-      icon: CalendarRange,
-      href: '/erp/dashboard/annual',
-      stat: null,
-    },
-    {
-      title: 'Statistiche',
-      description: 'Andamento mensile e proiezioni',
-      icon: BarChart3,
-      href: '/erp/dashboard/statistics',
       stat: null,
     },
     {
@@ -128,45 +97,10 @@ export default function ErpPage() {
       stat: loading ? null : `${stats.draftQuotes} bozze`,
     },
     {
-      title: 'Abbonamenti',
-      description: 'Spese ricorrenti e sottoscrizioni',
-      icon: RefreshCw,
-      href: '/erp/expenses/subscriptions',
-      stat: loading ? null : `${stats.activeSubscriptions} attivi · ${formatCurrency(stats.monthlySubCost)}/mese`,
-    },
-    {
-      title: 'Monitoraggio Fatture',
-      description: 'Fatture ricorrenti e scadenze',
-      icon: FileCheck,
-      href: '/erp/invoice-monitoring',
-      stat: null,
-    },
-    {
-      title: 'Firme Digitali',
-      description: 'Richieste di firma documenti',
-      icon: FileSignature,
-      href: '/erp/signatures',
-      stat: loading ? null : `${stats.pendingSignatures} in attesa`,
-    },
-    {
-      title: 'Template',
-      description: 'Modelli preventivo riutilizzabili',
+      title: 'Documenti',
+      description: 'Template, firme digitali e wizard',
       icon: FileCode,
-      href: '/erp/templates',
-      stat: loading ? null : `${stats.templateCount} template`,
-    },
-    {
-      title: 'Wizard',
-      description: 'Questionari e moduli interattivi',
-      icon: Wand2,
-      href: '/erp/wizards',
-      stat: loading ? null : `${stats.publishedWizards} pubblicati`,
-    },
-    {
-      title: 'Report',
-      description: 'Analisi finanziaria e statistiche',
-      icon: BarChart3,
-      href: '/erp/reports',
+      href: '/erp/documenti',
       stat: null,
     },
     {
@@ -227,10 +161,10 @@ export default function ErpPage() {
         <div className="mt-6">
           <QuickActionsGrid
             actions={[
-              { icon: TrendingUp, title: 'Entrata', description: 'Registra', onClick: () => router.push('/erp/income') },
-              { icon: CreditCard, title: 'Spesa', description: 'Registra', onClick: () => router.push('/erp/expenses') },
+              { icon: TrendingUp, title: 'Entrata', description: 'Registra', onClick: () => router.push('/erp/movimenti?tab=entrate') },
+              { icon: CreditCard, title: 'Spesa', description: 'Registra', onClick: () => router.push('/erp/movimenti') },
               { icon: FileText, title: 'Preventivo', description: 'Crea nuovo', onClick: () => router.push('/erp/quotes/new') },
-              { icon: Calendar, title: 'Dashboard', description: 'Mensile', onClick: () => router.push('/erp/dashboard/monthly') },
+              { icon: Calendar, title: 'Dashboard', description: 'Mensile', onClick: () => router.push('/erp/panoramica') },
               { icon: Settings, title: 'Impostazioni', description: 'Configura', onClick: () => router.push('/erp/settings') },
             ]}
           />

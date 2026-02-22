@@ -11,6 +11,10 @@ export const updateProfileSchema = z.object({
   timezone: z.string().max(50).optional().nullable(),
   language: z.string().max(10).optional().nullable(),
   dailyDigest: z.boolean().optional(),
+  workSchedule: z.record(
+    z.string(),
+    z.object({ start: z.number().min(0).max(23), end: z.number().min(1).max(24) })
+  ).optional(),
 })
 
 export const updateUserSchema = z.object({

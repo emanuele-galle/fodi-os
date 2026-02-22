@@ -13,7 +13,7 @@ export async function PATCH(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { firstName, lastName, username, phone, bio, timezone, language, dailyDigest } = parsed.data
+    const { firstName, lastName, username, phone, bio, timezone, language, dailyDigest, workSchedule } = parsed.data
 
     // Check username uniqueness if changed
     if (username !== undefined) {
@@ -40,6 +40,7 @@ export async function PATCH(request: NextRequest) {
         ...(timezone !== undefined && { timezone }),
         ...(language !== undefined && { language }),
         ...(dailyDigest !== undefined && { dailyDigest }),
+        ...(workSchedule !== undefined && { workSchedule }),
       },
       select: {
         id: true,
@@ -54,6 +55,7 @@ export async function PATCH(request: NextRequest) {
         timezone: true,
         language: true,
         dailyDigest: true,
+        workSchedule: true,
       },
     })
 

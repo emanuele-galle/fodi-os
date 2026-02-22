@@ -233,7 +233,7 @@ export default function ErpSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Conti Bancari */}
+        {/* Conti Bancari - Link */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -241,32 +241,12 @@ export default function ErpSettingsPage() {
                 <CardTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4" /> Conti Bancari</CardTitle>
                 <CardDescription>Conti correnti, carte e contanti</CardDescription>
               </div>
-              <Button size="sm" onClick={() => setEditTarget({ type: 'account' })}><Plus className="h-4 w-4" /> Nuovo</Button>
             </div>
           </CardHeader>
           <CardContent>
-            {loading ? <p className="text-sm text-muted">Caricamento...</p> : accounts.length === 0 ? (
-              <p className="text-sm text-muted">Nessun conto bancario. Creane uno per iniziare.</p>
-            ) : (
-              <div className="space-y-2">
-                {accounts.map(a => (
-                  <div key={a.id} className="flex items-center justify-between rounded-lg border border-border/20 px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <span>{a.icon || (a.type === 'bank' ? '🏛️' : a.type === 'credit_card' ? '💳' : '💵')}</span>
-                      <span className="font-medium text-sm">{a.name}</span>
-                      <Badge variant="outline" className="text-xs">{a.type === 'bank' ? 'CC' : a.type === 'credit_card' ? 'Carta' : 'Contanti'}</Badge>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium tabular-nums">{new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(parseFloat(a.balance))}</span>
-                      <div className="flex gap-1">
-                        <button onClick={() => setEditTarget({ type: 'account', item: a })} className="p-1.5 rounded hover:bg-secondary/20"><Pencil className="h-3.5 w-3.5 text-muted" /></button>
-                        <button onClick={() => setDeleteTarget({ type: 'account', id: a.id, name: a.name })} className="p-1.5 rounded hover:bg-secondary/20"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <a href="/erp/accounts" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+              Gestisci conti bancari &rarr;
+            </a>
           </CardContent>
         </Card>
 
