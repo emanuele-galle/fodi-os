@@ -69,7 +69,7 @@ export function maskEmail(email: string): string {
 }
 
 export async function sendLoginOtpEmail(to: string, otpCode: string, ipAddress: string): Promise<boolean> {
-  const subject = 'Codice di verifica - ${brand.name}'
+  const subject = `Codice di verifica - ${brand.name}`
 
   const html = `
 <!DOCTYPE html>
