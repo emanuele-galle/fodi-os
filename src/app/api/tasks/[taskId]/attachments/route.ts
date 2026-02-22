@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { logActivity } from '@/lib/activity-log'
+import { deleteFile } from '@/lib/s3'
 import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
@@ -74,6 +76,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
+    logActivity({
+      userId,
+      action: 'UPLOAD_TASK_ATTACHMENT',
+      entityType: 'TASK',
+      entityId: taskId,
+      metadata: { attachmentId: attachment.id, fileName },
+    })
+
     return NextResponse.json(attachment, { status: 201 })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
@@ -87,6 +97,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role
+    const userId = request.headers.get('x-user-id')!
     requirePermission(role, 'pm', 'write')
 
     const { taskId } = await params
@@ -104,7 +115,26 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Allegato non trovato' }, { status: 404 })
     }
 
+    // Delete file from MinIO (best-effort)
+    try {
+      const url = new URL(attachment.fileUrl)
+      const keyMatch = url.pathname.match(/^\/[^/]+\/(.+)$/)
+      if (keyMatch) {
+        await deleteFile(keyMatch[1])
+      }
+    } catch (err) {
+      console.warn(`[tasks/:taskId/attachments] Failed to delete S3 file for attachment ${attachmentId}:`, (err as Error).message)
+    }
+
     await prisma.taskAttachment.delete({ where: { id: attachmentId } })
+
+    logActivity({
+      userId,
+      action: 'DELETE_TASK_ATTACHMENT',
+      entityType: 'TASK',
+      entityId: taskId,
+      metadata: { attachmentId, fileName: attachment.fileName },
+    })
 
     return NextResponse.json({ success: true })
   } catch (e) {

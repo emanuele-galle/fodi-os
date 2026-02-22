@@ -1,6 +1,11 @@
 import { google } from 'googleapis'
 import { prisma } from './prisma'
 
+// Warn at startup if Google is not configured (GDrive will be disabled gracefully)
+if (!process.env.GOOGLE_CLIENT_ID) {
+  console.warn('[google] GOOGLE_CLIENT_ID non configurato. Google Calendar, Drive e Meet saranno disabilitati.')
+}
+
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar',
   'https://www.googleapis.com/auth/calendar.events',

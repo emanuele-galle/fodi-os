@@ -1021,6 +1021,7 @@ model Document {
   fileUrl         String
   fileSize        Int?
   mimeType        String?
+  driveFileId     String?
   category        String   @default("general")
   isClientVisible Boolean  @default(false)
   createdAt       DateTime @default(now())

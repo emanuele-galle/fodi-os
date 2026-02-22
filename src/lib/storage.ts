@@ -2,16 +2,33 @@ import { brand } from '@/lib/branding'
 import { google } from 'googleapis'
 import { prisma } from './prisma'
 import { getAuthenticatedClient, getDriveService } from './google'
+import { uploadFile as s3Upload, deleteFile as s3Delete } from './s3'
+
+// Cached admin drive client (avoid DB query on every upload)
+let cachedAdminDrive: { drive: ReturnType<typeof google.drive>; expiresAt: number } | null = null
 
 /**
  * Get the admin user's Google Drive client.
- * Uses the first ADMIN user who has a connected Google account.
+ * Uses GOOGLE_DRIVE_ADMIN_ID if set, otherwise the first ADMIN with Google connected.
+ * Caches the client for 5 minutes.
  */
 export async function getAdminDriveClient() {
-  const adminToken = await prisma.googleToken.findFirst({
-    where: { user: { role: 'ADMIN' } },
-    include: { user: { select: { id: true } } },
-  })
+  // Return cached client if still valid
+  if (cachedAdminDrive && cachedAdminDrive.expiresAt > Date.now()) {
+    return cachedAdminDrive.drive
+  }
+
+  const specificAdminId = process.env.GOOGLE_DRIVE_ADMIN_ID
+
+  const adminToken = specificAdminId
+    ? await prisma.googleToken.findUnique({
+        where: { userId: specificAdminId },
+        include: { user: { select: { id: true } } },
+      })
+    : await prisma.googleToken.findFirst({
+        where: { user: { role: 'ADMIN' } },
+        include: { user: { select: { id: true } } },
+      })
 
   if (!adminToken) {
     throw new Error('Nessun admin con Google Drive connesso. Collegare Google Drive dalle Impostazioni.')
@@ -22,7 +39,23 @@ export async function getAdminDriveClient() {
     throw new Error('Token Google admin non valido. Ricollegare Google Drive dalle Impostazioni.')
   }
 
-  return getDriveService(auth)
+  const drive = getDriveService(auth)
+  cachedAdminDrive = { drive, expiresAt: Date.now() + 5 * 60 * 1000 }
+  return drive
+}
+
+/**
+ * Check if Google Drive is available (configured and admin connected).
+ * Returns false without throwing if GDrive is not available.
+ */
+export async function isGDriveAvailable(): Promise<boolean> {
+  if (!process.env.GOOGLE_CLIENT_ID) return false
+  try {
+    await getAdminDriveClient()
+    return true
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -140,6 +173,93 @@ export async function uploadToGDrive(
   return {
     fileId,
     webViewLink: updated.data.webViewLink || `https://drive.google.com/file/d/${fileId}/view`,
+  }
+}
+
+export interface UploadResult {
+  fileUrl: string
+  driveFileId?: string
+  webViewLink?: string
+}
+
+/**
+ * Upload a file with dual storage: MinIO (primary, always) + Google Drive (optional backup).
+ *
+ * - MinIO upload is always attempted first and is required to succeed
+ * - Google Drive upload is best-effort: if it fails, a warning is logged but the operation succeeds
+ *
+ * @param fileName - sanitized file name
+ * @param buffer - file content
+ * @param mimeType - MIME type
+ * @param s3Key - S3/MinIO object key (e.g., "projects/{projectId}/{timestamp}-{random}.ext")
+ * @param gDrivePath - optional Google Drive folder path (e.g., "ProjectName" or "CRM/CompanyName")
+ */
+export async function uploadWithBackup(
+  fileName: string,
+  buffer: Buffer,
+  mimeType: string,
+  s3Key: string,
+  gDrivePath?: string
+): Promise<UploadResult> {
+  // 1. Upload to MinIO (primary, must succeed)
+  const fileUrl = await s3Upload(s3Key, buffer, mimeType)
+
+  const result: UploadResult = { fileUrl }
+
+  // 2. Upload to Google Drive (optional backup, best-effort)
+  if (gDrivePath) {
+    try {
+      const { fileId, webViewLink } = await uploadToGDrive(fileName, buffer, mimeType, gDrivePath)
+      result.driveFileId = fileId
+      result.webViewLink = webViewLink
+    } catch (err) {
+      console.warn(`[storage] Google Drive backup upload failed for "${fileName}":`, (err as Error).message)
+      // Continue - MinIO upload succeeded, GDrive is optional
+    }
+  }
+
+  return result
+}
+
+/**
+ * Delete a file from both storage backends (best-effort for both).
+ *
+ * @param fileUrl - MinIO file URL (to extract S3 key)
+ * @param driveFileId - optional Google Drive file ID
+ */
+export async function deleteWithBackup(fileUrl: string, driveFileId?: string | null): Promise<void> {
+  // 1. Delete from Google Drive (best-effort)
+  if (driveFileId) {
+    try {
+      await deleteFromGDrive(driveFileId)
+    } catch (err) {
+      console.warn(`[storage] Google Drive delete failed for "${driveFileId}":`, (err as Error).message)
+    }
+  }
+
+  // 2. Delete from MinIO (best-effort)
+  try {
+    const key = extractS3Key(fileUrl)
+    if (key) {
+      await s3Delete(key)
+    }
+  } catch (err) {
+    console.warn(`[storage] MinIO delete failed for "${fileUrl}":`, (err as Error).message)
+  }
+}
+
+/**
+ * Extract S3 key from a MinIO URL.
+ * URL format: {endpoint}/{bucket}/{key}
+ */
+function extractS3Key(fileUrl: string): string | null {
+  try {
+    const url = new URL(fileUrl)
+    // Remove leading /{bucket}/ from pathname
+    const match = url.pathname.match(/^\/[^/]+\/(.+)$/)
+    return match ? match[1] : null
+  } catch {
+    return null
   }
 }
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
-import { deleteFromGDrive } from '@/lib/storage'
+import { deleteWithBackup } from '@/lib/storage'
 import type { Role } from '@/generated/prisma/client'
 
 type Params = { params: Promise<{ clientId: string; documentId: string }> }
@@ -48,19 +48,17 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       return NextResponse.json({ success: false, error: 'Documento non trovato' }, { status: 404 })
     }
 
-    // Delete from Google Drive if driveFileId exists
-    // Note: The Document model doesn't have driveFileId field in the schema
-    // Extract file ID from the Google Drive URL (webViewLink)
-    try {
+    // Determine driveFileId: use the field if available, otherwise extract from URL (legacy)
+    let driveFileId = document.driveFileId
+    if (!driveFileId) {
       const urlMatch = document.fileUrl.match(/\/d\/([^\/]+)\//)
       if (urlMatch && urlMatch[1]) {
-        const driveFileId = urlMatch[1]
-        await deleteFromGDrive(driveFileId)
+        driveFileId = urlMatch[1]
       }
-    } catch (error) {
-      console.error(`Failed to delete file from GDrive for document ${documentId}`, error)
-      // Continue with DB deletion even if GDrive deletion fails
     }
+
+    // Delete from both MinIO and GDrive
+    await deleteWithBackup(document.fileUrl, driveFileId)
 
     await prisma.document.delete({ where: { id: documentId } })
 
