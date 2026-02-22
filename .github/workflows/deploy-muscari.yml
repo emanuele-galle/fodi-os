@@ -1,0 +1,50 @@
+name: Deploy Muscari OS to VPS1
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PROJECT_SLUG: muscari-os
+  PROJECT_PATH: /var/www/projects/muscari-os
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.MUSCARI_VPS_HOST }}
+          username: ${{ secrets.MUSCARI_VPS_USER }}
+          key: ${{ secrets.MUSCARI_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 15m
+          envs: PROJECT_PATH
+          script: |
+            cd $PROJECT_PATH
+            git pull origin main
+            docker compose build
+            docker compose up -d
+            echo "Waiting for container to be healthy..."
+            for i in $(seq 1 30); do
+              if curl -sf http://localhost:$(docker compose port app 3000 | cut -d: -f2)/api/health > /dev/null 2>&1; then
+                echo "Health check passed"
+                exit 0
+              fi
+              sleep 5
+            done
+            if docker compose ps app | grep -q healthy; then
+              echo "Container healthy (health endpoint not available)"
+            else
+              echo "ERROR: Container is not healthy after 150s"
+              docker compose logs --tail=50 app
+              exit 1
+            fi
+
+      - name: Notify deployment
+        if: always()
+        run: |
+          curl -s -X POST "https://n8n.fodivps1.cloud/webhook/deploy-notify"             -H "Content-Type: application/json"             -d "{\"project\": \"${{ env.PROJECT_SLUG }}\", \"status\": \"${{ job.status }}\", \"commit\": \"${{ github.sha }}\", \"actor\": \"${{ github.actor }}\"}"             || echo "Notification webhook failed (non-critical)"
