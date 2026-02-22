@@ -1,6 +1,7 @@
 import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
+import { getClientIp } from '@/lib/ip'
 
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
@@ -140,9 +141,7 @@ export async function middleware(request: NextRequest) {
           response.headers.set('x-custom-role-id', payload.customRoleId)
         }
         // Pass client IP for tracking (Traefik sets x-forwarded-for)
-        const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-          || request.headers.get('x-real-ip')
-          || ''
+        const clientIp = getClientIp(request)
         if (clientIp) response.headers.set('x-client-ip', clientIp)
         return setSecurityHeaders(response)
       }

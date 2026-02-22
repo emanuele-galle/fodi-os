@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
+import { getClientIp } from '@/lib/ip'
 
 export async function GET(
   request: NextRequest,
@@ -70,7 +71,7 @@ export async function DELETE(
         data: {
           requestId,
           action: 'cancelled',
-          ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+          ipAddress: getClientIp(request),
           userAgent: request.headers.get('user-agent'),
           metadata: { cancelledBy: userId },
         },

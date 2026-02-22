@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { createSignatureRequestSchema } from '@/lib/validation'
 import { createSignatureToken } from '@/lib/signature-token'
 import type { Role } from '@/generated/prisma/client'
+import { getClientIp } from '@/lib/ip'
 
 export async function GET(request: NextRequest) {
   try {
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Create audit trail entry
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const ip = getClientIp(request)
     await prisma.signatureAudit.create({
       data: {
         requestId: signatureRequest.id,

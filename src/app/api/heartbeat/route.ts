@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getClientIp } from '@/lib/ip'
 
 // Gap threshold: if no heartbeat for 5 minutes, session is considered ended
 const SESSION_GAP_MS = 5 * 60 * 1000
@@ -13,9 +14,7 @@ export async function POST(request: NextRequest) {
   const now = new Date()
 
   // Update lastActiveAt + IP
-  const clientIp = request.headers.get('x-client-ip')
-    || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || ''
+  const clientIp = getClientIp(request)
   await prisma.user.update({
     where: { id: userId },
     data: {

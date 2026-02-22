@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateApplePass } from '@/lib/apple-wallet'
 import { rateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const ip = getClientIp(request)
     if (!rateLimit(`wallet-apple:${ip}`, 10, 60000)) {
       return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
     }

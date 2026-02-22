@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 import { getSession } from '@/lib/auth'
 import { rateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 /**
  * Internal authenticated endpoint for portal booking availability.
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (!rateLimit(`portal-avail:${ip}`, 30, 60000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }

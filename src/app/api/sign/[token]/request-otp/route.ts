@@ -4,6 +4,7 @@ import { verifySignatureToken } from '@/lib/signature-token'
 import { generateOtp, hashOtp } from '@/lib/otp'
 import { sendOtpEmail } from '@/lib/signature-email'
 import { rateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 const MAX_OTP_PER_REQUEST = 3
 
@@ -12,7 +13,7 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const ip = getClientIp(request)
     if (!rateLimit(`otp-request:${ip}`, 5, 60000)) {
       return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
     }

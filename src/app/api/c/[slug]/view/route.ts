@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { rateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 export async function POST(
   request: NextRequest,
@@ -10,9 +11,7 @@ export async function POST(
     const { slug } = await params
 
     // Rate limit: 1 view per IP per 5 minuti
-    const ip = request.headers.get('x-forwarded-for') ||
-               request.headers.get('x-real-ip') ||
-               'unknown'
+    const ip = getClientIp(request)
 
     const rateLimitKey = `card-view:${slug}:${ip}`
     const allowed = rateLimit(rateLimitKey, 1, 300000) // 5 minutes

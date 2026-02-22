@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 import { rateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 const bookingSchema = z.object({
   name: z.string().min(1, 'Nome obbligatorio').max(100),
@@ -20,7 +21,7 @@ export async function POST(
   const { slug } = await context.params
 
   // Rate limit: 3 req/IP/10min
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (!rateLimit(`book:${ip}`, 3, 600000)) {
     return NextResponse.json({ error: 'Troppe richieste. Riprova tra qualche minuto.' }, { status: 429 })
   }

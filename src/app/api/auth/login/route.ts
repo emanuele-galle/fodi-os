@@ -6,12 +6,11 @@ import { rateLimit } from '@/lib/rate-limit'
 import { logActivity } from '@/lib/activity-log'
 import { generateOtpCode, maskEmail, sendLoginOtpEmail } from '@/lib/email'
 import bcrypt from 'bcryptjs'
+import { getClientIp } from '@/lib/ip'
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-      || request.headers.get('x-real-ip')
-      || 'unknown'
+    const ip = getClientIp(request)
 
     if (!rateLimit(`login:${ip}`, 5, 60000)) {
       return NextResponse.json({ success: false, error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })

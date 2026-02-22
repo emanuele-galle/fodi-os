@@ -5,6 +5,7 @@ import { verifySignatureToken } from '@/lib/signature-token'
 import { declineSignatureSchema } from '@/lib/validation'
 import { sendPush } from '@/lib/push'
 import { sendViaSMTP } from '@/lib/email'
+import { getClientIp } from '@/lib/ip'
 
 export async function POST(
   request: NextRequest,
@@ -46,7 +47,7 @@ export async function POST(
       return NextResponse.json({ error: 'Richiesta gia chiusa' }, { status: 400 })
     }
 
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const ip = getClientIp(request)
 
     await prisma.$transaction([
       prisma.signatureAudit.create({

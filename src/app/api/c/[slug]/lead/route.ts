@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { rateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 const leadSchema = z.object({
   name: z.string().min(1, 'Nome richiesto'),
@@ -21,9 +22,7 @@ export async function POST(
     const { slug } = await params
 
     // Rate limit: 5 submissions per IP per minuto
-    const ip = request.headers.get('x-forwarded-for') ||
-               request.headers.get('x-real-ip') ||
-               'unknown'
+    const ip = getClientIp(request)
 
     const rateLimitKey = `lead:${ip}`
     const allowed = rateLimit(rateLimitKey, 5, 60000) // 1 minute

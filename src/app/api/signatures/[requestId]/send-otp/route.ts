@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { generateOtp, hashOtp } from '@/lib/otp'
 import { sendOtpEmail } from '@/lib/signature-email'
 import type { Role } from '@/generated/prisma/client'
+import { getClientIp } from '@/lib/ip'
 
 const MAX_OTP_PER_REQUEST = 3
 
@@ -75,7 +76,7 @@ export async function POST(
     }
 
     // Audit
-    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const ip = getClientIp(request)
     await prisma.signatureAudit.create({
       data: {
         requestId,

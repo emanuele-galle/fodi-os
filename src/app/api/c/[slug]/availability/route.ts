@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 import { rateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 export async function GET(
   request: NextRequest,
@@ -10,7 +11,7 @@ export async function GET(
   const { slug } = await context.params
 
   // Rate limit: 20 req/IP/min
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (!rateLimit(`availability:${ip}`, 20, 60000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }

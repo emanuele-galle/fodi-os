@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 import { prisma } from '@/lib/prisma'
 import { rateLimit } from '@/lib/rate-limit'
+import { getClientIp } from '@/lib/ip'
 
 const blockSchema = z.object({
   userId: z.string().min(1),
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Permessi insufficienti' }, { status: 403 })
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const ip = getClientIp(request)
   if (!rateLimit(`block-slot:${ip}`, 10, 60000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }

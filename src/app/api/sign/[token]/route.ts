@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifySignatureToken } from '@/lib/signature-token'
+import { getClientIp } from '@/lib/ip'
 
 export async function GET(
   request: NextRequest,
@@ -49,7 +50,7 @@ export async function GET(
     }
 
     // Audit: viewed
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const ip = getClientIp(request)
     await prisma.signatureAudit.create({
       data: {
         requestId,

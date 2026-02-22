@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { rateLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
+import { getClientIp } from '@/lib/ip'
 
 const createLeadSchema = z.object({
   name: z.string().min(1, 'Nome obbligatorio').max(200, 'Nome troppo lungo'),
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const ip = getClientIp(request)
     if (!rateLimit(`leads:${ip}`, 10, 60000)) {
       return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
     }

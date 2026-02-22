@@ -5,10 +5,11 @@ import { forgotPasswordSchema } from '@/lib/validation'
 import { rateLimit } from '@/lib/rate-limit'
 import { sendViaSMTP } from '@/lib/email'
 import { SignJWT } from 'jose'
+import { getClientIp } from '@/lib/ip'
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const ip = getClientIp(request)
     if (!rateLimit(`forgot-password:${ip}`, 5, 15 * 60 * 1000)) {
       return NextResponse.json({ success: false, error: 'Troppi tentativi. Riprova tra 15 minuti.' }, { status: 429 })
     }

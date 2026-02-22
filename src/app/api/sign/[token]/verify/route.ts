@@ -8,13 +8,14 @@ import { addSignatureStamp } from '@/lib/signature-pdf'
 import { rateLimit } from '@/lib/rate-limit'
 import { sendPush } from '@/lib/push'
 import { sendViaSMTP } from '@/lib/email'
+import { getClientIp } from '@/lib/ip'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const ip = getClientIp(request)
     if (!rateLimit(`otp-verify:${ip}`, 10, 60000)) {
       return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
     }
