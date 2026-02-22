@@ -1,5 +1,6 @@
 import Image from 'next/image'
-import { Building2, ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
+import { brandClient } from '@/lib/branding-client'
 
 type CardCompanyProps = {
   company: {
@@ -22,12 +23,12 @@ export default function CardCompany({ company }: CardCompanyProps) {
       <div className="flex items-center gap-4">
         {/* Always use the dark logo for this dark card context */}
         <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-white/[0.05] flex-shrink-0 border border-white/[0.06]">
-          <Image
-            src="/logo-dark.png"
-            alt={company.ragioneSociale}
-            fill
-            className="object-contain p-1.5"
-          />
+          {brandClient.logo.dark.endsWith('.svg') ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={brandClient.logo.dark} alt={company.ragioneSociale} className="w-full h-full object-contain p-1.5" />
+          ) : (
+            <Image src={brandClient.logo.dark} alt={company.ragioneSociale} fill className="object-contain p-1.5" />
+          )}
         </div>
 
         <div className="flex-1 min-w-0">

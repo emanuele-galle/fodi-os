@@ -9,6 +9,12 @@ export const brandClient = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://os.fodisrl.it',
   contactEmail: process.env.NEXT_PUBLIC_BRAND_CONTACT_EMAIL || 'info@fodisrl.it',
 
+  // Logo paths (convention: /brands/{slug}/logo-{variant}.{ext})
+  logo: {
+    dark: process.env.NEXT_PUBLIC_BRAND_LOGO_DARK || `/brands/${slug}/logo-dark.${slug === 'fodi' ? 'png' : 'svg'}`,
+    light: process.env.NEXT_PUBLIC_BRAND_LOGO_LIGHT || `/brands/${slug}/logo-light.${slug === 'fodi' ? 'png' : 'svg'}`,
+  },
+
   cookies: {
     theme: `${slug}-theme`,
   },

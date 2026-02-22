@@ -62,6 +62,12 @@ export const brand = {
   // Meta / SEO
   description: process.env.BRAND_DESCRIPTION || 'Piattaforma di gestione aziendale FODI Srl - CRM, Progetti, Contabilita, Team',
 
+  // Logo paths (convention: /brands/{slug}/logo-{variant}.{ext})
+  logo: {
+    dark: process.env.BRAND_LOGO_DARK || `/brands/${slug}/logo-dark.${slug === 'fodi' ? 'png' : 'svg'}`,
+    light: process.env.BRAND_LOGO_LIGHT || `/brands/${slug}/logo-light.${slug === 'fodi' ? 'png' : 'svg'}`,
+  },
+
   // Copyright
   copyrightYear: new Date().getFullYear(),
 } as const

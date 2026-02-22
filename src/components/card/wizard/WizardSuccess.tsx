@@ -15,7 +15,7 @@ export function WizardSuccess({ message, companyName, cardSlug, phone }: WizardS
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
       {/* Logo */}
       <img
-        src="/logo-dark.png"
+        src={brandClient.logo.dark}
         alt={companyName || brandClient.slug.toUpperCase()}
         className="h-10 w-auto opacity-50 mb-8"
       />

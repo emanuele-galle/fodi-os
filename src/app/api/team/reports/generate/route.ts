@@ -43,10 +43,13 @@ export async function POST(req: NextRequest) {
     const logoUrl = companyProfile.logoUrl
     // SVG not supported by pdf-lib, and relative paths need special handling
     if (logoUrl.endsWith('.svg') || !logoUrl.startsWith('http')) {
-      // Fallback: read logo-dark.png from public directory
+      // Fallback: read brand logo from public directory (only PNG/JPG supported by pdf-lib)
       try {
-        const pngPath = join(process.cwd(), 'public', 'logo-dark.png')
-        const buf = await readFile(pngPath)
+        const brandLogoPath = brand.logo.dark
+        const pngFallback = brandLogoPath.endsWith('.svg')
+          ? join(process.cwd(), 'public', 'logo-dark.png')  // SVG not supported by pdf-lib
+          : join(process.cwd(), 'public', brandLogoPath)
+        const buf = await readFile(pngFallback)
         logoBytes = new Uint8Array(buf)
         logoMimeType = 'image/png'
       } catch { /* no logo available */ }
