@@ -139,12 +139,24 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
-    // Fetch previous state for auto-logging on status change
-    let previousTask: { status: string; title: string; projectId: string | null; timerStartedAt: Date | null; timerUserId: string | null; project: { name: string } | null; priority: string } | null = null
-    if (status !== undefined) {
+    // Fetch previous state for change tracking and auto-logging
+    let previousTask: {
+      status: string; title: string; description: string | null; projectId: string | null;
+      timerStartedAt: Date | null; timerUserId: string | null; project: { name: string } | null;
+      priority: string; dueDate: Date | null; assigneeId: string | null; folderId: string | null;
+      milestoneId: string | null; tags: string[];
+    } | null = null
+    const needsPreviousState = status !== undefined || priority !== undefined || dueDate !== undefined
+      || description !== undefined || title !== undefined || assigneeId !== undefined || assigneeIds !== undefined
+      || projectId !== undefined || folderId !== undefined || milestoneId !== undefined || tags !== undefined
+    if (needsPreviousState) {
       previousTask = await prisma.task.findUnique({
         where: { id: taskId },
-        select: { status: true, title: true, projectId: true, timerStartedAt: true, timerUserId: true, project: { select: { name: true } }, priority: true },
+        select: {
+          status: true, title: true, description: true, projectId: true, timerStartedAt: true,
+          timerUserId: true, project: { select: { name: true } }, priority: true, dueDate: true,
+          assigneeId: true, folderId: true, milestoneId: true, tags: true,
+        },
       })
     }
 
@@ -270,18 +282,36 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Priority/dueDate/description change notification
     if (priority !== undefined || dueDate !== undefined || description !== undefined) {
-      const changes: string[] = []
-      if (priority !== undefined) changes.push('priorita')
-      if (dueDate !== undefined) changes.push('scadenza')
-      if (description !== undefined) changes.push('descrizione')
+      const changeDetails: string[] = []
+      const priorityLabels: Record<string, string> = { LOW: 'Bassa', MEDIUM: 'Media', HIGH: 'Alta', URGENT: 'Urgente' }
 
-      if (changes.length > 0) {
+      if (priority !== undefined && previousTask && priority !== previousTask.priority) {
+        const fromLabel = priorityLabels[previousTask.priority] || previousTask.priority
+        const toLabel = priorityLabels[priority] || priority
+        changeDetails.push(`priorità: ${fromLabel} → ${toLabel}`)
+      } else if (priority !== undefined) {
+        changeDetails.push('priorità')
+      }
+
+      if (dueDate !== undefined && previousTask) {
+        const prevDate = previousTask.dueDate ? previousTask.dueDate.toLocaleDateString('it-IT') : 'nessuna'
+        const newDate = dueDate ? new Date(dueDate).toLocaleDateString('it-IT') : 'nessuna'
+        if (prevDate !== newDate) {
+          changeDetails.push(`scadenza: ${prevDate} → ${newDate}`)
+        }
+      } else if (dueDate !== undefined) {
+        changeDetails.push('scadenza')
+      }
+
+      if (description !== undefined) changeDetails.push('descrizione')
+
+      if (changeDetails.length > 0) {
         batch.add({
           type: 'task_updated',
           title: 'Task modificata',
-          message: `${actorName} ha modificato ${changes.join(', ')} di "${task.title}"`,
+          message: `${actorName} ha modificato ${changeDetails.join(', ')} di "${task.title}"`,
           link: taskLink,
-          metadata: notifMetadata,
+          metadata: { ...notifMetadata, changeDetails },
           projectId: effectiveProjectId ?? undefined,
           groupKey: `task_update:${taskId}`,
           actorName,
@@ -314,6 +344,45 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
+    // Build detailed changes array for activity log
+    const changes: Array<{ field: string; from: unknown; to: unknown }> = []
+    if (previousTask) {
+      if (title !== undefined && title !== previousTask.title) {
+        changes.push({ field: 'title', from: previousTask.title, to: title })
+      }
+      if (description !== undefined && description !== (previousTask.description || '')) {
+        changes.push({ field: 'description', from: previousTask.description ? '...' : null, to: description ? '...' : null })
+      }
+      if (status !== undefined && status !== previousTask.status) {
+        changes.push({ field: 'status', from: previousTask.status, to: status })
+      }
+      if (priority !== undefined && priority !== previousTask.priority) {
+        changes.push({ field: 'priority', from: previousTask.priority, to: priority })
+      }
+      if (dueDate !== undefined) {
+        const prevDate = previousTask.dueDate ? previousTask.dueDate.toISOString().slice(0, 10) : null
+        const newDate = dueDate ? new Date(dueDate).toISOString().slice(0, 10) : null
+        if (prevDate !== newDate) {
+          changes.push({ field: 'dueDate', from: prevDate, to: newDate })
+        }
+      }
+      if (assigneeId !== undefined && assigneeId !== previousTask.assigneeId) {
+        changes.push({ field: 'assigneeId', from: previousTask.assigneeId, to: assigneeId })
+      }
+      if (projectId !== undefined && projectId !== previousTask.projectId) {
+        changes.push({ field: 'projectId', from: previousTask.projectId, to: projectId })
+      }
+      if (folderId !== undefined && folderId !== previousTask.folderId) {
+        changes.push({ field: 'folderId', from: previousTask.folderId, to: folderId })
+      }
+      if (milestoneId !== undefined && milestoneId !== previousTask.milestoneId) {
+        changes.push({ field: 'milestoneId', from: previousTask.milestoneId, to: milestoneId })
+      }
+      if (tags !== undefined && JSON.stringify(tags) !== JSON.stringify(previousTask.tags)) {
+        changes.push({ field: 'tags', from: previousTask.tags, to: tags })
+      }
+    }
+
     logActivity({
       userId: currentUserId!,
       action: 'UPDATE',
@@ -323,6 +392,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         title: task.title,
         projectName: taskProjectName || null,
         changedFields: Object.keys(data).join(','),
+        changes,
       },
     })
 

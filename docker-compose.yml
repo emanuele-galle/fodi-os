@@ -10,10 +10,16 @@ services:
         - NEXT_PUBLIC_BRAND_NAME=${NEXT_PUBLIC_BRAND_NAME:-FODI OS}
         - NEXT_PUBLIC_BRAND_SLUG=${NEXT_PUBLIC_BRAND_SLUG:-fodi}
         - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://os.fodisrl.it}
+        - NEXT_PUBLIC_BRAND_LOGO_DARK=${NEXT_PUBLIC_BRAND_LOGO_DARK:-/brands/fodi/logo-dark.png}
+        - NEXT_PUBLIC_BRAND_LOGO_LIGHT=${NEXT_PUBLIC_BRAND_LOGO_LIGHT:-/brands/fodi/logo-light.png}
         - BRAND_NAME=${BRAND_NAME:-FODI OS}
         - BRAND_SLUG=${BRAND_SLUG:-fodi}
         - BRAND_COMPANY=${BRAND_COMPANY:-FODI S.r.l.}
         - BRAND_DESCRIPTION=${BRAND_DESCRIPTION:-Piattaforma di gestione aziendale}
+        - BRAND_LOGO_DARK=${BRAND_LOGO_DARK:-/brands/fodi/logo-dark.png}
+        - BRAND_LOGO_LIGHT=${BRAND_LOGO_LIGHT:-/brands/fodi/logo-light.png}
+        - BRAND_STORAGE_URL=${BRAND_STORAGE_URL:-https://storage.fodivps2.cloud/fodi-os-assets/tutorials}
+        - NEXT_PUBLIC_BRAND_STORAGE_URL=${NEXT_PUBLIC_BRAND_STORAGE_URL:-https://storage.fodivps2.cloud/fodi-os-assets/tutorials}
     restart: unless-stopped
     env_file:
       - .env.docker
