@@ -8,6 +8,7 @@ const USER_SELECT = {
   id: true,
   firstName: true,
   lastName: true,
+  username: true,
   email: true,
   role: true,
   customRoleId: true,
@@ -71,6 +72,17 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: 'Solo un Admin puo\' modificare un altro Admin' }, { status: 403 })
     }
 
+    // Check username uniqueness if changing
+    if (data.username) {
+      const usernameTaken = await prisma.user.findFirst({
+        where: { username: data.username, id: { not: id } },
+        select: { id: true },
+      })
+      if (usernameTaken) {
+        return NextResponse.json({ success: false, error: 'Username gia\' in uso da un altro utente' }, { status: 409 })
+      }
+    }
+
     // Check email uniqueness if changing
     if (data.email) {
       const emailTaken = await prisma.user.findFirst({
@@ -86,6 +98,7 @@ export async function PATCH(
     const updateData: Record<string, unknown> = {}
     if (data.firstName !== undefined) updateData.firstName = data.firstName.trim()
     if (data.lastName !== undefined) updateData.lastName = data.lastName.trim()
+    if (data.username !== undefined) updateData.username = data.username.trim()
     if (data.email !== undefined) updateData.email = data.email.trim()
     if (data.role !== undefined) updateData.role = data.role
     if (data.isActive !== undefined) updateData.isActive = data.isActive

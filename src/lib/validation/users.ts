@@ -20,6 +20,7 @@ export const updateProfileSchema = z.object({
 export const updateUserSchema = z.object({
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
+  username: z.string().min(3, 'Username minimo 3 caratteri').max(30, 'Username massimo 30 caratteri').regex(/^[a-zA-Z0-9._-]+$/, 'Solo lettere, numeri, punti, trattini e underscore').optional(),
   email: z.string().email('Email non valida').max(255).optional(),
   role: z.enum(VALID_ROLES).optional(),
   customRoleId: z.string().uuid().optional().nullable(),

@@ -41,12 +41,12 @@ export function CashFlowChart() {
   useEffect(() => {
     async function load() {
       try {
-        const [expensesRes] = await Promise.all([
+        const [expensesRes, incomesRes] = await Promise.all([
           fetch('/api/expenses?limit=200').then((r) => r.ok ? r.json() : { items: [] }),
+          fetch('/api/incomes?limit=500').then((r) => r.ok ? r.json() : { items: [] }),
         ])
 
-        // Invoices module removed
-        const invoices: { paidDate: string | null; total: string }[] = []
+        const incomes: { date: string; amount: string }[] = incomesRes.items || []
         const expenses = expensesRes.items || []
 
         const now = new Date()
@@ -57,13 +57,12 @@ export function CashFlowChart() {
           const year = d.getFullYear()
           const month = d.getMonth()
 
-          const entrate = invoices
-            .filter((inv: { paidDate: string | null }) => {
-              if (!inv.paidDate) return false
-              const pd = new Date(inv.paidDate)
-              return pd.getFullYear() === year && pd.getMonth() === month
+          const entrate = incomes
+            .filter((inc) => {
+              const d = new Date(inc.date)
+              return d.getFullYear() === year && d.getMonth() === month
             })
-            .reduce((s: number, inv: { total: string }) => s + parseFloat(inv.total), 0)
+            .reduce((s: number, inc) => s + parseFloat(inc.amount), 0)
 
           const uscite = expenses
             .filter((exp: { date: string }) => {

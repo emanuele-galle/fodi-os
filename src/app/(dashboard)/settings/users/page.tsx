@@ -59,6 +59,7 @@ interface UserItem {
   id: string
   firstName: string
   lastName: string
+  username: string
   email: string
   role: string
   customRoleId: string | null
@@ -167,7 +168,7 @@ function UsersPageContent() {
   const [copiedPassword, setCopiedPassword] = useState(false)
 
   const [editUser, setEditUser] = useState<UserItem | null>(null)
-  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', phone: '', role: '', customRoleId: '', avatarUrl: '' })
+  const [editForm, setEditForm] = useState({ firstName: '', lastName: '', username: '', email: '', phone: '', role: '', customRoleId: '', avatarUrl: '' })
   const [customRoles, setCustomRoles] = useState<CustomRoleOption[]>([])
   const [editTab, setEditTab] = useState<ModalTab>('profile')
   const [editSaving, setEditSaving] = useState(false)
@@ -308,6 +309,7 @@ function UsersPageContent() {
     setEditForm({
       firstName: user.firstName,
       lastName: user.lastName,
+      username: user.username || '',
       email: user.email,
       phone: user.phone || '',
       role: user.role,
@@ -360,6 +362,7 @@ function UsersPageContent() {
         body: JSON.stringify({
           firstName: editForm.firstName,
           lastName: editForm.lastName,
+          username: editForm.username,
           email: editForm.email,
           phone: editForm.phone || null,
           role: editForm.role,
@@ -372,8 +375,8 @@ function UsersPageContent() {
         setEditError(data.error || 'Errore durante il salvataggio')
         return
       }
-      setUsers((prev) => prev.map((u) => (u.id === editUser.id ? { ...u, ...data.user } : u)))
-      setEditUser(data.user)
+      setUsers((prev) => prev.map((u) => (u.id === editUser.id ? { ...u, ...data.data } : u)))
+      setEditUser(data.data)
     } catch {
       setEditError('Errore di connessione')
     } finally {
@@ -855,6 +858,7 @@ function UsersPageContent() {
                       <Input label="Nome" value={editForm.firstName} onChange={(e) => setEditForm((f) => ({ ...f, firstName: e.target.value }))} />
                       <Input label="Cognome" value={editForm.lastName} onChange={(e) => setEditForm((f) => ({ ...f, lastName: e.target.value }))} />
                     </div>
+                    <Input label="Username" value={editForm.username} onChange={(e) => setEditForm((f) => ({ ...f, username: e.target.value }))} placeholder="nome.cognome" />
                     <Input label="Email" type="email" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <Input label="Telefono" type="tel" value={editForm.phone} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))} placeholder="+39 ..." />

@@ -8,12 +8,11 @@ import { BarChart3 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 
-interface Invoice {
-  id: string
-  status: string
-  total: string
-  createdAt: string
-  paidDate: string | null
+interface IncomeItem {
+  amount: string
+  date: string
+  isPaid: boolean
+  dueDate: string | null
 }
 
 interface MonthData {
@@ -52,8 +51,9 @@ export function RevenueChart() {
   useEffect(() => {
     async function load() {
       try {
-        // Invoices module removed - revenue data not available
-        const invoices: Invoice[] = []
+        const res = await fetch('/api/incomes?limit=500')
+        const incomeData = res.ok ? await res.json() : { items: [] }
+        const incomes: IncomeItem[] = incomeData.items || []
 
         const now = new Date()
         const months: MonthData[] = []
@@ -63,22 +63,22 @@ export function RevenueChart() {
           const year = d.getFullYear()
           const month = d.getMonth()
 
-          const monthInvoices = invoices.filter((inv) => {
-            const created = new Date(inv.createdAt)
+          const monthIncomes = incomes.filter((inc) => {
+            const created = new Date(inc.date)
             return created.getFullYear() === year && created.getMonth() === month
           })
 
           months.push({
             month: `${MONTH_LABELS[month]} ${year !== now.getFullYear() ? year : ''}`.trim(),
-            paid: monthInvoices
-              .filter((i) => i.status === 'PAID')
-              .reduce((s, i) => s + parseFloat(i.total), 0),
-            sent: monthInvoices
-              .filter((i) => i.status === 'SENT')
-              .reduce((s, i) => s + parseFloat(i.total), 0),
-            overdue: monthInvoices
-              .filter((i) => i.status === 'OVERDUE')
-              .reduce((s, i) => s + parseFloat(i.total), 0),
+            paid: monthIncomes
+              .filter((i) => i.isPaid)
+              .reduce((s, i) => s + parseFloat(i.amount), 0),
+            sent: monthIncomes
+              .filter((i) => !i.isPaid && (!i.dueDate || new Date(i.dueDate) >= now))
+              .reduce((s, i) => s + parseFloat(i.amount), 0),
+            overdue: monthIncomes
+              .filter((i) => !i.isPaid && i.dueDate != null && new Date(i.dueDate) < now)
+              .reduce((s, i) => s + parseFloat(i.amount), 0),
           })
         }
 

@@ -185,7 +185,7 @@ export default function DashboardPage() {
         const todayStr = now.toISOString().split('T')[0]
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-        const [clientsRes, projectsRes, quotesRes, timeRes, teamRes, expensesRes, ticketsRes, tasksRes, activityRes, doneMonthRes, inProgressRes] = await Promise.all([
+        const [clientsRes, projectsRes, quotesRes, timeRes, teamRes, expensesRes, ticketsRes, tasksRes, activityRes, doneMonthRes, inProgressRes, accountingRes] = await Promise.all([
           fetch('/api/clients?status=ACTIVE&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/projects?status=IN_PROGRESS&limit=1').then((r) => r.ok ? r.json() : null),
           fetch('/api/quotes?status=SENT&limit=1').then((r) => r.ok ? r.json() : null),
@@ -197,6 +197,7 @@ export default function DashboardPage() {
           fetch('/api/activity?limit=10').then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch(`/api/tasks?status=DONE&from=${monthStart}&limit=1`).then((r) => r.ok ? r.json() : null).catch(() => null),
           fetch('/api/tasks?status=IN_PROGRESS&limit=1').then((r) => r.ok ? r.json() : null).catch(() => null),
+          fetch('/api/accounting/dashboard').then((r) => r.ok ? r.json() : null).catch(() => null),
         ])
 
         // Tasks + Activities (fetched in parallel with everything else)
@@ -222,10 +223,13 @@ export default function DashboardPage() {
         setWeekHours(hours)
         setWeekBillableHours(billable)
 
-        const expenses = (expensesRes?.items || [])
+        // Use accounting dashboard for accurate financial data
+        const monthRevenue = accountingRes?.data?.income?.totalGross ?? 0
+        const monthExpenses = accountingRes?.data?.expense?.totalGross ?? (expensesRes?.items || [])
           .filter((e: { date: string }) => e.date >= monthStart)
           .reduce((s: number, e: { amount: string }) => s + parseFloat(e.amount), 0)
-        setTotalExpenses(expenses)
+        setTotalRevenue(monthRevenue)
+        setTotalExpenses(monthExpenses)
 
         const members = teamRes?.items || teamRes?.members || []
         setTeamMembers(Array.isArray(members) ? members : [])
@@ -235,7 +239,7 @@ export default function DashboardPage() {
           { label: 'Progetti in Corso', value: String(projectsRes?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
           { label: 'Preventivi Aperti', value: String(quotesRes?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
           { label: 'Ore Questa Settimana', value: hours.toFixed(1) + 'h', icon: Clock, color: 'text-muted', href: '/time' },
-          { label: 'Fatturato Mese', value: totalRevenue > 0 ? formatCurrency(totalRevenue) : 'N/D', icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
+          { label: 'Fatturato Mese', value: monthRevenue > 0 ? formatCurrency(monthRevenue) : 'N/D', icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
           { label: 'Ticket Aperti', value: String(ticketsRes?.total ?? 0), icon: AlertCircle, color: 'text-destructive', href: '/support' },
         ])
       } catch {

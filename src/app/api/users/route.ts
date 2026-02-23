@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
         id: true,
         firstName: true,
         lastName: true,
+        username: isAdmin,
         email: isAdmin,
         role: true,
         customRoleId: isAdmin,
