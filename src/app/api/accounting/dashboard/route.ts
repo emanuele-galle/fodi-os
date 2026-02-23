@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         select: { amount: true, netAmount: true },
       }),
       prisma.income.findMany({
-        where: { isPaid: false, date: { gte: startDate }, ...entityFilter },
+        where: { isPaid: false, date: { gte: startDate, lte: endDate }, ...entityFilter },
         select: { id: true, clientName: true, date: true, amount: true, category: true },
         orderBy: { date: 'asc' },
         take: 20,
@@ -123,7 +123,10 @@ export async function GET(request: NextRequest) {
           deltaIncome: Math.round((totalIncomeGross - prevTotalIncomeGross) * 100) / 100,
           deltaExpense: Math.round((totalExpenseGross - prevTotalExpenseGross) * 100) / 100,
         },
-        pendingInvoices: pendingIncomes,
+        pendingInvoices: pendingIncomes.map(i => ({
+          ...i,
+          amount: Number(i.amount),
+        })),
       },
     })
   } catch (e) {

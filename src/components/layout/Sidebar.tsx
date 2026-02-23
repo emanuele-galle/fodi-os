@@ -96,7 +96,6 @@ const navigation: NavItem[] = [
     children: [
       { label: 'Panoramica', href: '/erp/panoramica' },
       { label: 'Movimenti', href: '/erp/movimenti' },
-      { label: 'Ricorrenti', href: '/erp/ricorrenti' },
       { label: 'Conti', href: '/erp/accounts' },
       { label: 'Preventivi', href: '/erp/quotes' },
       { label: 'Documenti', href: '/erp/documenti' },
