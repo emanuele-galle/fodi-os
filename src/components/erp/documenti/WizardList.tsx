@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface WizardTemplate {
   id: string
@@ -122,6 +123,14 @@ export function WizardList() {
     if (!categoryFilter) return wizards
     return wizards.filter((w) => w.category === categoryFilter)
   }, [wizards, categoryFilter])
+
+  const { sortKey, sortDir, handleSort, sortIcon } = useTableSort()
+  const getWizardValue = useCallback((item: any, key: string) => {
+    if (key === 'steps') return item._count?.steps ?? 0
+    if (key === 'submissions') return item._count?.submissions ?? 0
+    return item[key]
+  }, [])
+  const sortedWizards = useMemo(() => sortData(filteredWizards, sortKey, sortDir, getWizardValue), [filteredWizards, sortKey, sortDir, getWizardValue])
 
   // Stats computed from the current fetched wizards
   const stats = useMemo(() => {
@@ -425,17 +434,17 @@ export function WizardList() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                    <th className="py-3 pr-4 pl-3 font-medium">Nome</th>
-                    <th className="py-3 pr-4 font-medium">Stato</th>
-                    <th className="py-3 pr-4 font-medium">Categoria</th>
-                    <th className="py-3 pr-4 font-medium text-center">Step</th>
-                    <th className="py-3 pr-4 font-medium text-center">Compilazioni</th>
-                    <th className="py-3 font-medium hidden lg:table-cell">Creato</th>
+                    <th className="py-3 pr-4 pl-3 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('name')}>Nome{sortIcon('name')}</th>
+                    <th className="py-3 pr-4 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('status')}>Stato{sortIcon('status')}</th>
+                    <th className="py-3 pr-4 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('category')}>Categoria{sortIcon('category')}</th>
+                    <th className="py-3 pr-4 font-medium text-center cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('steps')}>Step{sortIcon('steps')}</th>
+                    <th className="py-3 pr-4 font-medium text-center cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('submissions')}>Compilazioni{sortIcon('submissions')}</th>
+                    <th className="py-3 font-medium hidden lg:table-cell cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('createdAt')}>Creato{sortIcon('createdAt')}</th>
                     <th className="py-3 pr-3 font-medium text-right w-20">Azioni</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredWizards.map((w) => (
+                  {sortedWizards.map((w) => (
                     <tr
                       key={w.id}
                       onClick={() => router.push(`/erp/wizards/${w.id}`)}

@@ -1,6 +1,8 @@
 'use client'
 
+import { useMemo } from 'react'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface UserProductivity {
   userId: string
@@ -17,6 +19,13 @@ interface TeamProductivityTableProps {
 }
 
 export function TeamProductivityTable({ data, loading }: TeamProductivityTableProps) {
+  const { sortKey, sortDir, handleSort, sortIcon } = useTableSort()
+
+  const sortedData = useMemo(
+    () => sortData(data, sortKey, sortDir),
+    [data, sortKey, sortDir]
+  )
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -35,11 +44,13 @@ export function TeamProductivityTable({ data, loading }: TeamProductivityTablePr
     )
   }
 
+  const thClass = "py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors"
+
   return (
     <>
       {/* Mobile: card layout */}
       <div className="md:hidden space-y-3">
-        {data.map((user) => {
+        {sortedData.map((user) => {
           const completionPct = user.assigned > 0 ? Math.round((user.completed / user.assigned) * 100) : 0
           return (
             <div key={user.userId} className="rounded-lg border border-border/30 p-3 bg-secondary/10">
@@ -80,15 +91,15 @@ export function TeamProductivityTable({ data, loading }: TeamProductivityTablePr
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/30">
-              <th className="text-left py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider">Membro</th>
-              <th className="text-right py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider">Assegnate</th>
-              <th className="text-right py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider">Completate</th>
-              <th className="text-right py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider">Scadute</th>
-              <th className="text-right py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider">Ore</th>
+              <th className={`text-left ${thClass}`} onClick={() => handleSort('userName')}>Membro{sortIcon('userName')}</th>
+              <th className={`text-right ${thClass}`} onClick={() => handleSort('assigned')}>Assegnate{sortIcon('assigned')}</th>
+              <th className={`text-right ${thClass}`} onClick={() => handleSort('completed')}>Completate{sortIcon('completed')}</th>
+              <th className={`text-right ${thClass}`} onClick={() => handleSort('overdue')}>Scadute{sortIcon('overdue')}</th>
+              <th className={`text-right ${thClass}`} onClick={() => handleSort('hoursLogged')}>Ore{sortIcon('hoursLogged')}</th>
             </tr>
           </thead>
           <tbody>
-            {data.map((user) => {
+            {sortedData.map((user) => {
               const completionPct = user.assigned > 0 ? Math.round((user.completed / user.assigned) * 100) : 0
               return (
                 <tr key={user.userId} className="border-b border-border/20 last:border-0 hover:bg-secondary/30 transition-colors">

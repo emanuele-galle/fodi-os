@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { BookOpen, Download, Search, Filter, AlertCircle, ArrowRightLeft, TrendingUp, TrendingDown } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
 import { generateCSV, downloadCSV } from '@/lib/export-csv'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface JournalEntry {
   id: string
@@ -92,6 +93,13 @@ export function PrimaNota() {
     const timeout = setTimeout(fetchEntries, 300)
     return () => clearTimeout(timeout)
   }, [fetchEntries])
+
+  const { sortKey, sortDir, handleSort, sortIcon } = useTableSort('date')
+
+  const sortedEntries = useMemo(
+    () => sortData(entries, sortKey, sortDir),
+    [entries, sortKey, sortDir]
+  )
 
   const totals = entries.reduce(
     (acc, e) => ({
@@ -232,18 +240,18 @@ export function PrimaNota() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Data</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Tipo</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">N. Fattura</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Descrizione</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Dare</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Avere</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Saldo</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Conto</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('date')}>Data{sortIcon('date')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('type')}>Tipo{sortIcon('type')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('invoiceNumber')}>N. Fattura{sortIcon('invoiceNumber')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('description')}>Descrizione{sortIcon('description')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('debit')}>Dare{sortIcon('debit')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('credit')}>Avere{sortIcon('credit')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('balance')}>Saldo{sortIcon('balance')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('account')}>Conto{sortIcon('account')}</th>
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry) => {
+                {sortedEntries.map((entry) => {
                   const cfg = TYPE_CONFIG[entry.type]
                   return (
                     <tr key={entry.id} className="border-b border-border/10 hover:bg-secondary/8 transition-colors even:bg-secondary/[0.03]">

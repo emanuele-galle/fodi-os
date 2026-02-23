@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { RefreshCw, Plus, AlertCircle, Pause, Play, X, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface Subscription {
   id: string
@@ -94,6 +95,13 @@ export function AbbonamentiContent() {
   }, [statusFilter])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  const { sortKey, sortDir, handleSort, sortIcon } = useTableSort('nextDueDate', 'asc')
+
+  const sortedItems = useMemo(
+    () => sortData(items, sortKey, sortDir),
+    [items, sortKey, sortDir]
+  )
 
   const activeItems = items.filter(i => i.status === 'active')
   const totalMonthly = activeItems.reduce(
@@ -321,17 +329,17 @@ export function AbbonamentiContent() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Provider</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Categoria</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Frequenza</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Importo</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Prossima Scadenza</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Stato</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('provider')}>Provider{sortIcon('provider')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('category')}>Categoria{sortIcon('category')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('frequency')}>Frequenza{sortIcon('frequency')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('amount')}>Importo{sortIcon('amount')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('nextDueDate')}>Prossima Scadenza{sortIcon('nextDueDate')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('status')}>Stato{sortIcon('status')}</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Azioni</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((sub) => (
+                {sortedItems.map((sub) => (
                   <tr key={sub.id} className="border-b border-border/10 hover:bg-secondary/8 transition-colors even:bg-secondary/[0.03]">
                     <td className="px-4 py-3.5">
                       <div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { TrendingUp, Plus, AlertCircle, Pencil, Trash2, Eye, EyeOff, Download } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
 import { generateCSV, downloadCSV } from '@/lib/export-csv'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface BankAccount {
   id: string
@@ -123,6 +124,23 @@ export function EntrateContent() {
       }
     })
   }, [])
+
+  const { sortKey, sortDir, handleSort, sortIcon } = useTableSort('date')
+
+  const getIncomeValue = useCallback((item: Income, key: string): unknown => {
+    switch (key) {
+      case 'bankAccount': return item.bankAccount?.name ?? null
+      case 'businessEntity': return item.businessEntity?.name ?? null
+      case 'net': return computeNet(item.amount, item.vatRate)
+      case 'vat': return computeVat(item.amount, item.vatRate)
+      default: return (item as unknown as Record<string, unknown>)[key]
+    }
+  }, [])
+
+  const sortedIncomes = useMemo(
+    () => sortData(incomes, sortKey, sortDir, getIncomeValue),
+    [incomes, sortKey, sortDir, getIncomeValue]
+  )
 
   const totalAmount = incomes.reduce((s, e) => s + parseFloat(e.amount), 0)
 
@@ -435,28 +453,28 @@ export function EntrateContent() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Data</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Pagato</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Cliente</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Categoria</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('date')}>Data{sortIcon('date')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('isPaid')}>Pagato{sortIcon('isPaid')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('clientName')}>Cliente{sortIcon('clientName')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('category')}>Categoria{sortIcon('category')}</th>
                   {advancedView && (
                     <>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">N° Fattura</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Scadenza</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Conto</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Attività</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">IVA%</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Netto</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">IVA</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('invoiceNumber')}>N° Fattura{sortIcon('invoiceNumber')}</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('dueDate')}>Scadenza{sortIcon('dueDate')}</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('bankAccount')}>Conto{sortIcon('bankAccount')}</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('businessEntity')}>Attività{sortIcon('businessEntity')}</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('vatRate')}>IVA%{sortIcon('vatRate')}</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('net')}>Netto{sortIcon('net')}</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('vat')}>IVA{sortIcon('vat')}</th>
                     </>
                   )}
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Importo</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Note</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('amount')}>Importo{sortIcon('amount')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('notes')}>Note{sortIcon('notes')}</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Azioni</th>
                 </tr>
               </thead>
               <tbody>
-                {incomes.map((inc) => (
+                {sortedIncomes.map((inc) => (
                   <tr key={inc.id} className="border-b border-border/10 hover:bg-secondary/8 transition-colors even:bg-secondary/[0.03]">
                     <td className="px-4 py-3.5">{new Date(inc.date).toLocaleDateString('it-IT')}</td>
                     <td className="px-4 py-3.5">

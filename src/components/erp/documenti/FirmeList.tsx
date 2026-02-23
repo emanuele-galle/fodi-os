@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileSignature, Plus, Search, ChevronLeft, ChevronRight, Send, AlertCircle, X, RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
 import { SignatureStatusBadge } from '@/components/erp/SignatureStatusBadge'
 import { NewSignatureModal } from '@/components/erp/NewSignatureModal'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface SignatureRequest {
   id: string
@@ -56,6 +57,9 @@ export function FirmeList() {
   const limit = 20
 
   const [fetchError, setFetchError] = useState<string | null>(null)
+
+  const { sortKey, sortDir, handleSort, sortIcon } = useTableSort('createdAt')
+  const sortedItems = useMemo(() => sortData(items, sortKey, sortDir), [items, sortKey, sortDir])
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
@@ -225,17 +229,17 @@ export function FirmeList() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                  <th className="py-3 pr-4 pl-3 font-medium">Documento</th>
-                  <th className="py-3 pr-4 font-medium">Tipo</th>
-                  <th className="py-3 pr-4 font-medium">Firmatario</th>
-                  <th className="py-3 pr-4 font-medium">Stato</th>
-                  <th className="py-3 pr-4 font-medium hidden lg:table-cell">Scadenza</th>
-                  <th className="py-3 font-medium hidden lg:table-cell">Creato</th>
+                  <th className="py-3 pr-4 pl-3 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('documentTitle')}>Documento{sortIcon('documentTitle')}</th>
+                  <th className="py-3 pr-4 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('documentType')}>Tipo{sortIcon('documentType')}</th>
+                  <th className="py-3 pr-4 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('signerName')}>Firmatario{sortIcon('signerName')}</th>
+                  <th className="py-3 pr-4 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('status')}>Stato{sortIcon('status')}</th>
+                  <th className="py-3 pr-4 font-medium hidden lg:table-cell cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('expiresAt')}>Scadenza{sortIcon('expiresAt')}</th>
+                  <th className="py-3 font-medium hidden lg:table-cell cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('createdAt')}>Creato{sortIcon('createdAt')}</th>
                   <th className="py-3 pr-3 font-medium text-right w-20">Azioni</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((req) => (
+                {sortedItems.map((req) => (
                   <tr
                     key={req.id}
                     onClick={() => router.push(`/erp/signatures/${req.id}`)}

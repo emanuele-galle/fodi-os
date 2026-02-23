@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileText, Plus, Search, ChevronLeft, ChevronRight, Copy, Trash2, MoreVertical, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface QuoteTemplate {
   id: string
@@ -37,6 +38,14 @@ export function TemplateList() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const limit = 20
+
+  const { sortKey, sortDir, handleSort, sortIcon } = useTableSort()
+  const getTemplateValue = useCallback((item: any, key: string) => {
+    if (key === 'lineItems') return item._count?.lineItems ?? 0
+    if (key === 'quotes') return item._count?.quotes ?? 0
+    return item[key]
+  }, [])
+  const sortedTemplates = useMemo(() => sortData(templates, sortKey, sortDir, getTemplateValue), [templates, sortKey, sortDir, getTemplateValue])
 
   const fetchTemplates = useCallback(async () => {
     setLoading(true)
@@ -179,17 +188,17 @@ export function TemplateList() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">
-                  <th className="py-3 pr-4 pl-3 font-medium">Nome</th>
-                  <th className="py-3 pr-4 font-medium">Tipo</th>
-                  <th className="py-3 pr-4 font-medium">Voci</th>
-                  <th className="py-3 pr-4 font-medium">Preventivi</th>
-                  <th className="py-3 pr-4 font-medium">IVA</th>
-                  <th className="py-3 pr-4 font-medium">Stato</th>
+                  <th className="py-3 pr-4 pl-3 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('name')}>Nome{sortIcon('name')}</th>
+                  <th className="py-3 pr-4 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('isGlobal')}>Tipo{sortIcon('isGlobal')}</th>
+                  <th className="py-3 pr-4 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('lineItems')}>Voci{sortIcon('lineItems')}</th>
+                  <th className="py-3 pr-4 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('quotes')}>Preventivi{sortIcon('quotes')}</th>
+                  <th className="py-3 pr-4 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('defaultTaxRate')}>IVA{sortIcon('defaultTaxRate')}</th>
+                  <th className="py-3 pr-4 font-medium cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('isActive')}>Stato{sortIcon('isActive')}</th>
                   <th className="py-3 font-medium text-right">Azioni</th>
                 </tr>
               </thead>
               <tbody>
-                {templates.map((t) => (
+                {sortedTemplates.map((t) => (
                   <tr
                     key={t.id}
                     className="border-b border-border/50 even:bg-secondary/20 hover:bg-primary/5 transition-colors"

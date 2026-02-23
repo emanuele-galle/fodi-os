@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { TrendingUp, TrendingDown, AlertCircle, Building2, FileWarning } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 import { CategoryBreakdownTable } from '@/components/erp/CategoryBreakdownTable'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 const DonutChart = dynamic(
   () => import('@/components/erp/DonutChart').then(m => ({ default: m.DonutChart })),
@@ -94,6 +95,13 @@ export function MonthlyDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [goalAmount, setGoalAmount] = useState<number | null>(null)
+
+  const { sortKey: piSortKey, sortDir: piSortDir, handleSort: piHandleSort, sortIcon: piSortIcon } = useTableSort('date', 'asc')
+
+  const sortedPendingInvoices = useMemo(
+    () => data?.pendingInvoices ? sortData(data.pendingInvoices, piSortKey, piSortDir) : [],
+    [data?.pendingInvoices, piSortKey, piSortDir]
+  )
 
   /* Load business entities */
   useEffect(() => {
@@ -431,14 +439,14 @@ export function MonthlyDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/30">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase">Cliente</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase">Data</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase">Categoria</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase">Importo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => piHandleSort('clientName')}>Cliente{piSortIcon('clientName')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => piHandleSort('date')}>Data{piSortIcon('date')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => piHandleSort('category')}>Categoria{piSortIcon('category')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => piHandleSort('amount')}>Importo{piSortIcon('amount')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.pendingInvoices.map((inv) => (
+                  {sortedPendingInvoices.map((inv) => (
                     <tr key={inv.id} className="border-b border-border/10 even:bg-secondary/[0.03]">
                       <td className="px-4 py-3 font-medium">{inv.clientName}</td>
                       <td className="px-4 py-3 text-muted">

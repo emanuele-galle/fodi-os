@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { FileCheck, Plus, AlertCircle, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface BankAccount { id: string; name: string }
 interface BusinessEntity { id: string; name: string }
@@ -125,6 +126,13 @@ export function FattureRicorrentiContent() {
     fetch('/api/business-entities').then(r => r.json()).then(d => setBusinessEntities(d.items || []))
     fetch('/api/accounting-categories?type=expense').then(r => r.json()).then(d => setCategories(d.items || []))
   }, [])
+
+  const { sortKey, sortDir, handleSort, sortIcon } = useTableSort('nextDueDate', 'asc')
+
+  const sortedInvoices = useMemo(
+    () => sortData(invoices, sortKey, sortDir),
+    [invoices, sortKey, sortDir]
+  )
 
   // Summary calculations
   const now = new Date()
@@ -360,18 +368,18 @@ export function FattureRicorrentiContent() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Descrizione</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Fornitore</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Importo</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Frequenza</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Ultimo Pag.</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Prossima Scad.</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Stato</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('description')}>Descrizione{sortIcon('description')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('supplierName')}>Fornitore{sortIcon('supplierName')}</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('amount')}>Importo{sortIcon('amount')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('frequency')}>Frequenza{sortIcon('frequency')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('lastPaidDate')}>Ultimo Pag.{sortIcon('lastPaidDate')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('nextDueDate')}>Prossima Scad.{sortIcon('nextDueDate')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('isActive')}>Stato{sortIcon('isActive')}</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Azioni</th>
                 </tr>
               </thead>
               <tbody>
-                {invoices.map((inv) => {
+                {sortedInvoices.map((inv) => {
                   const status = getInvoiceStatus(inv)
                   return (
                     <tr key={inv.id} className="border-b border-border/10 hover:bg-secondary/8 transition-colors even:bg-secondary/[0.03]">

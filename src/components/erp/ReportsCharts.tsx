@@ -1,11 +1,13 @@
 'use client'
 
+import { useMemo } from 'react'
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { formatCurrency } from '@/lib/utils'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface RevenueDataPoint { month: string; revenue: number }
 interface ExpenseDataPoint { category: string; amount: number }
@@ -238,6 +240,9 @@ export function ProfitTrendLine({ data }: { data: ProfitPoint[] }) {
 }
 
 export function TeamPerformanceTable({ data }: { data: TeamMember[] }) {
+  const { sortKey, sortDir, handleSort, sortIcon } = useTableSort('completionRate')
+  const sortedData = useMemo(() => sortData(data, sortKey, sortDir), [data, sortKey, sortDir])
+
   if (data.length === 0) {
     return (
       <Card>
@@ -256,16 +261,16 @@ export function TeamPerformanceTable({ data }: { data: TeamMember[] }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/40">
-                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted uppercase tracking-wider">Membro</th>
-                <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider">Assegnate</th>
-                <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider">Completate</th>
-                <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider">In Ritardo</th>
-                <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider">Ore</th>
-                <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider">Tasso</th>
+                <th className="text-left py-2.5 px-4 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('userName')}>Membro{sortIcon('userName')}</th>
+                <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('assigned')}>Assegnate{sortIcon('assigned')}</th>
+                <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('completed')}>Completate{sortIcon('completed')}</th>
+                <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('overdue')}>In Ritardo{sortIcon('overdue')}</th>
+                <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('hoursLogged')}>Ore{sortIcon('hoursLogged')}</th>
+                <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('completionRate')}>Tasso{sortIcon('completionRate')}</th>
               </tr>
             </thead>
             <tbody>
-              {data.sort((a, b) => b.completionRate - a.completionRate).map((m) => (
+              {sortedData.map((m) => (
                 <tr key={m.userName} className="border-b border-border/20 hover:bg-secondary/30 transition-colors">
                   <td className="py-2.5 px-4 font-medium">{m.userName}</td>
                   <td className="py-2.5 px-3 text-center tabular-nums">{m.assigned}</td>

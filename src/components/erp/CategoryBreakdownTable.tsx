@@ -1,6 +1,8 @@
 'use client'
 
+import { useMemo } from 'react'
 import { formatCurrency } from '@/lib/utils'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface CategoryRow {
   category: string
@@ -20,20 +22,29 @@ export function CategoryBreakdownTable({ data, type }: CategoryBreakdownTablePro
   const totalVat = data.reduce((s, r) => s + r.vat, 0)
   const totalNet = data.reduce((s, r) => s + r.net, 0)
 
+  const { sortKey, sortDir, handleSort, sortIcon } = useTableSort()
+
+  const sortedData = useMemo(
+    () => sortData(data, sortKey, sortDir),
+    [data, sortKey, sortDir]
+  )
+
+  const thClass = "px-4 py-3 text-xs font-medium text-muted uppercase cursor-pointer select-none hover:text-foreground transition-colors"
+
   return (
     <div className="rounded-xl border border-border/20 overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border/30">
-            <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase">Categoria</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase">Lordo</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase">{type === 'income' ? 'IVA' : 'IVA Detr.'}</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase">Netto</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase">%</th>
+            <th className={`${thClass} text-left`} onClick={() => handleSort('category')}>Categoria{sortIcon('category')}</th>
+            <th className={`${thClass} text-right`} onClick={() => handleSort('gross')}>Lordo{sortIcon('gross')}</th>
+            <th className={`${thClass} text-right`} onClick={() => handleSort('vat')}>{type === 'income' ? 'IVA' : 'IVA Detr.'}{sortIcon('vat')}</th>
+            <th className={`${thClass} text-right`} onClick={() => handleSort('net')}>Netto{sortIcon('net')}</th>
+            <th className={`${thClass} text-right`} onClick={() => handleSort('percentage')}>%{sortIcon('percentage')}</th>
           </tr>
         </thead>
         <tbody>
-          {data.map((row, i) => (
+          {sortedData.map((row, i) => (
             <tr key={i} className="border-b border-border/10 even:bg-secondary/[0.03]">
               <td className="px-4 py-3">{row.category}</td>
               <td className="px-4 py-3 text-right tabular-nums font-medium">{formatCurrency(row.gross)}</td>

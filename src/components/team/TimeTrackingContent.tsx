@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { useTableSort, sortData } from '@/hooks/useTableSort'
 
 interface WorkSession {
   id: string
@@ -70,6 +71,14 @@ export function TimeTrackingContent() {
   const [users, setUsers] = useState<UserOption[]>([])
   const [clockingOut, setClockingOut] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+
+  const { sortKey: tsSortKey, sortDir: tsSortDir, handleSort: tsHandleSort, sortIcon: tsSortIcon } = useTableSort('clockIn')
+
+  const getSessionValue = useCallback((item: any, key: string) => {
+    if (key === 'userName') return `${item.user?.firstName ?? ''} ${item.user?.lastName ?? ''}`
+    if (key === 'duration') return item.liveDurationMins || item.durationMins || 0
+    return item[key]
+  }, [])
 
   const fetchSessions = useCallback(async () => {
     setLoading(true)
@@ -356,15 +365,15 @@ export function TimeTrackingContent() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-muted bg-secondary/40">
-                      <th className="py-2.5 px-4 font-medium text-xs uppercase tracking-wider">Utente</th>
-                      <th className="py-2.5 pr-4 font-medium text-xs uppercase tracking-wider">Entrata</th>
-                      <th className="py-2.5 pr-4 font-medium text-xs uppercase tracking-wider">Uscita</th>
-                      <th className="py-2.5 pr-4 font-medium text-xs uppercase tracking-wider">Durata</th>
-                      <th className="py-2.5 pr-4 font-medium text-xs uppercase tracking-wider w-24">Stato</th>
+                      <th className="py-2.5 px-4 font-medium text-xs uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => tsHandleSort('userName')}>Utente{tsSortIcon('userName')}</th>
+                      <th className="py-2.5 pr-4 font-medium text-xs uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => tsHandleSort('clockIn')}>Entrata{tsSortIcon('clockIn')}</th>
+                      <th className="py-2.5 pr-4 font-medium text-xs uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => tsHandleSort('clockOut')}>Uscita{tsSortIcon('clockOut')}</th>
+                      <th className="py-2.5 pr-4 font-medium text-xs uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => tsHandleSort('duration')}>Durata{tsSortIcon('duration')}</th>
+                      <th className="py-2.5 pr-4 font-medium text-xs uppercase tracking-wider w-24 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => tsHandleSort('isActive')}>Stato{tsSortIcon('isActive')}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {group.sessions.map((s) => (
+                    {sortData(group.sessions, tsSortKey, tsSortDir, getSessionValue).map((s) => (
                       <tr key={s.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors even:bg-secondary/20">
                         <td className="py-2.5 px-4 font-medium">
                           <div className="flex items-center gap-2">
