@@ -4,11 +4,20 @@ import { useState, useCallback } from 'react'
 
 type SortDir = 'asc' | 'desc'
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}/
+
 function compare(aVal: unknown, bVal: unknown, dir: SortDir): number {
   if (aVal == null && bVal == null) return 0
   if (aVal == null) return 1
   if (bVal == null) return -1
 
+  // Date strings (ISO format) — compare lexicographically (YYYY-MM-DD sorts correctly)
+  if (typeof aVal === 'string' && typeof bVal === 'string' && ISO_DATE_RE.test(aVal) && ISO_DATE_RE.test(bVal)) {
+    const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+    return dir === 'asc' ? cmp : -cmp
+  }
+
+  // Numbers (including numeric strings like amounts)
   const aNum = typeof aVal === 'number' ? aVal : typeof aVal === 'string' ? parseFloat(aVal) : NaN
   const bNum = typeof bVal === 'number' ? bVal : typeof bVal === 'string' ? parseFloat(bVal) : NaN
 
