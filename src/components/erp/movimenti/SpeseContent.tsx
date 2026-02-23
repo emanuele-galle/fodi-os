@@ -246,7 +246,10 @@ export function SpeseContent() {
         setEditItem(null)
         fetchExpenses()
       } else {
-        setFormError(editItem ? 'Errore nella modifica della spesa' : 'Errore nella creazione della spesa')
+        const errData = await res.json().catch(() => null)
+        const details = errData?.details ? Object.values(errData.details).flat().join(', ') : ''
+        const base = editItem ? 'Errore nella modifica della spesa' : 'Errore nella creazione della spesa'
+        setFormError(details ? `${base}: ${details}` : base)
       }
     } catch {
       setFormError('Errore di rete')
