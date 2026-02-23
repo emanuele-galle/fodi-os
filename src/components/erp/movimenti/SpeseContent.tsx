@@ -213,7 +213,7 @@ export function SpeseContent() {
     body.category = (form.get('category') as string || '').trim()
     body.amount = parseFloat(form.get('amount') as string || '0')
     body.vatRate = (form.get('vatRate') as string || '22').trim()
-    body.deductibility = parseInt(form.get('deductibility') as string || '100', 10)
+    body.deductibility = (form.get('deductibility') as string || '100').trim()
     body.invoiceNumber = (form.get('invoiceNumber') as string || '').trim() || null
     body.dueDate = (form.get('dueDate') as string || '').trim() || null
     body.paymentMethod = (form.get('paymentMethod') as string || '').trim() || null

@@ -5,7 +5,7 @@ export const createExpenseSchema = z.object({
   description: z.string().min(1, 'Descrizione obbligatoria'),
   amount: z.number().min(0, 'Importo non valido'),
   date: z.string().date('Data non valida'),
-  receipt: z.string().optional(),
+  receipt: z.string().optional().nullable(),
   clientId: z.string().uuid().optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
 })
