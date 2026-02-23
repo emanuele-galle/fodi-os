@@ -55,7 +55,7 @@ function setSecurityHeaders(response: NextResponse, isHtmlPage = false): NextRes
   const scriptSrc = process.env.NODE_ENV === 'production'
     ? "'self' 'unsafe-inline'"
     : "'self' 'unsafe-inline' 'unsafe-eval'"
-  response.headers.set('Content-Security-Policy', `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://apis.google.com https://accounts.google.com https://*.googleusercontent.com https://*.googleapis.com; frame-src 'self' https://meet.google.com https://accounts.google.com https://drive.google.com; media-src 'self' blob: https://storage.fodivps2.cloud; worker-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`)
+  response.headers.set('Content-Security-Policy', `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://apis.google.com https://accounts.google.com https://*.googleusercontent.com https://*.googleapis.com; frame-src 'self' https://meet.google.com https://accounts.google.com https://drive.google.com; media-src 'self' blob: https://storage.fodivps2.cloud https://storage.fodivps1.cloud; worker-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`)
   return response
 }
 
