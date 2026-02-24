@@ -37,12 +37,6 @@ services:
       - traefik.http.routers.${APP_NAME:-fodi-os}.tls.certresolver=${APP_TLS_RESOLVER:-}
       - traefik.http.routers.${APP_NAME:-fodi-os}.middlewares=${APP_NAME:-fodi-os}-retry@docker,security-headers@file
       - traefik.http.routers.${APP_NAME:-fodi-os}.service=${APP_NAME:-fodi-os}
-      # Preview router
-      - traefik.http.routers.${APP_NAME:-fodi-os}-preview.rule=Host(`${APP_PREVIEW_DOMAIN:-fodi-os.fodivps2.cloud}`)
-      - traefik.http.routers.${APP_NAME:-fodi-os}-preview.entrypoints=websecure
-      - traefik.http.routers.${APP_NAME:-fodi-os}-preview.tls.certresolver=letsencrypt
-      - traefik.http.routers.${APP_NAME:-fodi-os}-preview.middlewares=${APP_NAME:-fodi-os}-retry@docker,security-headers@file
-      - traefik.http.routers.${APP_NAME:-fodi-os}-preview.service=${APP_NAME:-fodi-os}
       # Retry middleware
       - traefik.http.middlewares.${APP_NAME:-fodi-os}-retry.retry.attempts=3
       - traefik.http.middlewares.${APP_NAME:-fodi-os}-retry.retry.initialinterval=200ms
