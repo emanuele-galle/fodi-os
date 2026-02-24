@@ -19,6 +19,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ColorSwatches } from '@/components/ui/ColorSwatches'
 import {
   DndContext,
   DragOverlay,
@@ -1173,15 +1174,10 @@ export default function ProjectsPage() {
             <Input label="Budget (EUR)" type="number" step="0.01" value={projectForm.values.budgetAmount} onChange={(e) => projectForm.setValue('budgetAmount', e.target.value)} />
             <Input label="Ore Previste" type="number" value={projectForm.values.budgetHours} onChange={(e) => projectForm.setValue('budgetHours', e.target.value)} />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Colore</label>
-            <input
-              type="color"
-              value={projectForm.values.color}
-              onChange={(e) => projectForm.setValue('color', e.target.value)}
-              className="h-10 w-20 rounded-md border border-border cursor-pointer"
-            />
-          </div>
+          <ColorSwatches
+            value={projectForm.values.color}
+            onChange={(color) => projectForm.setValue('color', color)}
+          />
           {formError && (
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {formError}

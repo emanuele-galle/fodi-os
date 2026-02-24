@@ -17,6 +17,7 @@ import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/utils'
+import { ColorSwatches, WORKSPACE_DEFAULT_COLORS } from '@/components/ui/ColorSwatches'
 
 interface Project {
   id: string
@@ -92,6 +93,7 @@ export default function InternalPage() {
   const [formError, setFormError] = useState('')
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([])
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null)
+  const [formColor, setFormColor] = useState('#6366F1')
 
   const fetchData = async () => {
     setFetchError(null)
@@ -134,7 +136,7 @@ export default function InternalPage() {
     setSubmitting(true)
     setFormError('')
     const form = new FormData(e.currentTarget)
-    const body: Record<string, unknown> = { isInternal: true }
+    const body: Record<string, unknown> = { isInternal: true, color: formColor }
     form.forEach((v, k) => {
       if (typeof v === 'string' && v.trim()) body[k] = v.trim()
     })
@@ -151,6 +153,7 @@ export default function InternalPage() {
       })
       if (res.ok) {
         setFormError('')
+        setFormColor('#6366F1')
         setModalOpen(false)
         setLoading(true)
         fetchData()
@@ -482,6 +485,13 @@ export default function InternalPage() {
               { value: '', label: 'Seleziona area' },
               ...workspaces.filter(w => w.slug !== 'clienti').map(w => ({ value: w.id, label: w.name })),
             ]}
+            onChange={(e) => {
+              const ws = workspaces.find(w => w.id === e.target.value)
+              if (ws) {
+                const defaultColor = WORKSPACE_DEFAULT_COLORS[ws.slug] || ws.color
+                setFormColor(defaultColor)
+              }
+            }}
           />
           <div className="space-y-1">
             <label className="block text-sm font-medium text-foreground">Descrizione</label>
@@ -506,6 +516,7 @@ export default function InternalPage() {
             <Input name="endDate" label="Data Fine" type="date" />
           </div>
           <Input name="budgetHours" label="Ore Previste" type="number" />
+          <ColorSwatches value={formColor} onChange={setFormColor} />
           {formError && (
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {formError}

@@ -16,6 +16,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { MultiUserSelect } from '@/components/ui/MultiUserSelect'
+import { ColorSwatches } from '@/components/ui/ColorSwatches'
 import { Skeleton } from '@/components/ui/Skeleton'
 import dynamic from 'next/dynamic'
 
@@ -912,15 +913,10 @@ export default function ProjectDetailPage() {
               onChange={(e) => setEditForm((f) => ({ ...f, budgetHours: e.target.value }))}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Colore</label>
-            <input
-              type="color"
-              value={editForm.color || '#3b82f6'}
-              onChange={(e) => setEditForm((f) => ({ ...f, color: e.target.value }))}
-              className="h-10 w-20 rounded-md border border-border cursor-pointer"
-            />
-          </div>
+          <ColorSwatches
+            value={editForm.color || '#3B82F6'}
+            onChange={(color) => setEditForm((f) => ({ ...f, color }))}
+          />
           {editError && (
             <p className="text-sm text-destructive">{editError}</p>
           )}
