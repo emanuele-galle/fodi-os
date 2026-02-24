@@ -1,17 +1,38 @@
+import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
+import { jwtVerify } from 'jose'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { getAuthenticatedClient, getDriveService } from '@/lib/google'
 import type { Role } from '@/generated/prisma/client'
 
+const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
+
 /**
  * GET /api/auth/google/health
  * Returns the health status of the admin's Google Drive connection.
  * Admin-only endpoint.
+ *
+ * Note: this route is under /api/auth/ which the middleware treats as public,
+ * so x-user-role is not set. We read the role directly from the JWT cookie.
  */
 export async function GET(request: NextRequest) {
   try {
-    const role = request.headers.get('x-user-role') as Role
+    let role = request.headers.get('x-user-role') as Role | null
+
+    if (!role) {
+      const token = request.cookies.get(brand.cookies.access)?.value
+      if (!token) {
+        return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+      }
+      try {
+        const { payload } = await jwtVerify(token, ACCESS_SECRET)
+        role = payload.role as Role
+      } catch {
+        return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+      }
+    }
+
     requirePermission(role, 'admin', 'read')
 
     const status: {
