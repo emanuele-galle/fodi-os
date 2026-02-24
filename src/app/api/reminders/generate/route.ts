@@ -4,9 +4,12 @@ import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
-    // Protetto dal middleware JWT - solo utenti autenticati
+    // Auth: JWT (ADMIN role) or CRON_SECRET
+    const auth = request.headers.get('authorization')
+    const cronSecret = process.env.CRON_SECRET
+    const isCron = cronSecret && auth === `Bearer ${cronSecret}`
     const userRole = request.headers.get('x-user-role')
-    if (userRole !== 'ADMIN') {
+    if (!isCron && userRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Non autorizzato' }, { status: 403 })
     }
 

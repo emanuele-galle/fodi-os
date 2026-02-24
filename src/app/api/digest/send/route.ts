@@ -269,14 +269,18 @@ a{text-decoration:none}
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 
 export async function POST(req: NextRequest) {
-  const DIGEST_SECRET = process.env.DIGEST_SECRET
-  if (!DIGEST_SECRET) {
-    console.error('[digest] DIGEST_SECRET env var not configured')
+  const CRON_SECRET = process.env.CRON_SECRET
+  if (!CRON_SECRET) {
+    console.error('[digest] CRON_SECRET env var not configured')
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   }
 
-  const secret = req.headers.get('x-digest-secret')
-  if (!secret || secret !== DIGEST_SECRET) {
+  // Support both Authorization: Bearer and legacy x-digest-secret header
+  const authHeader = req.headers.get('authorization')
+  const bearerSecret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+  const legacySecret = req.headers.get('x-digest-secret')
+  const secret = bearerSecret || legacySecret
+  if (!secret || secret !== CRON_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

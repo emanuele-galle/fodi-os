@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { UserPlus, Search, Plus, Edit, Trash2, ArrowRightLeft, ChevronLeft, ChevronRight, AlertCircle, Mail, Phone, Building2, UserCheck } from 'lucide-react'
+import { UserPlus, Search, Plus, Edit, Trash2, ArrowRightLeft, ChevronLeft, ChevronRight, AlertCircle, Mail, Phone, Building2, UserCheck, Download } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -256,6 +256,31 @@ export default function LeadsPage() {
 
   const convertLead = convertLeadId ? leads.find((l) => l.id === convertLeadId) : null
 
+  function exportCSV() {
+    if (leads.length === 0) return
+    const rows = [['Nome', 'Email', 'Azienda', 'Telefono', 'Fonte', 'Stato', 'Assegnato a', 'Creato il']]
+    for (const l of leads) {
+      rows.push([
+        l.name,
+        l.email,
+        l.company || '',
+        l.phone || '',
+        l.source,
+        LEAD_STATUS_LABELS[l.status] || l.status,
+        l.assignee ? `${l.assignee.firstName} ${l.assignee.lastName}` : '',
+        new Date(l.createdAt).toLocaleDateString('it-IT'),
+      ])
+    }
+    const csv = rows.map((r) => r.map((v) => `"${v}"`).join(',')).join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `leads-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const handleQuickStatusChange = async (leadId: string, newStatus: string) => {
     try {
       const res = await fetch(`/api/leads/${leadId}`, {
@@ -280,10 +305,18 @@ export default function LeadsPage() {
             <p className="text-xs md:text-sm text-muted mt-0.5">Gestione contatti in fase di acquisizione</p>
           </div>
         </div>
-        <Button onClick={() => { setModalOpen(true); setFormError(null) }} size="sm">
-          <Plus className="h-4 w-4 mr-1.5" />
-          Nuovo Lead
-        </Button>
+        <div className="flex items-center gap-2">
+          {leads.length > 0 && (
+            <Button size="sm" variant="outline" onClick={exportCSV}>
+              <Download className="h-4 w-4 mr-1.5" />
+              Esporta CSV
+            </Button>
+          )}
+          <Button onClick={() => { setModalOpen(true); setFormError(null) }} size="sm">
+            <Plus className="h-4 w-4 mr-1.5" />
+            Nuovo Lead
+          </Button>
+        </div>
       </div>
 
       {/* Stats Bar */}

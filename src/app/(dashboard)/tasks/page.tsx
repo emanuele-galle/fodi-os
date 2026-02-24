@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Flame,
   Search,
+  Download,
 } from 'lucide-react'
 import {
   DndContext,
@@ -342,6 +343,31 @@ export default function TasksPage() {
     setModalOpen(true)
   }
 
+  function exportCSV() {
+    const rows: string[][] = [['Titolo', 'Stato', 'Priorità', 'Progetto', 'Assegnato a', 'Scadenza', 'Creato il']]
+    for (const t of tasks) {
+      rows.push([
+        t.title,
+        STATUS_LABELS[t.status] || t.status,
+        PRIORITY_LABELS[t.priority] || t.priority,
+        t.project?.name || '',
+        t.assignments && t.assignments.length > 0
+          ? t.assignments.map(a => `${a.user.firstName} ${a.user.lastName}`).join(', ')
+          : t.assignee ? `${t.assignee.firstName} ${t.assignee.lastName}` : '',
+        t.dueDate ? new Date(t.dueDate).toLocaleDateString('it-IT') : '',
+        new Date(t.createdAt).toLocaleDateString('it-IT'),
+      ])
+    }
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `tasks-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const stats = [
     { label: 'Totale', value: totalTasks, icon: Target, color: 'text-primary' },
     { label: 'In Corso', value: inProgressCount, icon: Clock, color: 'text-accent' },
@@ -396,6 +422,15 @@ export default function TasksPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          <Tooltip content="Esporta CSV">
+            <button
+              onClick={exportCSV}
+              disabled={tasks.length === 0}
+              className="p-2.5 md:p-2 rounded-md border border-border text-muted hover:text-foreground hover:bg-secondary/60 transition-colors touch-manipulation disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+          </Tooltip>
           <div className="flex rounded-md border border-border overflow-hidden">
             <Tooltip content="Vista lista">
               <button

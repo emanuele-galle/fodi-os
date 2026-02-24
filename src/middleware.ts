@@ -98,13 +98,13 @@ export async function middleware(request: NextRequest) {
       return setSecurityHeaders(NextResponse.next())
     }
 
-    // Allow POST /api/digest/send without auth (cron with secret header)
-    if (pathname === '/api/digest/send' && request.method === 'POST') {
-      return setSecurityHeaders(NextResponse.next())
-    }
-
-    // Allow POST /api/team/reports/generate without auth (cron with secret header)
-    if (pathname === '/api/team/reports/generate' && request.method === 'POST') {
+    // Allow cron endpoints without JWT auth (they verify CRON_SECRET internally)
+    if (request.method === 'POST' && (
+      pathname === '/api/digest/send' ||
+      pathname === '/api/tasks/check-deadlines' ||
+      pathname === '/api/team/reports/generate' ||
+      pathname === '/api/reminders/generate'
+    )) {
       return setSecurityHeaders(NextResponse.next())
     }
 
