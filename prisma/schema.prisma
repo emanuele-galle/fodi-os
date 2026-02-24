@@ -580,6 +580,7 @@ model TaskDependency {
 model Folder {
   id          String   @id @default(uuid())
   projectId   String
+  parentId    String?
   name        String
   description String?
   color       String   @default("#6366F1")
@@ -588,11 +589,14 @@ model Folder {
   updatedAt   DateTime @updatedAt
 
   project      Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent       Folder?              @relation("FolderSubfolders", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Folder[]             @relation("FolderSubfolders")
   tasks        Task[]
   attachments  ProjectAttachment[]
   chatChannels ChatChannel[]
 
   @@index([projectId])
+  @@index([parentId])
   @@map("folders")
 }
 

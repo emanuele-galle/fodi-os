@@ -9,6 +9,7 @@ const createFolderSchema = z.object({
   name: z.string().min(1, 'Nome cartella obbligatorio').max(200),
   description: z.string().optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Colore non valido').default('#6366F1'),
+  parentId: z.string().uuid('Parent ID non valido').optional(),
 })
 
 const updateFolderSchema = z.object({
@@ -17,6 +18,7 @@ const updateFolderSchema = z.object({
   description: z.string().optional().nullable(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   sortOrder: z.number().int().min(0).optional(),
+  parentId: z.string().uuid('Parent ID non valido').optional().nullable(),
 })
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
@@ -27,9 +29,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { projectId } = await params
 
     const folders = await prisma.folder.findMany({
-      where: { projectId },
+      where: { projectId, parentId: null },
       include: {
         _count: { select: { tasks: true } },
+        children: {
+          include: {
+            _count: { select: { tasks: true } },
+            children: {
+              include: {
+                _count: { select: { tasks: true } },
+              },
+              orderBy: { sortOrder: 'asc' },
+            },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
       },
       orderBy: { sortOrder: 'asc' },
     })
@@ -60,14 +74,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
+    // Validate parentId belongs to same project and enforce max 2 levels
+    if (parsed.data.parentId) {
+      const parent = await prisma.folder.findUnique({
+        where: { id: parsed.data.parentId },
+        select: { projectId: true, parentId: true },
+      })
+      if (!parent || parent.projectId !== projectId) {
+        return NextResponse.json({ error: 'Cartella parent non trovata o non appartiene al progetto' }, { status: 400 })
+      }
+      if (parent.parentId) {
+        return NextResponse.json({ error: 'Massimo 2 livelli di profondità consentiti' }, { status: 400 })
+      }
+    }
+
     const maxOrder = await prisma.folder.aggregate({
-      where: { projectId },
+      where: { projectId, parentId: parsed.data.parentId || null },
       _max: { sortOrder: true },
     })
 
     const folder = await prisma.folder.create({
       data: {
         projectId,
+        parentId: parsed.data.parentId || null,
         name: parsed.data.name,
         description: parsed.data.description,
         color: parsed.data.color,
@@ -75,6 +104,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
       include: {
         _count: { select: { tasks: true } },
+        children: {
+          include: {
+            _count: { select: { tasks: true } },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
       },
     })
 
@@ -119,12 +154,39 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       )
     }
 
-    const { id, ...data } = parsed.data
+    const { id, parentId, ...data } = parsed.data
+
+    // Validate parentId if provided
+    if (parentId !== undefined) {
+      if (parentId === id) {
+        return NextResponse.json({ error: 'Una cartella non può essere sottocartella di se stessa' }, { status: 400 })
+      }
+      if (parentId !== null) {
+        const parent = await prisma.folder.findUnique({
+          where: { id: parentId },
+          select: { projectId: true, parentId: true },
+        })
+        if (!parent || parent.projectId !== projectId) {
+          return NextResponse.json({ error: 'Cartella parent non trovata o non appartiene al progetto' }, { status: 400 })
+        }
+        if (parent.parentId) {
+          return NextResponse.json({ error: 'Massimo 2 livelli di profondità consentiti' }, { status: 400 })
+        }
+      }
+      (data as Record<string, unknown>).parentId = parentId
+    }
+
     const folder = await prisma.folder.update({
       where: { id, projectId },
       data,
       include: {
         _count: { select: { tasks: true } },
+        children: {
+          include: {
+            _count: { select: { tasks: true } },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
       },
     })
 
@@ -150,19 +212,26 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'ID cartella obbligatorio' }, { status: 400 })
     }
 
-    // Unlink tasks and attachments from folder before deleting
+    // Get all child folder IDs
+    const children = await prisma.folder.findMany({
+      where: { parentId: id },
+      select: { id: true },
+    })
+    const allFolderIds = [id, ...children.map((c) => c.id)]
+
+    // Unlink tasks and attachments from folder and children before deleting
     await prisma.task.updateMany({
-      where: { folderId: id },
+      where: { folderId: { in: allFolderIds } },
       data: { folderId: null },
     })
     await prisma.projectAttachment.updateMany({
-      where: { folderId: id },
+      where: { folderId: { in: allFolderIds } },
       data: { folderId: null },
     })
 
     // Archive associated chat channels instead of deleting
     await prisma.chatChannel.updateMany({
-      where: { folderId: id },
+      where: { folderId: { in: allFolderIds } },
       data: { isArchived: true, folderId: null },
     })
 

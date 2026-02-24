@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { MultiUserSelect } from '@/components/ui/MultiUserSelect'
-import { Trash2, Send, Paperclip, FileText, Image, Download, X, UserCheck, ArrowRightLeft, FolderOpen, History } from 'lucide-react'
+import { Trash2, Send, Paperclip, FileText, Image, Download, X, UserCheck, ArrowRightLeft, FolderOpen, History, ListChecks, Plus, CheckCircle2, Circle } from 'lucide-react'
 import { TaskTimer } from '@/components/tasks/TaskTimer'
 import { TaskDependencies } from '@/components/tasks/TaskDependencies'
 
@@ -46,6 +46,15 @@ interface TaskAssignment {
   assignedAt: string
 }
 
+interface Subtask {
+  id: string
+  title: string
+  status: string
+  priority: string
+  assignee: TaskUser | null
+  assignments?: { id: string; role: string; user: TaskUser }[]
+}
+
 interface TaskDetail {
   id: string
   title: string
@@ -64,6 +73,8 @@ interface TaskDetail {
   tags: string[]
   timerStartedAt: string | null
   timerUserId: string | null
+  subtasks?: Subtask[]
+  _count?: { subtasks: number }
 }
 
 interface TeamMember {
@@ -129,6 +140,11 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
   const [moveProjectId, setMoveProjectId] = useState<string>('')
   const [moveFolderId, setMoveFolderId] = useState<string>('')
   const [moving, setMoving] = useState(false)
+  const [subtasks, setSubtasks] = useState<Subtask[]>([])
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
+  const [addingSubtask, setAddingSubtask] = useState(false)
+  const [subtaskDetailId, setSubtaskDetailId] = useState<string | null>(null)
+  const [subtaskDetailOpen, setSubtaskDetailOpen] = useState(false)
 
   const isAdmin = userRole === 'ADMIN'
 
@@ -198,14 +214,26 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     } catch {}
   }, [taskId])
 
+  const fetchSubtasks = useCallback(async () => {
+    if (!taskId) return
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/subtasks`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.items) setSubtasks(data.items)
+      }
+    } catch {}
+  }, [taskId])
+
   useEffect(() => {
     if (open && taskId) {
       fetchTask()
       fetchAttachments()
       fetchActivity()
+      fetchSubtasks()
       setConfirmDelete(false)
     }
-  }, [open, taskId, fetchTask, fetchAttachments, fetchActivity])
+  }, [open, taskId, fetchTask, fetchAttachments, fetchActivity, fetchSubtasks])
 
   // Scroll to specific comment when opened from notification deep link
   useEffect(() => {
@@ -412,6 +440,44 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
+  async function handleAddSubtask() {
+    if (!taskId || !newSubtaskTitle.trim() || addingSubtask) return
+    setAddingSubtask(true)
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/subtasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newSubtaskTitle.trim() }),
+      })
+      if (res.ok) {
+        setNewSubtaskTitle('')
+        fetchSubtasks()
+        fetchTask() // refresh _count
+      }
+    } finally {
+      setAddingSubtask(false)
+    }
+  }
+
+  async function handleToggleSubtask(subtaskId: string, currentStatus: string) {
+    const newStatus = currentStatus === 'DONE' ? 'TODO' : 'DONE'
+    // Optimistic update
+    setSubtasks((prev) => prev.map((s) => s.id === subtaskId ? { ...s, status: newStatus } : s))
+    try {
+      const res = await fetch(`/api/tasks/${subtaskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, boardColumn: newStatus === 'DONE' ? 'done' : 'todo' }),
+      })
+      if (!res.ok) {
+        // Revert on failure
+        setSubtasks((prev) => prev.map((s) => s.id === subtaskId ? { ...s, status: currentStatus } : s))
+      }
+    } catch {
+      setSubtasks((prev) => prev.map((s) => s.id === subtaskId ? { ...s, status: currentStatus } : s))
+    }
+  }
+
   return (
     <Modal open={open} onClose={onClose} title="Dettaglio Task" size="xl" preventAccidentalClose={editForm.isDirty}>
       {loading || !task ? (
@@ -606,6 +672,113 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
           <div className="border-t border-border pt-4">
             <TaskDependencies taskId={task.id} />
           </div>
+
+          {/* Subtasks section */}
+          <div className="border-t border-border pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium flex items-center gap-1.5">
+                <ListChecks className="h-4 w-4" />
+                Subtask
+                {subtasks.length > 0 && (
+                  <span className="text-xs text-muted">
+                    ({subtasks.filter((s) => s.status === 'DONE').length}/{subtasks.length})
+                  </span>
+                )}
+              </h4>
+            </div>
+
+            {subtasks.length > 0 && (
+              <>
+                {/* Progress bar */}
+                <div className="mb-3">
+                  <div className="h-1.5 bg-secondary/60 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-300 rounded-full"
+                      style={{ width: `${Math.round((subtasks.filter((s) => s.status === 'DONE').length / subtasks.length) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Subtask list */}
+                <div className="space-y-1 mb-3 max-h-48 overflow-y-auto">
+                  {subtasks.map((sub) => (
+                    <div
+                      key={sub.id}
+                      className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-secondary/30 transition-colors group"
+                    >
+                      <button
+                        onClick={() => handleToggleSubtask(sub.id, sub.status)}
+                        className="flex-shrink-0"
+                      >
+                        {sub.status === 'DONE' ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-muted hover:text-primary transition-colors" />
+                        )}
+                      </button>
+                      <span
+                        onClick={() => { setSubtaskDetailId(sub.id); setSubtaskDetailOpen(true) }}
+                        className={`flex-1 text-sm cursor-pointer hover:text-primary transition-colors truncate ${
+                          sub.status === 'DONE' ? 'line-through text-muted' : ''
+                        }`}
+                      >
+                        {sub.title}
+                      </span>
+                      {sub.assignee && (
+                        <Avatar
+                          name={`${sub.assignee.firstName} ${sub.assignee.lastName}`}
+                          src={sub.assignee.avatarUrl}
+                          size="xs"
+                        />
+                      )}
+                      <Badge status={sub.priority} className="text-[10px] px-1.5 py-0">
+                        {sub.priority === 'LOW' ? 'B' : sub.priority === 'MEDIUM' ? 'M' : sub.priority === 'HIGH' ? 'A' : 'U'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Quick add subtask */}
+            <div className="flex items-center gap-2">
+              <Plus className="h-4 w-4 text-muted flex-shrink-0" />
+              <input
+                type="text"
+                value={newSubtaskTitle}
+                onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleAddSubtask()
+                  }
+                }}
+                placeholder="Aggiungi subtask..."
+                className="flex-1 h-9 md:h-8 rounded-md border border-border bg-transparent px-3 text-base md:text-sm placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
+              />
+              {newSubtaskTitle.trim() && (
+                <Button
+                  size="sm"
+                  onClick={handleAddSubtask}
+                  disabled={addingSubtask}
+                  className="h-8"
+                >
+                  {addingSubtask ? '...' : 'Aggiungi'}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Subtask detail modal (recursive) */}
+          {subtaskDetailId && (
+            <TaskDetailModal
+              taskId={subtaskDetailId}
+              open={subtaskDetailOpen}
+              onClose={() => { setSubtaskDetailOpen(false); setSubtaskDetailId(null) }}
+              onUpdated={() => { fetchSubtasks(); fetchTask(); onUpdated() }}
+              userRole={userRole}
+            />
+          )}
 
           {/* Comments section */}
           <div className="border-t border-border pt-4">

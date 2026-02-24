@@ -57,6 +57,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           orderBy: { createdAt: 'desc' },
           include: { uploadedBy: { select: { id: true, firstName: true, lastName: true } } },
         },
+        _count: {
+          select: { subtasks: true },
+        },
       },
     })
 
@@ -130,7 +133,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         { status: 400 }
       )
     }
-    const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, projectId, folderId, milestoneId, dueDate, estimatedHours, sortOrder, tags } = parsed.data
+    const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, projectId, folderId, milestoneId, dueDate, estimatedHours, sortOrder, tags, parentId } = parsed.data
 
     // Only ADMIN/DIR_TECNICO can move tasks between projects
     if (projectId !== undefined) {
@@ -206,6 +209,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (estimatedHours !== undefined) data.estimatedHours = estimatedHours
     if (sortOrder !== undefined) data.sortOrder = sortOrder
     if (tags !== undefined) data.tags = tags
+    if (parentId !== undefined) data.parentId = parentId
 
     const task = await prisma.task.update({
       where: { id: taskId },

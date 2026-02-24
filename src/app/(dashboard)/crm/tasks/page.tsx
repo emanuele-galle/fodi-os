@@ -248,7 +248,7 @@ export default function CrmTasksPage() {
         ...editForm,
         clientId: editForm.clientId || null,
         assigneeId: editForm.assigneeId || null,
-        dueDate: editForm.dueDate || null,
+        dueDate: editForm.dueDate ? new Date(editForm.dueDate).toISOString() : null,
       }
       const res = await fetch(`/api/tasks/${editTaskId}`, {
         method: 'PATCH',

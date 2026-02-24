@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
     const skip = (page - 1) * limit
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { parentId: null }
 
     if (search && search.trim().length >= 2) {
       where.title = { contains: search.trim(), mode: 'insensitive' }
@@ -108,6 +108,12 @@ export async function GET(request: NextRequest) {
       where.projectId = null
     }
 
+    // Allow fetching subtasks explicitly
+    const includeSubtasks = searchParams.get('includeSubtasks')
+    if (includeSubtasks === 'true') {
+      delete where.parentId
+    }
+
     const [items, total] = await Promise.all([
       prisma.task.findMany({
         where,
@@ -134,7 +140,7 @@ export async function GET(request: NextRequest) {
             select: { id: true, companyName: true },
           },
           _count: {
-            select: { comments: true },
+            select: { comments: true, subtasks: true },
           },
         },
       }),
@@ -170,7 +176,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { title, description, projectId, milestoneId, assigneeId, assigneeIds, priority, boardColumn, dueDate, estimatedHours, tags, isPersonal, clientId, taskType } = parsed.data
+    const { title, description, projectId, milestoneId, assigneeId, assigneeIds, priority, boardColumn, dueDate, estimatedHours, tags, isPersonal, clientId, taskType, parentId } = parsed.data
 
     // Default: se nessun assegnatario specificato, assegna al creatore
     const effectiveAssigneeId = assigneeId || (assigneeIds.length > 0 ? assigneeIds[0] : userId)
@@ -182,6 +188,7 @@ export async function POST(request: NextRequest) {
         projectId: projectId || null,
         milestoneId: milestoneId || null,
         clientId: clientId || null,
+        parentId: parentId || null,
         assigneeId: effectiveAssigneeId,
         creatorId: userId,
         priority,

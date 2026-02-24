@@ -85,7 +85,7 @@ interface Task {
   estimatedHours?: number | null
   timerStartedAt: string | null
   timerUserId: string | null
-  _count?: { comments: number }
+  _count?: { comments: number; subtasks: number }
 }
 
 const STATUS_OPTIONS = [
@@ -708,6 +708,12 @@ function TaskBadges({ task, activeTab, userId }: { task: Task; activeTab: TabKey
         <span className="inline-flex items-center gap-0.5 text-xs text-muted">
           <Clock className="h-3 w-3" />
           {task.estimatedHours}h
+        </span>
+      )}
+      {task._count && task._count.subtasks > 0 && (
+        <span className="inline-flex items-center gap-0.5 text-xs text-muted">
+          <ListTodo className="h-3 w-3" />
+          {task._count.subtasks}
         </span>
       )}
     </>

@@ -16,6 +16,7 @@ export const createTaskSchema = z.object({
   estimatedHours: z.number().min(0).optional(),
   tags: z.array(z.string()).default([]),
   isPersonal: z.boolean().optional(),
+  parentId: z.string().uuid('Parent Task ID non valido').optional(),
 })
 
 export const updateTaskSchema = z.object({
@@ -34,6 +35,7 @@ export const updateTaskSchema = z.object({
   sortOrder: z.number().int().min(0).optional(),
   tags: z.array(z.string()).optional(),
   isPersonal: z.boolean().optional(),
+  parentId: z.string().uuid('Parent Task ID non valido').optional().nullable(),
 })
 
 export const createTimeEntrySchema = z.object({

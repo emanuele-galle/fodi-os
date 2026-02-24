@@ -181,7 +181,7 @@ export default function ProjectDetailPage() {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false)
   const [taskDetailId, setTaskDetailId] = useState<string | null>(null)
   const [taskDetailOpen, setTaskDetailOpen] = useState(false)
-  const [folders, setFolders] = useState<{ id: string; name: string; description: string | null; color: string; sortOrder: number; _count?: { tasks: number } }[]>([])
+  const [folders, setFolders] = useState<{ id: string; name: string; description: string | null; color: string; sortOrder: number; parentId?: string | null; _count?: { tasks: number }; children?: { id: string; name: string; description: string | null; color: string; sortOrder: number; _count?: { tasks: number } }[] }[]>([])
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false)
   const [memberUserIds, setMemberUserIds] = useState<string[]>([])
@@ -470,14 +470,25 @@ export default function ProjectDetailPage() {
     )
   }
 
-  const folderMap = Object.fromEntries(folders.map((f) => [f.id, f]))
+  // Build folder map including children for task label lookups
+  const folderMap: Record<string, { id: string; name: string; color: string }> = {}
+  for (const f of folders) {
+    folderMap[f.id] = f
+    for (const c of (f.children ?? [])) {
+      folderMap[c.id] = c
+    }
+  }
 
   const allProjectTasks = (project.tasks || []).map((t) => {
     const f = t.folderId ? folderMap[t.folderId] : null
     return f ? { ...t, folderName: f.name, folderColor: f.color } : t
   })
-  const allTasks = selectedFolderId
-    ? allProjectTasks.filter((t) => t.folderId === selectedFolderId)
+  // When a parent folder is selected, also include tasks from its children
+  const selectedFolderIds = selectedFolderId
+    ? [selectedFolderId, ...(folders.find((f) => f.id === selectedFolderId)?.children ?? []).map((c) => c.id)]
+    : null
+  const allTasks = selectedFolderIds
+    ? allProjectTasks.filter((t) => t.folderId && selectedFolderIds.includes(t.folderId))
     : allProjectTasks
   const doneTasks = allTasks.filter((t) => t.status === 'DONE').length
   const totalEstimated = allTasks.reduce((s, t) => s + (t.estimatedHours || 0), 0)
