@@ -153,15 +153,22 @@ export async function POST(
       data: message,
     })
 
-    // Badge update for other members (increment unread chat count)
+    // Badge update for other members (count actual unread messages, not just channels)
     for (const memberId of memberUserIds.filter((id) => id !== userId)) {
-      const unreadChannels = await prisma.$queryRaw<[{ count: bigint }]>`
-        SELECT COUNT(*) as count FROM "chat_members" cm
-        JOIN "chat_channels" cc ON cc.id = cm."channelId"
-        WHERE cm."userId" = ${memberId}
-          AND (cm."lastReadAt" IS NULL OR cc."updatedAt" > cm."lastReadAt")
+      const unreadMessages = await prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COALESCE(SUM(msg_count), 0) as count FROM (
+          SELECT COUNT(msg.id) as msg_count
+          FROM "chat_members" cm
+          JOIN "chat_channels" cc ON cc.id = cm."channelId"
+          LEFT JOIN "chat_messages" msg ON msg."channelId" = cc.id
+            AND msg."deletedAt" IS NULL
+            AND (cm."lastReadAt" IS NULL OR msg."createdAt" > cm."lastReadAt")
+          WHERE cm."userId" = ${memberId}
+            AND cc."isArchived" = false
+          GROUP BY cc.id
+        ) sub
       `
-      sendBadgeUpdate(memberId, { chat: Number(unreadChannels[0]?.count ?? 0) })
+      sendBadgeUpdate(memberId, { chat: Number(unreadMessages[0]?.count ?? 0) })
     }
 
     // Push notification for offline members (no active SSE connection)

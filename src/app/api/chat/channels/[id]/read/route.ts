@@ -29,13 +29,21 @@ export async function POST(
     })
 
     // Send updated chat badge count for the reading user
-    const unreadChannels = await prisma.$queryRaw<[{ count: bigint }]>`
-      SELECT COUNT(*) as count FROM "chat_members" cm
-      JOIN "chat_channels" cc ON cc.id = cm."channelId"
-      WHERE cm."userId" = ${userId}
-        AND (cm."lastReadAt" IS NULL OR cc."updatedAt" > cm."lastReadAt")
+    // Count actual unread messages (not just channels with updatedAt > lastReadAt)
+    const unreadMessages = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COALESCE(SUM(msg_count), 0) as count FROM (
+        SELECT COUNT(msg.id) as msg_count
+        FROM "chat_members" cm
+        JOIN "chat_channels" cc ON cc.id = cm."channelId"
+        LEFT JOIN "chat_messages" msg ON msg."channelId" = cc.id
+          AND msg."deletedAt" IS NULL
+          AND (cm."lastReadAt" IS NULL OR msg."createdAt" > cm."lastReadAt")
+        WHERE cm."userId" = ${userId}
+          AND cc."isArchived" = false
+        GROUP BY cc.id
+      ) sub
     `
-    sendBadgeUpdate(userId, { chat: Number(unreadChannels[0]?.count ?? 0) })
+    sendBadgeUpdate(userId, { chat: Number(unreadMessages[0]?.count ?? 0) })
 
     return NextResponse.json({ success: true, lastReadAt: now.toISOString() })
   } catch (e) {
