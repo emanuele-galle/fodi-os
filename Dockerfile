@@ -47,6 +47,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN DATABASE_URL="$DATABASE_URL" npx prisma generate
 RUN npm run build
 
+# Prisma CLI (minimal install for migrate deploy only)
+FROM base AS prisma-cli
+WORKDIR /prisma-cli
+RUN echo '{"private":true}' > package.json && npm install prisma@7.4.1 && rm -rf /root/.npm /tmp/*
+
 # Runner
 FROM base AS runner
 WORKDIR /app
@@ -66,8 +71,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # nodemailer is loaded via dynamic require() so standalone doesn't auto-include it
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/nodemailer ./node_modules/nodemailer
 
+# Prisma migrate deploy: self-contained directory with CLI + schema + migrations + config
+COPY --from=builder --chown=nextjs:nodejs /app/prisma /app/prisma-cli/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.docker.js /app/prisma-cli/prisma.config.js
+COPY --from=prisma-cli --chown=nextjs:nodejs /prisma-cli/node_modules /app/prisma-cli/node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/docker-entrypoint.sh ./docker-entrypoint.sh
+
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+CMD ["sh", "./docker-entrypoint.sh"]
