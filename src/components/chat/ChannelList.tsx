@@ -11,9 +11,11 @@ interface ChannelItem {
   name: string
   type: string
   memberCount: number
+  memberUserIds?: string[]
   lastMessage: {
     content: string
     authorName: string
+    authorId?: string
     createdAt: string
   } | null
   hasUnread: boolean
@@ -27,6 +29,7 @@ interface TeamMember {
   avatarUrl: string | null
   role: string
   lastLoginAt: string | null
+  lastActiveAt: string | null
 }
 
 interface ChannelListProps {
@@ -71,10 +74,11 @@ const ROLE_LABELS: Record<string, string> = {
   CLIENT: 'Client',
 }
 
-function isRecentlyActive(lastLoginAt: string | null): boolean {
-  if (!lastLoginAt) return false
-  const diff = Date.now() - new Date(lastLoginAt).getTime()
-  return diff < 30 * 60 * 1000
+function isRecentlyActive(member: TeamMember): boolean {
+  const timestamp = member.lastActiveAt || member.lastLoginAt
+  if (!timestamp) return false
+  const diff = Date.now() - new Date(timestamp).getTime()
+  return diff < 5 * 60 * 1000
 }
 
 export function ChannelList({ channels, selectedId, onSelect, onNewChannel, teamMembers = [], currentUserId, onStartDM }: ChannelListProps) {
@@ -90,25 +94,13 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
   const directChannels = filtered.filter(ch => ch.type === 'DIRECT')
   const regularChannels = filtered.filter(ch => ch.type !== 'DIRECT')
 
-  // Build a map of DM channel by member name for quick lookup
-  const dmByMemberName = new Map<string, ChannelItem>()
-  for (const dm of directChannels) {
-    dmByMemberName.set(dm.name.toLowerCase(), dm)
-  }
-
-  // Find DM for a member
+  // Find DM for a member using memberUserIds (exact match)
   function findDmForMember(member: TeamMember): ChannelItem | undefined {
-    const fullName = `${member.firstName} ${member.lastName}`.toLowerCase()
-    for (const dm of directChannels) {
-      if (dm.name.toLowerCase().includes(fullName) || fullName.includes(dm.name.toLowerCase())) {
-        return dm
-      }
-    }
-    return undefined
+    return directChannels.find(dm => dm.memberUserIds?.includes(member.id))
   }
 
-  const onlineMembers = teamMembers.filter((m) => isRecentlyActive(m.lastLoginAt) && m.id !== currentUserId)
-  const offlineMembers = teamMembers.filter((m) => !isRecentlyActive(m.lastLoginAt) && m.id !== currentUserId)
+  const onlineMembers = teamMembers.filter((m) => isRecentlyActive(m) && m.id !== currentUserId)
+  const offlineMembers = teamMembers.filter((m) => !isRecentlyActive(m) && m.id !== currentUserId)
   const onlineCount = onlineMembers.length
 
   // Filter members by search
@@ -185,6 +177,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                   const dm = findDmForMember(member)
                   const isSelected = dm ? dm.id === selectedId : false
                   const unread = dm && !isSelected ? (dm.unreadCount || 0) : 0
+                  const isOwnLastMsg = dm?.lastMessage?.authorId === currentUserId
 
                   return (
                     <button
@@ -224,6 +217,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                             'text-[11px] truncate mt-0.5',
                             unread > 0 ? 'text-muted/70' : 'text-muted/45'
                           )}>
+                            {isOwnLastMsg && <span className="font-medium">Tu: </span>}
                             {dm.lastMessage.content}
                           </p>
                         ) : (
@@ -239,6 +233,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                   const dm = findDmForMember(member)
                   const isSelected = dm ? dm.id === selectedId : false
                   const unread = dm && !isSelected ? (dm.unreadCount || 0) : 0
+                  const isOwnLastMsg = dm?.lastMessage?.authorId === currentUserId
 
                   return (
                     <button
@@ -276,6 +271,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                         </div>
                         {dm?.lastMessage ? (
                           <p className="text-[11px] truncate mt-0.5 text-muted/45">
+                            {isOwnLastMsg && <span className="font-medium">Tu: </span>}
                             {dm.lastMessage.content}
                           </p>
                         ) : (

@@ -17,9 +17,11 @@ interface ChannelItem {
   name: string
   type: string
   memberCount: number
+  memberUserIds?: string[]
   lastMessage: {
     content: string
     authorName: string
+    authorId?: string
     createdAt: string
   } | null
   hasUnread: boolean
@@ -47,6 +49,7 @@ interface TeamMember {
   avatarUrl: string | null
   role: string
   lastLoginAt: string | null
+  lastActiveAt: string | null
 }
 
 interface ReplyTo {
@@ -460,6 +463,29 @@ export default function ChatPage() {
   const selectedChannel = channels.find((c) => c.id === selectedId)
   const typingNames = Array.from(typingUsers.values()).map((u) => u.name.split(' ')[0])
 
+  // Find the other member in a DM for online status
+  const dmOtherMember = selectedChannel?.type === 'DIRECT'
+    ? teamMembers.find(m => selectedChannel.memberUserIds?.includes(m.id) && m.id !== currentUserId)
+    : null
+  const dmOtherOnline = dmOtherMember
+    ? (() => {
+        const ts = dmOtherMember.lastActiveAt || dmOtherMember.lastLoginAt
+        if (!ts) return false
+        return Date.now() - new Date(ts).getTime() < 5 * 60 * 1000
+      })()
+    : false
+  const dmLastSeen = dmOtherMember
+    ? (() => {
+        const ts = dmOtherMember.lastActiveAt || dmOtherMember.lastLoginAt
+        if (!ts) return null
+        const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 60000)
+        if (diff < 1) return 'Ultimo accesso ora'
+        if (diff < 60) return `Ultimo accesso ${diff} min fa`
+        if (diff < 1440) return `Ultimo accesso ${Math.floor(diff / 60)} ore fa`
+        return `Ultimo accesso ${Math.floor(diff / 1440)} giorni fa`
+      })()
+    : null
+
   return (
     <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-4rem)] h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-4rem)] -mx-4 -mt-4 -mb-20 md:-mx-6 md:-mt-6 md:-mb-6 relative overflow-hidden">
       {/* Left panel - Channel list */}
@@ -517,7 +543,9 @@ export default function ChatPage() {
                         </span>
                       )
                       : selectedChannel?.type === 'DIRECT'
-                        ? 'Messaggio diretto'
+                        ? dmOtherOnline
+                          ? <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />Online</span>
+                          : <span className="text-muted-foreground/50">{dmLastSeen || 'Messaggio diretto'}</span>
                         : `${selectedChannel?.memberCount || 0} membri`
                     }
                   </span>

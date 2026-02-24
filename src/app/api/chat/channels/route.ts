@@ -19,8 +19,7 @@ export async function GET(request: NextRequest) {
       include: {
         _count: { select: { members: true } },
         members: {
-          where: { userId },
-          select: { lastReadAt: true },
+          select: { userId: true, lastReadAt: true },
         },
         messages: {
           orderBy: { createdAt: 'desc' },
@@ -30,7 +29,7 @@ export async function GET(request: NextRequest) {
             id: true,
             content: true,
             createdAt: true,
-            author: { select: { firstName: true, lastName: true } },
+            author: { select: { id: true, firstName: true, lastName: true } },
           },
         },
       },
@@ -40,7 +39,7 @@ export async function GET(request: NextRequest) {
     // Count unread messages per channel
     const unreadCounts = await Promise.all(
       channels.map(async (ch) => {
-        const lastReadAt = ch.members[0]?.lastReadAt
+        const lastReadAt = ch.members.find(m => m.userId === userId)?.lastReadAt
         if (!lastReadAt) {
           // Never read: count all messages
           return prisma.chatMessage.count({
@@ -64,10 +63,12 @@ export async function GET(request: NextRequest) {
         description: ch.description,
         type: ch.type,
         memberCount: ch._count.members,
+        ...(ch.type === 'DIRECT' ? { memberUserIds: ch.members.map(m => m.userId) } : {}),
         lastMessage: lastMessage
           ? {
               content: lastMessage.content.slice(0, 100),
               authorName: `${lastMessage.author.firstName} ${lastMessage.author.lastName}`,
+              authorId: lastMessage.author.id,
               createdAt: lastMessage.createdAt,
             }
           : null,

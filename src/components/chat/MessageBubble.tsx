@@ -50,6 +50,8 @@ interface MessageBubbleProps {
   currentUserId?: string
   userRole?: string
   readReceipts?: ReadReceipt[]
+  showAvatar?: boolean
+  showName?: boolean
   onEdit?: (messageId: string, newContent: string) => void
   onDelete?: (messageId: string) => void
   onReply?: (message: { id: string; content: string; authorName: string }) => void
@@ -172,7 +174,7 @@ function ReadReceiptIndicator({ receipts }: { receipts?: ReadReceipt[] }) {
   )
 }
 
-export function MessageBubble({ message, isOwn, currentUserId, userRole, readReceipts, onEdit, onDelete, onReply, onReact }: MessageBubbleProps) {
+export function MessageBubble({ message, isOwn, currentUserId, userRole, readReceipts, showAvatar = true, showName = true, onEdit, onDelete, onReply, onReact }: MessageBubbleProps) {
   const isSystemAdmin = userRole === 'ADMIN'
   const canDelete = isOwn || isSystemAdmin
   const authorName = `${message.author.firstName} ${message.author.lastName}`
@@ -254,19 +256,24 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
     const fileReactions = parseReactions(message.metadata)
     return (
       <div className={cn(
-        'flex gap-3 px-4 md:px-6 py-1 group hover:bg-secondary/30 transition-colors duration-100',
-        isOwn && 'flex-row-reverse'
+        'flex gap-3 px-4 md:px-6 group hover:bg-secondary/30 transition-colors duration-100',
+        isOwn && 'flex-row-reverse',
+        showName ? 'py-1' : 'py-0.5'
       )}>
-        {!isOwn ? (
+        {showAvatar ? (
           <Avatar src={message.author.avatarUrl} name={authorName} size="sm" className="flex-shrink-0 mt-0.5 ring-1 ring-border/50" />
         ) : (
           <div className="w-8 flex-shrink-0" />
         )}
         <div className={cn('max-w-[85%] md:max-w-[75%] min-w-0', isOwn && 'flex flex-col items-end')}>
-          <div className={cn('flex items-baseline gap-2 mb-0.5', isOwn && 'flex-row-reverse')}>
-            {!isOwn && <span className="text-[12px] font-semibold text-foreground/80">{authorName}</span>}
-            <span className="text-[10px] text-muted-foreground/40 font-medium">{time}</span>
-          </div>
+          {showName && (
+            <div className={cn('flex items-baseline gap-2 mb-0.5', isOwn && 'flex-row-reverse')}>
+              <span className={cn('text-[12px] font-semibold', isOwn ? 'text-primary/60' : 'text-foreground/80')}>
+                {isOwn ? 'Tu' : authorName}
+              </span>
+              <span className="text-[10px] text-muted-foreground/40 font-medium">{time}</span>
+            </div>
+          )}
           <div
             className="relative"
             onTouchStart={handleTouchStart}
@@ -373,10 +380,11 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
 
   return (
     <div className={cn(
-      'flex gap-3 px-4 md:px-6 py-1 group hover:bg-secondary/30 transition-colors duration-100',
-      isOwn && 'flex-row-reverse'
+      'flex gap-3 px-4 md:px-6 group hover:bg-secondary/30 transition-colors duration-100',
+      isOwn && 'flex-row-reverse',
+      showName ? 'py-1' : 'py-0.5'
     )}>
-      {!isOwn ? (
+      {showAvatar ? (
         <Avatar
           src={message.author.avatarUrl}
           name={authorName}
@@ -387,19 +395,19 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
         <div className="w-8 flex-shrink-0" />
       )}
       <div className={cn('max-w-[85%] md:max-w-[75%] min-w-0', isOwn && 'flex flex-col items-end')}>
-        <div className={cn('flex items-baseline gap-2 mb-0.5', isOwn && 'flex-row-reverse')}>
-          {!isOwn && (
-            <span className="text-[12px] font-semibold text-foreground/80">
-              {authorName}
+        {showName && (
+          <div className={cn('flex items-baseline gap-2 mb-0.5', isOwn && 'flex-row-reverse')}>
+            <span className={cn('text-[12px] font-semibold', isOwn ? 'text-primary/60' : 'text-foreground/80')}>
+              {isOwn ? 'Tu' : authorName}
             </span>
-          )}
-          <span className="text-[10px] text-muted-foreground/40 font-medium">
-            {time}
-          </span>
-          {message.editedAt && (
-            <span className="text-[10px] text-muted-foreground/30 italic">(modificato)</span>
-          )}
-        </div>
+            <span className="text-[10px] text-muted-foreground/40 font-medium">
+              {time}
+            </span>
+            {message.editedAt && (
+              <span className="text-[10px] text-muted-foreground/30 italic">(modificato)</span>
+            )}
+          </div>
+        )}
         {/* Reply quote */}
         {typeof meta?.replyToContent === 'string' && meta.replyToContent && (
           <div className={cn(

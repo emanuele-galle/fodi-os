@@ -227,36 +227,47 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
             <span className="text-xs text-muted font-medium">{group.date}</span>
             <div className="flex-1 border-t border-border/10" />
           </div>
-          {group.messages.map((msg) => (
-            <div key={msg.id} className={cn('flex items-start', selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN') && 'pl-2')}>
-              {selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN') && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onToggleSelection?.(msg.id) }}
-                  className={cn(
-                    'flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center transition-colors mr-1 mt-3',
-                    selectedMessages?.has(msg.id)
-                      ? 'bg-primary border-primary text-white'
-                      : 'border-border hover:border-primary/50'
-                  )}
-                >
-                  {selectedMessages?.has(msg.id) && <Check className="h-3 w-3" />}
-                </button>
-              )}
-              <div className="flex-1 min-w-0">
-                <MessageBubble
-                  message={msg}
-                  isOwn={msg.author.id === currentUserId}
-                  currentUserId={currentUserId}
-                  userRole={userRole}
-                  readReceipts={getReadReceipts(msg)}
-                  onEdit={onEditMessage}
-                  onDelete={onDeleteMessage}
-                  onReply={onReply}
-                  onReact={onReact}
-                />
+          {group.messages.map((msg, msgIdx) => {
+            const prevMsg = msgIdx > 0 ? group.messages[msgIdx - 1] : null
+            const sameAuthor = prevMsg && prevMsg.author.id === msg.author.id && prevMsg.type !== 'SYSTEM'
+            const withinTimeWindow = prevMsg && (new Date(msg.createdAt).getTime() - new Date(prevMsg.createdAt).getTime()) < 5 * 60 * 1000
+            const isGrouped = sameAuthor && withinTimeWindow
+            const showAvatar = !isGrouped
+            const showName = !isGrouped
+
+            return (
+              <div key={msg.id} className={cn('flex items-start', selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN') && 'pl-2')}>
+                {selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN') && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleSelection?.(msg.id) }}
+                    className={cn(
+                      'flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center transition-colors mr-1 mt-3',
+                      selectedMessages?.has(msg.id)
+                        ? 'bg-primary border-primary text-white'
+                        : 'border-border hover:border-primary/50'
+                    )}
+                  >
+                    {selectedMessages?.has(msg.id) && <Check className="h-3 w-3" />}
+                  </button>
+                )}
+                <div className="flex-1 min-w-0">
+                  <MessageBubble
+                    message={msg}
+                    isOwn={msg.author.id === currentUserId}
+                    currentUserId={currentUserId}
+                    userRole={userRole}
+                    readReceipts={getReadReceipts(msg)}
+                    showAvatar={showAvatar}
+                    showName={showName}
+                    onEdit={onEditMessage}
+                    onDelete={onDeleteMessage}
+                    onReply={onReply}
+                    onReact={onReact}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       ))}
 
