@@ -8,7 +8,7 @@ import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import {
   FolderKanban, Plus, Search, ChevronLeft, ChevronRight, Building2, AlertCircle,
   LayoutGrid, List, Columns3, Download, MoreVertical, Copy, Archive, Trash2, Pencil,
-  FolderOpen, CheckCircle2, Clock, AlertTriangle, ArrowUpDown, Euro,
+  FolderOpen, CheckCircle2, Clock, AlertTriangle, ArrowUpDown, Euro, ChevronUp, ChevronDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -55,7 +55,8 @@ interface ClientOption {
 }
 
 type ViewMode = 'grid' | 'table' | 'kanban'
-type SortField = 'name' | 'createdAt' | 'endDate' | 'priority'
+type SortField = 'name' | 'createdAt' | 'endDate' | 'priority' | 'client' | 'status' | 'budget'
+type SortDirection = 'asc' | 'desc'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Tutti gli stati' },
@@ -91,6 +92,9 @@ const SORT_OPTIONS = [
   { value: 'createdAt', label: 'Data creazione' },
   { value: 'endDate', label: 'Scadenza' },
   { value: 'priority', label: 'Priorita' },
+  { value: 'client', label: 'Cliente' },
+  { value: 'status', label: 'Stato' },
+  { value: 'budget', label: 'Budget' },
 ]
 
 const STATUS_COLORS: Record<string, string> = {
@@ -199,6 +203,7 @@ export default function ProjectsPage() {
   const [priorityFilter, setPriorityFilter] = useState('')
   const [clientFilter, setClientFilter] = useState('')
   const [sortField, setSortField] = useState<SortField>('name')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
@@ -330,26 +335,45 @@ export default function ProjectsPage() {
       result = result.filter((p) => p.client?.companyName === clientFilter)
     }
     // Sort
+    const dir = sortDirection === 'asc' ? 1 : -1
     result.sort((a, b) => {
+      let cmp = 0
       switch (sortField) {
         case 'name':
-          return a.name.localeCompare(b.name, 'it')
+          cmp = a.name.localeCompare(b.name, 'it')
+          break
         case 'createdAt':
-          return (a.startDate || '').localeCompare(b.startDate || '')
+          cmp = (a.startDate || '').localeCompare(b.startDate || '')
+          break
         case 'endDate': {
-          if (!a.endDate && !b.endDate) return 0
-          if (!a.endDate) return 1
-          if (!b.endDate) return -1
-          return a.endDate.localeCompare(b.endDate)
+          if (!a.endDate && !b.endDate) cmp = 0
+          else if (!a.endDate) cmp = 1
+          else if (!b.endDate) cmp = -1
+          else cmp = a.endDate.localeCompare(b.endDate)
+          break
         }
         case 'priority':
-          return (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99)
+          cmp = (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99)
+          break
+        case 'client':
+          cmp = (a.client?.companyName || '').localeCompare(b.client?.companyName || '', 'it')
+          break
+        case 'status':
+          cmp = a.status.localeCompare(b.status)
+          break
+        case 'budget': {
+          const ba = parseFloat(a.budgetAmount || '0')
+          const bb = parseFloat(b.budgetAmount || '0')
+          cmp = ba - bb
+          break
+        }
         default:
-          return 0
+          cmp = 0
       }
+      return cmp * dir
     })
     return result
-  }, [projects, priorityFilter, clientFilter, sortField])
+  }, [projects, priorityFilter, clientFilter, sortField, sortDirection])
 
   // Kanban: group allProjects by status (use allProjects for kanban to show all)
   const kanbanProjects = useMemo(() => {
@@ -721,19 +745,47 @@ export default function ProjectsPage() {
     )
   }
 
+  function handleColumnSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  function SortableHeader({ field, label, className }: { field: SortField; label: string; className?: string }) {
+    const isActive = sortField === field
+    return (
+      <th
+        className={`py-3 px-4 font-medium text-muted cursor-pointer select-none hover:text-foreground transition-colors ${className || ''}`}
+        onClick={() => handleColumnSort(field)}
+      >
+        <div className="flex items-center gap-1">
+          {label}
+          {isActive ? (
+            sortDirection === 'asc' ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />
+          ) : (
+            <ArrowUpDown className="h-3 w-3 opacity-30" />
+          )}
+        </div>
+      </th>
+    )
+  }
+
   function renderTableView() {
     return (
       <div className="overflow-x-auto rounded-xl border border-border/40 bg-card">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/30 text-left">
-              <th className="py-3 px-4 font-medium text-muted">Nome</th>
-              <th className="py-3 px-4 font-medium text-muted hidden sm:table-cell">Cliente</th>
-              <th className="py-3 px-4 font-medium text-muted">Stato</th>
-              <th className="py-3 px-4 font-medium text-muted hidden md:table-cell">Priorita</th>
+              <SortableHeader field="name" label="Nome" />
+              <SortableHeader field="client" label="Cliente" className="hidden sm:table-cell" />
+              <SortableHeader field="status" label="Stato" />
+              <SortableHeader field="priority" label="Priorita" className="hidden md:table-cell" />
               <th className="py-3 px-4 font-medium text-muted hidden md:table-cell">Progresso</th>
-              <th className="py-3 px-4 font-medium text-muted hidden lg:table-cell">Scadenza</th>
-              <th className="py-3 px-4 font-medium text-muted hidden lg:table-cell">Budget</th>
+              <SortableHeader field="endDate" label="Scadenza" className="hidden lg:table-cell" />
+              <SortableHeader field="budget" label="Budget" className="hidden lg:table-cell" />
               <th className="py-3 px-4 text-right font-medium text-muted">Azioni</th>
             </tr>
           </thead>
@@ -977,6 +1029,13 @@ export default function ProjectsPage() {
               onChange={(e) => setSortField(e.target.value as SortField)}
               className="w-40 sm:w-44"
             />
+            <button
+              onClick={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
+              className="p-1.5 rounded-md hover:bg-secondary transition-colors"
+              title={sortDirection === 'asc' ? 'Ordine crescente' : 'Ordine decrescente'}
+            >
+              {sortDirection === 'asc' ? <ChevronUp className="h-4 w-4 text-muted" /> : <ChevronDown className="h-4 w-4 text-muted" />}
+            </button>
           </div>
           {/* View mode toggle */}
           <div className="flex items-center border border-border rounded-md overflow-hidden flex-shrink-0">
