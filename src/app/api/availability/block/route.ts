@@ -8,10 +8,11 @@ import { getClientIp } from '@/lib/ip'
 
 const blockSchema = z.object({
   userId: z.string().min(1),
-  start: z.string().datetime(),
-  end: z.string().datetime(),
+  start: z.string().min(1),
+  end: z.string().min(1),
   title: z.string().max(200).optional(),
   recurrence: z.array(z.string()).optional(),
+  calendarId: z.string().optional(),
 })
 
 /**
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
     const timezone = user.timezone || 'Europe/Rome'
 
     const event = await calendar.events.insert({
-      calendarId: 'primary',
+      calendarId: data.calendarId || 'primary',
       requestBody: {
         summary: data.title || 'Non disponibile',
         transparency: 'opaque',

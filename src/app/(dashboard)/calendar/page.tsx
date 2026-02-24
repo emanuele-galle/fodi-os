@@ -555,6 +555,7 @@ export default function CalendarPage() {
             end,
             title: newEvent.summary || undefined,
             ...(recurrenceRules.length > 0 && { recurrence: recurrenceRules }),
+            ...(targetCalendarId && { calendarId: targetCalendarId }),
           }),
         })
         if (!res.ok) {

@@ -7,6 +7,7 @@ import { MobileHeader } from '@/components/layout/MobileHeader'
 import { IncomingCallBanner } from '@/components/layout/IncomingCallBanner'
 import { MobileNotificationsPanel } from '@/components/layout/MobileNotificationsPanel'
 import { ImpersonationBanner } from '@/components/layout/ImpersonationBanner'
+import { SetupBanner } from '@/components/layout/SetupBanner'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { SSEProvider } from '@/providers/SSEProvider'
@@ -209,6 +210,8 @@ export default function DashboardLayout({
             onOpenCommandPalette={openCommandPalette}
           />
         </div>
+
+        <SetupBanner />
 
         <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6 [&>*]:max-w-[1400px] [&>*]:mx-auto">
           <Suspense fallback={

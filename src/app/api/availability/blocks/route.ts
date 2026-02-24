@@ -4,7 +4,8 @@ import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 
 /**
  * GET /api/availability/blocks
- * Returns future "Non disponibile" / opaque events from the user's Google Calendar.
+ * Returns future block events (opaque, no attendees) from the user's Google Calendar.
+ * Searches both primary and any "Fodi" calendar.
  */
 export async function GET(request: NextRequest) {
   const session = await getSession()
@@ -21,25 +22,56 @@ export async function GET(request: NextRequest) {
     const calendar = getCalendarService(auth)
     const now = new Date()
 
-    const res = await calendar.events.list({
-      calendarId: 'primary',
-      timeMin: now.toISOString(),
-      q: 'Non disponibile',
-      singleEvents: true,
-      orderBy: 'startTime',
-      maxResults: 100,
-    })
+    // Find all calendars to search (primary + any Fodi calendar)
+    const calendarIds = ['primary']
+    try {
+      const calList = await calendar.calendarList.list()
+      const fodiCal = (calList.data.items || []).find((c) =>
+        c.summary?.toLowerCase().includes('fodi')
+      )
+      if (fodiCal?.id && fodiCal.id !== 'primary') {
+        calendarIds.push(fodiCal.id)
+      }
+    } catch {
+      // ignore - fallback to primary only
+    }
 
-    const events = (res.data.items || []).map((ev) => ({
-      id: ev.id,
-      summary: ev.summary,
-      start: ev.start,
-      end: ev.end,
-      recurringEventId: ev.recurringEventId,
-      recurrence: ev.recurrence,
-    }))
+    // Fetch events from all relevant calendars
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allEvents: any[] = []
+    const seen = new Set<string>()
 
-    return NextResponse.json({ events })
+    for (const calId of calendarIds) {
+      const res = await calendar.events.list({
+        calendarId: calId,
+        timeMin: now.toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
+        maxResults: 200,
+      })
+
+      for (const ev of res.data.items || []) {
+        // Filter: only opaque events without attendees (= blocks)
+        if (ev.transparency === 'transparent') continue
+        if (ev.attendees && ev.attendees.length > 0) continue
+
+        // Deduplicate across calendars
+        if (ev.id && seen.has(ev.id)) continue
+        if (ev.id) seen.add(ev.id)
+
+        allEvents.push({
+          id: ev.id!,
+          summary: ev.summary,
+          start: ev.start,
+          end: ev.end,
+          recurringEventId: ev.recurringEventId,
+          recurrence: ev.recurrence,
+          _calendarId: calId,
+        })
+      }
+    }
+
+    return NextResponse.json({ events: allEvents })
   } catch (error) {
     console.error('GET /api/availability/blocks error:', error)
     return NextResponse.json({ error: 'Errore interno' }, { status: 500 })

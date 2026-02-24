@@ -42,6 +42,7 @@ interface BlockEvent {
   start: { dateTime?: string; date?: string }
   end: { dateTime?: string; date?: string }
   recurringEventId?: string
+  _calendarId?: string
 }
 
 function formatBlockDate(start: BlockEvent['start']) {
@@ -93,11 +94,14 @@ export default function AvailabilityPage() {
   const [creatingBlock, setCreatingBlock] = useState(false)
   const [userId, setUserId] = useState('')
 
+  // Target calendar for blocks
+  const [targetCalendarId, setTargetCalendarId] = useState('')
+
   // Feedback messages
   const [hoursSaved, setHoursSaved] = useState(false)
   const [bookingSaved, setBookingSaved] = useState(false)
 
-  // Load session + work schedule
+  // Load session + work schedule + target calendar
   useEffect(() => {
     fetch('/api/auth/session')
       .then((r) => r.ok ? r.json() : null)
@@ -111,6 +115,18 @@ export default function AvailabilityPage() {
             setSchedule(ws)
           }
           setHoursLoaded(true)
+        }
+      })
+      .catch(() => {})
+    // Fetch calendars to find the target calendar for blocks
+    fetch('/api/calendar')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.calendars) {
+          const fodiCal = data.calendars.find((c: { summary: string }) =>
+            c.summary.toLowerCase().includes('fodi')
+          )
+          if (fodiCal) setTargetCalendarId(fodiCal.id)
         }
       })
       .catch(() => {})
@@ -208,10 +224,11 @@ export default function AvailabilityPage() {
   }
 
   // Delete block
-  const deleteBlock = async (eventId: string) => {
+  const deleteBlock = async (eventId: string, calId?: string) => {
     setDeletingBlockId(eventId)
     try {
-      await fetch(`/api/calendar/events/${eventId}`, { method: 'DELETE' })
+      const calParam = calId && calId !== 'primary' ? `?calendarId=${encodeURIComponent(calId)}` : ''
+      await fetch(`/api/calendar/events/${eventId}${calParam}`, { method: 'DELETE' })
       setBlocks((prev) => prev.filter((b) => b.id !== eventId))
     } catch {
       // ignore
@@ -236,6 +253,7 @@ export default function AvailabilityPage() {
           start,
           end,
           title: newBlock.reason || undefined,
+          ...(targetCalendarId && { calendarId: targetCalendarId }),
         }),
       })
       if (res.ok) {
@@ -474,7 +492,7 @@ export default function AvailabilityPage() {
                       </Badge>
                     )}
                     <button
-                      onClick={() => deleteBlock(block.id)}
+                      onClick={() => deleteBlock(block.id, block._calendarId)}
                       disabled={deletingBlockId === block.id}
                       className="p-1.5 rounded-lg text-muted hover:text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0"
                     >
