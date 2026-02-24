@@ -2,7 +2,7 @@ import { brand } from '@/lib/branding'
 import { google } from 'googleapis'
 import { prisma } from './prisma'
 import { getAuthenticatedClient, getDriveService } from './google'
-import { uploadFile as s3Upload, deleteFile as s3Delete } from './s3'
+import { uploadFile as s3Upload, deleteFile as s3Delete, isR2Active } from './s3'
 
 // Cached admin drive client (avoid DB query on every upload)
 let cachedAdminDrive: { drive: ReturnType<typeof google.drive>; expiresAt: number } | null = null
@@ -183,15 +183,14 @@ export interface UploadResult {
 }
 
 /**
- * Upload a file with dual storage: MinIO (primary, always) + Google Drive (optional backup).
- *
- * - MinIO upload is always attempted first and is required to succeed
- * - Google Drive upload is best-effort: if it fails, a warning is logged but the operation succeeds
+ * Upload a file with multi-backend storage:
+ *   - R2 (primary CDN) + MinIO (local backup) — handled transparently by s3Upload
+ *   - Google Drive (optional additional backup) — best-effort
  *
  * @param fileName - sanitized file name
  * @param buffer - file content
  * @param mimeType - MIME type
- * @param s3Key - S3/MinIO object key (e.g., "projects/{projectId}/{timestamp}-{random}.ext")
+ * @param s3Key - object key (e.g., "projects/{projectId}/{timestamp}-{random}.ext")
  * @param gDrivePath - optional Google Drive folder path (e.g., "ProjectName" or "CRM/CompanyName")
  */
 export async function uploadWithBackup(
@@ -201,12 +200,12 @@ export async function uploadWithBackup(
   s3Key: string,
   gDrivePath?: string
 ): Promise<UploadResult> {
-  // 1. Upload to MinIO (primary, must succeed)
+  // 1. Upload to R2 (primary) + MinIO (local backup) — s3Upload handles both
   const fileUrl = await s3Upload(s3Key, buffer, mimeType)
 
   const result: UploadResult = { fileUrl }
 
-  // 2. Upload to Google Drive (optional backup, best-effort)
+  // 2. Upload to Google Drive (optional additional backup, best-effort)
   if (gDrivePath) {
     try {
       const { fileId, webViewLink } = await uploadToGDrive(fileName, buffer, mimeType, gDrivePath)
@@ -214,7 +213,6 @@ export async function uploadWithBackup(
       result.webViewLink = webViewLink
     } catch (err) {
       console.warn(`[storage] Google Drive backup upload failed for "${fileName}":`, (err as Error).message)
-      // Continue - MinIO upload succeeded, GDrive is optional
     }
   }
 
@@ -249,13 +247,20 @@ export async function deleteWithBackup(fileUrl: string, driveFileId?: string | n
 }
 
 /**
- * Extract S3 key from a MinIO URL.
- * URL format: {endpoint}/{bucket}/{key}
+ * Extract the object key from a file URL (works with both R2 and MinIO URLs).
+ *
+ * R2 URL:   https://files.domain.com/projects/123/file.pdf  → projects/123/file.pdf
+ * MinIO URL: https://s3.domain.com/bucket/projects/123/file.pdf → projects/123/file.pdf
  */
 function extractS3Key(fileUrl: string): string | null {
   try {
     const url = new URL(fileUrl)
-    // Remove leading /{bucket}/ from pathname
+    // R2 URL: no bucket prefix in path, key is the full pathname
+    const r2PublicUrl = process.env.R2_PUBLIC_URL
+    if (r2PublicUrl && fileUrl.startsWith(r2PublicUrl)) {
+      return url.pathname.slice(1) // remove leading /
+    }
+    // MinIO URL: remove leading /{bucket}/ from pathname
     const match = url.pathname.match(/^\/[^/]+\/(.+)$/)
     return match ? match[1] : null
   } catch {
