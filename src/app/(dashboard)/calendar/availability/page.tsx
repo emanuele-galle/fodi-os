@@ -1,4 +1,5 @@
 'use client'
+import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
@@ -123,10 +124,10 @@ export default function AvailabilityPage() {
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (data?.calendars) {
-          const fodiCal = data.calendars.find((c: { summary: string }) =>
-            c.summary.toLowerCase().includes('fodi')
+          const brandCal = data.calendars.find((c: { summary: string }) =>
+            c.summary.toLowerCase().includes(brandClient.slug)
           )
-          if (fodiCal) setTargetCalendarId(fodiCal.id)
+          if (brandCal) setTargetCalendarId(brandCal.id)
         }
       })
       .catch(() => {})

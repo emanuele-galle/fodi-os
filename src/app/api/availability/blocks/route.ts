@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
+import { brand } from '@/lib/branding'
 
 /**
  * GET /api/availability/blocks
  * Returns future block events (opaque, no attendees) from the user's Google Calendar.
- * Searches both primary and any "Fodi" calendar.
+ * Searches both primary and any brand-specific calendar.
  */
 export async function GET(request: NextRequest) {
   const session = await getSession()
@@ -22,15 +23,15 @@ export async function GET(request: NextRequest) {
     const calendar = getCalendarService(auth)
     const now = new Date()
 
-    // Find all calendars to search (primary + any Fodi calendar)
+    // Find all calendars to search (primary + any brand calendar)
     const calendarIds = ['primary']
     try {
       const calList = await calendar.calendarList.list()
-      const fodiCal = (calList.data.items || []).find((c) =>
-        c.summary?.toLowerCase().includes('fodi')
+      const brandCal = (calList.data.items || []).find((c) =>
+        c.summary?.toLowerCase().includes(brand.slug)
       )
-      if (fodiCal?.id && fodiCal.id !== 'primary') {
-        calendarIds.push(fodiCal.id)
+      if (brandCal?.id && brandCal.id !== 'primary') {
+        calendarIds.push(brandCal.id)
       }
     } catch {
       // ignore - fallback to primary only

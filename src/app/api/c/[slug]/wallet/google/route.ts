@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { generateGoogleWalletUrl } from '@/lib/google-wallet'
 import { rateLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/ip'
+import { brand } from '@/lib/branding'
 
 export async function GET(
   request: NextRequest,
@@ -44,7 +45,7 @@ export async function GET(
       jobTitle: card.jobTitle,
       email: card.user.email,
       phone: card.user.phone,
-      company: company?.ragioneSociale || 'Fodi SRL',
+      company: company?.ragioneSociale || brand.company,
       cardBio: card.cardBio,
       avatarUrl: card.user.avatarUrl,
     })

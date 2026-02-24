@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { generateVCard } from '@/lib/vcard'
 import { rateLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/ip'
+import { brand } from '@/lib/branding'
 
 export async function GET(
   request: NextRequest,
@@ -49,7 +50,7 @@ export async function GET(
       phone: card.user.phone,
       avatarUrl: card.user.avatarUrl,
       jobTitle: card.jobTitle,
-      company: company?.ragioneSociale || 'Fodi SRL',
+      company: company?.ragioneSociale || brand.company,
       bio: card.cardBio,
       linkedinUrl: card.linkedinUrl,
       instagramUrl: card.instagramUrl,

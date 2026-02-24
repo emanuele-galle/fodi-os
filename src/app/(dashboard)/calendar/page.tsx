@@ -244,7 +244,7 @@ export default function CalendarPage() {
   const [recurrenceEndDate, setRecurrenceEndDate] = useState('')
   const [recurrenceEndCount, setRecurrenceEndCount] = useState(10)
 
-  const [fodiCalendarId, setFodiCalendarId] = useState<string | null>(null)
+  const [brandCalendarId, setBrandCalendarId] = useState<string | null>(null)
 
   // Multi-calendar state: which Google calendars are visible
   const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set())
@@ -286,12 +286,12 @@ export default function CalendarPage() {
       const data = await res.json()
       if (data.calendars) {
         setCalendars(data.calendars)
-        // Find the "Fodi Srl" calendar (or similar name)
-        const fodiCal = (data.calendars as CalendarInfo[]).find((c) =>
-          c.summary.toLowerCase().includes('fodi')
+        // Find the brand-specific calendar
+        const brandCal = (data.calendars as CalendarInfo[]).find((c) =>
+          c.summary.toLowerCase().includes(brandClient.slug)
         )
-        if (fodiCal) {
-          setFodiCalendarId(fodiCal.id)
+        if (brandCal) {
+          setBrandCalendarId(brandCal.id)
         }
 
         // Initialize selectedCalendars from localStorage or default to all
@@ -329,7 +329,7 @@ export default function CalendarPage() {
       // Multi-user mode: fetch all selected team members' events
       if (selectedTeamIds.length > 0 && canViewTeam) {
         const userIdsParam = selectedTeamIds.join(',')
-        const calParam = fodiCalendarId ? `&calendarId=${encodeURIComponent(fodiCalendarId)}` : ''
+        const calParam = brandCalendarId ? `&calendarId=${encodeURIComponent(brandCalendarId)}` : ''
         const res = await fetch(`/api/calendar/events?${baseParams}&userIds=${userIdsParam}${calParam}`)
         const data = await res.json()
 
@@ -445,7 +445,7 @@ export default function CalendarPage() {
     }
   }, [selectedCalendars])
 
-  // Fetch calendars first, then events depend on fodiCalendarId
+  // Fetch calendars first, then events depend on brandCalendarId
   useEffect(() => {
     fetchCalendars()
     fetch('/api/team')
@@ -456,7 +456,7 @@ export default function CalendarPage() {
       .catch(() => {})
   }, [fetchCalendars])
 
-  // Fetch events whenever month/year changes or fodiCalendarId is resolved
+  // Fetch events whenever month/year changes or brandCalendarId is resolved
   useEffect(() => {
     fetchEvents()
   }, [fetchEvents])
@@ -598,7 +598,7 @@ export default function CalendarPage() {
             start,
             end,
             attendees: attendeeEmails,
-            ...(targetCalendarId ? { calendarId: targetCalendarId } : fodiCalendarId ? { calendarId: fodiCalendarId } : {}),
+            ...(targetCalendarId ? { calendarId: targetCalendarId } : brandCalendarId ? { calendarId: brandCalendarId } : {}),
             ...(recurrenceRules.length > 0 && { recurrence: recurrenceRules }),
           }),
         })
@@ -620,7 +620,7 @@ export default function CalendarPage() {
             end,
             withMeet: newEvent.withMeet || attendeeEmails.length > 0,
             attendees: attendeeEmails,
-            ...(targetCalendarId ? { calendarId: targetCalendarId } : fodiCalendarId ? { calendarId: fodiCalendarId } : {}),
+            ...(targetCalendarId ? { calendarId: targetCalendarId } : brandCalendarId ? { calendarId: brandCalendarId } : {}),
             ...(recurrenceRules.length > 0 && { recurrence: recurrenceRules }),
           }),
         })
@@ -648,7 +648,7 @@ export default function CalendarPage() {
     if (!selectedEvent) return
     setDeleting(true)
     try {
-      const eventCalId = selectedEvent._calendarId || fodiCalendarId
+      const eventCalId = selectedEvent._calendarId || brandCalendarId
       const calParam = eventCalId ? `?calendarId=${encodeURIComponent(eventCalId)}` : ''
       const res = await fetch(`/api/calendar/events/${selectedEvent.id}${calParam}`, { method: 'DELETE' })
       if (res.ok) {
@@ -813,8 +813,8 @@ export default function CalendarPage() {
       </div>
 
       {/* Active calendar indicator */}
-      {fodiCalendarId && calendars.length > 0 && (() => {
-        const activeCal = calendars.find((c) => c.id === fodiCalendarId)
+      {brandCalendarId && calendars.length > 0 && (() => {
+        const activeCal = calendars.find((c) => c.id === brandCalendarId)
         return activeCal ? (
           <div className="flex items-center gap-2 mb-4 text-xs">
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: activeCal.backgroundColor }} />

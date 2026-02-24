@@ -1,5 +1,4 @@
 // Centralized brand configuration — all client-specific values read from env vars.
-// Default values are for the original "Fodi OS" deployment.
 // To rebrand for a new client, set the BRAND_* env vars in .env / .env.docker.
 
 const slug = process.env.BRAND_SLUG || 'muscari'

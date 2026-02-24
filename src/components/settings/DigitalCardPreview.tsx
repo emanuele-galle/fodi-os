@@ -82,7 +82,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
 
             {/* Card content */}
             <div className="absolute inset-0 flex flex-col items-center pt-12 px-4 overflow-y-auto">
-              {/* FODI logo placeholder */}
+              {/* Brand logo placeholder */}
               <div className="text-[8px] text-white/20 tracking-[0.2em] uppercase font-medium mb-5">{brandClient.slug.toUpperCase()}</div>
 
               {/* Avatar with ring */}
