@@ -37,6 +37,9 @@ const ProjectFolders = dynamic(() => import('@/components/projects/ProjectFolder
   loading: () => <Skeleton className="h-32 w-full rounded-lg" />,
 })
 const ProjectAttachments = dynamic(() => import('@/components/projects/ProjectAttachments').then(m => ({ default: m.ProjectAttachments })), {
+const ProjectLinks = dynamic(() => import("@/components/projects/ProjectLinks").then(m => ({ default: m.ProjectLinks })), {
+  loading: () => <Skeleton className="h-32 w-full rounded-lg" />,
+})
   loading: () => <Skeleton className="h-32 w-full rounded-lg" />,
 })
 
@@ -747,6 +750,7 @@ export default function ProjectDetailPage() {
           { id: 'milestones', label: 'Timeline', content: milestonesTab },
           { id: 'time', label: 'Tempi', content: timeTab },
           { id: 'files', label: 'File', content: <ProjectAttachments projectId={projectId} folderId={selectedFolderId} /> },
+          { id: 'links', label: 'Collegamenti', content: <ProjectLinks projectId={projectId} /> },
           { id: 'team', label: 'Team', content: (
             <div>
               <div className="flex items-center justify-between mb-4">

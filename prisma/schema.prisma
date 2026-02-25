@@ -70,6 +70,7 @@ model User {
   loginOtps            LoginOtp[]
   wikiPages            WikiPage[]
   dailyReports         DailyReport[]
+  projectLinks         ProjectLink[]    @relation("ProjectLinkCreator")
 
   workSchedule     Json?    @default("{\"1\":{\"start\":9,\"end\":18},\"2\":{\"start\":9,\"end\":18},\"3\":{\"start\":9,\"end\":18},\"4\":{\"start\":9,\"end\":18},\"5\":{\"start\":9,\"end\":18}}")
 
@@ -407,6 +408,7 @@ model Project {
   members       ProjectMember[]
   expenses      Expense[]
   notifications Notification[]
+  links         ProjectLink[]
 
   @@index([workspaceId])
   @@index([clientId])
@@ -1579,3 +1581,23 @@ model WikiPage {
   @@map("wiki_pages")
 }
 
+
+model ProjectLink {
+  id          String   @id @default(uuid())
+  projectId   String
+  creatorId   String
+  title       String
+  url         String
+  description String?  @db.Text
+  tags        String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator User    @relation("ProjectLinkCreator", fields: [creatorId], references: [id])
+
+  @@index([projectId])
+  @@index([creatorId])
+  @@index([createdAt])
+  @@map("project_links")
+}
