@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import {
   CheckSquare,
@@ -197,6 +197,9 @@ export default function TasksPage() {
   const [userRole, setUserRole] = useState<string>('')
   const [userId, setUserId] = useState<string>('')
   const [tabCounts, setTabCounts] = useState<Record<TabKey, number>>({ mine: 0, delegated: 0, team: 0 })
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set())
+  const [subtasksCache, setSubtasksCache] = useState<Record<string, Task[]>>({})
+  const [loadingSubtasks, setLoadingSubtasks] = useState<Set<string>>(new Set())
   const searchParams = useSearchParams()
 
   // Load user session for role check
@@ -307,6 +310,28 @@ export default function TasksPage() {
     fetchTasks()
     fetchTabCounts()
   }
+
+  const toggleSubtasks = useCallback(async (taskId: string, e?: React.MouseEvent) => {
+    if (e) { e.stopPropagation(); e.preventDefault() }
+    if (expandedTasks.has(taskId)) {
+      setExpandedTasks(prev => { const n = new Set(prev); n.delete(taskId); return n })
+      return
+    }
+    // Fetch subtasks if not cached
+    if (!subtasksCache[taskId]) {
+      setLoadingSubtasks(prev => new Set(prev).add(taskId))
+      try {
+        const res = await fetch(`/api/tasks/${taskId}/subtasks`)
+        if (res.ok) {
+          const data = await res.json()
+          setSubtasksCache(prev => ({ ...prev, [taskId]: data.items || [] }))
+        }
+      } catch { /* ignore */ } finally {
+        setLoadingSubtasks(prev => { const n = new Set(prev); n.delete(taskId); return n })
+      }
+    }
+    setExpandedTasks(prev => new Set(prev).add(taskId))
+  }, [expandedTasks, subtasksCache])
 
   // Real-time refresh when task data changes via SSE
   useRealtimeRefresh('task', refreshAll)
@@ -661,12 +686,17 @@ export default function TasksPage() {
                     activeTab={activeTab}
                     userId={userId}
                     onClick={() => openTask(task.id)}
+                    expanded={expandedTasks.has(task.id)}
+                    subtasks={subtasksCache[task.id]}
+                    loadingSubtasks={loadingSubtasks.has(task.id)}
+                    onToggleSubtasks={toggleSubtasks}
+                    onSubtaskClick={openTask}
                   />
                 ))}
               </div>
               {/* Desktop table view */}
               <div className="hidden md:block">
-                <ListView tasks={activeTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} />
+                <ListView tasks={activeTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} expandedTasks={expandedTasks} subtasksCache={subtasksCache} loadingSubtasks={loadingSubtasks} onToggleSubtasks={toggleSubtasks} />
               </div>
             </>
           )}
@@ -691,11 +721,16 @@ export default function TasksPage() {
                         activeTab={activeTab}
                         userId={userId}
                         onClick={() => openTask(task.id)}
+                        expanded={expandedTasks.has(task.id)}
+                        subtasks={subtasksCache[task.id]}
+                        loadingSubtasks={loadingSubtasks.has(task.id)}
+                        onToggleSubtasks={toggleSubtasks}
+                        onSubtaskClick={openTask}
                       />
                     ))}
                   </div>
                   <div className="hidden md:block">
-                    <ListView tasks={completedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} />
+                    <ListView tasks={completedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} expandedTasks={expandedTasks} subtasksCache={subtasksCache} loadingSubtasks={loadingSubtasks} onToggleSubtasks={toggleSubtasks} />
                   </div>
                 </div>
               )}
@@ -703,7 +738,7 @@ export default function TasksPage() {
           )}
         </>
       ) : (
-        <KanbanView tasks={sortedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} onStatusChange={handleStatusChange} kanbanDoneCollapsed={kanbanDoneCollapsed} onToggleDoneCollapsed={() => setKanbanDoneCollapsed(!kanbanDoneCollapsed)} />
+        <KanbanView tasks={sortedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} onStatusChange={handleStatusChange} kanbanDoneCollapsed={kanbanDoneCollapsed} onToggleDoneCollapsed={() => setKanbanDoneCollapsed(!kanbanDoneCollapsed)} expandedTasks={expandedTasks} subtasksCache={subtasksCache} loadingSubtasks={loadingSubtasks} onToggleSubtasks={toggleSubtasks} />
       )}
 
       <TaskDetailModal
@@ -765,7 +800,7 @@ function UrgencyBadge({ urgency }: { urgency: DueUrgency }) {
   )
 }
 
-function MobileTaskCard({ task, activeTab, userId, onClick }: { task: Task; activeTab: TabKey; userId: string; onClick: () => void }) {
+function MobileTaskCard({ task, activeTab, userId, onClick, expanded, subtasks, loadingSubtasks, onToggleSubtasks, onSubtaskClick }: { task: Task; activeTab: TabKey; userId: string; onClick: () => void; expanded?: boolean; subtasks?: Task[]; loadingSubtasks?: boolean; onToggleSubtasks?: (taskId: string, e?: React.MouseEvent) => void; onSubtaskClick?: (id: string) => void }) {
   const urgency = getDueUrgency(task.dueDate, task.status)
   const urgencyStyles = URGENCY_STYLES[urgency]
 
@@ -780,6 +815,14 @@ function MobileTaskCard({ task, activeTab, userId, onClick }: { task: Task; acti
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
+          {task._count && task._count.subtasks > 0 && onToggleSubtasks && (
+            <button
+              onClick={(e) => onToggleSubtasks(task.id, e)}
+              className="p-0.5 rounded hover:bg-secondary/60 transition-colors flex-shrink-0"
+            >
+              {expanded ? <ChevronDown className="h-3.5 w-3.5 text-muted" /> : <ChevronRight className="h-3.5 w-3.5 text-muted" />}
+            </button>
+          )}
           {task.timerStartedAt && (
             <Timer className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
           )}
@@ -820,11 +863,59 @@ function MobileTaskCard({ task, activeTab, userId, onClick }: { task: Task; acti
           </span>
         )}
       </div>
+      {/* Subtasks nested */}
+      {expanded && (
+        <div className="ml-3 pl-3 border-l-2 border-primary/20 space-y-2 pt-1">
+          {loadingSubtasks ? (
+            <div className="flex items-center gap-2 py-2">
+              <div className="h-3 w-3 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+              <span className="text-xs text-muted">Caricamento subtask...</span>
+            </div>
+          ) : subtasks && subtasks.length > 0 ? (
+            subtasks.map((sub) => {
+              const subUrgency = getDueUrgency(sub.dueDate, sub.status)
+              return (
+                <div
+                  key={sub.id}
+                  onClick={(e) => { e.stopPropagation(); onSubtaskClick?.(sub.id) }}
+                  className={cn(
+                    'p-2.5 rounded-md border bg-secondary/30 cursor-pointer hover:bg-secondary/60 transition-colors',
+                    'border-border/50'
+                  )}
+                  style={{ borderLeft: `2px solid ${PRIORITY_COLORS[sub.priority] || 'var(--color-primary)'}` }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium truncate">{sub.title}</span>
+                    <Badge status={sub.status} className="text-[9px] px-1 py-0">
+                      {STATUS_LABELS[sub.status] || sub.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    {sub.assignee && (
+                      <div className="flex items-center gap-1">
+                        <Avatar name={`${sub.assignee.firstName} ${sub.assignee.lastName}`} src={sub.assignee.avatarUrl} size="xs" />
+                        <span className="text-[10px] text-muted">{sub.assignee.firstName}</span>
+                      </div>
+                    )}
+                    {sub.dueDate && (
+                      <span className={cn('text-[10px]', URGENCY_STYLES[subUrgency].text)}>
+                        {new Date(sub.dueDate).toLocaleDateString('it-IT')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            <span className="text-xs text-muted py-1">Nessuna subtask</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
-function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; activeTab: TabKey; userId: string; onTaskClick: (id: string) => void }) {
+function ListView({ tasks, activeTab, userId, onTaskClick, expandedTasks, subtasksCache, loadingSubtasks, onToggleSubtasks }: { tasks: Task[]; activeTab: TabKey; userId: string; onTaskClick: (id: string) => void; expandedTasks?: Set<string>; subtasksCache?: Record<string, Task[]>; loadingSubtasks?: Set<string>; onToggleSubtasks?: (taskId: string, e?: React.MouseEvent) => void }) {
   return (
     <div className="rounded-xl border border-border/20 overflow-hidden">
       <table className="w-full">
@@ -842,17 +933,32 @@ function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; ac
           {tasks.map((task) => {
             const urgency = getDueUrgency(task.dueDate, task.status)
             const urgencyStyles = URGENCY_STYLES[urgency]
+            const hasSubtasks = task._count && task._count.subtasks > 0
+            const isExpanded = expandedTasks?.has(task.id)
+            const subs = subtasksCache?.[task.id]
+            const isLoadingSubs = loadingSubtasks?.has(task.id)
             return (
+              <React.Fragment key={task.id}>
               <tr
-                key={task.id}
                 onClick={() => onTaskClick(task.id)}
                 className={cn(
                   'border-b border-border/10 hover:bg-secondary/8 cursor-pointer transition-colors group even:bg-secondary/[0.03]',
-                  (urgency === 'overdue' || urgency === 'today') && `${urgencyStyles.bg}`
+                  (urgency === 'overdue' || urgency === 'today') && `${urgencyStyles.bg}`,
+                  isExpanded && 'border-b-0'
                 )}
               >
                 <td className="px-4 py-3.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
+                    {hasSubtasks && onToggleSubtasks ? (
+                      <button
+                        onClick={(e) => onToggleSubtasks(task.id, e)}
+                        className="p-0.5 rounded hover:bg-secondary/60 transition-colors flex-shrink-0"
+                      >
+                        {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-primary" /> : <ChevronRight className="h-3.5 w-3.5 text-muted" />}
+                      </button>
+                    ) : (
+                      <span className="w-4" />
+                    )}
                     {task.timerStartedAt && (
                       <Timer className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
                     )}
@@ -906,6 +1012,59 @@ function ListView({ tasks, activeTab, userId, onTaskClick }: { tasks: Task[]; ac
                   </span>
                 </td>
               </tr>
+              {/* Subtask rows */}
+              {isExpanded && (
+                <tr className="border-b border-border/10">
+                  <td colSpan={6} className="px-4 py-0 pb-3">
+                    <div className="ml-6 pl-3 border-l-2 border-primary/20 space-y-1 pt-1">
+                      {isLoadingSubs ? (
+                        <div className="flex items-center gap-2 py-2">
+                          <div className="h-3 w-3 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+                          <span className="text-xs text-muted">Caricamento subtask...</span>
+                        </div>
+                      ) : subs && subs.length > 0 ? (
+                        subs.map((sub) => {
+                          const subUrgency = getDueUrgency(sub.dueDate, sub.status)
+                          const subUrgencyStyles = URGENCY_STYLES[subUrgency]
+                          return (
+                            <div
+                              key={sub.id}
+                              onClick={(e) => { e.stopPropagation(); onTaskClick(sub.id) }}
+                              className="flex items-center gap-3 py-2 px-3 rounded-md bg-secondary/20 hover:bg-secondary/40 cursor-pointer transition-colors group/sub"
+                              style={{ borderLeft: `2px solid ${PRIORITY_COLORS[sub.priority] || 'var(--color-primary)'}` }}
+                            >
+                              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                <ListTodo className="h-3 w-3 text-muted flex-shrink-0" />
+                                <span className="text-xs font-medium truncate">{sub.title}</span>
+                              </div>
+                              <Badge status={sub.status} className="text-[9px] px-1.5 py-0 flex-shrink-0">
+                                {STATUS_LABELS[sub.status] || sub.status}
+                              </Badge>
+                              <Badge status={sub.priority} className="text-[9px] px-1.5 py-0 flex-shrink-0 hidden md:inline-flex">
+                                {PRIORITY_LABELS[sub.priority] || sub.priority}
+                              </Badge>
+                              {sub.assignee && (
+                                <div className="flex items-center gap-1 flex-shrink-0 hidden lg:flex">
+                                  <Avatar name={`${sub.assignee.firstName} ${sub.assignee.lastName}`} src={sub.assignee.avatarUrl} size="xs" />
+                                  <span className="text-[10px] text-muted">{sub.assignee.firstName}</span>
+                                </div>
+                              )}
+                              {sub.dueDate && (
+                                <span className={cn('text-[10px] flex-shrink-0 hidden lg:inline', subUrgencyStyles.text)}>
+                                  {new Date(sub.dueDate).toLocaleDateString('it-IT')}
+                                </span>
+                              )}
+                            </div>
+                          )
+                        })
+                      ) : (
+                        <span className="text-xs text-muted py-1 block">Nessuna subtask</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )}
+              </React.Fragment>
             )
           })}
         </tbody>
@@ -946,9 +1105,10 @@ function DroppableKanbanColumn({ columnKey, isOver, children }: { columnKey: str
   )
 }
 
-function DraggableTaskCard({ task, activeTab, userId, onClick }: { task: Task; activeTab: TabKey; userId: string; onClick: () => void }) {
+function DraggableTaskCard({ task, activeTab, userId, onClick, expanded, subtasks, loadingSubtasks, onToggleSubtasks, onSubtaskClick }: { task: Task; activeTab: TabKey; userId: string; onClick: () => void; expanded?: boolean; subtasks?: Task[]; loadingSubtasks?: boolean; onToggleSubtasks?: (taskId: string, e?: React.MouseEvent) => void; onSubtaskClick?: (id: string) => void }) {
   const urgency = getDueUrgency(task.dueDate, task.status)
   const urgencyStyles = URGENCY_STYLES[urgency]
+  const hasSubtasks = task._count && task._count.subtasks > 0
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'task', task },
@@ -968,6 +1128,14 @@ function DraggableTaskCard({ task, activeTab, userId, onClick }: { task: Task; a
       onClick={(e) => { if (!isDragging) { e.stopPropagation(); onClick() } }}
     >
       <div className="flex items-center gap-1.5 mb-2">
+        {hasSubtasks && onToggleSubtasks && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleSubtasks(task.id, e) }}
+            className="p-0.5 rounded hover:bg-secondary/60 transition-colors flex-shrink-0"
+          >
+            {expanded ? <ChevronDown className="h-3.5 w-3.5 text-primary" /> : <ChevronRight className="h-3.5 w-3.5 text-muted" />}
+          </button>
+        )}
         {task.timerStartedAt && (
           <Timer className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
         )}
@@ -1003,12 +1171,39 @@ function DraggableTaskCard({ task, activeTab, userId, onClick }: { task: Task; a
           </span>
         )}
       </div>
+      {/* Subtasks nested inside kanban card */}
+      {expanded && (
+        <div className="mt-2 pl-2 border-l-2 border-primary/20 space-y-1">
+          {loadingSubtasks ? (
+            <div className="flex items-center gap-1.5 py-1">
+              <div className="h-2.5 w-2.5 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+              <span className="text-[10px] text-muted">Caricamento...</span>
+            </div>
+          ) : subtasks && subtasks.length > 0 ? (
+            subtasks.map((sub) => (
+              <div
+                key={sub.id}
+                onClick={(e) => { e.stopPropagation(); onSubtaskClick?.(sub.id) }}
+                className="flex items-center gap-1.5 py-1 px-2 rounded bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors"
+                style={{ borderLeft: `2px solid ${PRIORITY_COLORS[sub.priority] || 'var(--color-primary)'}` }}
+              >
+                <span className={cn('text-[10px] font-medium truncate flex-1', sub.status === 'DONE' && 'line-through text-muted')}>{sub.title}</span>
+                <Badge status={sub.status} className="text-[8px] px-1 py-0">
+                  {STATUS_LABELS[sub.status]?.[0] || sub.status[0]}
+                </Badge>
+              </div>
+            ))
+          ) : (
+            <span className="text-[10px] text-muted">Nessuna subtask</span>
+          )}
+        </div>
+      )}
     </Card>
     </div>
   )
 }
 
-function KanbanView({ tasks, activeTab, userId, onTaskClick, onStatusChange, kanbanDoneCollapsed, onToggleDoneCollapsed }: { tasks: Task[]; activeTab: TabKey; userId: string; onTaskClick: (id: string) => void; onStatusChange?: (taskId: string, newStatus: string) => void; kanbanDoneCollapsed?: boolean; onToggleDoneCollapsed?: () => void }) {
+function KanbanView({ tasks, activeTab, userId, onTaskClick, onStatusChange, kanbanDoneCollapsed, onToggleDoneCollapsed, expandedTasks, subtasksCache, loadingSubtasks, onToggleSubtasks }: { tasks: Task[]; activeTab: TabKey; userId: string; onTaskClick: (id: string) => void; onStatusChange?: (taskId: string, newStatus: string) => void; kanbanDoneCollapsed?: boolean; onToggleDoneCollapsed?: () => void; expandedTasks?: Set<string>; subtasksCache?: Record<string, Task[]>; loadingSubtasks?: Set<string>; onToggleSubtasks?: (taskId: string, e?: React.MouseEvent) => void }) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
   const sensors = useSensors(
@@ -1090,7 +1285,7 @@ function KanbanView({ tasks, activeTab, userId, onTaskClick, onStatusChange, kan
                 <SortableContext items={columnTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
                   <div className={cn('space-y-2 flex-1 min-h-[60px]', isDoneCol && 'opacity-60')}>
                     {columnTasks.map((task) => (
-                      <DraggableTaskCard key={task.id} task={task} activeTab={activeTab} userId={userId} onClick={() => onTaskClick(task.id)} />
+                      <DraggableTaskCard key={task.id} task={task} activeTab={activeTab} userId={userId} onClick={() => onTaskClick(task.id)} expanded={expandedTasks?.has(task.id)} subtasks={subtasksCache?.[task.id]} loadingSubtasks={loadingSubtasks?.has(task.id)} onToggleSubtasks={onToggleSubtasks} onSubtaskClick={onTaskClick} />
                     ))}
                     {columnTasks.length === 0 && (
                       <div className="text-center py-6 text-sm text-muted">
