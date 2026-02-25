@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
-import { Landmark, FileCode, FileSignature, Wand2 } from 'lucide-react'
+import { Landmark, FileCode, FileSignature, Wand2, ScrollText } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 
 const TemplateList = dynamic(() => import('@/components/erp/documenti/TemplateList').then(m => ({ default: m.TemplateList })), {
@@ -15,9 +15,13 @@ const FirmeList = dynamic(() => import('@/components/erp/documenti/FirmeList').t
 const WizardList = dynamic(() => import('@/components/erp/documenti/WizardList').then(m => ({ default: m.WizardList })), {
   loading: () => <Skeleton className="h-96 w-full rounded-lg" />,
 })
+const ContrattiList = dynamic(() => import('@/components/erp/documenti/ContrattiList').then(m => ({ default: m.ContrattiList })), {
+  loading: () => <Skeleton className="h-96 w-full rounded-lg" />,
+})
 
 const TABS = [
   { key: 'template', label: 'Template', icon: FileCode },
+  { key: 'contratti', label: 'Contratti', icon: ScrollText },
   { key: 'firme', label: 'Firme', icon: FileSignature },
   { key: 'wizard', label: 'Wizard', icon: Wand2 },
 ] as const
@@ -37,7 +41,7 @@ function DocumentiContent() {
         </div>
         <div>
           <h1 className="text-xl md:text-2xl font-bold">Documenti</h1>
-          <p className="text-xs md:text-sm text-muted">Template, firme digitali e wizard</p>
+          <p className="text-xs md:text-sm text-muted">Template, contratti, firme digitali e wizard</p>
         </div>
       </div>
 
@@ -59,6 +63,7 @@ function DocumentiContent() {
       </div>
 
       {activeTab === 'template' && <TemplateList />}
+      {activeTab === 'contratti' && <ContrattiList />}
       {activeTab === 'firme' && <FirmeList />}
       {activeTab === 'wizard' && <WizardList />}
     </div>
