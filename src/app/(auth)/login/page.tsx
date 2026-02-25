@@ -86,7 +86,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1">
               <label htmlFor="username" className="block text-sm font-medium text-foreground">
-                Username
+                Username o Email
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
@@ -94,7 +94,7 @@ export default function LoginPage() {
                   id="username"
                   type="text"
                   autoComplete="username"
-                  placeholder="Il tuo username"
+                  placeholder="Username o email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required

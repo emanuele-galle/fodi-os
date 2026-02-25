@@ -25,9 +25,11 @@ export async function POST(request: NextRequest) {
       )
     }
     const { username, password } = parsed.data
+    const credential = username.toLowerCase().trim()
+    const isEmail = credential.includes('@')
 
     const user = await prisma.user.findUnique({
-      where: { username: username.toLowerCase() },
+      where: isEmail ? { email: credential } : { username: credential },
       select: {
         id: true,
         email: true,
