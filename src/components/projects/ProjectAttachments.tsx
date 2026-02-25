@@ -285,12 +285,11 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                       <Pencil className="h-4 w-4 text-muted" />
                     </button>
                     <a
-                      href={att.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`/api/projects/${projectId}/attachments/${att.id}/download`}
                       className="p-1.5 rounded hover:bg-primary/10 transition-colors"
                       onClick={(e) => e.stopPropagation()}
                       title="Scarica"
+                      download
                     >
                       <Download className="h-4 w-4 text-muted" />
                     </a>
