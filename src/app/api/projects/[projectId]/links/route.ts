@@ -9,6 +9,7 @@ const createLinkSchema = z.object({
   url: z.string().min(1, 'URL obbligatorio').max(2000),
   description: z.string().max(5000).optional().nullable(),
   tags: z.array(z.string().max(50)).max(20).default([]),
+  folderId: z.string().uuid().optional().nullable(),
 })
 
 const updateLinkSchema = z.object({
@@ -28,8 +29,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { searchParams } = request.nextUrl
     const search = searchParams.get('search')
     const tag = searchParams.get('tag')
+    const folderId = searchParams.get('folderId')
 
     const where: Record<string, unknown> = { projectId }
+    if (folderId) {
+      where.folderId = folderId
+    } else if (searchParams.has('folderId')) {
+      // folderId param present but empty → root-level links only
+      where.folderId = null
+    }
     if (search && search.trim().length >= 2) {
       where.title = { contains: search.trim(), mode: 'insensitive' }
     }
@@ -76,6 +84,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const link = await prisma.projectLink.create({
       data: {
         projectId,
+        folderId: parsed.data.folderId || null,
         creatorId: userId,
         title: parsed.data.title,
         url: parsed.data.url,

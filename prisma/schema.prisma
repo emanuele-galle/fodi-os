@@ -596,6 +596,7 @@ model Folder {
   tasks        Task[]
   attachments  ProjectAttachment[]
   chatChannels ChatChannel[]
+  links        ProjectLink[]
 
   @@index([projectId])
   @@index([parentId])
@@ -1585,6 +1586,7 @@ model WikiPage {
 model ProjectLink {
   id          String   @id @default(uuid())
   projectId   String
+  folderId    String?
   creatorId   String
   title       String
   url         String
@@ -1593,10 +1595,12 @@ model ProjectLink {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  creator User    @relation("ProjectLinkCreator", fields: [creatorId], references: [id])
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folder  Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  creator User     @relation("ProjectLinkCreator", fields: [creatorId], references: [id])
 
   @@index([projectId])
+  @@index([folderId])
   @@index([creatorId])
   @@index([createdAt])
   @@map("project_links")

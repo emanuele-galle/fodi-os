@@ -326,11 +326,10 @@ export default function CalendarPage() {
     const baseParams = `timeMin=${timeMin}&timeMax=${timeMax}`
 
     try {
-      // Multi-user mode: fetch all selected team members' events
+      // Multi-user mode: fetch all selected team members' events (all their calendars)
       if (selectedTeamIds.length > 0 && canViewTeam) {
         const userIdsParam = selectedTeamIds.join(',')
-        const calParam = brandCalendarId ? `&calendarId=${encodeURIComponent(brandCalendarId)}` : ''
-        const res = await fetch(`/api/calendar/events?${baseParams}&userIds=${userIdsParam}${calParam}`)
+        const res = await fetch(`/api/calendar/events?${baseParams}&userIds=${userIdsParam}`)
         const data = await res.json()
 
         if (data?.connected === false) {

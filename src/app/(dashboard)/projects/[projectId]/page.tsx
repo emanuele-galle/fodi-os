@@ -750,7 +750,7 @@ export default function ProjectDetailPage() {
           { id: 'milestones', label: 'Timeline', content: milestonesTab },
           { id: 'time', label: 'Tempi', content: timeTab },
           { id: 'files', label: 'File', content: <ProjectAttachments projectId={projectId} folderId={selectedFolderId} /> },
-          { id: 'links', label: 'Collegamenti', content: <ProjectLinks projectId={projectId} /> },
+          { id: 'links', label: 'Collegamenti', content: <ProjectLinks projectId={projectId} folderId={selectedFolderId} /> },
           { id: 'team', label: 'Team', content: (
             <div>
               <div className="flex items-center justify-between mb-4">

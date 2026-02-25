@@ -65,23 +65,44 @@ export async function GET(request: NextRequest) {
           if (!userAuth) return { userId: user.id, events: [] }
 
           const cal = getCalendarService(userAuth)
-          const res = await cal.events.list({
-            calendarId,
-            timeMin,
-            ...(timeMax && { timeMax }),
-            maxResults,
-            singleEvents: true,
-            orderBy: 'startTime',
-          })
 
-          return {
-            userId: user.id,
-            events: (res.data.items || []).map((ev) => ({
-              ...ev,
-              _ownerUserId: user.id,
-              _ownerName: `${user.firstName} ${user.lastName}`,
-            })),
+          // Fetch ALL calendars for this user, then query events from each
+          const calListRes = await cal.calendarList.list()
+          const userCalendars = (calListRes.data.items || []).filter(
+            (c) => c.id && (c.accessRole === 'owner' || c.accessRole === 'writer' || c.accessRole === 'reader')
+          )
+          const calColorMap = new Map<string, string>()
+          for (const c of userCalendars) {
+            if (c.id && c.backgroundColor) calColorMap.set(c.id, c.backgroundColor)
           }
+
+          // Query events from all calendars in parallel
+          const calResults = await Promise.allSettled(
+            userCalendars.map(async (userCal) => {
+              const res = await cal.events.list({
+                calendarId: userCal.id!,
+                timeMin,
+                ...(timeMax && { timeMax }),
+                maxResults,
+                singleEvents: true,
+                orderBy: 'startTime',
+              })
+              return (res.data.items || []).map((ev) => ({
+                ...ev,
+                _ownerUserId: user.id,
+                _ownerName: `${user.firstName} ${user.lastName}`,
+                _calendarId: userCal.id,
+                _calendarColor: calColorMap.get(userCal.id!) || '#039BE5',
+              }))
+            })
+          )
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const userEvents: any[] = calResults
+            .filter((r) => r.status === 'fulfilled')
+            .flatMap((r: any) => r.value)
+
+          return { userId: user.id, events: userEvents }
         })
       )
 
@@ -90,10 +111,10 @@ export async function GET(request: NextRequest) {
         .filter((r) => r.status === 'fulfilled')
         .flatMap((r: any) => r.value.events)
 
-      // Deduplicate by eventId + ownerUserId
+      // Deduplicate by eventId + ownerUserId + calendarId
       const seen = new Set<string>()
       const unique = allEvents.filter((ev) => {
-        const key = `${ev.id}_${ev._ownerUserId}`
+        const key = `${ev.id}_${ev._ownerUserId}_${ev._calendarId || ''}`
         if (seen.has(key)) return false
         seen.add(key)
         return true

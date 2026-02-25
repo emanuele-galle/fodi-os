@@ -32,6 +32,7 @@ interface ProjectLinkItem {
 
 interface ProjectLinksProps {
   projectId: string
+  folderId?: string | null
 }
 
 const TAG_COLORS = [
@@ -75,7 +76,7 @@ function groupByDate(links: ProjectLinkItem[]): { date: string; links: ProjectLi
   return Object.entries(groups).map(([date, links]) => ({ date, links }))
 }
 
-export function ProjectLinks({ projectId }: ProjectLinksProps) {
+export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
   const [links, setLinks] = useState<ProjectLinkItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -97,6 +98,11 @@ export function ProjectLinks({ projectId }: ProjectLinksProps) {
   const fetchLinks = useCallback(async () => {
     try {
       const params = new URLSearchParams()
+      if (folderId) {
+        params.set('folderId', folderId)
+      } else {
+        params.set('folderId', '')
+      }
       if (searchQuery.trim().length >= 2) params.set('search', searchQuery.trim())
       if (filterTag) params.set('tag', filterTag)
       const res = await fetch(`/api/projects/${projectId}/links?${params}`)
@@ -109,7 +115,7 @@ export function ProjectLinks({ projectId }: ProjectLinksProps) {
     } finally {
       setLoading(false)
     }
-  }, [projectId, searchQuery, filterTag])
+  }, [projectId, folderId, searchQuery, filterTag])
 
   useEffect(() => {
     fetchLinks()
@@ -167,6 +173,7 @@ export function ProjectLinks({ projectId }: ProjectLinksProps) {
         url: formUrl.trim(),
         description: formDescription.trim() || null,
         tags: formTags,
+        folderId: folderId || null,
       }
 
       if (editingLink) {
