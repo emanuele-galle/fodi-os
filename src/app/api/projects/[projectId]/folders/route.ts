@@ -200,6 +200,74 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
+// PUT /api/projects/:projectId/folders - Batch reorder / reparent folders
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
+  try {
+    const role = request.headers.get('x-user-role') as Role
+    requirePermission(role, 'pm', 'write')
+
+    const { projectId } = await params
+    const body = await request.json()
+
+    const schema = z.object({
+      items: z.array(z.object({
+        id: z.string().uuid(),
+        parentId: z.string().uuid().nullable(),
+        sortOrder: z.number().int().min(0),
+      })),
+    })
+
+    const parsed = schema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+
+    // Validate all folders belong to this project
+    const folderIds = parsed.data.items.map((i) => i.id)
+    const existing = await prisma.folder.findMany({
+      where: { id: { in: folderIds }, projectId },
+      select: { id: true },
+    })
+    if (existing.length !== folderIds.length) {
+      return NextResponse.json({ error: 'Alcune cartelle non appartengono a questo progetto' }, { status: 400 })
+    }
+
+    // Validate no folder is parent of itself and max 2 levels
+    for (const item of parsed.data.items) {
+      if (item.parentId === item.id) {
+        return NextResponse.json({ error: 'Una cartella non può essere sottocartella di se stessa' }, { status: 400 })
+      }
+      if (item.parentId) {
+        const parentItem = parsed.data.items.find((i) => i.id === item.parentId)
+        if (parentItem && parentItem.parentId !== null) {
+          return NextResponse.json({ error: 'Massimo 2 livelli di profondità consentiti' }, { status: 400 })
+        }
+      }
+    }
+
+    // Batch update in a transaction
+    await prisma.$transaction(
+      parsed.data.items.map((item) =>
+        prisma.folder.update({
+          where: { id: item.id, projectId },
+          data: { parentId: item.parentId, sortOrder: item.sortOrder },
+        })
+      )
+    )
+
+    return NextResponse.json({ success: true })
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
+    }
+    console.error('[projects/:projectId/folders/PUT]', e)
+    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+  }
+}
+
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role
