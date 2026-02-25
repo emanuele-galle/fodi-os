@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useCallback, useMemo, useRef } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { FolderOpen, Plus, Pencil, Trash2, Check, X, ChevronRight, ChevronDown, GripVertical } from 'lucide-react'
 import {
   DndContext,
   DragOverlay,
+  closestCenter,
   PointerSensor,
   TouchSensor,
   useSensor,
   useSensors,
-  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
   type DragOverEvent,
@@ -40,10 +40,21 @@ interface ProjectFoldersProps {
   onSelectFolder: (folderId: string | null) => void
 }
 
+// Flattened item for the sortable list
+interface FlatItem {
+  id: string
+  folder: Folder
+  parentId: string | null
+  depth: number
+}
+
 const FOLDER_COLORS = [
   '#6366F1', '#8B5CF6', '#EC4899', '#EF4444', '#F97316',
   '#EAB308', '#22C55E', '#14B8A6', '#06B6D4', '#3B82F6',
 ]
+
+const INDENT_PX = 24
+const NEST_HOVER_MS = 600 // Hold over a folder for 600ms to nest
 
 function getTotalTaskCount(folder: Folder): number {
   const own = folder._count?.tasks ?? 0
@@ -55,7 +66,21 @@ function getAllFoldersTotalCount(folders: Folder[]): number {
   return folders.reduce((s, f) => s + getTotalTaskCount(f), 0)
 }
 
-// Flatten the tree into a list of { id, parentId, sortOrder } for the batch API
+// Flatten the tree into a sortable list
+function flattenTree(folders: Folder[], expandedIds: Set<string>): FlatItem[] {
+  const items: FlatItem[] = []
+  for (const f of folders) {
+    items.push({ id: f.id, folder: f, parentId: f.parentId || null, depth: 0 })
+    if (expandedIds.has(f.id)) {
+      for (const c of f.children ?? []) {
+        items.push({ id: c.id, folder: c, parentId: f.id, depth: 1 })
+      }
+    }
+  }
+  return items
+}
+
+// Build batch items for the API
 function buildBatchItems(folders: Folder[]): { id: string; parentId: string | null; sortOrder: number }[] {
   const items: { id: string; parentId: string | null; sortOrder: number }[] = []
   folders.forEach((f, i) => {
@@ -67,18 +92,16 @@ function buildBatchItems(folders: Folder[]): { id: string; parentId: string | nu
   return items
 }
 
-// ---- Sortable folder item ----
-function SortableFolderItem({
-  folder,
-  depth,
+// ---- Sortable folder row ----
+function SortableFolderRow({
+  item,
   isExpanded,
   selectedFolderId,
   editingId,
   editName,
   editColor,
   submitting,
-  overDropId,
-  dragActiveId,
+  isNestTarget,
   onToggleExpanded,
   onSelect,
   onStartEdit,
@@ -88,18 +111,15 @@ function SortableFolderItem({
   onEditColorChange,
   onRename,
   onCancelEdit,
-  children: childrenContent,
 }: {
-  folder: Folder
-  depth: number
+  item: FlatItem
   isExpanded: boolean
   selectedFolderId: string | null | undefined
   editingId: string | null
   editName: string
   editColor: string
   submitting: boolean
-  overDropId: string | null
-  dragActiveId: string | null
+  isNestTarget: boolean
   onToggleExpanded: (id: string) => void
   onSelect: (id: string | null) => void
   onStartEdit: (folder: Folder) => void
@@ -109,8 +129,8 @@ function SortableFolderItem({
   onEditColorChange: (v: string) => void
   onRename: () => void
   onCancelEdit: () => void
-  children?: React.ReactNode
 }) {
+  const { folder, depth } = item
   const hasChildren = (folder.children ?? []).length > 0
   const totalCount = getTotalTaskCount(folder)
   const isMaxDepth = depth >= 1
@@ -124,28 +144,21 @@ function SortableFolderItem({
     isDragging,
   } = useSortable({
     id: folder.id,
-    data: { type: 'folder', folder, depth },
-  })
-
-  // This folder is also a drop target (to become parent)
-  const { setNodeRef: setDropRef, isOver } = useDroppable({
-    id: `drop-${folder.id}`,
-    data: { type: 'folder-target', folderId: folder.id, depth },
-    disabled: isMaxDepth || isDragging,
+    data: { type: 'folder', item },
   })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
-    paddingLeft: depth > 0 ? `${depth * 16}px` : undefined,
+    opacity: isDragging ? 0.3 : 1,
   }
-
-  const isDropTarget = overDropId === `drop-${folder.id}` && dragActiveId !== folder.id && !isMaxDepth
 
   return (
     <div ref={setNodeRef} style={style}>
-      <div ref={setDropRef} className="group relative">
+      <div
+        className="group relative"
+        style={{ paddingLeft: `${depth * INDENT_PX}px` }}
+      >
         {editingId === folder.id ? (
           <div className="flex items-center gap-1 my-1">
             <div className="flex gap-0.5">
@@ -176,9 +189,9 @@ function SortableFolderItem({
         ) : (
           <button
             onClick={() => onSelect(selectedFolderId === folder.id ? null : folder.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors border w-full text-left ${
-              isDropTarget
-                ? 'bg-primary/20 border-primary/50 ring-2 ring-primary/30'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all border w-full text-left ${
+              isNestTarget
+                ? 'bg-primary/20 border-primary ring-2 ring-primary/30 shadow-sm scale-[1.02]'
                 : selectedFolderId === folder.id
                   ? 'bg-primary/10 border-primary/30 font-medium'
                   : 'border-border hover:bg-secondary/50'
@@ -210,45 +223,51 @@ function SortableFolderItem({
             />
             <span className="truncate">{folder.name}</span>
             <span className="text-xs opacity-60 flex-shrink-0">({totalCount})</span>
-            <span className="hidden group-hover:flex items-center gap-0.5 ml-auto flex-shrink-0">
-              {!isMaxDepth && (
+            {isNestTarget && (
+              <span className="text-[10px] text-primary font-medium ml-auto flex-shrink-0">↳ nidifica qui</span>
+            )}
+            {!isNestTarget && (
+              <span className="hidden group-hover:flex items-center gap-0.5 ml-auto flex-shrink-0">
+                {!isMaxDepth && (
+                  <span
+                    role="button"
+                    onClick={(e) => { e.stopPropagation(); onStartCreateSubfolder(folder.id) }}
+                    className="p-0.5 rounded hover:bg-primary/10"
+                    title="Aggiungi sottocartella"
+                  >
+                    <Plus className="h-3 w-3 text-muted" />
+                  </span>
+                )}
                 <span
                   role="button"
-                  onClick={(e) => { e.stopPropagation(); onStartCreateSubfolder(folder.id) }}
+                  onClick={(e) => { e.stopPropagation(); onStartEdit(folder) }}
                   className="p-0.5 rounded hover:bg-primary/10"
-                  title="Aggiungi sottocartella"
                 >
-                  <Plus className="h-3 w-3 text-muted" />
+                  <Pencil className="h-3 w-3 text-muted" />
                 </span>
-              )}
-              <span
-                role="button"
-                onClick={(e) => { e.stopPropagation(); onStartEdit(folder) }}
-                className="p-0.5 rounded hover:bg-primary/10"
-              >
-                <Pencil className="h-3 w-3 text-muted" />
+                <span
+                  role="button"
+                  onClick={(e) => { e.stopPropagation(); onDelete(folder.id) }}
+                  className="p-0.5 rounded hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-3 w-3 text-destructive" />
+                </span>
               </span>
-              <span
-                role="button"
-                onClick={(e) => { e.stopPropagation(); onDelete(folder.id) }}
-                className="p-0.5 rounded hover:bg-destructive/10"
-              >
-                <Trash2 className="h-3 w-3 text-destructive" />
-              </span>
-            </span>
+            )}
           </button>
         )}
       </div>
-      {childrenContent}
     </div>
   )
 }
 
 // Drag overlay (ghost preview while dragging)
-function DragOverlayFolder({ folder }: { folder: Folder }) {
+function DragOverlayFolder({ folder, nestMode }: { folder: Folder; nestMode: boolean }) {
   const totalCount = getTotalTaskCount(folder)
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border border-primary/50 bg-card shadow-lg w-fit max-w-xs">
+    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border bg-card shadow-lg w-fit max-w-xs ${
+      nestMode ? 'border-primary' : 'border-primary/50'
+    }`}>
       <GripVertical className="h-3.5 w-3.5 text-muted" />
       <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: folder.color }} />
       <span className="truncate">{folder.name}</span>
@@ -268,16 +287,19 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
   const [submitting, setSubmitting] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [dragActiveId, setDragActiveId] = useState<string | null>(null)
-  const [overDropId, setOverDropId] = useState<string | null>(null)
+  const [currentOverId, setCurrentOverId] = useState<string | null>(null)
+  const [nestTargetId, setNestTargetId] = useState<string | null>(null)
   const { confirm, confirmProps } = useConfirm()
   const savingRef = useRef(false)
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hoverOverIdRef = useRef<string | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
   )
 
-  // Flat map of all folders by id for quick lookup
+  // Flat map of all folders by id
   const folderMap = useMemo(() => {
     const map = new Map<string, Folder>()
     function walk(list: Folder[]) {
@@ -290,8 +312,16 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     return map
   }, [folders])
 
-  // Root-level folder ids for SortableContext
-  const rootIds = useMemo(() => folders.map((f) => f.id), [folders])
+  // Flattened list for sortable context (includes expanded children)
+  const flatItems = useMemo(() => flattenTree(folders, expandedIds), [folders, expandedIds])
+  const sortableIds = useMemo(() => flatItems.map((i) => i.id), [flatItems])
+
+  // Clear hover timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    }
+  }, [])
 
   function toggleExpanded(id: string) {
     setExpandedIds((prev) => {
@@ -390,88 +420,139 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     setExpandedIds((prev) => new Set(prev).add(parentId))
   }
 
+  function clearHoverTimer() {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = null
+    }
+    hoverOverIdRef.current = null
+  }
+
   // ---- Drag handlers ----
   function handleDragStart(event: DragStartEvent) {
     setDragActiveId(event.active.id as string)
+    setNestTargetId(null)
+    clearHoverTimer()
   }
 
   function handleDragOver(event: DragOverEvent) {
-    setOverDropId(event.over?.id as string | null)
-  }
+    const overId = event.over?.id as string | null
+    setCurrentOverId(overId)
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    setDragActiveId(null)
-    setOverDropId(null)
-
-    if (!over || active.id === over.id) return
-
-    const draggedId = active.id as string
-    const draggedFolder = folderMap.get(draggedId)
-    if (!draggedFolder) return
-
-    const overId = over.id as string
-
-    // Case 1: Dropped onto a folder-target (make it a child)
-    if (overId.startsWith('drop-')) {
-      const targetFolderId = overId.replace('drop-', '')
-      const targetFolder = folderMap.get(targetFolderId)
-      if (!targetFolder || targetFolderId === draggedId) return
-
-      // Can't nest deeper than 2 levels
-      if (targetFolder.parentId) return
-
-      // Can't drop a parent folder (with children) into another folder
-      if ((draggedFolder.children ?? []).length > 0 && !draggedFolder.parentId) {
-        // Moving a root folder with children into another root folder — not allowed (would make 3 levels)
-        return
-      }
-
-      // Build updated tree
-      const newFolders = folders
-        .filter((f) => f.id !== draggedId)
-        .map((f) => {
-          if (f.id === targetFolderId) {
-            return {
-              ...f,
-              children: [...(f.children ?? []).filter((c) => c.id !== draggedId), { ...draggedFolder, parentId: targetFolderId, children: [] }],
-            }
-          }
-          return {
-            ...f,
-            children: (f.children ?? []).filter((c) => c.id !== draggedId),
-          }
-        })
-
-      saveBatchOrder(newFolders)
-      setExpandedIds((prev) => new Set(prev).add(targetFolderId))
+    if (!overId || !dragActiveId || overId === dragActiveId) {
+      clearHoverTimer()
+      setNestTargetId(null)
       return
     }
 
-    // Case 2: Dropped onto another sortable item (reorder)
-    const overFolder = folderMap.get(overId)
-    if (!overFolder) return
+    // Check if the over item is a root folder (can accept nesting)
+    const overItem = flatItems.find((i) => i.id === overId)
+    const dragItem = flatItems.find((i) => i.id === dragActiveId)
 
-    // Both at root level — simple reorder
-    if (!draggedFolder.parentId && !overFolder.parentId) {
-      const oldIndex = folders.findIndex((f) => f.id === draggedId)
-      const newIndex = folders.findIndex((f) => f.id === overId)
-      if (oldIndex === -1 || newIndex === -1) return
+    if (!overItem || !dragItem) {
+      clearHoverTimer()
+      setNestTargetId(null)
+      return
+    }
 
+    // Can only nest into root-level folders, and can't nest a folder that has children
+    const canNest = overItem.depth === 0
+      && (dragItem.folder.children ?? []).length === 0
+      && overItem.id !== dragActiveId
+
+    if (!canNest) {
+      clearHoverTimer()
+      if (nestTargetId === overId) setNestTargetId(null)
+      return
+    }
+
+    // If hovering over a new folder, start the timer
+    if (hoverOverIdRef.current !== overId) {
+      clearHoverTimer()
+      hoverOverIdRef.current = overId
+      hoverTimerRef.current = setTimeout(() => {
+        setNestTargetId(overId)
+      }, NEST_HOVER_MS)
+    }
+  }
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+    const activeNestTarget = nestTargetId
+
+    setDragActiveId(null)
+    setCurrentOverId(null)
+    setNestTargetId(null)
+    clearHoverTimer()
+
+    if (!over) return
+
+    const draggedId = active.id as string
+    const targetId = over.id as string
+
+    const draggedFolder = folderMap.get(draggedId)
+    if (!draggedFolder) return
+
+    // ===== NEST MODE: hover timer triggered =====
+    if (activeNestTarget && activeNestTarget !== draggedId) {
+      const targetFolder = folderMap.get(activeNestTarget)
+      if (!targetFolder) return
+
+      // Can't nest into a sub-folder (max 2 levels)
+      if (targetFolder.parentId) return
+      // Can't nest a folder that has children
+      if ((draggedFolder.children ?? []).length > 0) return
+
+      // Build updated tree: remove from current position, add as child of target
+      const newFolders = folders
+        .filter((f) => f.id !== draggedId)
+        .map((f) => {
+          // Remove from any parent's children
+          const cleanChildren = (f.children ?? []).filter((c) => c.id !== draggedId)
+          if (f.id === activeNestTarget) {
+            return {
+              ...f,
+              children: [...cleanChildren, { ...draggedFolder, parentId: activeNestTarget, children: [] }],
+            }
+          }
+          return { ...f, children: cleanChildren }
+        })
+
+      saveBatchOrder(newFolders)
+      setExpandedIds((prev) => new Set(prev).add(activeNestTarget))
+      return
+    }
+
+    // ===== REORDER MODE: simple drag up/down =====
+    if (draggedId === targetId) return
+
+    const dragIdx = flatItems.findIndex((i) => i.id === draggedId)
+    const targetIdx = flatItems.findIndex((i) => i.id === targetId)
+    if (dragIdx === -1 || targetIdx === -1) return
+
+    const dragItem = flatItems[dragIdx]
+    const targetItem = flatItems[targetIdx]
+
+    // Both at root level — reorder roots
+    if (dragItem.depth === 0 && targetItem.depth === 0) {
+      const rootIds = folders.map((f) => f.id)
+      const oldIdx = rootIds.indexOf(draggedId)
+      const newIdx = rootIds.indexOf(targetId)
+      if (oldIdx === -1 || newIdx === -1) return
       const reordered = [...folders]
-      const [moved] = reordered.splice(oldIndex, 1)
-      reordered.splice(newIndex, 0, moved)
+      const [moved] = reordered.splice(oldIdx, 1)
+      reordered.splice(newIdx, 0, moved)
       saveBatchOrder(reordered)
       return
     }
 
-    // Both in same parent — reorder within parent
-    if (draggedFolder.parentId && draggedFolder.parentId === overFolder.parentId) {
-      const parent = folders.find((f) => f.id === draggedFolder.parentId)
+    // Both children of same parent — reorder within parent
+    if (dragItem.parentId && dragItem.parentId === targetItem.parentId) {
+      const parent = folders.find((f) => f.id === dragItem.parentId)
       if (!parent?.children) return
       const kids = [...parent.children]
       const oldIdx = kids.findIndex((c) => c.id === draggedId)
-      const newIdx = kids.findIndex((c) => c.id === overId)
+      const newIdx = kids.findIndex((c) => c.id === targetId)
       if (oldIdx === -1 || newIdx === -1) return
       const [moved] = kids.splice(oldIdx, 1)
       kids.splice(newIdx, 0, moved)
@@ -480,20 +561,20 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
       return
     }
 
-    // Dragged from child to root level (unparent)
-    if (draggedFolder.parentId && !overFolder.parentId) {
-      const newIndex = folders.findIndex((f) => f.id === overId)
-      const newFolders = folders
-        .map((f) => ({
-          ...f,
-          children: (f.children ?? []).filter((c) => c.id !== draggedId),
-        }))
+    // Child dragged to root position (un-nest)
+    if (dragItem.depth > 0 && targetItem.depth === 0) {
+      const newIdx = folders.findIndex((f) => f.id === targetId)
+      if (newIdx === -1) return
+      const newFolders = folders.map((f) => ({
+        ...f,
+        children: (f.children ?? []).filter((c) => c.id !== draggedId),
+      }))
       const unparented = { ...draggedFolder, parentId: null, children: [] as Folder[] }
-      newFolders.splice(newIndex, 0, unparented)
+      newFolders.splice(newIdx + 1, 0, unparented)
       saveBatchOrder(newFolders)
       return
     }
-  }
+  }, [flatItems, folderMap, folders, nestTargetId, projectId, onFoldersChange])
 
   const draggedFolder = dragActiveId ? folderMap.get(dragActiveId) : null
 
@@ -530,26 +611,6 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     )
   }
 
-  // Collect all sortable IDs (root + children)
-  const allSortableIds = useMemo(() => {
-    const ids: string[] = []
-    for (const f of folders) {
-      ids.push(f.id)
-      for (const c of f.children ?? []) {
-        ids.push(c.id)
-      }
-    }
-    return ids
-  }, [folders])
-
-  // Root-level drop zone (for unparenting)
-  const { setNodeRef: setRootDropRef } = useDroppable({
-    id: 'drop-root',
-    data: { type: 'root-drop' },
-  })
-
-  const handleDragEndWrapped = useCallback(handleDragEnd, [folders, folderMap, projectId, onFoldersChange])
-
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-2">
@@ -566,11 +627,12 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
 
       <DndContext
         sensors={sensors}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
-        onDragEnd={handleDragEndWrapped}
+        onDragEnd={handleDragEnd}
       >
-        <div ref={setRootDropRef} className="space-y-1">
+        <div className="space-y-1">
           <button
             onClick={() => onSelectFolder(null)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors border w-full text-left ${
@@ -583,75 +645,45 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
             <span className="text-xs opacity-60">({getAllFoldersTotalCount(folders)})</span>
           </button>
 
-          <SortableContext items={allSortableIds} strategy={verticalListSortingStrategy}>
-            {folders.map((folder) => {
-              const hasChildren = (folder.children ?? []).length > 0
-              const isExpanded = expandedIds.has(folder.id)
+          <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+            {flatItems.map((item) => {
+              const isExpanded = expandedIds.has(item.id)
+              const isNestTarget = nestTargetId === item.id && dragActiveId !== item.id
 
               return (
-                <SortableFolderItem
-                  key={folder.id}
-                  folder={folder}
-                  depth={0}
-                  isExpanded={isExpanded}
-                  selectedFolderId={selectedFolderId}
-                  editingId={editingId}
-                  editName={editName}
-                  editColor={editColor}
-                  submitting={submitting}
-                  overDropId={overDropId}
-                  dragActiveId={dragActiveId}
-                  onToggleExpanded={toggleExpanded}
-                  onSelect={onSelectFolder}
-                  onStartEdit={startEdit}
-                  onStartCreateSubfolder={startCreateSubfolder}
-                  onDelete={handleDelete}
-                  onEditNameChange={setEditName}
-                  onEditColorChange={setEditColor}
-                  onRename={handleRename}
-                  onCancelEdit={() => setEditingId(null)}
-                >
-                  {hasChildren && isExpanded && (
-                    <div className="mt-1 space-y-1">
-                      {folder.children!.map((child) => (
-                        <SortableFolderItem
-                          key={child.id}
-                          folder={child}
-                          depth={1}
-                          isExpanded={false}
-                          selectedFolderId={selectedFolderId}
-                          editingId={editingId}
-                          editName={editName}
-                          editColor={editColor}
-                          submitting={submitting}
-                          overDropId={overDropId}
-                          dragActiveId={dragActiveId}
-                          onToggleExpanded={toggleExpanded}
-                          onSelect={onSelectFolder}
-                          onStartEdit={startEdit}
-                          onStartCreateSubfolder={startCreateSubfolder}
-                          onDelete={handleDelete}
-                          onEditNameChange={setEditName}
-                          onEditColorChange={setEditColor}
-                          onRename={handleRename}
-                          onCancelEdit={() => setEditingId(null)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  {creating && creatingParentId === folder.id && (
-                    <div className="mt-1" style={{ paddingLeft: '16px' }}>
+                <div key={item.id}>
+                  <SortableFolderRow
+                    item={item}
+                    isExpanded={isExpanded}
+                    selectedFolderId={selectedFolderId}
+                    editingId={editingId}
+                    editName={editName}
+                    editColor={editColor}
+                    submitting={submitting}
+                    isNestTarget={isNestTarget}
+                    onToggleExpanded={toggleExpanded}
+                    onSelect={onSelectFolder}
+                    onStartEdit={startEdit}
+                    onStartCreateSubfolder={startCreateSubfolder}
+                    onDelete={handleDelete}
+                    onEditNameChange={setEditName}
+                    onEditColorChange={setEditColor}
+                    onRename={handleRename}
+                    onCancelEdit={() => setEditingId(null)}
+                  />
+                  {creating && creatingParentId === item.id && (
+                    <div className="mt-1" style={{ paddingLeft: `${INDENT_PX}px` }}>
                       {renderCreateForm()}
                     </div>
                   )}
-                </SortableFolderItem>
+                </div>
               )
             })}
           </SortableContext>
         </div>
 
         <DragOverlay dropAnimation={null}>
-          {draggedFolder && <DragOverlayFolder folder={draggedFolder} />}
+          {draggedFolder && <DragOverlayFolder folder={draggedFolder} nestMode={!!nestTargetId} />}
         </DragOverlay>
       </DndContext>
 
