@@ -24,6 +24,30 @@ export async function POST() {
       if (stored) {
         await prisma.refreshToken.delete({ where: { id: stored.id } })
       }
+      // Token not found or expired — may have been cleaned up after rotation.
+      // Check if user has a valid token from a concurrent refresh.
+      const latestValid = await prisma.refreshToken.findFirst({
+        where: { userId: payload.sub, isRevoked: false, expiresAt: { gt: new Date() } },
+        orderBy: { createdAt: 'desc' },
+      })
+      if (latestValid) {
+        const user = await prisma.user.findUnique({
+          where: { id: payload.sub },
+          select: { id: true, email: true, firstName: true, lastName: true, role: true, customRoleId: true, isActive: true },
+        })
+        if (user && user.isActive) {
+          const accessToken = await createAccessToken({
+            sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role, customRoleId: user.customRoleId,
+          })
+          cookieStore.set(brand.cookies.access, accessToken, {
+            httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60,
+          })
+          cookieStore.set(brand.cookies.refresh, latestValid.token, {
+            httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60,
+          })
+          return NextResponse.json({ success: true })
+        }
+      }
       return NextResponse.json({ error: 'Refresh token scaduto' }, { status: 401 })
     }
 
@@ -71,7 +95,10 @@ export async function POST() {
       return NextResponse.json({ error: 'Token riutilizzato - sessioni invalidate' }, { status: 401 })
     }
 
-    // Rotate: invalidate old token and cleanup old revoked/expired tokens
+    // Rotate: invalidate old token and cleanup old revoked/expired tokens.
+    // Keep recently-revoked tokens (< 2 min) so concurrent requests using the
+    // old cookie can still hit the grace-window path instead of getting a 401.
+    const cleanupCutoff = new Date(Date.now() - 2 * 60 * 1000)
     await prisma.$transaction([
       prisma.refreshToken.update({
         where: { id: stored.id },
@@ -81,7 +108,7 @@ export async function POST() {
         where: {
           userId: stored.userId,
           OR: [
-            { isRevoked: true, id: { not: stored.id } },
+            { isRevoked: true, id: { not: stored.id }, createdAt: { lt: cleanupCutoff } },
             { expiresAt: { lt: new Date() } },
           ],
         },

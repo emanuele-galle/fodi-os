@@ -87,11 +87,14 @@ export default function DashboardLayout({
         }
       }
 
+      // 401: access token expired — attempt refresh then retry
       if (res.status === 401 && !retried) {
         retried = true
-        await new Promise((r) => setTimeout(r, 1500))
-        if (!cancelled) return loadSession()
-        return
+        try {
+          const { refreshAccessToken } = await import('@/hooks/useAuthRefresh')
+          const ok = await refreshAccessToken()
+          if (ok && !cancelled) return loadSession()
+        } catch { /* refresh failed */ }
       }
 
       if (!cancelled) window.location.href = '/login'

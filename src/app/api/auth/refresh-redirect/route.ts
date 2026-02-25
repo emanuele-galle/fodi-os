@@ -34,6 +34,28 @@ export async function GET(request: NextRequest) {
       if (stored) {
         await prisma.refreshToken.delete({ where: { id: stored.id } })
       }
+      // Token not found in DB — may have been cleaned up after rotation.
+      // Check if this user has a valid (non-revoked) token, indicating a
+      // recent rotation by a concurrent request (e.g. proactive refresh).
+      const latestValid = await prisma.refreshToken.findFirst({
+        where: { userId: payload.sub, isRevoked: false, expiresAt: { gt: new Date() } },
+        orderBy: { createdAt: 'desc' },
+      })
+      if (latestValid) {
+        const user = await prisma.user.findUnique({
+          where: { id: payload.sub },
+          select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
+        })
+        if (user && user.isActive) {
+          const accessToken = await createAccessToken({
+            sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role,
+          })
+          const response = NextResponse.redirect(buildUrl(request, safePath))
+          response.cookies.set(brand.cookies.access, accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60 })
+          response.cookies.set(brand.cookies.refresh, latestValid.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 })
+          return response
+        }
+      }
       return NextResponse.redirect(buildUrl(request, '/login'))
     }
 

@@ -9,62 +9,77 @@ import { useRouter } from 'next/navigation'
  * components or polling intervals (which would trigger token reuse detection
  * and revoke ALL tokens, causing unexpected logout).
  *
- * Access token: 15min. Proactive refresh: every 12min.
- * On tab focus: refresh only if >10min since last successful refresh.
+ * Access token: 30min. Proactive refresh: every 14min.
+ * On tab focus: always refresh if token could be close to expiry.
  */
 
 // Global state shared across all hook instances (singleton)
 let lastRefreshTime = 0
-let globalRefreshing = false
+let refreshPromise: Promise<boolean> | null = null
 
 export function useAuthRefresh() {
   const router = useRouter()
   const mountedRef = useRef(true)
 
   const doRefresh = useCallback(async (force = false): Promise<boolean> => {
-    // Skip if another refresh is in progress
-    if (globalRefreshing) return true
+    // If a refresh is already in progress, wait for it instead of skipping
+    if (refreshPromise) return refreshPromise
 
     // Skip if refreshed recently (< 2 minutes ago) unless forced
     const elapsed = Date.now() - lastRefreshTime
     if (!force && elapsed < 2 * 60 * 1000) return true
 
-    globalRefreshing = true
+    refreshPromise = (async () => {
+      try {
+        const res = await fetch('/api/auth/refresh', { method: 'POST' })
+        if (res.ok) {
+          lastRefreshTime = Date.now()
+          return true
+        }
+        // Refresh failed - session truly expired
+        if (mountedRef.current) {
+          router.push('/login')
+        }
+        return false
+      } catch {
+        return false
+      } finally {
+        refreshPromise = null
+      }
+    })()
 
-    try {
-      const res = await fetch('/api/auth/refresh', { method: 'POST' })
-      if (res.ok) {
-        lastRefreshTime = Date.now()
-        return true
-      }
-      // Refresh failed - session truly expired
-      if (mountedRef.current) {
-        router.push('/login')
-      }
-      return false
-    } catch {
-      return false
-    } finally {
-      globalRefreshing = false
-    }
+    return refreshPromise
   }, [router])
 
   useEffect(() => {
     mountedRef.current = true
 
-    // Proactive refresh: every 25 minutes (token lives 30min)
+    // Proactive refresh: every 14 minutes (well before 30min token expiry)
     const interval = setInterval(() => {
       doRefresh()
-    }, 25 * 60 * 1000)
+    }, 14 * 60 * 1000)
 
-    // On tab focus: refresh only if it's been a while (>20 minutes)
+    // On tab focus: refresh if it's been more than 5 minutes since last refresh.
+    // This catches the common case of returning to a backgrounded tab where
+    // the interval timer was throttled by the browser.
     function onFocus() {
       const elapsed = Date.now() - lastRefreshTime
-      if (elapsed > 20 * 60 * 1000) {
+      if (elapsed > 5 * 60 * 1000) {
         doRefresh()
       }
     }
     window.addEventListener('focus', onFocus)
+
+    // On visibilitychange: also handle mobile browsers that fire this instead of focus
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        const elapsed = Date.now() - lastRefreshTime
+        if (elapsed > 5 * 60 * 1000) {
+          doRefresh()
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     // Initial refresh only if we haven't refreshed recently
     if (Date.now() - lastRefreshTime > 2 * 60 * 1000) {
@@ -75,8 +90,37 @@ export function useAuthRefresh() {
       mountedRef.current = false
       clearInterval(interval)
       window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   }, [doRefresh])
 
   return { refresh: doRefresh }
+}
+
+/**
+ * Attempt a single token refresh. Deduplicates concurrent calls.
+ * Can be called from outside React (e.g. fetch interceptors).
+ */
+export async function refreshAccessToken(): Promise<boolean> {
+  if (refreshPromise) return refreshPromise
+
+  const elapsed = Date.now() - lastRefreshTime
+  if (elapsed < 2 * 60 * 1000) return true
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch('/api/auth/refresh', { method: 'POST' })
+      if (res.ok) {
+        lastRefreshTime = Date.now()
+        return true
+      }
+      return false
+    } catch {
+      return false
+    } finally {
+      refreshPromise = null
+    }
+  })()
+
+  return refreshPromise
 }
