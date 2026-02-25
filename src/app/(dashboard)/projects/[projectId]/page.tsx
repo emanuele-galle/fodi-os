@@ -37,9 +37,9 @@ const ProjectFolders = dynamic(() => import('@/components/projects/ProjectFolder
   loading: () => <Skeleton className="h-32 w-full rounded-lg" />,
 })
 const ProjectAttachments = dynamic(() => import('@/components/projects/ProjectAttachments').then(m => ({ default: m.ProjectAttachments })), {
-const ProjectLinks = dynamic(() => import("@/components/projects/ProjectLinks").then(m => ({ default: m.ProjectLinks })), {
   loading: () => <Skeleton className="h-32 w-full rounded-lg" />,
 })
+const ProjectLinks = dynamic(() => import('@/components/projects/ProjectLinks').then(m => ({ default: m.ProjectLinks })), {
   loading: () => <Skeleton className="h-32 w-full rounded-lg" />,
 })
 
