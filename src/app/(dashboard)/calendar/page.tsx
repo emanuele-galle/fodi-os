@@ -72,7 +72,8 @@ interface TeamMember {
 }
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 8) // 8:00 - 20:00
+const HOURS = Array.from({ length: 24 }, (_, i) => i) // 0:00 - 23:00
+const SLOT_HEIGHT = 60 // px per hour in day/week view
 
 const RRULE_DAYS: Record<number, string> = {
   0: 'SU', 1: 'MO', 2: 'TU', 3: 'WE', 4: 'TH', 5: 'FR', 6: 'SA',
@@ -204,7 +205,7 @@ const CALENDAR_VIEWER_ROLES = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_S
 const LS_KEY = brandClient.storageKeys.calendarTeam
 const LS_CALENDARS_KEY = brandClient.storageKeys.calendarSelected
 
-type DesktopView = 'month' | 'week'
+type DesktopView = 'month' | 'week' | 'day'
 
 export default function CalendarPage() {
   const [today, setToday] = useState(() => new Date())
@@ -218,8 +219,12 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showNewEvent, setShowNewEvent] = useState(false)
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
-  const [mobileView, setMobileView] = useState<'calendar' | 'agenda'>('agenda')
+  const [mobileView, setMobileView] = useState<'calendar' | 'agenda' | 'day'>('agenda')
   const [desktopView, setDesktopView] = useState<DesktopView>('month')
+  const [selectedDayKey, setSelectedDayKey] = useState<string>(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  })
   const [weekAnchor, setWeekAnchor] = useState(today.getDate())
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [selectedAttendees, setSelectedAttendees] = useState<string[]>([])
@@ -706,6 +711,18 @@ export default function CalendarPage() {
     return EVENT_COLORS[colorIdx] || EVENT_COLORS[0]
   }, [isMultiUser, teamColorMap])
 
+  // Helper: calcola top/height in px per un evento nella time grid (pixel-per-minute)
+  const getEventPositionStyle = useCallback((ev: CalendarEvent) => {
+    if (!ev.start.dateTime || !ev.end.dateTime) return null
+    const start = new Date(ev.start.dateTime)
+    const end = new Date(ev.end.dateTime)
+    const startMins = start.getHours() * 60 + start.getMinutes()
+    const endMins = end.getHours() * 60 + end.getMinutes()
+    const top = (startMins / 60) * SLOT_HEIGHT
+    const height = Math.max(((endMins - startMins) / 60) * SLOT_HEIGHT, SLOT_HEIGHT / 2)
+    return { top, height }
+  }, [])
+
   const todayKey = today.toISOString().split('T')[0]
   const isCurrentMonth = year === today.getFullYear() && month === today.getMonth()
 
@@ -796,6 +813,14 @@ export default function CalendarPage() {
             >
               Settimana
             </button>
+            <button
+              onClick={() => { setDesktopView('day'); setSelectedDayKey(todayKey) }}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                desktopView === 'day' ? 'bg-card shadow-sm text-foreground' : 'text-muted hover:text-foreground'
+              }`}
+            >
+              Giorno
+            </button>
           </div>
 
           <Link href="/calendar/availability">
@@ -880,15 +905,23 @@ export default function CalendarPage() {
         <div className="flex-1 flex rounded-lg border border-border bg-secondary/30 p-1">
         <button
           onClick={() => setMobileView('agenda')}
-          className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${
+          className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
             mobileView === 'agenda' ? 'bg-card shadow-sm text-foreground' : 'text-muted'
           }`}
         >
           Agenda
         </button>
         <button
+          onClick={() => { setMobileView('day'); setSelectedDayKey(todayKey) }}
+          className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
+            mobileView === 'day' ? 'bg-card shadow-sm text-foreground' : 'text-muted'
+          }`}
+        >
+          Giorno
+        </button>
+        <button
           onClick={() => setMobileView('calendar')}
-          className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${
+          className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors ${
             mobileView === 'calendar' ? 'bg-card shadow-sm text-foreground' : 'text-muted'
           }`}
         >
@@ -1218,12 +1251,18 @@ export default function CalendarPage() {
                   const isToday = dateKey === todayKey
                   return (
                     <div key={dateKey}>
-                      <div className={`sticky top-0 z-10 px-3 py-1.5 text-xs font-semibold rounded-md mb-1 ${
-                        isToday ? 'bg-primary/10 text-primary' : 'bg-secondary/50 text-muted'
-                      }`}>
-                        {isToday && 'Oggi - '}
-                        {d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
-                      </div>
+                      <button
+                        onClick={() => { setSelectedDayKey(dateKey); setMobileView('day') }}
+                        className={`sticky top-0 z-10 w-full text-left px-3 py-1.5 text-xs font-semibold rounded-md mb-1 flex items-center justify-between group ${
+                          isToday ? 'bg-primary/10 text-primary' : 'bg-secondary/50 text-muted'
+                        }`}
+                      >
+                        <span>
+                          {isToday && 'Oggi — '}
+                          {d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                        </span>
+                        <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                      </button>
                       <div className="space-y-1.5 mb-3">
                         {dayEvents.map((ev) => {
                           const color = getEventColor(ev)
@@ -1274,6 +1313,36 @@ export default function CalendarPage() {
           {desktopView === 'week' && (
             <Card className="hidden md:block overflow-hidden">
               <CardContent className="p-0">
+                {/* All-day events row */}
+                {weekDates.some((d) => {
+                  const dk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                  return (eventsByDate.get(dk) || []).some((ev) => !!ev.start.date)
+                }) && (
+                  <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-secondary/10">
+                    <div className="text-[10px] text-muted px-2 py-1 text-right pt-2">tutto giorno</div>
+                    {weekDates.map((d, i) => {
+                      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                      const allDayEvs = (eventsByDate.get(dateKey) || []).filter((ev) => !!ev.start.date)
+                      return (
+                        <div key={i} className="border-l border-border/50 px-0.5 py-1 min-h-[28px]">
+                          {allDayEvs.map((ev) => {
+                            const color = getEventColor(ev)
+                            return (
+                              <button
+                                key={ev.id}
+                                onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev) }}
+                                className="w-full text-left rounded px-1.5 py-0.5 text-[10px] truncate border-l-2 mb-0.5"
+                                style={{ borderLeftColor: color, backgroundColor: color + '20', color: color }}
+                              >
+                                {ev.summary}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
                 {/* Week header */}
                 <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border">
                   <div className="py-2" />
@@ -1283,7 +1352,7 @@ export default function CalendarPage() {
                     return (
                       <button
                         key={i}
-                        onClick={() => openNewEventForDate(dateKey)}
+                        onClick={() => { setSelectedDayKey(dateKey); setDesktopView('day') }}
                         className={`py-2 text-center border-l border-border hover:bg-secondary/30 transition-colors ${
                           isToday ? 'bg-primary/5' : ''
                         }`}
@@ -1298,61 +1367,274 @@ export default function CalendarPage() {
                     )
                   })}
                 </div>
-                {/* Hour rows */}
-                <div className="max-h-[600px] overflow-y-auto">
-                  {HOURS.map((hour) => (
-                    <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/50 min-h-[48px]">
-                      <div className="text-xs text-muted py-1 px-2 text-right">
-                        {String(hour).padStart(2, '0')}:00
-                      </div>
-                      {weekDates.map((d, i) => {
-                        const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-                        const dayEvents = eventsByDate.get(dateKey) || []
-                        const hourEvents = dayEvents.filter((ev) => {
-                          if (ev.start.date) return hour === 8 // Show all-day events at 8am
-                          const evHour = ev.start.dateTime ? new Date(ev.start.dateTime).getHours() : -1
-                          return evHour === hour
-                        })
-                        return (
-                          <div
-                            key={i}
-                            className="border-l border-border/50 px-0.5 py-0.5 hover:bg-secondary/20 transition-colors cursor-pointer"
-                            onClick={() => {
-                              const dateStr = dateKey
-                              const timeStr = `${String(hour).padStart(2, '0')}:00`
-                              setNewEvent({
-                                summary: '', description: '', location: '',
-                                startDate: dateStr, startTime: timeStr,
-                                endDate: dateStr, endTime: addHour(timeStr),
-                                withMeet: false,
-                              })
-                              setCreateError(null)
-                              setShowNewEvent(true)
-                            }}
-                          >
-                            {hourEvents.map((ev) => {
-                              const color = getEventColor(ev)
-                              return (
-                                <button
-                                  key={ev.id}
-                                  onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev) }}
-                                  className="w-full text-left rounded px-1.5 py-0.5 text-[10px] truncate border-l-2 bg-opacity-10 hover:bg-opacity-20 transition-colors mb-0.5"
-                                  style={{ borderLeftColor: color, backgroundColor: color + '20', color: color }}
-                                >
-                                  <span className="font-semibold">{ev.start.date ? 'Giornata' : formatTime(ev.start.dateTime)}</span>{' '}
-                                  {ev.summary}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        )
-                      })}
+                {/* Time grid - eventi posizionati proporzionalmente */}
+                <div className="max-h-[600px] overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
+                  <div className="grid grid-cols-[60px_repeat(7,1fr)]" style={{ height: HOURS.length * SLOT_HEIGHT }}>
+                    {/* Time labels column */}
+                    <div className="relative">
+                      {HOURS.map((hour) => (
+                        <div
+                          key={hour}
+                          className="absolute w-full text-[10px] text-muted text-right pr-2"
+                          style={{ top: hour * SLOT_HEIGHT - 8, height: SLOT_HEIGHT }}
+                        >
+                          {hour > 0 ? `${String(hour).padStart(2, '0')}:00` : ''}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                    {/* Day columns */}
+                    {weekDates.map((d, i) => {
+                      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                      const isToday = dateKey === todayKey
+                      const timedEvents = (eventsByDate.get(dateKey) || []).filter((ev) => !!ev.start.dateTime)
+                      return (
+                        <div
+                          key={i}
+                          className={`border-l border-border/50 relative ${isToday ? 'bg-primary/3' : ''}`}
+                          style={{ height: HOURS.length * SLOT_HEIGHT }}
+                        >
+                          {/* Hour lines */}
+                          {HOURS.map((hour) => (
+                            <div
+                              key={hour}
+                              className="absolute w-full border-t border-border/30 hover:bg-secondary/20 transition-colors cursor-pointer"
+                              style={{ top: hour * SLOT_HEIGHT, height: SLOT_HEIGHT }}
+                              onClick={() => {
+                                const timeStr = `${String(hour).padStart(2, '0')}:00`
+                                setNewEvent({
+                                  summary: '', description: '', location: '',
+                                  startDate: dateKey, startTime: timeStr,
+                                  endDate: dateKey, endTime: addHour(timeStr),
+                                  withMeet: false,
+                                })
+                                setCreateError(null)
+                                setShowNewEvent(true)
+                              }}
+                            />
+                          ))}
+                          {/* Events */}
+                          {timedEvents.map((ev) => {
+                            const pos = getEventPositionStyle(ev)
+                            if (!pos) return null
+                            const color = getEventColor(ev)
+                            return (
+                              <button
+                                key={ev.id}
+                                onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev) }}
+                                className="absolute left-0.5 right-0.5 rounded text-[10px] px-1.5 py-0.5 text-left border-l-2 overflow-hidden hover:z-10 transition-all hover:shadow-md"
+                                style={{
+                                  top: pos.top,
+                                  height: pos.height,
+                                  borderLeftColor: color,
+                                  backgroundColor: color + '25',
+                                  color: color,
+                                  zIndex: 1,
+                                }}
+                                title={`${formatTime(ev.start.dateTime)} - ${formatTime(ev.end.dateTime)}: ${ev.summary}`}
+                              >
+                                <span className="font-semibold block truncate">{formatTime(ev.start.dateTime)}</span>
+                                <span className="truncate block">{ev.summary}</span>
+                              </button>
+                            )
+                          })}
+                          {/* Current time indicator */}
+                          {isToday && (() => {
+                            const now = new Date()
+                            const nowTop = (now.getHours() * 60 + now.getMinutes()) / 60 * SLOT_HEIGHT
+                            return (
+                              <div
+                                className="absolute left-0 right-0 z-20 pointer-events-none"
+                                style={{ top: nowTop }}
+                              >
+                                <div className="flex items-center">
+                                  <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 flex-shrink-0" />
+                                  <div className="flex-1 h-[2px] bg-red-500" />
+                                </div>
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           )}
+
+          {/* Day View - desktop (day) + mobile (day) */}
+          {(desktopView === 'day' || mobileView === 'day') && (() => {
+            const selDayEvents = eventsByDate.get(selectedDayKey) || []
+            const allDayEvs = selDayEvents.filter((ev) => !!ev.start.date)
+            const timedEvs = selDayEvents.filter((ev) => !!ev.start.dateTime)
+            const selDate = new Date(selectedDayKey + 'T00:00:00')
+            const isToday = selectedDayKey === todayKey
+            // prev/next day
+            const goPrevDay = () => {
+              const d = new Date(selectedDayKey + 'T00:00:00')
+              d.setDate(d.getDate() - 1)
+              setSelectedDayKey(d.toISOString().split('T')[0])
+              setYear(d.getFullYear())
+              setMonth(d.getMonth())
+            }
+            const goNextDay = () => {
+              const d = new Date(selectedDayKey + 'T00:00:00')
+              d.setDate(d.getDate() + 1)
+              setSelectedDayKey(d.toISOString().split('T')[0])
+              setYear(d.getFullYear())
+              setMonth(d.getMonth())
+            }
+            return (
+              <Card className={`overflow-hidden ${mobileView === 'day' ? '' : 'hidden md:block'}`}>
+                <CardContent className="p-0">
+                  {/* Day header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/10">
+                    <button onClick={goPrevDay} className="p-1.5 rounded-lg hover:bg-secondary/50 transition-colors">
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <div className="text-center">
+                      <div className={`text-lg font-bold capitalize ${isToday ? 'text-primary' : ''}`}>
+                        {selDate.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                        {isToday && <span className="ml-2 text-xs font-normal bg-primary text-primary-foreground rounded-full px-2 py-0.5">Oggi</span>}
+                      </div>
+                      <div className="text-xs text-muted mt-0.5">{selDayEvents.length} eventi</div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openNewEventForDate(selectedDayKey)}
+                        className="p-1.5 rounded-lg hover:bg-secondary/50 transition-colors"
+                        title="Nuovo evento"
+                      >
+                        <Plus className="h-4 w-4 text-primary" />
+                      </button>
+                      <button onClick={goNextDay} className="p-1.5 rounded-lg hover:bg-secondary/50 transition-colors">
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  {/* All-day events */}
+                  {allDayEvs.length > 0 && (
+                    <div className="px-3 py-2 border-b border-border bg-secondary/5 space-y-1">
+                      <p className="text-[10px] text-muted font-medium uppercase tracking-wide mb-1">Tutto il giorno</p>
+                      {allDayEvs.map((ev) => {
+                        const color = getEventColor(ev)
+                        return (
+                          <button
+                            key={ev.id}
+                            onClick={() => setSelectedEvent(ev)}
+                            className="w-full text-left rounded-md px-2.5 py-1.5 text-xs border-l-2 font-medium"
+                            style={{ borderLeftColor: color, backgroundColor: color + '15', color }}
+                          >
+                            {ev.summary}
+                            {isMultiUser && ev._ownerName && <span className="ml-2 font-normal opacity-70">— {ev._ownerName}</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                  {/* Time grid */}
+                  <div className="overflow-y-auto max-h-[calc(100vh-280px)] md:max-h-[650px]">
+                    <div className="relative" style={{ height: HOURS.length * SLOT_HEIGHT }}>
+                      {/* Hour lines + labels */}
+                      {HOURS.map((hour) => (
+                        <div
+                          key={hour}
+                          className="absolute left-0 right-0 border-t border-border/30 flex items-start hover:bg-secondary/15 transition-colors cursor-pointer group"
+                          style={{ top: hour * SLOT_HEIGHT, height: SLOT_HEIGHT }}
+                          onClick={() => {
+                            const timeStr = `${String(hour).padStart(2, '0')}:00`
+                            setNewEvent({
+                              summary: '', description: '', location: '',
+                              startDate: selectedDayKey, startTime: timeStr,
+                              endDate: selectedDayKey, endTime: addHour(timeStr),
+                              withMeet: false,
+                            })
+                            setCreateError(null)
+                            setShowNewEvent(true)
+                          }}
+                        >
+                          <span className="text-[10px] text-muted w-14 text-right pr-3 pt-1 flex-shrink-0 select-none">
+                            {`${String(hour).padStart(2, '0')}:00`}
+                          </span>
+                          <div className="flex-1 border-l border-border/20 h-full" />
+                        </div>
+                      ))}
+                      {/* Events - absolute positioned */}
+                      {timedEvs.map((ev) => {
+                        const pos = getEventPositionStyle(ev)
+                        if (!pos) return null
+                        const color = getEventColor(ev)
+                        const durationMins = (new Date(ev.end.dateTime!).getTime() - new Date(ev.start.dateTime!).getTime()) / 60000
+                        return (
+                          <button
+                            key={ev.id}
+                            onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev) }}
+                            className="absolute rounded-lg text-left px-2.5 py-1.5 border-l-[3px] overflow-hidden hover:shadow-lg transition-all hover:z-20 hover:scale-[1.01]"
+                            style={{
+                              top: pos.top + 1,
+                              height: Math.max(pos.height - 2, 24),
+                              left: 60,
+                              right: 8,
+                              borderLeftColor: color,
+                              backgroundColor: color + '20',
+                              zIndex: 5,
+                            }}
+                          >
+                            <div className="font-semibold text-xs truncate" style={{ color }}>
+                              {formatTime(ev.start.dateTime)} — {formatTime(ev.end.dateTime)}
+                              {ev.conferenceData?.entryPoints?.find(ep => ep.entryPointType === 'video') && (
+                                <Video className="inline h-3 w-3 ml-1.5" />
+                              )}
+                            </div>
+                            {pos.height > 35 && (
+                              <div className="text-xs truncate mt-0.5 font-medium text-foreground/80">{ev.summary}</div>
+                            )}
+                            {pos.height > 55 && ev.location && (
+                              <div className="text-[10px] text-muted truncate mt-0.5">
+                                <MapPin className="inline h-2.5 w-2.5 mr-0.5" />{ev.location}
+                              </div>
+                            )}
+                            {pos.height > 55 && isMultiUser && ev._ownerName && (
+                              <div className="text-[10px] truncate mt-0.5" style={{ color }}>— {ev._ownerName}</div>
+                            )}
+                            {durationMins < 30 && (
+                              <span className="sr-only">{ev.summary}</span>
+                            )}
+                          </button>
+                        )
+                      })}
+                      {/* Current time line */}
+                      {isToday && (() => {
+                        const now = new Date()
+                        const nowTop = (now.getHours() * 60 + now.getMinutes()) / 60 * SLOT_HEIGHT
+                        return (
+                          <div
+                            className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
+                            style={{ top: nowTop }}
+                          >
+                            <div className="w-14 pr-1 text-right">
+                              <div className="w-2.5 h-2.5 rounded-full bg-red-500 ml-auto" />
+                            </div>
+                            <div className="flex-1 h-[2px] bg-red-500 opacity-80" />
+                          </div>
+                        )
+                      })()}
+                      {/* Empty state */}
+                      {timedEvs.length === 0 && allDayEvs.length === 0 && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="text-center">
+                            <Calendar className="h-8 w-8 text-muted/30 mx-auto mb-2" />
+                            <p className="text-sm text-muted">Nessun evento per questo giorno</p>
+                            <p className="text-xs text-muted/70 mt-1">Tocca un orario per aggiungere un evento</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })()}
 
           {/* Calendar Month Grid - always on desktop (if month view), conditional on mobile */}
           {(desktopView === 'month' || mobileView === 'calendar') && (
@@ -1381,7 +1663,10 @@ export default function CalendarPage() {
                         key={i}
                         onClick={() => {
                           if (isCurrentMonth && cellDate) {
-                            openNewEventForDate(cellDate)
+                            setSelectedDayKey(cellDate)
+                            // Desktop: navigate to day view; Mobile: navigate to day view
+                            setDesktopView('day')
+                            setMobileView('day')
                           }
                         }}
                         className={`min-h-[60px] md:min-h-[100px] border-b border-r border-border/60 p-1 md:p-1.5 transition-colors cursor-pointer ${
