@@ -80,7 +80,7 @@ export function SetupBanner() {
         if (reg) {
           const sub = await reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content,
+            applicationServerKey: document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
           })
           await fetch('/api/notifications/subscribe', {
             method: 'POST',

@@ -55,6 +55,9 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#27272A" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+        {process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && (
+          <meta name="vapid-public-key" content={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY} />
+        )}
       </head>
       <body className="antialiased">
         {children}

@@ -3,6 +3,7 @@ import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
+import { refreshAccessToken } from '@/hooks/useAuthRefresh'
 import Link from 'next/link'
 import {
   ChevronLeft,
@@ -282,7 +283,12 @@ export default function CalendarPage() {
 
   const fetchCalendars = useCallback(async () => {
     try {
-      const res = await fetch('/api/calendar')
+      let res = await fetch('/api/calendar')
+      if (res.status === 401) {
+        const refreshed = await refreshAccessToken()
+        if (refreshed) res = await fetch('/api/calendar')
+      }
+      if (!res.ok) return
       const data = await res.json()
       if (data.calendars) {
         setCalendars(data.calendars)
@@ -325,57 +331,52 @@ export default function CalendarPage() {
     const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString()
     const baseParams = `timeMin=${timeMin}&timeMax=${timeMax}`
 
+    // Helper: fetch with auto-retry on 401 (expired JWT)
+    const fetchWithRetry = async (url: string): Promise<Response> => {
+      const res = await fetch(url)
+      if (res.status === 401) {
+        const refreshed = await refreshAccessToken()
+        if (refreshed) return fetch(url)
+      }
+      return res
+    }
+
+    // Helper: process calendar API response
+    const processResponse = (res: Response, data: Record<string, unknown>): boolean => {
+      if (!res.ok || data?.connected === false) {
+        setConnected(false)
+        if (data?.reason === 'scopes') { setScopeError(true); setSyncStatus('scopes') }
+        return false
+      }
+      setConnected(true)
+      setSyncStatus('ok')
+      setLastSyncTime(new Date())
+      setScopeError(false)
+      setEvents((data.events as CalendarEvent[]) || [])
+      return true
+    }
+
     try {
       // Multi-user mode: fetch all selected team members' events (all their calendars)
       if (selectedTeamIds.length > 0 && canViewTeam) {
         const userIdsParam = selectedTeamIds.join(',')
-        const res = await fetch(`/api/calendar/events?${baseParams}&userIds=${userIdsParam}`)
+        const res = await fetchWithRetry(`/api/calendar/events?${baseParams}&userIds=${userIdsParam}`)
         const data = await res.json()
-
-        if (data?.connected === false) {
-          setConnected(false)
-          if (data.reason === 'scopes') { setScopeError(true); setSyncStatus('scopes') }
-          return
-        }
-        setConnected(true)
-        setSyncStatus('ok')
-        setLastSyncTime(new Date())
-        setScopeError(false)
-        setEvents(data.events || [])
+        processResponse(res, data)
         return
       }
 
       // Single-user mode: use multi-calendar endpoint if calendars selected
       if (selectedCalendars.size > 0) {
         const calIdsParam = [...selectedCalendars].map(encodeURIComponent).join(',')
-        const res = await fetch(`/api/calendar/events?${baseParams}&calendarIds=${calIdsParam}`)
+        const res = await fetchWithRetry(`/api/calendar/events?${baseParams}&calendarIds=${calIdsParam}`)
         const data = await res.json()
-
-        if (data?.connected === false) {
-          setConnected(false)
-          if (data.reason === 'scopes') { setScopeError(true); setSyncStatus('scopes') }
-          return
-        }
-        setConnected(true)
-        setSyncStatus('ok')
-        setLastSyncTime(new Date())
-        setScopeError(false)
-        setEvents(data.events || [])
+        processResponse(res, data)
       } else {
         // Fallback: fetch primary calendar only
-        const res = await fetch(`/api/calendar/events?${baseParams}`)
+        const res = await fetchWithRetry(`/api/calendar/events?${baseParams}`)
         const data = await res.json()
-
-        if (data?.connected === false) {
-          setConnected(false)
-          if (data.reason === 'scopes') { setScopeError(true); setSyncStatus('scopes') }
-          return
-        }
-        setConnected(true)
-        setSyncStatus('ok')
-        setLastSyncTime(new Date())
-        setScopeError(false)
-        setEvents(data.events || [])
+        processResponse(res, data)
       }
     } catch {
       setFetchError('Errore nel caricamento degli eventi')
