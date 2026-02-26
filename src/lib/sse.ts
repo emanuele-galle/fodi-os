@@ -5,9 +5,11 @@ export interface SSEEvent {
 
 class SSEManager {
   private clients: Map<string, Set<ReadableStreamDefaultController>>
+  private heartbeats: Map<ReadableStreamDefaultController, NodeJS.Timeout>
 
   constructor() {
     this.clients = new Map()
+    this.heartbeats = new Map()
   }
 
   addClient(userId: string, controller: ReadableStreamDefaultController) {
@@ -15,9 +17,24 @@ class SSEManager {
       this.clients.set(userId, new Set())
     }
     this.clients.get(userId)!.add(controller)
+
+    const intervalId = setInterval(() => {
+      try {
+        controller.enqueue(new TextEncoder().encode(':keepalive\n\n'))
+      } catch {
+        // Client disconnected, will be cleaned up
+      }
+    }, 30000)
+    this.heartbeats.set(controller, intervalId)
   }
 
   removeClient(userId: string, controller: ReadableStreamDefaultController) {
+    const heartbeat = this.heartbeats.get(controller)
+    if (heartbeat) {
+      clearInterval(heartbeat)
+      this.heartbeats.delete(controller)
+    }
+
     const controllers = this.clients.get(userId)
     if (controllers) {
       controllers.delete(controller)

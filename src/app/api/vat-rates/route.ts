@@ -27,7 +27,9 @@ export async function GET(request: NextRequest) {
       orderBy: [{ sortOrder: 'asc' }, { rate: 'asc' }],
     })
 
-    return NextResponse.json({ success: true, items })
+    return NextResponse.json({ success: true, items }, {
+      headers: { 'Cache-Control': 'private, max-age=300' },
+    })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied'))
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

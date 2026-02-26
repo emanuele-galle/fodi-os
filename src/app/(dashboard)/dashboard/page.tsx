@@ -173,37 +173,19 @@ export default function DashboardPage() {
       .catch(() => {})
   }, [])
 
-  // Load dashboard data
+  // Load dashboard data (single aggregated API call)
   useEffect(() => {
     async function loadDashboard() {
       setFetchError(null)
       try {
-        const now = new Date()
-        const monday = new Date(now)
-        monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
-        const mondayStr = monday.toISOString().split('T')[0]
-        const todayStr = now.toISOString().split('T')[0]
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+        const res = await fetch('/api/dashboard/summary')
+        if (!res.ok) throw new Error('fetch failed')
+        const data = await res.json()
 
-        const [clientsRes, projectsRes, quotesRes, timeRes, teamRes, expensesRes, ticketsRes, tasksRes, activityRes, doneMonthRes, inProgressRes, accountingRes] = await Promise.all([
-          fetch('/api/clients?status=ACTIVE&limit=1').then((r) => r.ok ? r.json() : null),
-          fetch('/api/projects?status=IN_PROGRESS&limit=1').then((r) => r.ok ? r.json() : null),
-          fetch('/api/quotes?status=SENT&limit=1').then((r) => r.ok ? r.json() : null),
-          fetch(`/api/time?from=${mondayStr}&to=${todayStr}&limit=200`).then((r) => r.ok ? r.json() : null),
-          fetch('/api/team').then((r) => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/expenses?limit=200').then((r) => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/tickets?status=OPEN,IN_PROGRESS,WAITING_CLIENT&limit=1').then((r) => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/tasks?status=TODO,IN_PROGRESS,IN_REVIEW&sort=dueDate&order=asc&limit=10&mine=true&scope=assigned').then((r) => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/activity?limit=10').then((r) => r.ok ? r.json() : null).catch(() => null),
-          fetch(`/api/tasks?status=DONE&from=${monthStart}&limit=1`).then((r) => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/tasks?status=IN_PROGRESS&limit=1').then((r) => r.ok ? r.json() : null).catch(() => null),
-          fetch('/api/accounting/dashboard').then((r) => r.ok ? r.json() : null).catch(() => null),
-        ])
-
-        // Tasks + Activities (fetched in parallel with everything else)
-        const taskItems: TaskItem[] = tasksRes?.items || (Array.isArray(tasksRes) ? tasksRes : [])
+        // Tasks + Activities
+        const taskItems: TaskItem[] = data.tasks?.items || []
         setTasks(taskItems)
-        if (activityRes?.items) setActivities(activityRes.items)
+        if (data.activity?.items) setActivities(data.activity.items)
 
         // Operational summary metrics
         let overdue = 0, dueToday = 0
@@ -214,33 +196,31 @@ export default function DashboardPage() {
         }
         setOverdueTaskCount(overdue)
         setTodayTaskCount(dueToday)
-        setInProgressTaskCount(inProgressRes?.total ?? 0)
-        setCompletedMonthCount(doneMonthRes?.total ?? 0)
+        setInProgressTaskCount(data.inProgress?.total ?? 0)
+        setCompletedMonthCount(data.doneMonth?.total ?? 0)
 
-        const timeItems = timeRes?.items || []
+        const timeItems = data.time?.items || []
         const hours = timeItems.reduce((s: number, e: { hours: number }) => s + e.hours, 0)
         const billable = timeItems.filter((e: { billable: boolean }) => e.billable).reduce((s: number, e: { hours: number }) => s + e.hours, 0)
         setWeekHours(hours)
         setWeekBillableHours(billable)
 
         // Use accounting dashboard for accurate financial data
-        const monthRevenue = accountingRes?.data?.income?.totalGross ?? 0
-        const monthExpenses = accountingRes?.data?.expense?.totalGross ?? (expensesRes?.items || [])
-          .filter((e: { date: string }) => e.date >= monthStart)
-          .reduce((s: number, e: { amount: string }) => s + parseFloat(e.amount), 0)
+        const monthRevenue = data.accounting?.data?.income?.totalGross ?? 0
+        const monthExpenses = data.accounting?.data?.expense?.totalGross ?? 0
         setTotalRevenue(monthRevenue)
         setTotalExpenses(monthExpenses)
 
-        const members = teamRes?.items || teamRes?.members || []
+        const members = data.team?.items || []
         setTeamMembers(Array.isArray(members) ? members : [])
 
         setStats([
-          { label: 'Clienti Attivi', value: String(clientsRes?.total ?? 0), icon: Users, color: 'text-primary', href: '/crm?status=ACTIVE' },
-          { label: 'Progetti in Corso', value: String(projectsRes?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
-          { label: 'Preventivi Aperti', value: String(quotesRes?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
+          { label: 'Clienti Attivi', value: String(data.clients?.total ?? 0), icon: Users, color: 'text-primary', href: '/crm?status=ACTIVE' },
+          { label: 'Progetti in Corso', value: String(data.projects?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
+          { label: 'Preventivi Aperti', value: String(data.quotes?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
           { label: 'Ore Questa Settimana', value: hours.toFixed(1) + 'h', icon: Clock, color: 'text-muted', href: '/time' },
           { label: 'Fatturato Mese', value: monthRevenue > 0 ? formatCurrency(monthRevenue) : 'N/D', icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
-          { label: 'Ticket Aperti', value: String(ticketsRes?.total ?? 0), icon: AlertCircle, color: 'text-destructive', href: '/support' },
+          { label: 'Ticket Aperti', value: String(data.tickets?.total ?? 0), icon: AlertCircle, color: 'text-destructive', href: '/support' },
         ])
       } catch {
         setFetchError('Errore nel caricamento dei dati della dashboard')

@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
     if (!profile) {
       return NextResponse.json(null)
     }
-    return NextResponse.json(profile)
+    return NextResponse.json(profile, {
+      headers: { 'Cache-Control': 'private, max-age=300' },
+    })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

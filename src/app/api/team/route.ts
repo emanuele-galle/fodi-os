@@ -120,7 +120,9 @@ export async function GET(request: NextRequest) {
       ...(isCalendarViewer && { hasGoogleCalendar: !!(u as any).googleToken }),
     }))
 
-    return NextResponse.json({ items, total: items.length })
+    return NextResponse.json({ items, total: items.length }, {
+      headers: { 'Cache-Control': 'private, max-age=60' },
+    })
   } catch (e) {
     console.error('[team]', e)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })

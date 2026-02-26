@@ -5,6 +5,7 @@ const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  serverExternalPackages: ['googleapis'],
   env: {
     APP_VERSION: pkg.version,
     NEXT_PUBLIC_BRAND_NAME: process.env.NEXT_PUBLIC_BRAND_NAME || process.env.BRAND_NAME || 'Muscari OS',
@@ -37,9 +38,9 @@ const nextConfig: NextConfig = {
     ]
   },
   experimental: {
-    middlewareClientMaxBodySize: '1gb',
+    middlewareClientMaxBodySize: '50mb',
     serverActions: {
-      bodySizeLimit: '1gb',
+      bodySizeLimit: '50mb',
     },
     optimizePackageImports: [
       'lucide-react',

@@ -530,6 +530,7 @@ model Task {
   @@index([priority])
   @@index([createdAt])
   @@index([updatedAt])
+  @@index([status, assigneeId])
   @@map("tasks")
 }
 
@@ -1117,6 +1118,7 @@ model ActivityLog {
   @@index([userId])
   @@index([entityType, entityId])
   @@index([createdAt])
+  @@index([userId, createdAt])
   @@map("activity_logs")
 }
 

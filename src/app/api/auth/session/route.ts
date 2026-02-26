@@ -48,6 +48,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ user: null }, { status: 401 })
     }
 
+    const cacheHeaders = { 'Cache-Control': 'private, max-age=30' }
+
     // Add impersonation info
     if (isImpersonating) {
       return NextResponse.json({
@@ -56,10 +58,10 @@ export async function GET(request: NextRequest) {
           isImpersonating: true,
           realAdmin: { id: session.sub, name: session.name },
         },
-      })
+      }, { headers: cacheHeaders })
     }
 
-    return NextResponse.json({ user })
+    return NextResponse.json({ user }, { headers: cacheHeaders })
   } catch (error) {
     console.error('[auth/session]', error)
     return NextResponse.json({ error: 'Errore interno del server' }, { status: 500 })
