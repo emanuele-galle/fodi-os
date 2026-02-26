@@ -54,7 +54,7 @@ const FOLDER_COLORS = [
 ]
 
 const INDENT_PX = 24
-const NEST_HOVER_MS = 600 // Hold over a folder for 600ms to nest
+const NEST_HOVER_MS = 350 // Hold over a folder for 350ms to nest
 
 function getTotalTaskCount(folder: Folder): number {
   const own = folder._count?.tasks ?? 0
