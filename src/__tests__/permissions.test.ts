@@ -34,9 +34,10 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('DIR_COMMERCIALE', 'erp', 'admin')).toBe(true)
     })
 
-    it('DIR_COMMERCIALE ha solo read su pm', () => {
+    it('DIR_COMMERCIALE ha read/write su pm', () => {
       expect(hasPermission('DIR_COMMERCIALE', 'pm', 'read')).toBe(true)
-      expect(hasPermission('DIR_COMMERCIALE', 'pm', 'write')).toBe(false)
+      expect(hasPermission('DIR_COMMERCIALE', 'pm', 'write')).toBe(true)
+      expect(hasPermission('DIR_COMMERCIALE', 'pm', 'delete')).toBe(false)
     })
 
     it('DIR_COMMERCIALE ha solo read su admin', () => {
@@ -83,9 +84,10 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('DIR_SUPPORT', 'crm', 'delete')).toBe(false)
     })
 
-    it('DIR_SUPPORT ha solo read su pm', () => {
+    it('DIR_SUPPORT ha read/write su pm', () => {
       expect(hasPermission('DIR_SUPPORT', 'pm', 'read')).toBe(true)
-      expect(hasPermission('DIR_SUPPORT', 'pm', 'write')).toBe(false)
+      expect(hasPermission('DIR_SUPPORT', 'pm', 'write')).toBe(true)
+      expect(hasPermission('DIR_SUPPORT', 'pm', 'delete')).toBe(false)
     })
   })
 
@@ -116,8 +118,12 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('COMMERCIALE', 'support', 'write')).toBe(false)
     })
 
-    it('COMMERCIALE NON ha accesso a content, admin, portal', () => {
-      expect(hasPermission('COMMERCIALE', 'content', 'read')).toBe(false)
+    it('COMMERCIALE ha read/write su content', () => {
+      expect(hasPermission('COMMERCIALE', 'content', 'read')).toBe(true)
+      expect(hasPermission('COMMERCIALE', 'content', 'write')).toBe(true)
+    })
+
+    it('COMMERCIALE NON ha accesso a admin, portal', () => {
       expect(hasPermission('COMMERCIALE', 'admin', 'read')).toBe(false)
       expect(hasPermission('COMMERCIALE', 'portal', 'read')).toBe(false)
     })
@@ -145,9 +151,13 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('PM', 'support', 'write')).toBe(false)
     })
 
-    it('PM NON ha accesso a erp, content, admin, portal', () => {
+    it('PM ha read/write su content', () => {
+      expect(hasPermission('PM', 'content', 'read')).toBe(true)
+      expect(hasPermission('PM', 'content', 'write')).toBe(true)
+    })
+
+    it('PM NON ha accesso a erp, admin, portal', () => {
       expect(hasPermission('PM', 'erp', 'read')).toBe(false)
-      expect(hasPermission('PM', 'content', 'read')).toBe(false)
       expect(hasPermission('PM', 'admin', 'read')).toBe(false)
     })
   })
@@ -212,9 +222,13 @@ describe('Permissions - hasPermission', () => {
       expect(hasPermission('SUPPORT', 'pm', 'write')).toBe(true)
     })
 
-    it('SUPPORT NON ha accesso a erp, content, admin', () => {
+    it('SUPPORT ha read/write su content', () => {
+      expect(hasPermission('SUPPORT', 'content', 'read')).toBe(true)
+      expect(hasPermission('SUPPORT', 'content', 'write')).toBe(true)
+    })
+
+    it('SUPPORT NON ha accesso a erp, admin', () => {
       expect(hasPermission('SUPPORT', 'erp', 'read')).toBe(false)
-      expect(hasPermission('SUPPORT', 'content', 'read')).toBe(false)
       expect(hasPermission('SUPPORT', 'admin', 'read')).toBe(false)
     })
   })
