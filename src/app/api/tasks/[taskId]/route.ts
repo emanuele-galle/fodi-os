@@ -441,6 +441,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     })
 
+    // Sync to Microsoft To Do (fire-and-forget)
+    pushTaskToMicrosoftTodo(taskId, 'update').catch(() => {})
+
     // Resolve assignedBy user names for PATCH response
     if (fullTask) {
       const patchAssignedByIds = [...new Set(
@@ -462,9 +465,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         return NextResponse.json({ success: true, data: enriched })
       }
     }
-
-    // Sync to Microsoft To Do (fire-and-forget)
-    pushTaskToMicrosoftTodo(taskId, 'update').catch(() => {})
 
     return NextResponse.json({ success: true, data: fullTask })
   } catch (e) {

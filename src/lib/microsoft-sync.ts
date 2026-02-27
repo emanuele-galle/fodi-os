@@ -196,11 +196,11 @@ export async function initialSyncToMicrosoftTodo(userId: string): Promise<number
   try {
     const listId = await getOrCreateTodoList(userId, BRAND_NAME)
 
-    // Get all tasks where user is creator or assignee, not yet synced
+    // Get all tasks where user is creator or assignee, not yet synced (including completed)
     const tasks = await prisma.task.findMany({
       where: {
         microsoftTodoId: null,
-        status: { notIn: ['DONE', 'CANCELLED'] },
+        status: { notIn: ['CANCELLED'] },
         OR: [
           { creatorId: userId },
           { assigneeId: userId },

@@ -256,10 +256,7 @@ export async function getTodoTask(userId: string, listId: string, todoTaskId: st
 }
 
 export async function listTodoTasks(userId: string, listId: string) {
-  const res = await graphFetch(userId, `/me/todo/lists/${listId}/tasks?$top=100`)
-  if (!res.ok) throw new Error('Failed to list To Do tasks')
-  const data = await res.json()
-  return data.value as Array<{
+  const allTasks: Array<{
     id: string
     title: string
     status: string
@@ -268,7 +265,25 @@ export async function listTodoTasks(userId: string, listId: string) {
     dueDateTime?: { dateTime: string }
     lastModifiedDateTime: string
     completedDateTime?: { dateTime: string }
-  }>
+  }> = []
+
+  let url: string | null = `/me/todo/lists/${listId}/tasks?$top=100`
+  while (url) {
+    const res = await graphFetch(userId, url)
+    if (!res.ok) throw new Error('Failed to list To Do tasks')
+    const data = await res.json()
+    if (data.value) allTasks.push(...data.value)
+    // Handle @odata.nextLink for pagination
+    if (data['@odata.nextLink']) {
+      // nextLink is a full URL, extract the path
+      const nextUrl = new URL(data['@odata.nextLink'])
+      url = nextUrl.pathname.replace('/v1.0', '') + nextUrl.search
+    } else {
+      url = null
+    }
+  }
+
+  return allTasks
 }
 
 // ---------------------------------------------------------------------------
