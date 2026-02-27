@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
       where: {
         members: { some: { userId } },
         isArchived: false,
+        type: { not: 'PROJECT' },
       },
       include: {
         _count: { select: { members: true } },

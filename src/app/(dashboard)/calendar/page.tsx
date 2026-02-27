@@ -219,8 +219,8 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showNewEvent, setShowNewEvent] = useState(false)
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
-  const [mobileView, setMobileView] = useState<'calendar' | 'agenda' | 'day'>('agenda')
-  const [desktopView, setDesktopView] = useState<DesktopView>('month')
+  const [mobileView, setMobileView] = useState<'calendar' | 'agenda' | 'day'>('day')
+  const [desktopView, setDesktopView] = useState<DesktopView>('day')
   const [selectedDayKey, setSelectedDayKey] = useState<string>(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`

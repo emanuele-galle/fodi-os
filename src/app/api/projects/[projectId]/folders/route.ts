@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
-import { slugify } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
@@ -109,22 +108,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             _count: { select: { tasks: true } },
           },
           orderBy: { sortOrder: 'asc' },
-        },
-      },
-    })
-
-    // Create a dedicated chat channel for this folder
-    await prisma.chatChannel.create({
-      data: {
-        name: `Chat - ${parsed.data.name}`,
-        slug: `folder-${slugify(parsed.data.name)}-${Date.now()}`,
-        description: `Chat della cartella ${parsed.data.name}`,
-        type: 'PROJECT',
-        projectId,
-        folderId: folder.id,
-        createdById: userId,
-        members: {
-          create: [{ userId, role: 'OWNER' }],
         },
       },
     })
