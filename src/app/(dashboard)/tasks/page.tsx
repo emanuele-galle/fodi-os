@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { CheckSquare, ListTodo, LayoutGrid, ChevronDown, ChevronRight, Download, AlertTriangle, User, Send, Users } from 'lucide-react'
+import { CheckSquare, ListTodo, LayoutGrid, ChevronDown, ChevronRight, Download, AlertTriangle, User, Send, Users, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getDueUrgency } from '@/lib/task-utils'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -258,6 +258,13 @@ export default function TasksPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => { setSelectedTaskId(null); setModalOpen(true) }}
+            className="h-9 md:h-8 px-3 text-sm md:text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary-hover transition-colors touch-manipulation flex items-center gap-1.5"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Nuova Task</span>
+          </button>
           <Tooltip content="Esporta CSV">
             <button
               onClick={exportCSV}
@@ -294,7 +301,7 @@ export default function TasksPage() {
       <TaskTabBar tabs={visibleTabs} activeTab={activeTab} onTabChange={setActiveTab} tabCounts={tabCounts} />
 
       <div className="mb-4">
-        <QuickTaskInput onCreated={refreshAll} />
+        <QuickTaskInput onCreated={refreshAll} users={users} />
       </div>
 
       <TaskFilters

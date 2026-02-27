@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, UserPlus } from 'lucide-react'
 
 interface QuickTaskInputProps {
   onCreated: () => void
+  users?: { id: string; firstName: string; lastName: string }[]
 }
 
 const PRIORITY_OPTIONS = [
@@ -14,9 +15,10 @@ const PRIORITY_OPTIONS = [
   { value: 'URGENT', label: 'Urgente' },
 ]
 
-export function QuickTaskInput({ onCreated }: QuickTaskInputProps) {
+export function QuickTaskInput({ onCreated, users = [] }: QuickTaskInputProps) {
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState('MEDIUM')
+  const [assigneeId, setAssigneeId] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit() {
@@ -25,14 +27,17 @@ export function QuickTaskInput({ onCreated }: QuickTaskInputProps) {
 
     setSubmitting(true)
     try {
+      const body: Record<string, unknown> = { title: trimmed, priority, isPersonal: !assigneeId }
+      if (assigneeId) body.assigneeId = assigneeId
       const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: trimmed, priority, isPersonal: true }),
+        body: JSON.stringify(body),
       })
       if (res.ok) {
         setTitle('')
         setPriority('MEDIUM')
+        setAssigneeId('')
         onCreated()
       }
     } finally {
@@ -62,6 +67,23 @@ export function QuickTaskInput({ onCreated }: QuickTaskInputProps) {
         />
       </div>
       <div className="flex items-center gap-2">
+        {users.length > 0 && (
+          <div className="flex items-center gap-1 flex-1 sm:flex-none">
+            <UserPlus className="h-4 w-4 text-muted flex-shrink-0 hidden sm:block" />
+            <select
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
+              className="h-11 md:h-8 rounded-md border border-border bg-transparent px-2 text-base md:text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 flex-1 sm:flex-none max-w-[140px]"
+            >
+              <option value="">Me</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.firstName} {u.lastName}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value)}
