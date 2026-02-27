@@ -196,6 +196,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
     if (priority !== undefined) data.priority = priority
+    // Auto-sync boardColumn when status changes (unless boardColumn explicitly provided)
+    if (status !== undefined && boardColumn === undefined) {
+      const STATUS_TO_COLUMN: Record<string, string> = {
+        TODO: 'todo', IN_PROGRESS: 'in_progress', IN_REVIEW: 'in_review', DONE: 'done', CANCELLED: 'cancelled',
+      }
+      if (STATUS_TO_COLUMN[status]) data.boardColumn = STATUS_TO_COLUMN[status]
+    }
     if (boardColumn !== undefined) data.boardColumn = boardColumn
     if (assigneeId !== undefined) data.assigneeId = assigneeId
     if (projectId !== undefined) {
