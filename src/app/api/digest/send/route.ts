@@ -191,7 +191,7 @@ a{text-decoration:none}
 
   <!-- LOGO -->
   <tr><td style="padding:0 0 32px;text-align:center;">
-    <img src="${LOGO_URL}" alt="${brand.name}" width="120" height="42" style="display:inline-block;" />
+    <img src="${LOGO_URL}" alt="${brand.name}" width="160" height="26" style="display:inline-block;" />
   </td></tr>
 
   <!-- MAIN CARD -->
