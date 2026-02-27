@@ -2,6 +2,7 @@ import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendViaSMTP } from '@/lib/email'
+import { escapeHtml } from '@/lib/email-templates'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || brand.siteUrl
 const LOGO_URL = `${SITE_URL}/logo-light.png`
@@ -23,9 +24,7 @@ function fmtDate(d: Date) {
 function fmtShort(d: Date) {
   return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
 }
-function esc(t: string) {
-  return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
+const esc = escapeHtml
 function cut(t: string, n: number) { return t.length <= n ? t : t.slice(0, n - 1) + '\u2026' }
 function initials(f: string, l: string) { return (f.charAt(0) + l.charAt(0)).toUpperCase() }
 

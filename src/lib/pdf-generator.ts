@@ -1,4 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont, PDFImage } from 'pdf-lib'
+import { hexToRgb, drawText, drawTextRight as rightAlignText, wrapText, formatEur } from '@/lib/pdf-utils'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -62,49 +63,8 @@ export interface PdfDocumentData {
   secondaryColor?: string
 }
 
-// ─── Helpers ────────────────────────────────────────────────
-
 function parseNumber(val: number | string): number {
   return typeof val === 'string' ? parseFloat(val) || 0 : val
-}
-
-function formatEur(val: number | string): string {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(parseNumber(val))
-}
-
-function hexToRgb(hex: string) {
-  const clean = hex.replace('#', '')
-  return {
-    r: parseInt(clean.substring(0, 2), 16) / 255,
-    g: parseInt(clean.substring(2, 4), 16) / 255,
-    b: parseInt(clean.substring(4, 6), 16) / 255,
-  }
-}
-
-function drawText(page: PDFPage, text: string, x: number, y: number, font: PDFFont, size: number, color = rgb(0.1, 0.1, 0.1)) {
-  page.drawText(text, { x, y, size, font, color })
-}
-
-function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = text.split(' ')
-  const lines: string[] = []
-  let currentLine = ''
-  for (const word of words) {
-    const testLine = currentLine ? `${currentLine} ${word}` : word
-    if (font.widthOfTextAtSize(testLine, size) > maxWidth && currentLine) {
-      lines.push(currentLine)
-      currentLine = word
-    } else {
-      currentLine = testLine
-    }
-  }
-  if (currentLine) lines.push(currentLine)
-  return lines
-}
-
-function rightAlignText(page: PDFPage, text: string, rightX: number, y: number, font: PDFFont, size: number, color = rgb(0.1, 0.1, 0.1)) {
-  const w = font.widthOfTextAtSize(text, size)
-  drawText(page, text, rightX - w, y, font, size, color)
 }
 
 // ─── Logo Fetch Helper ──────────────────────────────────────

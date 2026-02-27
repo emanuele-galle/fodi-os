@@ -1,5 +1,6 @@
 import { brand } from '@/lib/branding'
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont, PDFImage } from 'pdf-lib'
+import { hexToRgb, lightenColor, drawText as draw, drawTextRight as drawRight, truncate, wrapText, formatEur, formatHoursShort, formatMinsHuman } from '@/lib/pdf-utils'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -102,84 +103,10 @@ const FOOTER_H = 35
 
 // ─── Helpers ────────────────────────────────────────────────
 
-function hexToRgb(hex: string) {
-  const clean = hex.replace('#', '')
-  return {
-    r: parseInt(clean.substring(0, 2), 16) / 255,
-    g: parseInt(clean.substring(2, 4), 16) / 255,
-    b: parseInt(clean.substring(4, 6), 16) / 255,
-  }
-}
-
-function lightenColor(hex: string, amount: number) {
-  const c = hexToRgb(hex)
-  return rgb(
-    Math.min(1, c.r + (1 - c.r) * amount),
-    Math.min(1, c.g + (1 - c.g) * amount),
-    Math.min(1, c.b + (1 - c.b) * amount),
-  )
-}
-
-function draw(page: PDFPage, text: string, x: number, y: number, font: PDFFont, size: number, color = rgb(0, 0, 0)) {
-  page.drawText(text, { x, y, size, font, color })
-}
-
-function drawRight(page: PDFPage, text: string, rightX: number, y: number, font: PDFFont, size: number, color = rgb(0, 0, 0)) {
-  const w = font.widthOfTextAtSize(text, size)
-  draw(page, text, rightX - w, y, font, size, color)
-}
-
-function truncate(text: string, font: PDFFont, size: number, maxWidth: number): string {
-  if (font.widthOfTextAtSize(text, size) <= maxWidth) return text
-  let t = text
-  while (t.length > 1 && font.widthOfTextAtSize(t + '\u2026', size) > maxWidth) {
-    t = t.slice(0, -1)
-  }
-  return t + '\u2026'
-}
-
-function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = text.split(' ')
-  const lines: string[] = []
-  let current = ''
-  for (const word of words) {
-    const test = current ? `${current} ${word}` : word
-    if (font.widthOfTextAtSize(test, size) > maxWidth && current) {
-      lines.push(current)
-      current = word
-    } else {
-      current = test
-    }
-  }
-  if (current) lines.push(current)
-  return lines.length ? lines : ['']
-}
-
 function formatWeekdayDateIT(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
   const result = d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   return result.charAt(0).toUpperCase() + result.slice(1)
-}
-
-function formatHoursShort(hours: number): string {
-  const h = Math.floor(hours)
-  const m = Math.round((hours - h) * 60)
-  if (m === 0) return `${h}h`
-  if (h === 0) return `${m}min`
-  return `${h}h ${m}min`
-}
-
-function formatMinsHuman(mins: number): string {
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  const parts: string[] = []
-  if (h > 0) parts.push(`${h}h`)
-  if (m > 0) parts.push(`${m}min`)
-  return parts.length ? parts.join(' ') : '0min'
-}
-
-function formatEur(val: number): string {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val)
 }
 
 // ─── Activity Labels ────────────────────────────────────────
@@ -422,13 +349,33 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
     String(data.kpi.tasksCompleted), 'TASK COMPLETATI',
     `${data.kpi.tasksCreated} creati, ${data.kpi.activeTasks} attivi`)
 
-  // Card 3: Fatturabile
+  // Card 3: Fatturabile — with stacked billable bar
   const hasRates = data.kpi.billableValue > 0
   const valueStr = hasRates ? formatEur(data.kpi.billableValue) : formatHoursShort(data.kpi.billableHours)
   const valueSub = hasRates
     ? `media ${formatEur(data.kpi.billableValue / Math.max(data.kpi.billableHours, 0.01))}/h`
     : 'nessuna tariffa impostata'
-  drawSlimKpiCard(MARGIN + (cardW + cardGap) * 2, valueStr, hasRates ? 'VALORE FATTURABILE' : 'ORE FATTURABILI', valueSub)
+  const card3X = MARGIN + (cardW + cardGap) * 2
+  drawSlimKpiCard(card3X, valueStr, hasRates ? 'VALORE FATTURABILE' : 'ORE FATTURABILI', valueSub)
+
+  // Stacked bar for billable percentage
+  if (data.kpi.hoursLogged > 0) {
+    const barY = y - cardH + 3
+    const barX = card3X + 10
+    const barW = cardW - 20
+    const barH = 4
+    const billPct = data.kpi.billablePercentage / 100
+    // Non-billable (light)
+    page.drawRectangle({ x: barX, y: barY, width: barW, height: barH, color: primaryLightBg })
+    // Billable (solid)
+    if (billPct > 0) {
+      page.drawRectangle({ x: barX, y: barY, width: Math.max(barW * billPct, 2), height: barH, color: primaryRgb })
+    }
+    // Percentage text centered above bar
+    const pctText = `${Math.round(data.kpi.billablePercentage)}%`
+    const pctW = font.widthOfTextAtSize(pctText, 5.5)
+    draw(page, pctText, barX + (barW - pctW) / 2, barY + barH + 2, font, 5.5, grayText)
+  }
 
   // Card 4: Sessione
   if (data.workSessions.length > 0 && data.kpi.workSessionMinutes > 0) {
@@ -445,13 +392,21 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
     drawSlimKpiCard(MARGIN + (cardW + cardGap) * 3, 'N/D', 'SESSIONE LAVORO', 'nessuna sessione')
   }
 
-  y -= cardH + 16
+  y -= cardH + 10
+
+  // ─── Visual separator after KPI ───────────────────────────
+  const primaryFaded = lightenColor(primaryHex, 0.5)
+  page.drawLine({ start: { x: MARGIN, y }, end: { x: PAGE_W - MARGIN, y }, thickness: 0.6, color: primaryFaded })
+  page.drawLine({ start: { x: MARGIN, y: y - 2 }, end: { x: PAGE_W - MARGIN, y: y - 2 }, thickness: 0.3, color: borderColor })
+  y -= 12
 
   // ═══ TWO-COLUMN LAYOUT ═════════════════════════════════════
   let yL = y  // left column tracker
   let yR = y  // right column tracker
 
   // ─── LEFT COLUMN: Distribuzione Tempo ──────────────────────
+  const PROJECT_DOT_COLORS = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#EF4444']
+
   if (data.projectBreakdown.length > 0) {
     yL = drawColSectionTitle(
       `DISTRIBUZIONE TEMPO (${data.projectBreakdown.length} progett${data.projectBreakdown.length === 1 ? 'o' : 'i'})`,
@@ -461,26 +416,38 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
     const barMaxW = COL_LEFT_W - 200
     const maxHours = Math.max(...data.projectBreakdown.map(p => p.totalHours), 0.01)
 
-    for (const proj of data.projectBreakdown) {
-      const projLabel = truncate(proj.projectName, font, 7.5, 120)
-      draw(page, projLabel, MARGIN, yL, font, 7.5, darkText)
+    for (let pi = 0; pi < data.projectBreakdown.length; pi++) {
+      const proj = data.projectBreakdown[pi]
+      const dotColor = hexToRgb(PROJECT_DOT_COLORS[pi % PROJECT_DOT_COLORS.length])
+
+      // Colored dot
+      page.drawCircle({ x: MARGIN + 4, y: yL + 1, size: 3, color: rgb(dotColor.r, dotColor.g, dotColor.b) })
+
+      const projLabel = truncate(proj.projectName, font, 7.5, 110)
+      draw(page, projLabel, MARGIN + 12, yL, font, 7.5, darkText)
 
       const barX = MARGIN + 130
       const totalBarW = (proj.totalHours / maxHours) * barMaxW
       const billBarW = (proj.billableHours / maxHours) * barMaxW
 
       if (totalBarW > 0) {
-        page.drawRectangle({ x: barX, y: yL - 4, width: Math.max(totalBarW, 2), height: 10, color: primaryLightBg })
+        page.drawRectangle({ x: barX, y: yL - 5, width: Math.max(totalBarW, 2), height: 12, color: primaryLightBg })
       }
       if (billBarW > 0) {
-        page.drawRectangle({ x: barX, y: yL - 4, width: Math.max(billBarW, 2), height: 10, color: primaryRgb })
+        page.drawRectangle({ x: barX, y: yL - 5, width: Math.max(billBarW, 2), height: 12, color: primaryRgb })
       }
 
       const rightLabel = `${formatHoursShort(proj.totalHours)} (${Math.round(proj.percentage)}%)`
       draw(page, rightLabel, barX + barMaxW + 8, yL, font, 7, grayText)
-      yL -= 15
+      yL -= 16
     }
-    yL -= 6
+
+    // Legend row
+    page.drawRectangle({ x: MARGIN + 130, y: yL, width: 8, height: 8, color: primaryRgb })
+    draw(page, 'Fatturabile', MARGIN + 141, yL + 1, font, 6, grayText)
+    page.drawRectangle({ x: MARGIN + 195, y: yL, width: 8, height: 8, color: primaryLightBg })
+    draw(page, 'Non fatturabile', MARGIN + 206, yL + 1, font, 6, grayText)
+    yL -= 12
   }
 
   // ─── LEFT COLUMN: Registro Tempo (tabella 5 colonne) ───────
@@ -594,6 +561,8 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
   const rowCount = hasValue ? 4 : 3
   const boxH = boxRowH * (rowCount + 1)
 
+  // Background tint for the entire box
+  page.drawRectangle({ x: RIGHT_X, y: yR - boxH, width: boxW, height: boxH, color: primaryLightBg })
   page.drawRectangle({ x: RIGHT_X, y: yR - boxH, width: boxW, height: boxH, borderColor, borderWidth: 0.6 })
 
   // Header
@@ -639,14 +608,21 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
 
     const timelineX = MARGIN + 8
     const lineX = timelineX + 2
-    // Full width for activity detail in landscape
     const detailMaxW = CONTENT_W - 60
+    const ROW_STEP = 17
+
+    // Action → circle color
+    const ACTION_CIRCLE_COLORS: Record<string, string> = {
+      CREATE: '#22C55E', COMPLETE: '#15803D', APPROVE: '#15803D',
+      UPDATE: '#3B82F6', ASSIGN: '#3B82F6', COMMENT: '#8B5CF6',
+      DELETE: '#EF4444', REJECT: '#EF4444',
+    }
 
     for (let i = 0; i < visibleActivities.length; i++) {
       const activity = visibleActivities[i]
 
       // Page break if needed
-      if (y < FOOTER_H + MARGIN + 16) {
+      if (y < FOOTER_H + MARGIN + 20) {
         page = doc.addPage([PAGE_W, PAGE_H])
         drawSlimHeader()
         y = PAGE_H - HEADER_H - 18
@@ -656,13 +632,15 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
         y -= 14
       }
 
-      // Vertical line segment
+      // Continuous vertical line (to next entry)
       if (i < visibleActivities.length - 1) {
-        page.drawLine({ start: { x: lineX, y: y - 2 }, end: { x: lineX, y: y - 16 }, thickness: 0.8, color: borderColor })
+        page.drawLine({ start: { x: lineX, y: y - 4 }, end: { x: lineX, y: y - ROW_STEP }, thickness: 0.8, color: borderColor })
       }
 
-      // Circle
-      page.drawCircle({ x: lineX, y: y - 1, size: 3, color: primaryRgb })
+      // Colored circle per action type
+      const circleHex = ACTION_CIRCLE_COLORS[activity.action] || primaryHex
+      const circleC = hexToRgb(circleHex)
+      page.drawCircle({ x: lineX, y: y - 1, size: 3.5, color: rgb(circleC.r, circleC.g, circleC.b) })
 
       // Timestamp
       const ts = new Date(activity.createdAt)
@@ -682,20 +660,31 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
         draw(page, truncate(detail, font, 7, detailMaxW - aeW), timelineX + 42 + aeW, y - 4, font, 7, grayText)
       }
 
-      y -= 14
+      y -= ROW_STEP
+
+      // Separator every 5 entries
+      if ((i + 1) % 5 === 0 && i < visibleActivities.length - 1) {
+        page.drawLine({ start: { x: MARGIN + 20, y: y + 4 }, end: { x: PAGE_W - MARGIN, y: y + 4 }, thickness: 0.3, color: borderColor })
+      }
     }
   }
 
   // ═══ FOOTER (tutte le pagine) ══════════════════════════════
 
   const pages = doc.getPages()
+  const generatedTs = new Date(data.generatedAt)
+  const generatedLabel = `Generato il ${generatedTs.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })} alle ${generatedTs.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`
+
   for (let i = 0; i < pages.length; i++) {
     const p = pages[i]
     const footY = FOOTER_H - 10
 
+    // Accent primary line (2px)
+    p.drawLine({ start: { x: MARGIN, y: footY + 2 }, end: { x: PAGE_W - MARGIN, y: footY + 2 }, thickness: 2, color: primaryRgb, opacity: 0.4 })
+    // Thin separator
     p.drawLine({ start: { x: MARGIN, y: footY }, end: { x: PAGE_W - MARGIN, y: footY }, thickness: 0.4, color: borderColor })
 
-    // Single line: company info
+    // Company info
     const footParts: string[] = [company?.ragioneSociale || brand.company]
     if (company?.indirizzo && company?.cap && company?.citta && company?.provincia) {
       footParts.push(`${company.indirizzo}, ${company.cap} ${company.citta} (${company.provincia})`)
@@ -704,9 +693,9 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
     if (company?.email) footParts.push(company.email)
     draw(p, footParts.join('  ·  '), MARGIN, footY - 12, font, 6, grayText)
 
-    // Page number
-    const pageText = `Pag ${i + 1} di ${pages.length}`
-    drawRight(p, pageText, PAGE_W - MARGIN, footY - 12, font, 6.5, grayText)
+    // Timestamp + page number
+    const pageText = `${generatedLabel}  ·  Pag ${i + 1} di ${pages.length}`
+    drawRight(p, pageText, PAGE_W - MARGIN, footY - 12, font, 6, grayText)
   }
 
   return doc.save()

@@ -8,6 +8,7 @@ import { addSignatureStamp } from '@/lib/signature-pdf'
 import { rateLimit } from '@/lib/rate-limit'
 import { sendPush } from '@/lib/push'
 import { sendViaSMTP } from '@/lib/email'
+import { buildSignatureCompletedEmail } from '@/lib/email-templates'
 import { getClientIp } from '@/lib/ip'
 
 export async function POST(
@@ -221,11 +222,12 @@ export async function POST(
         link: '/erp/signatures',
       })
       if (r.email) {
-        sendViaSMTP(
-          r.email,
-          `Documento firmato: ${reqWithRequester.documentTitle}`,
-          `<p>Ciao ${r.firstName},</p><p><strong>${reqWithRequester.signerName}</strong> ha firmato il documento "${reqWithRequester.documentTitle}".</p><p>Puoi visualizzare i dettagli nella sezione <a href="${process.env.NEXT_PUBLIC_APP_URL || brand.siteUrl}/erp/signatures">Firme</a>.</p>`
-        )
+        const html = buildSignatureCompletedEmail({
+          recipientFirstName: r.firstName,
+          signerName: reqWithRequester.signerName,
+          documentTitle: reqWithRequester.documentTitle,
+        })
+        sendViaSMTP(r.email, `Documento firmato: ${reqWithRequester.documentTitle}`, html)
       }
     }
 

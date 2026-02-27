@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib'
 import type { ContractTemplate, ContractClause } from './contract-templates'
 import { fetchLogoBytes } from './pdf-generator'
+import { hexToRgb, drawText, drawTextCenter as centerText, wrapText } from '@/lib/pdf-utils'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -42,43 +43,6 @@ export interface ContractPdfData {
   logoUrl?: string | null
   primaryColor?: string
   secondaryColor?: string
-}
-
-// ─── Helpers ────────────────────────────────────────────────
-
-function hexToRgb(hex: string) {
-  const clean = hex.replace('#', '')
-  return {
-    r: parseInt(clean.substring(0, 2), 16) / 255,
-    g: parseInt(clean.substring(2, 4), 16) / 255,
-    b: parseInt(clean.substring(4, 6), 16) / 255,
-  }
-}
-
-function drawText(page: PDFPage, text: string, x: number, y: number, font: PDFFont, size: number, color = rgb(0.1, 0.1, 0.1)) {
-  page.drawText(text, { x, y, size, font, color })
-}
-
-function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = text.split(' ')
-  const lines: string[] = []
-  let currentLine = ''
-  for (const word of words) {
-    const testLine = currentLine ? `${currentLine} ${word}` : word
-    if (font.widthOfTextAtSize(testLine, size) > maxWidth && currentLine) {
-      lines.push(currentLine)
-      currentLine = word
-    } else {
-      currentLine = testLine
-    }
-  }
-  if (currentLine) lines.push(currentLine)
-  return lines
-}
-
-function centerText(page: PDFPage, text: string, y: number, font: PDFFont, size: number, pageWidth: number, color = rgb(0.1, 0.1, 0.1)) {
-  const w = font.widthOfTextAtSize(text, size)
-  drawText(page, text, (pageWidth - w) / 2, y, font, size, color)
 }
 
 // ─── Main Generator ─────────────────────────────────────────

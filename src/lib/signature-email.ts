@@ -1,5 +1,5 @@
-import { brand } from '@/lib/branding'
 import { sendViaSMTP } from '@/lib/email'
+import { buildSignatureOtpEmail } from '@/lib/email-templates'
 
 interface CompanyData {
   ragioneSociale: string
@@ -19,46 +19,7 @@ export async function sendOtpEmail(
   documentTitle: string,
   company?: CompanyData | null
 ): Promise<boolean> {
-  const companyName = company?.ragioneSociale || brand.name
   const subject = `Codice OTP per firma: ${documentTitle}`
-
-  const logoHtml = company?.logoUrl
-    ? `<img src="${company.logoUrl}" alt="${companyName}" style="max-height: 40px; max-width: 160px; margin-bottom: 8px;" /><br/>`
-    : ''
-
-  const footerParts: string[] = []
-  if (company) {
-    footerParts.push(`${company.ragioneSociale} - ${company.indirizzo}, ${company.cap} ${company.citta} (${company.provincia})`)
-    footerParts.push(`P.IVA: ${company.partitaIva}`)
-    if (company.pec) footerParts.push(`PEC: ${company.pec}`)
-    if (company.siteUrl) footerParts.push(company.siteUrl)
-  }
-
-  const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px;">
-  <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-    ${logoHtml}
-    <h2 style="color: #1e293b; margin: 0 0 8px;">Codice di Verifica</h2>
-    <p style="color: #64748b; margin: 0 0 24px; font-size: 14px;">
-      Per firmare il documento <strong>&ldquo;${documentTitle}&rdquo;</strong>, inserisci il seguente codice:
-    </p>
-    <div style="background: #f1f5f9; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-      <span style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #1e293b;">${otpCode}</span>
-    </div>
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-      Il codice scade tra <strong>10 minuti</strong>. Non condividerlo con nessuno.
-    </p>
-    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-    <p style="color: #94a3b8; font-size: 11px; margin: 0; line-height: 1.5;">
-      ${footerParts.length > 0 ? footerParts.join('<br/>') : `${companyName} - Sistema di Firma Digitale`}<br/>
-      Se non hai richiesto questo codice, ignora questa email.
-    </p>
-  </div>
-</body>
-</html>`
-
+  const html = buildSignatureOtpEmail({ otpCode, documentTitle, company })
   return sendViaSMTP(to, subject, html)
 }
