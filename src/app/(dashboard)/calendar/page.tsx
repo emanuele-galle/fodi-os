@@ -1489,7 +1489,7 @@ export default function CalendarPage() {
                 <CardContent className="p-0">
                   {/* Day header */}
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/10">
-                    <button onClick={goPrevDay} className="p-1.5 rounded-lg hover:bg-secondary/50 transition-colors">
+                    <button onClick={goPrevDay} className="p-2 md:p-1.5 rounded-lg hover:bg-secondary/50 transition-colors touch-manipulation">
                       <ChevronLeft className="h-4 w-4" />
                     </button>
                     <div className="text-center">
@@ -1502,12 +1502,12 @@ export default function CalendarPage() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => openNewEventForDate(selectedDayKey)}
-                        className="p-1.5 rounded-lg hover:bg-secondary/50 transition-colors"
+                        className="p-2 md:p-1.5 rounded-lg hover:bg-secondary/50 transition-colors touch-manipulation"
                         title="Nuovo evento"
                       >
                         <Plus className="h-4 w-4 text-primary" />
                       </button>
-                      <button onClick={goNextDay} className="p-1.5 rounded-lg hover:bg-secondary/50 transition-colors">
+                      <button onClick={goNextDay} className="p-2 md:p-1.5 rounded-lg hover:bg-secondary/50 transition-colors touch-manipulation">
                         <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>

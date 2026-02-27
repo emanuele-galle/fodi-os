@@ -447,7 +447,7 @@ export default function SettingsPage() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar navigation */}
         <nav className="lg:w-60 flex-shrink-0">
-          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 lg:border lg:border-border/30 lg:rounded-xl lg:p-2 lg:bg-secondary/20">
+          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 lg:border lg:border-border/30 lg:rounded-xl lg:p-2 lg:bg-secondary/20 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory lg:snap-none">
             {sections.map((section) => {
               const Icon = section.icon
               return (
@@ -455,7 +455,7 @@ export default function SettingsPage() {
                   key={section.id}
                   onClick={() => section.href ? router.push(section.href) : setActiveSection(section.id)}
                   className={cn(
-                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap touch-manipulation min-h-[44px] md:min-h-0',
+                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap touch-manipulation min-h-[44px] snap-center lg:snap-align-none',
                     activeSection === section.id && !section.href
                       ? 'bg-primary/10 text-primary border-l-2 border-primary lg:border-l-2'
                       : 'text-muted hover:text-foreground hover:bg-secondary/60'
@@ -664,7 +664,7 @@ export default function SettingsPage() {
               <CardTitle>Tema</CardTitle>
               <CardContent>
                 <p className="text-sm text-muted mb-4">Scegli il tema che preferisci per l&apos;interfaccia.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {THEMES.map((t) => {
                     const Icon = t.icon
                     const isActive = currentTheme === t.value
@@ -673,7 +673,7 @@ export default function SettingsPage() {
                         key={t.value}
                         onClick={() => selectTheme(t.value)}
                         className={cn(
-                          'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center',
+                          'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center touch-manipulation min-h-[88px]',
                           isActive
                             ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
                             : 'border-border/50 hover:border-primary/30 hover:bg-secondary/30'
@@ -871,7 +871,7 @@ export default function SettingsPage() {
                 ) : (
                   <div className="border border-border/30 rounded-lg overflow-hidden">
                     {/* Header */}
-                    <div className="grid grid-cols-[1fr_70px_70px] gap-2 px-4 py-2.5 bg-secondary/30 border-b border-border/30">
+                    <div className="grid grid-cols-[1fr_60px_60px] sm:grid-cols-[1fr_70px_70px] gap-2 px-3 sm:px-4 py-2.5 bg-secondary/30 border-b border-border/30">
                       <span className="text-xs font-medium text-muted uppercase tracking-wide">Tipo</span>
                       <span className="text-xs font-medium text-muted uppercase tracking-wide text-center">In-app</span>
                       <span className="text-xs font-medium text-muted uppercase tracking-wide text-center">Push</span>
@@ -880,7 +880,7 @@ export default function SettingsPage() {
                     {CONFIGURABLE_NOTIF_TYPES.map((t) => (
                       <div
                         key={t.type}
-                        className="grid grid-cols-[1fr_70px_70px] gap-2 px-4 py-3 border-b border-border/20 last:border-b-0 hover:bg-secondary/20 transition-colors"
+                        className="grid grid-cols-[1fr_60px_60px] sm:grid-cols-[1fr_70px_70px] gap-2 px-3 sm:px-4 py-3 border-b border-border/20 last:border-b-0 hover:bg-secondary/20 transition-colors"
                       >
                         <span className="text-sm text-foreground">{t.label}</span>
                         <div className="flex justify-center">

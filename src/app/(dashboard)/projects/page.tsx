@@ -1032,7 +1032,7 @@ export default function ProjectsPage() {
             />
             <button
               onClick={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
-              className="p-1.5 rounded-md hover:bg-secondary transition-colors"
+              className="p-2.5 sm:p-1.5 rounded-md hover:bg-secondary transition-colors touch-manipulation"
               title={sortDirection === 'asc' ? 'Ordine crescente' : 'Ordine decrescente'}
             >
               {sortDirection === 'asc' ? <ChevronUp className="h-4 w-4 text-muted" /> : <ChevronDown className="h-4 w-4 text-muted" />}
@@ -1042,21 +1042,21 @@ export default function ProjectsPage() {
           <div className="flex items-center border border-border rounded-md overflow-hidden flex-shrink-0">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}`}
+              className={`p-2.5 sm:p-2 transition-colors touch-manipulation ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}`}
               title="Vista griglia"
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2 transition-colors ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}`}
+              className={`p-2.5 sm:p-2 transition-colors touch-manipulation ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}`}
               title="Vista tabella"
             >
               <List className="h-4 w-4" />
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`p-2 transition-colors ${viewMode === 'kanban' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}`}
+              className={`p-2.5 sm:p-2 transition-colors touch-manipulation ${viewMode === 'kanban' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}`}
               title="Vista kanban"
             >
               <Columns3 className="h-4 w-4" />
@@ -1104,14 +1104,14 @@ export default function ProjectsPage() {
           {viewMode === 'kanban' && renderKanbanView()}
 
           {showPagination && (
-            <div className="flex items-center justify-between mt-6">
+            <div className="flex items-center justify-between mt-6 gap-2">
               <p className="text-sm text-muted">{total} progetti totali</p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted">{page} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>

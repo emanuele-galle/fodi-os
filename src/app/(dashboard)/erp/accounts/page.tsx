@@ -383,17 +383,17 @@ export default function AccountsPage() {
                       realBalance={account.balance}
                       onRealBalanceChange={(val) => handleRealBalanceUpdate(account.id, val)}
                     />
-                    <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-3 right-3 flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => openEditAccount(account)}
-                        className="p-1.5 rounded-lg bg-card/80 backdrop-blur border border-border/30 hover:bg-secondary/40 transition-colors"
+                        className="p-2 md:p-1.5 rounded-lg bg-card/80 backdrop-blur border border-border/30 hover:bg-secondary/40 transition-colors"
                         title="Modifica"
                       >
                         <Pencil className="h-3.5 w-3.5 text-muted" />
                       </button>
                       <button
                         onClick={() => setDeleteAccountConfirm(account)}
-                        className="p-1.5 rounded-lg bg-card/80 backdrop-blur border border-border/30 hover:bg-secondary/40 transition-colors"
+                        className="p-2 md:p-1.5 rounded-lg bg-card/80 backdrop-blur border border-border/30 hover:bg-secondary/40 transition-colors"
                         title="Elimina"
                       >
                         <Trash2 className="h-3.5 w-3.5 text-destructive" />

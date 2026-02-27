@@ -100,7 +100,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
         className={cn(
           'bg-card/95 backdrop-blur-xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in flex flex-col',
           // Mobile: full-screen sheet
-          'w-full rounded-none',
+          'w-full h-[100dvh] rounded-none',
           // Desktop: centered dialog
           'md:h-auto md:max-h-[85vh] md:rounded-xl',
           {

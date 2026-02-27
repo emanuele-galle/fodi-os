@@ -24,19 +24,19 @@ import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
 
 const RevenueChart = dynamic(() => import('@/components/dashboard/RevenueChart').then(m => ({ default: m.RevenueChart })), {
   ssr: false,
-  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[200px] md:h-64 w-full rounded-lg" />,
 })
 const CashFlowChart = dynamic(() => import('@/components/dashboard/CashFlowChart').then(m => ({ default: m.CashFlowChart })), {
   ssr: false,
-  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[200px] md:h-64 w-full rounded-lg" />,
 })
 const PipelineFunnel = dynamic(() => import('@/components/dashboard/PipelineFunnel').then(m => ({ default: m.PipelineFunnel })), {
   ssr: false,
-  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[200px] md:h-64 w-full rounded-lg" />,
 })
 const ActivityTrendChart = dynamic(() => import('@/components/dashboard/ActivityTrendChart').then(m => ({ default: m.ActivityTrendChart })), {
   ssr: false,
-  loading: () => <Skeleton className="h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[200px] md:h-64 w-full rounded-lg" />,
 })
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
@@ -308,7 +308,7 @@ export default function DashboardPage() {
       {/* STAT CARDS */}
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[100px] rounded-xl" />)}
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[88px] md:h-[100px] rounded-xl" />)}
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6 animate-stagger">
@@ -316,7 +316,7 @@ export default function DashboardPage() {
             <div
               key={stat.label}
               onClick={() => router.push(stat.href)}
-              className="relative overflow-hidden rounded-xl border border-border/40 bg-card p-4 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-primary/25 transition-all duration-200 group touch-manipulation active:scale-[0.97]"
+              className="relative overflow-hidden rounded-xl border border-border/40 bg-card p-3 md:p-4 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-primary/25 transition-all duration-200 group touch-manipulation active:scale-[0.97]"
             >
               <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl opacity-80" style={{ background: 'currentColor' }} />
               <div className={`flex flex-col gap-3 ${stat.color}`}>
@@ -344,7 +344,7 @@ export default function DashboardPage() {
               <button
                 key={action.label}
                 onClick={() => router.push(action.href)}
-                className={`group relative flex flex-col items-center gap-2 p-4 md:p-5 rounded-xl border border-border/30 ${action.hoverBorder} bg-card hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.97]`}
+                className={`group relative flex flex-col items-center gap-1.5 md:gap-2 p-3.5 md:p-5 rounded-xl border border-border/30 ${action.hoverBorder} bg-card hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.97]`}
               >
                 <div className={`p-2.5 md:p-3 rounded-xl ${action.bg} ${action.color} transition-transform duration-200 group-hover:scale-110`}>
                   <Icon className="h-5 w-5 md:h-6 md:w-6" />
@@ -360,7 +360,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ROW 1: TASK IN SCADENZA (2 col) + RIEPILOGO OPERATIVO (1 col) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-5 md:mb-6">
         <Card className="lg:col-span-2">
           <CardContent>
             <div className="flex items-center justify-between mb-5">
@@ -443,7 +443,7 @@ export default function DashboardPage() {
               </div>
               <CardTitle>Riepilogo Operativo</CardTitle>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
               <div className="text-center p-3 rounded-lg bg-red-500/5 border border-red-200/30 dark:border-red-800/30">
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">{overdueTaskCount}</p>
                 <p className="text-xs text-muted mt-1">Scadute</p>
@@ -466,7 +466,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ROW 2: FATTURATO + CASH FLOW */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6">
         <Card className="overflow-hidden">
           <CardContent>
             <div className="flex items-center justify-between mb-6">
@@ -503,7 +503,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ROW 3: FINANCIAL SUMMARY + PIPELINE */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6">
         <FinancialSummaryCard
           income={totalRevenue}
           expenses={totalExpenses}
@@ -529,7 +529,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ROW 4: TREND + TEAM ACTIVITY */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6">
         <Card className="overflow-hidden">
           <CardContent>
             <div className="flex items-center justify-between mb-6">
@@ -569,7 +569,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ROW 5: ACTIVITY TIMELINE + STICKY NOTES */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6">
         <ActivityTimeline
           activities={activities.map((activity) => {
             const ActionIcon = ACTIVITY_ICONS[activity.entityType] || Activity

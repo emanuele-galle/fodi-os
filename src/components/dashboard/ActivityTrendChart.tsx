@@ -60,7 +60,8 @@ export function ActivityTrendChart({ color = 'var(--color-primary)', height = 26
   if (loading) return <Skeleton className="h-[220px] w-full" />
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <div className="h-[200px] md:h-[260px]">
+    <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 5 }}>
         <defs>
           <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
@@ -70,8 +71,8 @@ export function ActivityTrendChart({ color = 'var(--color-primary)', height = 26
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="var(--color-border)" strokeOpacity={0.4} />
-        <XAxis dataKey="label" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
-        <YAxis tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} allowDecimals={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} allowDecimals={false} />
         <Tooltip content={<ChartTooltip />} cursor={{ stroke: color, strokeDasharray: '4 4', strokeOpacity: 0.3 }} />
         <Area
           type="monotone"
@@ -84,5 +85,6 @@ export function ActivityTrendChart({ color = 'var(--color-primary)', height = 26
         />
       </AreaChart>
     </ResponsiveContainer>
+    </div>
   )
 }

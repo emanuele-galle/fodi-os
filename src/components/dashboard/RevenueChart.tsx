@@ -104,7 +104,8 @@ export function RevenueChart() {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <div className="h-[200px] md:h-[280px]">
+    <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 8, right: 8, left: -5, bottom: 5 }} barCategoryGap="20%">
         <defs>
           <linearGradient id="gradPaid" x1="0" y1="0" x2="0" y2="1">
@@ -121,9 +122,9 @@ export function RevenueChart() {
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="var(--color-border)" strokeOpacity={0.4} />
-        <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
+        <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
         <YAxis
-          tick={{ fontSize: 13, fill: 'var(--color-muted)' }}
+          tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
           stroke="transparent"
           tickLine={false}
           axisLine={false}
@@ -136,5 +137,6 @@ export function RevenueChart() {
         <Bar dataKey="overdue" stackId="a" fill="url(#gradOverdue)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
+    </div>
   )
 }

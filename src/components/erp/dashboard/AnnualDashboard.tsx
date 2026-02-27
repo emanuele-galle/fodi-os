@@ -107,7 +107,7 @@ export function AnnualDashboard() {
           <Card className="mb-6">
             <CardContent className="pt-4">
               <p className="text-sm font-medium mb-2">Confronto anno precedente</p>
-              <div className="flex gap-6">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
                 <div className="flex items-center gap-2">
                   {data.comparison.deltaIncome >= 0 ? <ArrowUpRight className="h-4 w-4 text-emerald-500" /> : <ArrowDownRight className="h-4 w-4 text-red-500" />}
                   <span className="text-sm">Entrate: <strong>{data.comparison.deltaIncome >= 0 ? '+' : ''}{formatCurrency(data.comparison.deltaIncome)}</strong></span>

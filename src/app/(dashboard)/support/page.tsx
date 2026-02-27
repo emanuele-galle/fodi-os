@@ -300,7 +300,7 @@ export default function SupportPage() {
               <div
                 key={ticket.id}
                 onClick={() => router.push(`/support/${ticket.id}`)}
-                className="p-4 space-y-2.5 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)] rounded-lg border border-border/80 bg-card"
+                className="p-4 space-y-3 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)] rounded-lg border border-border/80 bg-card"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -377,14 +377,14 @@ export default function SupportPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between mt-4 gap-2">
               <p className="text-sm text-muted">{total} ticket totali</p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted">{page} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -418,7 +418,7 @@ export default function SupportPage() {
               required
               value={ticketForm.values.description}
               onChange={(e) => ticketForm.setValue('description', e.target.value)}
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-base md:text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2.5 text-base md:text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               placeholder="Descrivi il problema..."
             />
           </div>

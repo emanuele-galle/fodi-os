@@ -108,12 +108,12 @@ export function TeamReportsContent() {
       {/* Filters */}
       <Card className="mb-4">
         <CardContent>
-          <div className="flex flex-wrap items-center gap-3">
-            <Filter className="h-4 w-4 text-muted flex-shrink-0" />
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <Filter className="h-4 w-4 text-muted flex-shrink-0 hidden sm:block" />
             <select
               value={filter.userId}
               onChange={(e) => { setPage(1); setFilter(f => ({ ...f, userId: e.target.value })) }}
-              className="text-sm bg-secondary border-0 rounded-lg px-3 py-1.5 text-foreground"
+              className="text-sm bg-secondary border-0 rounded-lg px-3 py-2.5 sm:py-1.5 text-foreground min-h-[44px] sm:min-h-0"
             >
               <option value="">Tutti i membri</option>
               {users.map(u => (
@@ -124,14 +124,14 @@ export function TeamReportsContent() {
               type="date"
               value={filter.dateFrom}
               onChange={(e) => { setPage(1); setFilter(f => ({ ...f, dateFrom: e.target.value })) }}
-              className="text-sm bg-secondary border-0 rounded-lg px-3 py-1.5 text-foreground"
+              className="text-sm bg-secondary border-0 rounded-lg px-3 py-2.5 sm:py-1.5 text-foreground min-h-[44px] sm:min-h-0"
               placeholder="Da"
             />
             <input
               type="date"
               value={filter.dateTo}
               onChange={(e) => { setPage(1); setFilter(f => ({ ...f, dateTo: e.target.value })) }}
-              className="text-sm bg-secondary border-0 rounded-lg px-3 py-1.5 text-foreground"
+              className="text-sm bg-secondary border-0 rounded-lg px-3 py-2.5 sm:py-1.5 text-foreground min-h-[44px] sm:min-h-0"
               placeholder="A"
             />
             <span className="ml-auto text-xs text-muted">{total} report</span>
@@ -159,7 +159,7 @@ export function TeamReportsContent() {
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3.5 sm:py-3 hover:bg-secondary/30 transition-colors touch-manipulation"
                 >
                   <Avatar
                     src={item.user.avatarUrl}
@@ -176,6 +176,16 @@ export function TeamReportsContent() {
                     <p className="text-xs text-muted mt-0.5">
                       {formatDate(item.date)}
                     </p>
+                    <div className="flex md:hidden items-center gap-3 text-xs text-muted mt-1.5">
+                      <span className="flex items-center gap-1" title="Ore loggate">
+                        <Clock className="h-3 w-3" />
+                        {item.summary.hoursLogged?.toFixed(1) || '0'}h
+                      </span>
+                      <span className="flex items-center gap-1 text-emerald-500" title="Task completate">
+                        <CheckCircle2 className="h-3 w-3" />
+                        {item.summary.tasksCompleted || 0}
+                      </span>
+                    </div>
                   </div>
 
                   {/* KPI chips */}
@@ -201,7 +211,7 @@ export function TeamReportsContent() {
                   {/* Download button */}
                   <button
                     onClick={() => handleDownload(item.id)}
-                    className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted hover:text-foreground flex-shrink-0"
+                    className="p-2.5 sm:p-2 rounded-lg hover:bg-secondary transition-colors text-muted hover:text-foreground flex-shrink-0 touch-manipulation min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                     title="Scarica PDF"
                   >
                     <Download className="h-4 w-4" />
@@ -219,7 +229,7 @@ export function TeamReportsContent() {
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors"
+            className="p-2.5 sm:p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors touch-manipulation min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -229,7 +239,7 @@ export function TeamReportsContent() {
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors"
+            className="p-2.5 sm:p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors touch-manipulation min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

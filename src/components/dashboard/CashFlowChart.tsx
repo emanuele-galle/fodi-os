@@ -100,7 +100,8 @@ export function CashFlowChart() {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <div className="h-[200px] md:h-[280px]">
+    <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 8, right: 8, left: -5, bottom: 5 }}>
         <defs>
           <linearGradient id="gradEntrate" x1="0" y1="0" x2="0" y2="1">
@@ -115,9 +116,9 @@ export function CashFlowChart() {
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 6" vertical={false} stroke="var(--color-border)" strokeOpacity={0.4} />
-        <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
+        <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} />
         <YAxis
-          tick={{ fontSize: 13, fill: 'var(--color-muted)' }}
+          tick={{ fontSize: 11, fill: 'var(--color-muted)' }}
           stroke="transparent"
           tickLine={false}
           axisLine={false}
@@ -147,5 +148,6 @@ export function CashFlowChart() {
         />
       </AreaChart>
     </ResponsiveContainer>
+    </div>
   )
 }

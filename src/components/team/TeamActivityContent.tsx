@@ -104,12 +104,12 @@ export function TeamActivityContent() {
       {/* Filters */}
       <Card className="mb-4">
         <CardContent>
-          <div className="flex flex-wrap items-center gap-3">
-            <Filter className="h-4 w-4 text-muted flex-shrink-0" />
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <Filter className="h-4 w-4 text-muted flex-shrink-0 hidden sm:block" />
             <select
               value={filter.entityType}
               onChange={(e) => { setPage(1); setFilter((f) => ({ ...f, entityType: e.target.value })) }}
-              className="text-sm bg-secondary border-0 rounded-lg px-3 py-1.5 text-foreground"
+              className="text-sm bg-secondary border-0 rounded-lg px-3 py-2.5 sm:py-1.5 text-foreground min-h-[44px] sm:min-h-0"
             >
               <option value="">Tutti i tipi</option>
               {Object.entries(ENTITY_TYPE_LABELS).map(([k, v]) => (
@@ -119,7 +119,7 @@ export function TeamActivityContent() {
             <select
               value={filter.action}
               onChange={(e) => { setPage(1); setFilter((f) => ({ ...f, action: e.target.value })) }}
-              className="text-sm bg-secondary border-0 rounded-lg px-3 py-1.5 text-foreground"
+              className="text-sm bg-secondary border-0 rounded-lg px-3 py-2.5 sm:py-1.5 text-foreground min-h-[44px] sm:min-h-0"
             >
               <option value="">Tutte le azioni</option>
               {Object.entries(ACTION_CONFIG).map(([k, v]) => (
@@ -155,7 +155,7 @@ export function TeamActivityContent() {
                 return (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors ${link ? 'cursor-pointer' : ''}`}
+                    className={`flex items-center gap-3 px-4 py-3.5 sm:py-3 hover:bg-secondary/30 transition-colors touch-manipulation ${link ? 'cursor-pointer' : ''}`}
                     onClick={() => link && router.push(link)}
                   >
                     <div className={`p-1.5 rounded-lg bg-secondary/80 ${config.color} flex-shrink-0`}>
@@ -216,7 +216,7 @@ export function TeamActivityContent() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors"
+            className="p-2.5 sm:p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors touch-manipulation min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -226,7 +226,7 @@ export function TeamActivityContent() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors"
+            className="p-2.5 sm:p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors touch-manipulation min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

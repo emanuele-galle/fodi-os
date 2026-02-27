@@ -140,7 +140,7 @@ export default function KbPage() {
             {pages.map((item) => (
               <Card
                 key={item.id}
-                className="!p-4 cursor-pointer hover:shadow-[var(--shadow-md)] transition-all duration-200"
+                className="!p-4 cursor-pointer hover:shadow-[var(--shadow-md)] transition-all duration-200 touch-manipulation active:scale-[0.98]"
                 onClick={() => router.push(`/kb/${item.id}`)}
               >
                 <div className="flex items-start gap-3">
@@ -148,10 +148,11 @@ export default function KbPage() {
                     name={`${item.author.firstName} ${item.author.lastName}`}
                     src={item.author.avatarUrl || undefined}
                     size="sm"
+                    className="hidden sm:flex"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium text-sm truncate">{item.title}</h3>
+                    <div className="flex items-start sm:items-center gap-2 mb-1">
+                      <h3 className="font-medium text-sm line-clamp-2 sm:truncate">{item.title}</h3>
                       {item.isPublished ? (
                         <span className="flex items-center gap-1 text-[10px] text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">
                           <Eye className="h-3 w-3" /> Pubblicato
@@ -188,16 +189,16 @@ export default function KbPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between mt-4 gap-2">
               <p className="text-sm text-muted">
                 {total} articol{total !== 1 ? 'i' : 'o'} totali
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted">{page} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>

@@ -55,7 +55,7 @@ function MovimentiContent() {
           <button
             key={key}
             onClick={() => router.push(`/erp/movimenti${key === 'spese' ? '' : `?tab=${key}`}`)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap min-h-[44px] ${
               activeTab === key
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted hover:text-foreground hover:bg-muted/50'

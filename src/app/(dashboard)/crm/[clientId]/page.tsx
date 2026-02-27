@@ -407,11 +407,11 @@ export default function ClientDetailPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <button onClick={() => openEditContact(c)} className="p-1.5 rounded-md hover:bg-secondary/50 text-muted hover:text-foreground transition-colors" title="Modifica">
-                    <Edit className="h-3.5 w-3.5" />
+                  <button onClick={() => openEditContact(c)} className="p-2 md:p-1.5 rounded-md hover:bg-secondary/50 text-muted hover:text-foreground transition-colors" title="Modifica">
+                    <Edit className="h-4 w-4 md:h-3.5 md:w-3.5" />
                   </button>
-                  <button onClick={() => setDeleteContactId(c.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted hover:text-destructive transition-colors" title="Elimina">
-                    <Trash2 className="h-3.5 w-3.5" />
+                  <button onClick={() => setDeleteContactId(c.id)} className="p-2 md:p-1.5 rounded-md hover:bg-destructive/10 text-muted hover:text-destructive transition-colors" title="Elimina">
+                    <Trash2 className="h-4 w-4 md:h-3.5 md:w-3.5" />
                   </button>
                 </div>
               </CardContent>
@@ -466,12 +466,12 @@ export default function ClientDetailPage() {
                       <span className="text-xs text-muted">
                         {new Date(i.date).toLocaleDateString('it-IT')}
                       </span>
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover/interaction:opacity-100 transition-opacity ml-1">
-                        <button onClick={() => openEditInteraction(i)} className="p-1 rounded-md hover:bg-secondary/50 text-muted hover:text-foreground transition-colors" title="Modifica">
-                          <Edit className="h-3 w-3" />
+                      <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover/interaction:opacity-100 transition-opacity ml-1">
+                        <button onClick={() => openEditInteraction(i)} className="p-1.5 md:p-1 rounded-md hover:bg-secondary/50 text-muted hover:text-foreground transition-colors" title="Modifica">
+                          <Edit className="h-3.5 w-3.5 md:h-3 md:w-3" />
                         </button>
-                        <button onClick={() => setDeleteInteractionId(i.id)} className="p-1 rounded-md hover:bg-destructive/10 text-muted hover:text-destructive transition-colors" title="Elimina">
-                          <Trash2 className="h-3 w-3" />
+                        <button onClick={() => setDeleteInteractionId(i.id)} className="p-1.5 md:p-1 rounded-md hover:bg-destructive/10 text-muted hover:text-destructive transition-colors" title="Elimina">
+                          <Trash2 className="h-3.5 w-3.5 md:h-3 md:w-3" />
                         </button>
                       </div>
                     </div>
@@ -578,40 +578,40 @@ export default function ClientDetailPage() {
         Torna alla lista clienti
       </button>
 
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <Avatar name={client.companyName} size="lg" />
-          <div>
+          <div className="min-w-0">
             <h1 className="text-xl md:text-2xl font-semibold truncate">{client.companyName}</h1>
             <Badge status={client.status}>
               {STATUS_LABELS[client.status] || client.status}
             </Badge>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Modifica
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)} className="min-h-[44px] sm:min-h-0">
+            <Edit className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Modifica</span>
           </Button>
-          <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => setDeleteConfirmOpen(true)}>
+          <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10 min-h-[44px] sm:min-h-0" onClick={() => setDeleteConfirmOpen(true)}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-card border border-border/40 rounded-lg p-3">
-          <p className="text-xs text-muted mb-0.5">Revenue Totale</p>
-          <p className="text-lg font-bold text-emerald-500">{formatCurrency(client.totalRevenue)}</p>
+      <div className="grid grid-cols-3 gap-2 md:gap-3 mb-6">
+        <div className="bg-card border border-border/40 rounded-lg p-2.5 md:p-3">
+          <p className="text-[10px] md:text-xs text-muted mb-0.5">Revenue Totale</p>
+          <p className="text-base md:text-lg font-bold text-emerald-500 tabular-nums">{formatCurrency(client.totalRevenue)}</p>
         </div>
-        <div className="bg-card border border-border/40 rounded-lg p-3">
-          <p className="text-xs text-muted mb-0.5">Contatti</p>
-          <p className="text-lg font-bold">{client.contacts.length}</p>
+        <div className="bg-card border border-border/40 rounded-lg p-2.5 md:p-3">
+          <p className="text-[10px] md:text-xs text-muted mb-0.5">Contatti</p>
+          <p className="text-base md:text-lg font-bold">{client.contacts.length}</p>
         </div>
-        <div className="bg-card border border-border/40 rounded-lg p-3">
-          <p className="text-xs text-muted mb-0.5">Interazioni</p>
-          <p className="text-lg font-bold">{client.interactions.length}</p>
+        <div className="bg-card border border-border/40 rounded-lg p-2.5 md:p-3">
+          <p className="text-[10px] md:text-xs text-muted mb-0.5">Interazioni</p>
+          <p className="text-base md:text-lg font-bold">{client.interactions.length}</p>
         </div>
       </div>
 

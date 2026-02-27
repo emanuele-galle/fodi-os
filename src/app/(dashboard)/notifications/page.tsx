@@ -89,17 +89,17 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Notifiche</h1>
-          <p className="text-sm text-muted mt-1">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold">Notifiche</h1>
+          <p className="text-xs md:text-sm text-muted mt-1">
             {unreadCount > 0 ? `${unreadCount} non lette` : 'Tutte lette'}
           </p>
         </div>
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="text-sm text-primary hover:underline font-medium"
+            className="text-sm text-primary hover:underline font-medium flex-shrink-0 min-h-[44px] flex items-center touch-manipulation"
           >
             Segna tutte come lette
           </button>
@@ -112,7 +112,7 @@ export default function NotificationsPage() {
         <div className="flex gap-1 bg-secondary/30 rounded-lg p-1">
           <button
             onClick={() => { setTab('all'); setLimit(30) }}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors touch-manipulation min-h-[44px] ${
               tab === 'all' ? 'bg-card shadow-sm text-foreground' : 'text-muted hover:text-foreground'
             }`}
           >
@@ -120,7 +120,7 @@ export default function NotificationsPage() {
           </button>
           <button
             onClick={() => { setTab('unread'); setLimit(30) }}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors touch-manipulation min-h-[44px] ${
               tab === 'unread' ? 'bg-card shadow-sm text-foreground' : 'text-muted hover:text-foreground'
             }`}
           >
@@ -132,7 +132,7 @@ export default function NotificationsPage() {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="h-9 px-3 rounded-lg border border-border/40 bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="h-11 sm:h-9 px-3 rounded-lg border border-border/40 bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
         >
           <option value="">Tutti i tipi</option>
           {Object.entries(NOTIF_TYPE_LABELS).map(([key, label]) => (
@@ -172,7 +172,7 @@ export default function NotificationsPage() {
             return (
               <Card
                 key={notif.id}
-                className={`p-4 cursor-pointer hover:bg-secondary/30 transition-colors ${
+                className={`p-4 cursor-pointer hover:bg-secondary/30 transition-colors touch-manipulation active:scale-[0.99] ${
                   !notif.isRead ? 'border-primary/20 bg-primary/[0.02]' : ''
                 }`}
                 onClick={() => handleNotificationClick(notif)}
@@ -237,7 +237,7 @@ export default function NotificationsPage() {
         <div className="flex justify-center pt-2">
           <button
             onClick={loadMore}
-            className="px-6 py-2 rounded-lg border border-border/40 text-sm text-muted hover:text-foreground hover:bg-secondary/30 transition-colors"
+            className="px-6 py-3 sm:py-2 rounded-lg border border-border/40 text-sm text-muted hover:text-foreground hover:bg-secondary/30 transition-colors touch-manipulation min-h-[44px]"
           >
             Carica altro
           </button>

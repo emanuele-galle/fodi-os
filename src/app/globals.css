@@ -516,6 +516,31 @@ body,
   -webkit-user-select: none;
 }
 
+/* ===== Mobile UI Utilities ===== */
+
+.mobile-card {
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  border: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+.mobile-section-header {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
 @layer base {
   * {
     @apply border-border;

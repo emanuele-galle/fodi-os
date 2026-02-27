@@ -433,51 +433,51 @@ export default function CrmPage() {
       {!filtersOpen && (industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax || tagFilter || createdAfter || createdBefore) && (
         <div className="flex items-center gap-2 flex-wrap mb-4">
           {industryFilter && (
-            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Settore: {INDUSTRY_OPTIONS.find(o => o.value === industryFilter)?.label}
-              <button onClick={() => setIndustryFilter('')}><X className="h-3 w-3" /></button>
+              <button onClick={() => setIndustryFilter('')} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {sourceFilter && (
-            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Fonte: {SOURCE_OPTIONS.find(o => o.value === sourceFilter)?.label}
-              <button onClick={() => setSourceFilter('')}><X className="h-3 w-3" /></button>
+              <button onClick={() => setSourceFilter('')} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {revenueMin && (
-            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
-              Min: €{revenueMin}
-              <button onClick={() => setRevenueMin('')}><X className="h-3 w-3" /></button>
+            <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
+              Min: {revenueMin}
+              <button onClick={() => setRevenueMin('')} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {revenueMax && (
-            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
-              Max: €{revenueMax}
-              <button onClick={() => setRevenueMax('')}><X className="h-3 w-3" /></button>
+            <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
+              Max: {revenueMax}
+              <button onClick={() => setRevenueMax('')} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {neglectedFilter && (
-            <span className="inline-flex items-center gap-1 text-xs bg-amber-500/10 text-amber-600 px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1.5 text-xs bg-amber-500/10 text-amber-600 px-2.5 py-1.5 rounded-full">
               Trascurati
-              <button onClick={() => setNeglectedFilter(false)}><X className="h-3 w-3" /></button>
+              <button onClick={() => setNeglectedFilter(false)} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {tagFilter && (
-            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Tag: {tagFilter}
-              <button onClick={() => setTagFilter('')}><X className="h-3 w-3" /></button>
+              <button onClick={() => setTagFilter('')} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {createdAfter && (
-            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Dal: {createdAfter}
-              <button onClick={() => setCreatedAfter('')}><X className="h-3 w-3" /></button>
+              <button onClick={() => setCreatedAfter('')} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {createdBefore && (
-            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Fino al: {createdBefore}
-              <button onClick={() => setCreatedBefore('')}><X className="h-3 w-3" /></button>
+              <button onClick={() => setCreatedBefore('')} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           <button
@@ -750,8 +750,8 @@ export default function CrmPage() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted">
-                {total} client{total !== 1 ? 'i' : 'e'} totali
+              <p className="text-xs md:text-sm text-muted">
+                {total} client{total !== 1 ? 'i' : 'e'}
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -759,10 +759,11 @@ export default function CrmPage() {
                   size="sm"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
+                  className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm text-muted">
+                <span className="text-sm text-muted tabular-nums">
                   {page} / {totalPages}
                 </span>
                 <Button
@@ -770,6 +771,7 @@ export default function CrmPage() {
                   size="sm"
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => p + 1)}
+                  className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>

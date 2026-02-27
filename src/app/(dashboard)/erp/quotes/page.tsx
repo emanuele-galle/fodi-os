@@ -271,13 +271,13 @@ export default function QuotesPage() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted">{total} preventivi totali</p>
+              <p className="text-xs md:text-sm text-muted">{total} preventivi</p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0">
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm text-muted">{page} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                <span className="text-sm text-muted tabular-nums">{page} / {totalPages}</span>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0">
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>

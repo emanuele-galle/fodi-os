@@ -435,7 +435,28 @@ export function MonthlyDashboard() {
             <CardDescription>{data.pendingInvoices.length} fatture non saldate</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-xl border border-border/20 overflow-hidden">
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-2">
+              {sortedPendingInvoices.map((inv) => (
+                <div key={inv.id} className="rounded-lg border border-border bg-card p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-sm truncate">{inv.clientName}</span>
+                    <span className="font-bold text-sm tabular-nums">{formatCurrency(inv.amount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted">
+                    <span>{inv.category}</span>
+                    <span>{new Date(inv.date).toLocaleDateString('it-IT')}</span>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-2 border-t border-border/30 font-semibold text-sm">
+                <span>Totale in sospeso</span>
+                <span className="tabular-nums">{formatCurrency(data.pendingInvoices.reduce((s, inv) => s + inv.amount, 0))}</span>
+              </div>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/30">

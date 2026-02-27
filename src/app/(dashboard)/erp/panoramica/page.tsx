@@ -42,12 +42,12 @@ function PanoramicaContent() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 p-1 bg-card rounded-lg border border-border mb-6 w-fit">
+      <div className="flex gap-1 p-1 bg-card rounded-lg border border-border mb-6 w-fit max-w-full overflow-x-auto scrollbar-none">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => router.push(`/erp/panoramica${key === 'mensile' ? '' : `?tab=${key}`}`)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap min-h-[44px] ${
               activeTab === key
                 ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted hover:text-foreground hover:bg-muted/50'

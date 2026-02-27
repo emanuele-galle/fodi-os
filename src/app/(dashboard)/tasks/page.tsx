@@ -479,10 +479,10 @@ export default function TasksPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 animate-stagger">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-4 mb-4 animate-stagger">
         {stats.map((s) => (
           <Card key={s.label} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
-            <CardContent className="flex items-center gap-3 py-3">
+            <CardContent className="flex items-center gap-2.5 md:gap-3 py-2.5 md:py-3">
               <div className={`p-2.5 rounded-xl ${s.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
                 <s.icon className="h-4.5 w-4.5" />
               </div>
@@ -596,7 +596,7 @@ export default function TasksPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-2 md:gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
           <Input
