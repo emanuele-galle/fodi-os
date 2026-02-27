@@ -1,4 +1,5 @@
 import { Cron } from 'croner'
+import { logger } from '@/lib/logger'
 
 const PORT = process.env.PORT || '3000'
 const BASE_URL = `http://127.0.0.1:${PORT}`
@@ -15,7 +16,7 @@ const SCHEDULES = {
 
 async function callEndpoint(path: string, label: string) {
   if (!CRON_SECRET) {
-    console.warn(`[scheduler] CRON_SECRET not set, skipping ${label}`)
+    logger.warn(`[scheduler] CRON_SECRET not set, skipping ${label}`)
     return
   }
 
@@ -27,12 +28,12 @@ async function callEndpoint(path: string, label: string) {
     })
     const data = await res.json().catch(() => null)
     if (res.ok) {
-      console.log(`[scheduler] ${label} OK:`, JSON.stringify(data))
+      logger.info(`[scheduler] ${label} OK`, { response: data })
     } else {
-      console.error(`[scheduler] ${label} ${res.status}:`, JSON.stringify(data))
+      logger.error(`[scheduler] ${label} ${res.status}`, { response: data })
     }
   } catch (err) {
-    console.error(`[scheduler] ${label} fetch error:`, err instanceof Error ? err.message : err)
+    logger.error(`[scheduler] ${label} fetch error`, { error: err instanceof Error ? err.message : String(err) })
   }
 }
 
@@ -40,15 +41,16 @@ const jobs: Cron[] = []
 
 export function startScheduler() {
   if (!CRON_SECRET) {
-    console.warn('[scheduler] CRON_SECRET not configured — scheduler disabled')
+    logger.warn('[scheduler] CRON_SECRET not configured — scheduler disabled')
     return
   }
 
-  console.log('[scheduler] Starting with schedules:')
-  console.log(`  digest:          ${SCHEDULES.digest}`)
-  console.log(`  check-deadlines: ${SCHEDULES.checkDeadlines}`)
-  console.log(`  reminders:       ${SCHEDULES.reminders}`)
-  console.log(`  reports:         ${SCHEDULES.reports}`)
+  logger.info('[scheduler] Starting with schedules', {
+    digest: SCHEDULES.digest,
+    checkDeadlines: SCHEDULES.checkDeadlines,
+    reminders: SCHEDULES.reminders,
+    reports: SCHEDULES.reports,
+  })
 
   jobs.push(
     new Cron(SCHEDULES.digest, { timezone: 'Europe/Rome' }, () => {
@@ -65,11 +67,11 @@ export function startScheduler() {
     }),
   )
 
-  console.log('[scheduler] All cron jobs registered')
+  logger.info('[scheduler] All cron jobs registered')
 }
 
 export function stopScheduler() {
   for (const job of jobs) job.stop()
   jobs.length = 0
-  console.log('[scheduler] All cron jobs stopped')
+  logger.info('[scheduler] All cron jobs stopped')
 }

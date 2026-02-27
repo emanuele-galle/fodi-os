@@ -1,4 +1,5 @@
 import { brand } from '@/lib/branding'
+import { ROLE_LABELS } from '@/lib/constants'
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont, PDFImage } from 'pdf-lib'
 import { hexToRgb, lightenColor, drawText as draw, drawTextRight as drawRight, truncate, wrapText, formatEur, formatHoursShort, formatMinsHuman } from '@/lib/pdf-utils'
 
@@ -220,7 +221,7 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
   let page = doc.addPage([PAGE_W, PAGE_H])
   let y = PAGE_H
 
-  const roleLabels: Record<string, string> = { ADMIN: 'Amministratore', DIR_COMMERCIALE: 'Dir. Commerciale', DIR_TECNICO: 'Dir. Tecnico', DIR_SUPPORT: 'Dir. Supporto', COMMERCIALE: 'Commerciale', PM: 'Project Manager', DEVELOPER: 'Sviluppatore', CONTENT: 'Contenuti', SUPPORT: 'Assistenza' }
+  const roleLabels = ROLE_LABELS
 
   // ─── Layout constants ──────────────────────────────────────
   const HEADER_H = 40

@@ -40,10 +40,10 @@ export function TemplateList() {
   const limit = 20
 
   const { sortKey, sortDir, handleSort, sortIcon } = useTableSort()
-  const getTemplateValue = useCallback((item: any, key: string) => {
+  const getTemplateValue = useCallback((item: QuoteTemplate, key: string) => {
     if (key === 'lineItems') return item._count?.lineItems ?? 0
     if (key === 'quotes') return item._count?.quotes ?? 0
-    return item[key]
+    return item[key as keyof QuoteTemplate]
   }, [])
   const sortedTemplates = useMemo(() => sortData(templates, sortKey, sortDir, getTemplateValue), [templates, sortKey, sortDir, getTemplateValue])
 

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import { useFetch } from '@/hooks/useFetch'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
@@ -34,8 +35,15 @@ interface ClientOption {
 type SortKey = 'name' | 'totalCount'
 
 export default function TagManagementPage() {
-  const [tags, setTags] = useState<TagData[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: tagsRaw, loading, refetch: refetchTags } = useFetch<{ success: boolean; data: TagData[] }>(
+    '/api/crm/tags',
+    { init: { headers: { 'x-user-role': 'ADMIN' } } }
+  )
+  const { data: clientsRaw } = useFetch<{ items: ClientOption[] }>('/api/clients?limit=200')
+
+  const tags = tagsRaw?.success ? tagsRaw.data : []
+  const clients = (clientsRaw?.items || []).map((c) => ({ id: c.id, companyName: c.companyName }))
+
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const [sortAsc, setSortAsc] = useState(true)
@@ -45,7 +53,6 @@ export default function TagManagementPage() {
   const [newTagName, setNewTagName] = useState('')
   const [newTagClientId, setNewTagClientId] = useState('')
   const [createLoading, setCreateLoading] = useState(false)
-  const [clients, setClients] = useState<ClientOption[]>([])
 
   // Rename modal
   const [renameTag, setRenameTag] = useState<string | null>(null)
@@ -60,27 +67,6 @@ export default function TagManagementPage() {
   // Delete confirm
   const [deleteTag, setDeleteTag] = useState<string | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
-
-  const fetchTags = async () => {
-    try {
-      const res = await fetch('/api/crm/tags', {
-        headers: { 'x-user-role': 'ADMIN' },
-      })
-      const json = await res.json()
-      if (json.success) setTags(json.data)
-    } catch (e) {
-      console.error('Errore caricamento tag:', e)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { fetchTags() }, [])
-  useEffect(() => {
-    fetch('/api/clients?limit=200').then(r => r.json()).then(data => {
-      setClients((data.items || []).map((c: ClientOption) => ({ id: c.id, companyName: c.companyName })))
-    }).catch(() => {})
-  }, [])
 
   const filteredTags = useMemo(() => {
     let result = tags
@@ -130,7 +116,7 @@ export default function TagManagementPage() {
         setCreateOpen(false)
         setNewTagName('')
         setNewTagClientId('')
-        await fetchTags()
+        refetchTags()
       }
     } catch (e) {
       console.error('Errore creazione tag:', e)
@@ -152,7 +138,7 @@ export default function TagManagementPage() {
       if (json.success) {
         setRenameTag(null)
         setNewName('')
-        await fetchTags()
+        refetchTags()
       }
     } catch (e) {
       console.error('Errore rinomina:', e)
@@ -174,7 +160,7 @@ export default function TagManagementPage() {
       if (json.success) {
         setMergeSource(null)
         setMergeTarget('')
-        await fetchTags()
+        refetchTags()
       }
     } catch (e) {
       console.error('Errore merge:', e)
@@ -195,7 +181,7 @@ export default function TagManagementPage() {
       const json = await res.json()
       if (json.success) {
         setDeleteTag(null)
-        await fetchTags()
+        refetchTags()
       }
     } catch (e) {
       console.error('Errore eliminazione:', e)

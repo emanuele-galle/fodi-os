@@ -8,7 +8,7 @@ interface Field {
   placeholder?: string | null
   helpText?: string | null
   isRequired: boolean
-  options?: any
+  options?: unknown
 }
 
 interface WizardFieldProps {
@@ -28,9 +28,10 @@ export function WizardField({ field, value, onChange, error }: WizardFieldProps)
   let options: { value: string; label: string }[] = []
   if (field.options) {
     try {
-      options = typeof field.options === 'string'
+      const parsed = typeof field.options === 'string'
         ? JSON.parse(field.options)
         : field.options
+      if (Array.isArray(parsed)) options = parsed
     } catch (e) {
       console.error('Failed to parse field options:', e)
     }

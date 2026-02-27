@@ -74,10 +74,10 @@ export function TimeTrackingContent() {
 
   const { sortKey: tsSortKey, sortDir: tsSortDir, handleSort: tsHandleSort, sortIcon: tsSortIcon } = useTableSort('clockIn')
 
-  const getSessionValue = useCallback((item: any, key: string) => {
+  const getSessionValue = useCallback((item: WorkSession, key: string) => {
     if (key === 'userName') return `${item.user?.firstName ?? ''} ${item.user?.lastName ?? ''}`
     if (key === 'duration') return item.liveDurationMins || item.durationMins || 0
-    return item[key]
+    return item[key as keyof WorkSession]
   }, [])
 
   const fetchSessions = useCallback(async () => {

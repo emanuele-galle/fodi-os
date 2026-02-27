@@ -8,6 +8,8 @@ import { sendViaSMTP } from '@/lib/email'
 import { buildReportIndividualEmail, buildReportSummaryEmail } from '@/lib/email-templates'
 import { generateReportPdf, type DailyReportData, type ReportCompanyInfo, type ReportTimeEntry, type ReportTask, type ReportWorkSession, type ReportProjectBreakdown } from '@/lib/report-pdf'
 import { fetchLogoBytes } from '@/lib/pdf-generator'
+import { handleApiError } from '@/lib/api-error'
+import { logger } from '@/lib/logger'
 
 export async function POST(req: NextRequest) {
   // Auth: unified CRON_SECRET pattern (same as check-deadlines, digest)
@@ -17,6 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  try {
   const dateParam = req.nextUrl.searchParams.get('date')
   const targetDate = dateParam ? new Date(dateParam + 'T00:00:00') : (() => {
     const d = new Date()
@@ -330,7 +333,7 @@ export async function POST(req: NextRequest) {
         )
         emailed++
       } catch (err) {
-        console.error(`[daily-reports] Error emailing individual ${user.email}:`, err)
+        logger.error(`[daily-reports] Error emailing individual ${user.email}`, { error: err instanceof Error ? err.message : String(err) })
       }
     }
 
@@ -356,10 +359,13 @@ export async function POST(req: NextRequest) {
         )
         emailed++
       } catch (err) {
-        console.error(`[daily-reports] Error emailing summary ${r.email}:`, err)
+        logger.error(`[daily-reports] Error emailing summary ${r.email}`, { error: err instanceof Error ? err.message : String(err) })
       }
     }
   }
 
   return NextResponse.json({ ok: true, date: dateStr, generated, emailed })
+  } catch (e) {
+    return handleApiError(e)
+  }
 }

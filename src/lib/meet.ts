@@ -1,5 +1,6 @@
 import type { OAuth2Client } from 'google-auth-library'
 import { getMeetService } from './google'
+import { logger } from '@/lib/logger'
 
 /**
  * Configure a Google Meet space after creation via Calendar API.
@@ -34,7 +35,7 @@ export async function configureMeetSpace(
       },
     })
   } catch (e) {
-    console.warn('[meet] Failed to configure space:', (e as Error).message || e)
+    logger.warn('[meet] Failed to configure space', { error: (e as Error).message || String(e) })
     return // If space config fails, skip co-host too
   }
 
@@ -42,7 +43,7 @@ export async function configureMeetSpace(
   if (options.coHostEmails?.length) {
     const token = (await auth.getAccessToken()).token
     if (!token) {
-      console.warn('[meet] No access token for co-host assignment')
+      logger.warn('[meet] No access token for co-host assignment')
       return
     }
 
@@ -70,10 +71,9 @@ export async function configureMeetSpace(
 
     const failed = results.filter((r) => r.status === 'rejected')
     if (failed.length > 0) {
-      console.warn(
-        `[meet] ${failed.length}/${options.coHostEmails.length} co-host assignments failed:`,
-        failed.map((r) => (r as PromiseRejectedResult).reason?.message)
-      )
+      logger.warn(`[meet] ${failed.length}/${options.coHostEmails.length} co-host assignments failed`, {
+        errors: failed.map((r) => (r as PromiseRejectedResult).reason?.message),
+      })
     }
   }
 }

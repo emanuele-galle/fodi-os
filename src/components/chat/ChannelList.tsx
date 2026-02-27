@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { Search, Plus, Hash, Lock, FolderKanban, ChevronDown, MessageCircle } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { ChatUnreadBadge } from './ChatUnreadBadge'
+import { ROLE_LABELS_SHORT } from '@/lib/constants'
 
 interface ChannelItem {
   id: string
@@ -61,18 +62,6 @@ const ROLE_COLORS: Record<string, string> = {
   CLIENT: 'bg-gray-500/15 text-gray-600 dark:text-gray-400',
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Admin',
-  DIR_COMMERCIALE: 'Dir. Comm.',
-  DIR_TECNICO: 'Dir. Tech.',
-  DIR_SUPPORT: 'Dir. Supp.',
-  COMMERCIALE: 'Comm.',
-  PM: 'PM',
-  DEVELOPER: 'Dev',
-  CONTENT: 'Content',
-  SUPPORT: 'Support',
-  CLIENT: 'Client',
-}
 
 function isRecentlyActive(member: TeamMember): boolean {
   const timestamp = member.lastActiveAt || member.lastLoginAt
@@ -222,7 +211,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                           </p>
                         ) : (
                           <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-md', ROLE_COLORS[member.role] || 'bg-gray-500/10 text-gray-500')}>
-                            {ROLE_LABELS[member.role] || member.role}
+                            {ROLE_LABELS_SHORT[member.role] || member.role}
                           </span>
                         )}
                       </div>
@@ -276,7 +265,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                           </p>
                         ) : (
                           <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-md', ROLE_COLORS[member.role] || 'bg-gray-500/10 text-gray-500')}>
-                            {ROLE_LABELS[member.role] || member.role}
+                            {ROLE_LABELS_SHORT[member.role] || member.role}
                           </span>
                         )}
                       </div>

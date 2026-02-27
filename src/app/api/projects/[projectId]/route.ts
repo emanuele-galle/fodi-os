@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { updateProjectSchema } from '@/lib/validation'
-import type { Role } from '@/generated/prisma/client'
+import type { Role, Prisma } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   try {
@@ -109,7 +109,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const project = await prisma.project.update({
       where: { id: projectId },
-      data: data as any,
+      data: data as Prisma.ProjectUpdateInput,
     })
 
     const userId = request.headers.get('x-user-id')!

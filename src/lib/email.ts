@@ -1,6 +1,7 @@
 import { brand } from '@/lib/branding'
 import { randomInt } from 'crypto'
 import { buildLoginOtpEmail } from '@/lib/email-templates'
+import { logger } from '@/lib/logger'
 
 const SMTP_HOST = process.env.SMTP_HOST
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587')
@@ -28,8 +29,7 @@ function stripHtml(html: string): string {
 
 // ─── Singleton transporter ─────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _transporter: any = null
+let _transporter: { sendMail: (opts: Record<string, unknown>) => Promise<unknown> } | null = null
 
 function getTransporter() {
   if (_transporter) return _transporter
@@ -62,16 +62,12 @@ export async function sendViaSMTP(
 ): Promise<boolean> {
   const transporter = getTransporter()
   if (!transporter) {
-    console.log('[EMAIL] SMTP non configurato, email simulata:')
-    console.log(`  To: ${to}`)
-    console.log(`  Subject: ${subject}`)
-    console.log(`  Body: ${html.substring(0, 200)}...`)
+    logger.info('[EMAIL] SMTP non configurato, email simulata', { to, subject, bodyPreview: html.substring(0, 200) })
     return true
   }
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mailOpts: any = {
+    const mailOpts: Record<string, unknown> = {
       from: SMTP_FROM,
       to,
       subject,
@@ -88,7 +84,7 @@ export async function sendViaSMTP(
     await transporter.sendMail(mailOpts)
     return true
   } catch (err) {
-    console.error('[EMAIL] Errore invio email:', err)
+    logger.error('[EMAIL] Errore invio email', { error: err instanceof Error ? err.message : String(err) })
     return false
   }
 }

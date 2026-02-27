@@ -30,6 +30,7 @@ import {
   type SectionAccessMap,
 } from '@/lib/section-access'
 import { ROLE_PERMISSIONS } from '@/lib/permissions'
+import { ROLES as BASE_ROLES, ROLE_LABELS, ROLE_BADGE } from '@/lib/constants'
 import type { Role } from '@/generated/prisma/client'
 
 interface CustomRole {
@@ -46,33 +47,6 @@ interface CustomRole {
   _count: { users: number }
 }
 
-const BASE_ROLES = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'DIR_COMMERCIALE', label: 'Dir. Commerciale' },
-  { value: 'DIR_TECNICO', label: 'Dir. Tecnico' },
-  { value: 'DIR_SUPPORT', label: 'Dir. Supporto' },
-  { value: 'COMMERCIALE', label: 'Commerciale' },
-  { value: 'PM', label: 'Resp. Progetto' },
-  { value: 'DEVELOPER', label: 'Sviluppatore' },
-  { value: 'CONTENT', label: 'Contenuti' },
-  { value: 'SUPPORT', label: 'Assistenza' },
-  { value: 'CLIENT', label: 'Cliente' },
-]
-
-const ROLE_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  ADMIN: 'destructive',
-  DIR_COMMERCIALE: 'warning',
-  DIR_TECNICO: 'warning',
-  DIR_SUPPORT: 'warning',
-  COMMERCIALE: 'success',
-  PM: 'default',
-  DEVELOPER: 'default',
-  CONTENT: 'outline',
-  SUPPORT: 'outline',
-  CLIENT: 'outline',
-}
-
-const ROLE_LABELS: Record<string, string> = Object.fromEntries(BASE_ROLES.map((r) => [r.value, r.label]))
 
 const MODULES = [
   { key: 'crm', label: 'CRM' },

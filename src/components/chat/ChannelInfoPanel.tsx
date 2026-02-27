@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { X, Hash, Lock, Users, FolderKanban, UserPlus, LogOut, Settings, Pencil, Archive, Trash2 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/utils'
+import { CHANNEL_ROLE_LABELS } from '@/lib/constants'
 
 interface ChannelMember {
   id: string
@@ -54,11 +55,6 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   PROJECT: FolderKanban,
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  OWNER: 'Proprietario',
-  ADMIN: 'Admin',
-  MEMBER: 'Membro',
-}
 
 export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, teamMembers, onClose, onDeleteChannel }: ChannelInfoPanelProps) {
   const [channel, setChannel] = useState<ChannelInfo | null>(null)
@@ -288,7 +284,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
                   </span>
                 </div>
                 <span className="text-[10px] text-muted-foreground/50 font-medium">
-                  {ROLE_LABELS[member.role] || member.role}
+                  {CHANNEL_ROLE_LABELS[member.role] || member.role}
                 </span>
                 {isOwnerOrAdmin && member.role !== 'OWNER' && member.userId !== currentUserId && channel.type !== 'DIRECT' && (
                   <button

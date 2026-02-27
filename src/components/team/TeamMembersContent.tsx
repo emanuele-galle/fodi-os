@@ -15,6 +15,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
+import { ROLE_LABELS, ROLE_BADGE, TASK_STATUS_LABELS } from '@/lib/constants'
 
 interface WorkspaceMembership {
   workspace: { id: string; name: string; color: string }
@@ -56,39 +57,7 @@ interface SearchTask {
   priority: string
 }
 
-const ROLE_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  ADMIN: 'destructive',
-  DIR_COMMERCIALE: 'warning',
-  DIR_TECNICO: 'warning',
-  DIR_SUPPORT: 'warning',
-  COMMERCIALE: 'success',
-  PM: 'default',
-  DEVELOPER: 'default',
-  CONTENT: 'outline',
-  SUPPORT: 'outline',
-  CLIENT: 'outline',
-}
-
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Admin',
-  DIR_COMMERCIALE: 'Dir. Commerciale',
-  DIR_TECNICO: 'Dir. Tecnico',
-  DIR_SUPPORT: 'Dir. Supporto',
-  COMMERCIALE: 'Commerciale',
-  PM: 'Project Manager',
-  DEVELOPER: 'Developer',
-  CONTENT: 'Content',
-  SUPPORT: 'Support',
-  CLIENT: 'Cliente',
-}
-
-
-const STATUS_LABELS: Record<string, string> = {
-  TODO: 'Da fare',
-  IN_PROGRESS: 'In corso',
-  IN_REVIEW: 'In revisione',
-  DONE: 'Completata',
-}
+const STATUS_LABELS = TASK_STATUS_LABELS
 
 const ROLE_OPTIONS = [
   { value: '', label: 'Tutti i ruoli' },

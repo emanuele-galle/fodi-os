@@ -5,6 +5,8 @@ import { logActivity } from '@/lib/activity-log'
 import { updateTaskSchema } from '@/lib/validation'
 import { getTaskParticipants, dispatchNotification, NotificationBatch } from '@/lib/notifications'
 import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
+import { ApiError, handleApiError } from '@/lib/api-error'
+import { TASK_STATUS_LABELS } from '@/lib/constants'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
@@ -64,7 +66,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!task) {
-      return NextResponse.json({ success: false, error: 'Task non trovato' }, { status: 404 })
+      throw new ApiError(404, 'Task non trovato')
     }
 
     // Resolve assignedBy user names
@@ -89,11 +91,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ success: true, data: enrichedTask, ...enrichedTask })
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
-      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
-    }
-    console.error('[tasks/GET]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return handleApiError(e)
   }
 }
 
@@ -115,30 +113,27 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         },
       })
       if (!taskCheck) {
-        return NextResponse.json({ success: false, error: 'Task non trovato' }, { status: 404 })
+        throw new ApiError(404, 'Task non trovato')
       }
       const isCreator = taskCheck.creatorId === currentUserId
       const isAssignee = taskCheck.assigneeId === currentUserId
       const isInAssignments = taskCheck.assignments.some((a) => a.userId === currentUserId)
       if (!isCreator && !isAssignee && !isInAssignments) {
-        return NextResponse.json({ success: false, error: 'Permission denied: non sei creatore o assegnatario di questa task' }, { status: 403 })
+        throw new ApiError(403, 'Permission denied: non sei creatore o assegnatario di questa task')
       }
     }
 
     const body = await request.json()
     const parsed = updateTaskSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json(
-        { success: false, error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors },
-        { status: 400 }
-      )
+      throw new ApiError(400, 'Validazione fallita', parsed.error.flatten().fieldErrors)
     }
     const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, projectId, folderId, milestoneId, dueDate, estimatedHours, sortOrder, tags, parentId } = parsed.data
 
     // Only ADMIN/DIR_TECNICO can move tasks between projects
     if (projectId !== undefined) {
       if (role !== 'ADMIN' && role !== 'DIR_TECNICO') {
-        return NextResponse.json({ success: false, error: 'Solo Admin e Direttore Tecnico possono spostare task tra progetti' }, { status: 403 })
+        throw new ApiError(403, 'Solo Admin e Direttore Tecnico possono spostare task tra progetti')
       }
     }
 
@@ -169,7 +164,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (targetProjectId) {
         const folder = await prisma.folder.findUnique({ where: { id: folderId }, select: { projectId: true } })
         if (!folder || folder.projectId !== targetProjectId) {
-          return NextResponse.json({ success: false, error: 'La cartella non appartiene al progetto selezionato' }, { status: 400 })
+          throw new ApiError(400, 'La cartella non appartiene al progetto selezionato')
         }
       }
     }
@@ -253,14 +248,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Status change notification
     if (status !== undefined && previousTask && status !== previousTask.status) {
-      const statusLabels: Record<string, string> = {
-        TODO: 'Da fare',
-        IN_PROGRESS: 'In corso',
-        IN_REVIEW: 'In revisione',
-        DONE: 'Completata',
-        CANCELLED: 'Cancellata',
-      }
-      const newLabel = statusLabels[status] || status
+      const newLabel = TASK_STATUS_LABELS[status] || status
 
       if (status === 'DONE') {
         batch.add({
@@ -476,11 +464,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json({ success: true, data: fullTask })
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
-      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
-    }
-    console.error('[tasks/PATCH]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return handleApiError(e)
   }
 }
 
@@ -496,7 +480,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       select: { id: true, title: true, creatorId: true, assigneeId: true, project: { select: { name: true } }, assignments: { select: { userId: true } } },
     })
     if (!existing) {
-      return NextResponse.json({ success: false, error: 'Task non trovato' }, { status: 404 })
+      throw new ApiError(404, 'Task non trovato')
     }
 
     // Allow delete if user has pm:delete OR is creator/assignee of this task
@@ -506,7 +490,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       const isAssignee = existing.assigneeId === userId
       const isInAssignments = existing.assignments.some((a) => a.userId === userId)
       if (!isCreator && !isAssignee && !isInAssignments) {
-        return NextResponse.json({ success: false, error: 'Puoi eliminare solo le task che hai creato o che ti sono assegnate' }, { status: 403 })
+        throw new ApiError(403, 'Puoi eliminare solo le task che hai creato o che ti sono assegnate')
       }
     }
 
@@ -537,9 +521,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
-      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
-    }
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return handleApiError(e)
   }
 }

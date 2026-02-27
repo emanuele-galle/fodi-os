@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendViaSMTP } from '@/lib/email'
 import { escapeHtml } from '@/lib/email-templates'
+import { handleApiError } from '@/lib/api-error'
+import { logger } from '@/lib/logger'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || brand.siteUrl
 const LOGO_URL = `${SITE_URL}/logo-light.png`
@@ -270,7 +272,7 @@ function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 export async function POST(req: NextRequest) {
   const CRON_SECRET = process.env.CRON_SECRET
   if (!CRON_SECRET) {
-    console.error('[digest] CRON_SECRET env var not configured')
+    logger.error('[digest] CRON_SECRET env var not configured')
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   }
 
@@ -283,6 +285,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  try {
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const todayEnd = new Date(todayStart.getTime() + 864e5)
@@ -348,10 +351,13 @@ export async function POST(req: NextRequest) {
       ok ? sent++ : errors++
       await sleep(500)
     } catch (err) {
-      console.error(`[digest] Error for user ${u.id}:`, err)
+      logger.error(`[digest] Error for user ${u.id}`, { error: err instanceof Error ? err.message : String(err) })
       errors++
     }
   }
 
   return NextResponse.json({ ok: true, sent, skipped, errors, totalUsers: users.length })
+  } catch (e) {
+    return handleApiError(e)
+  }
 }

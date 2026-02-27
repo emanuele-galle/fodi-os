@@ -1,4 +1,5 @@
 import type { SectionAccessMap } from '@/lib/section-access'
+export { ROLES, ROLE_LABELS, ROLE_BADGE } from '@/lib/constants'
 
 export interface CustomRoleOption {
   id: string
@@ -34,33 +35,6 @@ export interface UserStats {
   hoursLogged: number
 }
 
-export const ROLES = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'DIR_COMMERCIALE', label: 'Dir. Commerciale' },
-  { value: 'DIR_TECNICO', label: 'Dir. Tecnico' },
-  { value: 'DIR_SUPPORT', label: 'Dir. Supporto' },
-  { value: 'COMMERCIALE', label: 'Commerciale' },
-  { value: 'PM', label: 'Resp. Progetto' },
-  { value: 'DEVELOPER', label: 'Sviluppatore' },
-  { value: 'CONTENT', label: 'Contenuti' },
-  { value: 'SUPPORT', label: 'Assistenza' },
-  { value: 'CLIENT', label: 'Cliente' },
-]
-
-export const ROLE_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  ADMIN: 'destructive',
-  DIR_COMMERCIALE: 'warning',
-  DIR_TECNICO: 'warning',
-  DIR_SUPPORT: 'warning',
-  COMMERCIALE: 'success',
-  PM: 'default',
-  DEVELOPER: 'default',
-  CONTENT: 'outline',
-  SUPPORT: 'outline',
-  CLIENT: 'outline',
-}
-
-export const ROLE_LABELS: Record<string, string> = Object.fromEntries(ROLES.map((r) => [r.value, r.label]))
 
 export const MODULES = [
   { key: 'crm', label: 'CRM' },

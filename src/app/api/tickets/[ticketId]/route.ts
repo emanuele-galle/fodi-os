@@ -5,6 +5,7 @@ import { updateTicketSchema } from '@/lib/validation'
 import { notifyUsers } from '@/lib/notifications'
 import { sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
+import { TICKET_STATUS_LABELS } from '@/lib/constants'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ ticketId: string }> }) {
   try {
@@ -95,20 +96,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       // Status change notification
       if (status !== undefined && status !== previousTicket.status) {
-        const statusLabels: Record<string, string> = {
-          OPEN: 'Aperto',
-          IN_PROGRESS: 'In corso',
-          WAITING_CLIENT: 'In attesa cliente',
-          RESOLVED: 'Risolto',
-          CLOSED: 'Chiuso',
-        }
         await notifyUsers(
           Array.from(recipients),
           currentUserId,
           {
             type: 'ticket_status_changed',
             title: 'Stato ticket cambiato',
-            message: `Ticket "${previousTicket.subject}" cambiato in "${statusLabels[status] || status}"`,
+            message: `Ticket "${previousTicket.subject}" cambiato in "${TICKET_STATUS_LABELS[status] || status}"`,
             link: ticketLink,
             metadata: { clientName: previousTicket.client?.companyName, ticketNumber: previousTicket.number, ticketStatus: status },
           }

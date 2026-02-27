@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
       completedThisWeek: weeklyCompletedMap.get(u.id) || 0,
       activeTasks: (u as Record<string, unknown>).assignedTasks || [],
       digitalCardSlug: u.digitalCard?.isEnabled ? u.digitalCard.slug : null,
-      ...(isCalendarViewer && { hasGoogleCalendar: !!(u as any).googleToken }),
+      ...(isCalendarViewer && { hasGoogleCalendar: !!(u as Record<string, unknown>).googleToken }),
     }))
 
     return NextResponse.json({ items, total: items.length }, {

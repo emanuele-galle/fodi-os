@@ -34,7 +34,7 @@ export async function GET(
 
     const company = await prisma.companyProfile.findFirst()
 
-    let wizards: any[] = []
+    let wizards: { id: string; name: string; slug: string; description: string | null; category: string }[] = []
     if (card.showWizards) {
       wizards = await prisma.wizardTemplate.findMany({
         where: { status: 'PUBLISHED' },

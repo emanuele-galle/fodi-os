@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { useFetch } from '@/hooks/useFetch'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -32,48 +33,24 @@ function UsersPageContent() {
     router.push(`/settings/users${qs ? `?${qs}` : ''}`, { scroll: false })
   }
 
+  const { data: usersRaw, loading, error: fetchError, refetch: refetchUsers } = useFetch<{ users: UserItem[] }>('/api/users')
+  const { data: rolesRaw } = useFetch<{ items: { id: string; name: string; color: string | null; isActive: boolean }[] }>('/api/roles')
+
   const [users, setUsers] = useState<UserItem[]>([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [editingRole, setEditingRole] = useState<string | null>(null)
   const [editUser, setEditUser] = useState<UserItem | null>(null)
-  const [customRoles, setCustomRoles] = useState<CustomRoleOption[]>([])
-  const [fetchError, setFetchError] = useState<string | null>(null)
 
+  const customRoles: CustomRoleOption[] = (rolesRaw?.items || [])
+    .filter((r) => r.isActive)
+    .map((r) => ({ id: r.id, name: r.name, color: r.color }))
+
+  // Sync fetched users into local state (needed for optimistic updates after PATCH)
   useEffect(() => {
-    loadUsers()
-    loadCustomRoles()
-  }, [])
-
-  async function loadCustomRoles() {
-    try {
-      const res = await fetch('/api/roles')
-      if (res.ok) {
-        const data = await res.json()
-        setCustomRoles((data.items || []).filter((r: { isActive: boolean }) => r.isActive).map((r: { id: string; name: string; color: string | null }) => ({ id: r.id, name: r.name, color: r.color })))
-      }
-    } catch {}
-  }
-
-  async function loadUsers() {
-    setLoading(true)
-    setFetchError(null)
-    try {
-      const res = await fetch('/api/users')
-      if (res.ok) {
-        const data = await res.json()
-        if (data?.users) setUsers(data.users)
-      } else {
-        setFetchError('Errore nel caricamento degli utenti')
-      }
-    } catch {
-      setFetchError('Errore di rete nel caricamento degli utenti')
-    } finally {
-      setLoading(false)
-    }
-  }
+    if (usersRaw?.users) setUsers(usersRaw.users)
+  }, [usersRaw])
 
   async function handleRoleChange(userId: string, newRole: string) {
     try {
@@ -152,7 +129,7 @@ function UsersPageContent() {
             open={showInviteForm}
             onClose={() => setShowInviteForm(false)}
             customRoles={customRoles}
-            onInvited={loadUsers}
+            onInvited={refetchUsers}
           />
 
           <EditUserModal
@@ -172,7 +149,7 @@ function UsersPageContent() {
                 <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
                 <p className="text-sm text-destructive">{fetchError}</p>
               </div>
-              <button onClick={() => loadUsers()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+              <button onClick={() => refetchUsers()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
             </div>
           )}
 

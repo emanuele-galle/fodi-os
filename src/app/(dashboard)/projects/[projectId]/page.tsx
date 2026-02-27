@@ -5,20 +5,21 @@ import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { useFormPersist } from '@/hooks/useFormPersist'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
-  ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer, Video, Trash2, Users, UserPlus, X,
+  ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer, Video, Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Card, CardContent, CardTitle } from '@/components/ui/Card'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Tabs } from '@/components/ui/Tabs'
-import { Avatar } from '@/components/ui/Avatar'
 import { AvatarStack } from '@/components/ui/AvatarStack'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { MultiUserSelect } from '@/components/ui/MultiUserSelect'
-import { ColorSwatches } from '@/components/ui/ColorSwatches'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { TASK_STATUS_LABELS, PRIORITY_LABELS, PROJECT_STATUS_LABELS } from '@/lib/constants'
+import { ProjectEditModal } from '@/components/projects/ProjectEditModal'
+import { ProjectMembersPanel } from '@/components/projects/ProjectMembersPanel'
 import dynamic from 'next/dynamic'
 
 const KanbanBoard = dynamic(() => import('@/components/projects/KanbanBoard').then(m => ({ default: m.KanbanBoard })), {
@@ -44,97 +45,30 @@ const ProjectLinks = dynamic(() => import('@/components/projects/ProjectLinks').
   loading: () => <Skeleton className="h-32 w-full rounded-lg" />,
 })
 
-interface ClientOption {
-  id: string
-  companyName: string
-}
-
-interface WorkspaceOption {
-  id: string
-  name: string
-}
-
-interface TaskUser {
-  id: string
-  firstName: string
-  lastName: string
-  avatarUrl: string | null
-}
+interface ClientOption { id: string; companyName: string }
+interface WorkspaceOption { id: string; name: string }
+interface TaskUser { id: string; firstName: string; lastName: string; avatarUrl: string | null }
 
 interface Task {
-  id: string
-  title: string
-  status: string
-  priority: string
-  boardColumn: string
-  folderId: string | null
-  folderName?: string | null
-  folderColor?: string | null
-  dueDate: string | null
-  estimatedHours: number | null
-  assignee?: TaskUser | null
-  assignments?: { id: string; role: string; user: TaskUser }[]
+  id: string; title: string; status: string; priority: string; boardColumn: string
+  folderId: string | null; folderName?: string | null; folderColor?: string | null
+  dueDate: string | null; estimatedHours: number | null
+  assignee?: TaskUser | null; assignments?: { id: string; role: string; user: TaskUser }[]
 }
 
-interface Milestone {
-  id: string
-  name: string
-  dueDate: string | null
-  status: string
-  tasks: Task[]
-}
-
-interface TimeEntry {
-  id: string
-  date: string
-  hours: number
-  description: string | null
-  billable: boolean
-  user: { firstName: string; lastName: string }
-  task?: { title: string } | null
-}
-
-interface ProjectMember {
-  id: string
-  userId: string
-  role: string
-  joinedAt: string
-  user: { id: string; firstName: string; lastName: string; email: string; role: string; avatarUrl: string | null }
-}
+interface Milestone { id: string; name: string; dueDate: string | null; status: string; tasks: Task[] }
+interface TimeEntry { id: string; date: string; hours: number; description: string | null; billable: boolean; user: { firstName: string; lastName: string }; task?: { title: string } | null }
+interface ProjectMember { id: string; userId: string; role: string; joinedAt: string; user: { id: string; firstName: string; lastName: string; email: string; role: string; avatarUrl: string | null } }
 
 interface ProjectDetail {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  status: string
-  priority: string
-  startDate: string | null
-  endDate: string | null
-  budgetAmount: string | null
-  budgetHours: number | null
-  color: string
-  client?: { id: string; companyName: string } | null
-  workspace: { id: string; name: string }
-  tasks: Task[]
-  milestones: Milestone[]
-  members: ProjectMember[]
-  _count?: { tasks: number }
+  id: string; name: string; slug: string; description: string | null; status: string; priority: string
+  startDate: string | null; endDate: string | null; budgetAmount: string | null; budgetHours: number | null; color: string
+  client?: { id: string; companyName: string } | null; workspace: { id: string; name: string }
+  tasks: Task[]; milestones: Milestone[]; members: ProjectMember[]; _count?: { tasks: number }
 }
 
 const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
   LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
-}
-const STATUS_LABEL: Record<string, string> = {
-  PLANNING: 'Pianificazione', IN_PROGRESS: 'In Corso', ON_HOLD: 'In Pausa',
-  REVIEW: 'In Revisione', COMPLETED: 'Completato', CANCELLED: 'Cancellato',
-}
-const PRIORITY_LABEL: Record<string, string> = {
-  LOW: 'Bassa', MEDIUM: 'Media', HIGH: 'Alta', URGENT: 'Urgente',
-}
-const TASK_STATUS_LABEL: Record<string, string> = {
-  TODO: 'Da Fare', IN_PROGRESS: 'In Corso', IN_REVIEW: 'In Revisione',
-  DONE: 'Completato', CANCELLED: 'Cancellato',
 }
 
 const BOARD_COLUMNS = [
@@ -151,14 +85,9 @@ const PRIORITY_OPTIONS = [
   { value: 'URGENT', label: 'Urgente' },
 ]
 
-const STATUS_OPTIONS = [
-  { value: 'PLANNING', label: 'Pianificazione' },
-  { value: 'IN_PROGRESS', label: 'In Corso' },
-  { value: 'ON_HOLD', label: 'In Pausa' },
-  { value: 'REVIEW', label: 'In Revisione' },
-  { value: 'COMPLETED', label: 'Completato' },
-  { value: 'CANCELLED', label: 'Cancellato' },
-]
+const STATUS_LABEL = PROJECT_STATUS_LABELS
+const TASK_STATUS_LABEL = TASK_STATUS_LABELS
+const PRIORITY_LABEL = PRIORITY_LABELS
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -175,8 +104,6 @@ export default function ProjectDetailPage() {
   const [submitting, setSubmitting] = useState(false)
   const [creatingMeet, setCreatingMeet] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [editSubmitting, setEditSubmitting] = useState(false)
-  const [editError, setEditError] = useState<string | null>(null)
   const [clients, setClients] = useState<ClientOption[]>([])
   const [workspaces, setWorkspaces] = useState<WorkspaceOption[]>([])
   const [teamMembers, setTeamMembers] = useState<{ id: string; firstName: string; lastName: string; avatarUrl?: string | null }[]>([])
@@ -187,31 +114,10 @@ export default function ProjectDetailPage() {
   const [taskDetailOpen, setTaskDetailOpen] = useState(false)
   const [folders, setFolders] = useState<{ id: string; name: string; description: string | null; color: string; sortOrder: number; parentId?: string | null; _count?: { tasks: number }; children?: { id: string; name: string; description: string | null; color: string; sortOrder: number; _count?: { tasks: number } }[] }[]>([])
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
-  const [addMemberModalOpen, setAddMemberModalOpen] = useState(false)
-  const [memberUserIds, setMemberUserIds] = useState<string[]>([])
-  const [addingMembers, setAddingMembers] = useState(false)
-  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<string>('')
-  const [editForm, setEditForm] = useState({
-    name: '',
-    description: '',
-    status: '',
-    priority: '',
-    clientId: '',
-    workspaceId: '',
-    startDate: '',
-    endDate: '',
-    budgetAmount: '',
-    budgetHours: '',
-    color: '',
-  })
 
   const taskForm = useFormPersist(`new-task:${projectId}`, {
-    title: '',
-    description: '',
-    priority: 'MEDIUM',
-    dueDate: '',
-    estimatedHours: '',
+    title: '', description: '', priority: 'MEDIUM', dueDate: '', estimatedHours: '',
   })
 
   const fetchProject = useCallback(async () => {
@@ -235,7 +141,6 @@ export default function ProjectDetailPage() {
   }, [projectId])
 
   useEffect(() => {
-    // Load user session for role check
     fetch('/api/auth/session')
       .then((res) => res.ok ? res.json() : null)
       .then((data) => { if (data?.user) setUserRole(data.user.role) })
@@ -243,7 +148,6 @@ export default function ProjectDetailPage() {
   }, [])
 
   useEffect(() => {
-    // Fetch all data in parallel to avoid waterfall
     Promise.all([
       fetchProject(),
       fetchFolders(),
@@ -262,7 +166,6 @@ export default function ProjectDetailPage() {
     })
   }, [fetchProject, fetchFolders, projectId])
 
-  // Real-time refresh when task data changes via SSE
   useRealtimeRefresh('task', fetchProject)
 
   async function handleProjectMeet() {
@@ -272,9 +175,7 @@ export default function ProjectDetailPage() {
       const res = await fetch('/api/meetings/quick', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          summary: `Meet - ${project.name}`,
-        }),
+        body: JSON.stringify({ summary: `Meet - ${project.name}` }),
       })
       if (res.ok) {
         const data = await res.json()
@@ -282,61 +183,6 @@ export default function ProjectDetailPage() {
       }
     } finally {
       setCreatingMeet(false)
-    }
-  }
-
-  function openEditModal() {
-    if (!project) return
-    setEditForm({
-      name: project.name || '',
-      description: project.description || '',
-      status: project.status || '',
-      priority: project.priority || '',
-      clientId: project.client?.id || '',
-      workspaceId: project.workspace?.id || '',
-      startDate: project.startDate ? project.startDate.slice(0, 10) : '',
-      endDate: project.endDate ? project.endDate.slice(0, 10) : '',
-      budgetAmount: project.budgetAmount || '',
-      budgetHours: project.budgetHours != null ? String(project.budgetHours) : '',
-      color: project.color || '',
-    })
-    setEditModalOpen(true)
-  }
-
-  async function handleEditProject(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setEditSubmitting(true)
-    const body: Record<string, unknown> = {}
-    for (const [k, v] of Object.entries(editForm)) {
-      if (typeof v === 'string' && v.trim()) body[k] = v.trim()
-    }
-    if (body.budgetAmount) body.budgetAmount = parseFloat(body.budgetAmount as string)
-    if (body.budgetHours) body.budgetHours = parseInt(body.budgetHours as string, 10)
-    // Convert dates from YYYY-MM-DD to ISO 8601 datetime
-    if (body.startDate) body.startDate = new Date(body.startDate as string).toISOString()
-    if (body.endDate) body.endDate = new Date(body.endDate as string).toISOString()
-    // Allow clearing optional fields
-    if (!editForm.clientId) body.clientId = null
-    if (!editForm.startDate) body.startDate = null
-    if (!editForm.endDate) body.endDate = null
-    if (!editForm.budgetAmount) body.budgetAmount = null
-    if (!editForm.budgetHours) body.budgetHours = null
-    try {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (res.ok) {
-        setEditModalOpen(false)
-        setEditError(null)
-        fetchProject()
-      } else {
-        const err = await res.json().catch(() => null)
-        setEditError(err?.error || 'Errore durante il salvataggio')
-      }
-    } finally {
-      setEditSubmitting(false)
     }
   }
 
@@ -352,37 +198,6 @@ export default function ProjectDetailPage() {
     }
   }
 
-  async function handleAddMembers() {
-    if (memberUserIds.length === 0) return
-    setAddingMembers(true)
-    try {
-      const res = await fetch(`/api/projects/${projectId}/members`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userIds: memberUserIds }),
-      })
-      if (res.ok) {
-        setMemberUserIds([])
-        setAddMemberModalOpen(false)
-        fetchProject()
-      }
-    } finally {
-      setAddingMembers(false)
-    }
-  }
-
-  async function handleRemoveMember(userId: string) {
-    setRemovingMemberId(userId)
-    try {
-      const res = await fetch(`/api/projects/${projectId}/members?userId=${userId}`, { method: 'DELETE' })
-      if (res.ok) {
-        fetchProject()
-      }
-    } finally {
-      setRemovingMemberId(null)
-    }
-  }
-
   function openTaskDetail(taskId: string) {
     setTaskDetailId(taskId)
     setTaskDetailOpen(true)
@@ -395,14 +210,10 @@ export default function ProjectDetailPage() {
   }
 
   const COLUMN_STATUS_MAP: Record<string, string> = {
-    todo: 'TODO',
-    in_progress: 'IN_PROGRESS',
-    in_review: 'IN_REVIEW',
-    done: 'DONE',
+    todo: 'TODO', in_progress: 'IN_PROGRESS', in_review: 'IN_REVIEW', done: 'DONE',
   }
 
   async function handleColumnChange(taskId: string, newColumn: string) {
-    // Optimistic update
     setProject((prev) => {
       if (!prev) return prev
       const tasks = prev.tasks.map((t) =>
@@ -410,15 +221,10 @@ export default function ProjectDetailPage() {
       )
       return { ...prev, tasks }
     })
-
-    // PATCH API
     await fetch(`/api/tasks/${taskId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        boardColumn: newColumn,
-        status: COLUMN_STATUS_MAP[newColumn] || undefined,
-      }),
+      body: JSON.stringify({ boardColumn: newColumn, status: COLUMN_STATUS_MAP[newColumn] || undefined }),
     })
   }
 
@@ -477,20 +283,16 @@ export default function ProjectDetailPage() {
     )
   }
 
-  // Build folder map including children for task label lookups
   const folderMap: Record<string, { id: string; name: string; color: string }> = {}
   for (const f of folders) {
     folderMap[f.id] = f
-    for (const c of (f.children ?? [])) {
-      folderMap[c.id] = c
-    }
+    for (const c of (f.children ?? [])) { folderMap[c.id] = c }
   }
 
   const allProjectTasks = (project.tasks || []).map((t) => {
     const f = t.folderId ? folderMap[t.folderId] : null
     return f ? { ...t, folderName: f.name, folderColor: f.color } : t
   })
-  // When a parent folder is selected, also include tasks from its children
   const selectedFolderIds = selectedFolderId
     ? [selectedFolderId, ...(folders.find((f) => f.id === selectedFolderId)?.children ?? []).map((c) => c.id)]
     : null
@@ -510,12 +312,7 @@ export default function ProjectDetailPage() {
   }
 
   const boardTab = (
-    <KanbanBoard
-      tasksByColumn={tasksByColumn}
-      onColumnChange={handleColumnChange}
-      onAddTask={openAddTask}
-      onTaskClick={openTaskDetail}
-    />
+    <KanbanBoard tasksByColumn={tasksByColumn} onColumnChange={handleColumnChange} onAddTask={openAddTask} onTaskClick={openTaskDetail} />
   )
 
   const listTab = (
@@ -575,11 +372,7 @@ export default function ProjectDetailPage() {
       {allTasks.length === 0 && (project.milestones || []).length === 0 ? (
         <p className="text-sm text-muted text-center py-8">Nessun task o milestone con date definite.</p>
       ) : (
-        <GanttChart
-          tasks={allTasks}
-          milestones={project.milestones || []}
-          onTaskClick={openTaskDetail}
-        />
+        <GanttChart tasks={allTasks} milestones={project.milestones || []} onTaskClick={openTaskDetail} />
       )}
     </div>
   )
@@ -637,10 +430,7 @@ export default function ProjectDetailPage() {
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             {project.color && (
-              <span
-                className="inline-block w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: project.color }}
-              />
+              <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: project.color }} />
             )}
             <h1 className="text-xl sm:text-2xl font-semibold truncate">{project.name}</h1>
             <Badge status={project.status}>{STATUS_LABEL[project.status] || project.status}</Badge>
@@ -661,7 +451,7 @@ export default function ProjectDetailPage() {
             <Video className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">{creatingMeet ? 'Avvio...' : 'Meet'}</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={openEditModal} className="touch-manipulation">
+          <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)} className="touch-manipulation">
             <Edit className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Modifica</span>
           </Button>
@@ -672,7 +462,6 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      {/* Confirm delete modal */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm" onClick={() => setConfirmDelete(false)}>
           <div className="bg-card rounded-xl p-6 shadow-xl max-w-sm mx-4 border border-border" onClick={(e) => e.stopPropagation()}>
@@ -681,9 +470,7 @@ export default function ProjectDetailPage() {
               Sei sicuro di voler eliminare <strong>{project.name}</strong>? Il progetto verrà archiviato e non sarà più visibile.
             </p>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)}>
-                Annulla
-              </Button>
+              <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)}>Annulla</Button>
               <Button variant="destructive" size="sm" onClick={handleDeleteProject} disabled={deleteSubmitting}>
                 {deleteSubmitting ? 'Eliminazione...' : 'Elimina'}
               </Button>
@@ -756,60 +543,12 @@ export default function ProjectDetailPage() {
           { id: 'files', label: 'File', content: <ProjectAttachments projectId={projectId} folderId={selectedFolderId} /> },
           { id: 'links', label: 'Collegamenti', content: <ProjectLinks projectId={projectId} folderId={selectedFolderId} /> },
           { id: 'team', label: 'Team', content: (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted" />
-                  <span className="text-sm font-medium">{(project.members || []).length} membri</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {teamMembers.filter((u) => !(project.members || []).some((m) => m.userId === u.id)).length > 0 && (
-                    <Button size="sm" variant="outline" onClick={() => {
-                      const nonMembers = teamMembers.filter((u) => !(project.members || []).some((m) => m.userId === u.id))
-                      setMemberUserIds(nonMembers.map((u) => u.id))
-                      setAddMemberModalOpen(true)
-                    }}>
-                      <Users className="h-4 w-4 mr-2" />
-                      Aggiungi Tutti
-                    </Button>
-                  )}
-                  <Button size="sm" onClick={() => { setMemberUserIds([]); setAddMemberModalOpen(true) }}>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Aggiungi
-                  </Button>
-                </div>
-              </div>
-              {(project.members || []).length === 0 ? (
-                <p className="text-sm text-muted text-center py-8">Nessun membro assegnato a questo progetto.</p>
-              ) : (
-                <div className="space-y-2">
-                  {project.members.map((m) => (
-                    <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card hover:bg-secondary/30 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <Avatar name={`${m.user.firstName} ${m.user.lastName}`} src={m.user.avatarUrl} size="sm" />
-                        <div>
-                          <p className="text-sm font-medium">{m.user.firstName} {m.user.lastName}</p>
-                          <p className="text-xs text-muted">{m.user.email}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={m.role === 'OWNER' ? 'default' : 'outline'}>
-                          {m.role === 'OWNER' ? 'Owner' : m.role === 'ADMIN' ? 'Admin' : 'Membro'}
-                        </Badge>
-                        <button
-                          onClick={() => handleRemoveMember(m.userId)}
-                          disabled={removingMemberId === m.userId}
-                          className="p-1.5 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
-                          title="Rimuovi dal progetto"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <ProjectMembersPanel
+              projectId={projectId}
+              members={project.members || []}
+              teamMembers={teamMembers}
+              onMembersChanged={fetchProject}
+            />
           ) },
           { id: 'chat', label: 'Chat', content: <ProjectChat projectId={projectId} folderId={selectedFolderId} /> },
         ]}
@@ -852,117 +591,15 @@ export default function ProjectDetailPage() {
         </form>
       </Modal>
 
-      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Modifica Progetto" size="lg">
-        <form onSubmit={handleEditProject} className="space-y-4">
-          <Input
-            label="Nome Progetto *"
-            required
-            value={editForm.name}
-            onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              label="Workspace"
-              value={editForm.workspaceId}
-              onChange={(e) => setEditForm((f) => ({ ...f, workspaceId: e.target.value }))}
-              options={[
-                { value: '', label: 'Seleziona workspace' },
-                ...workspaces.map((w) => ({ value: w.id, label: w.name })),
-              ]}
-            />
-            <Select
-              label="Cliente"
-              value={editForm.clientId}
-              onChange={(e) => setEditForm((f) => ({ ...f, clientId: e.target.value }))}
-              options={[
-                { value: '', label: 'Nessun cliente' },
-                ...clients.map((c) => ({ value: c.id, label: c.companyName })),
-              ]}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-foreground">Descrizione</label>
-            <textarea
-              rows={3}
-              value={editForm.description}
-              onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              label="Stato"
-              value={editForm.status}
-              onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
-              options={STATUS_OPTIONS}
-            />
-            <Select
-              label="Priorità"
-              value={editForm.priority}
-              onChange={(e) => setEditForm((f) => ({ ...f, priority: e.target.value }))}
-              options={PRIORITY_OPTIONS}
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Data Inizio"
-              type="date"
-              value={editForm.startDate}
-              onChange={(e) => setEditForm((f) => ({ ...f, startDate: e.target.value }))}
-            />
-            <Input
-              label="Data Fine"
-              type="date"
-              value={editForm.endDate}
-              onChange={(e) => setEditForm((f) => ({ ...f, endDate: e.target.value }))}
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Budget (EUR)"
-              type="number"
-              step="0.01"
-              value={editForm.budgetAmount}
-              onChange={(e) => setEditForm((f) => ({ ...f, budgetAmount: e.target.value }))}
-            />
-            <Input
-              label="Ore Previste"
-              type="number"
-              value={editForm.budgetHours}
-              onChange={(e) => setEditForm((f) => ({ ...f, budgetHours: e.target.value }))}
-            />
-          </div>
-          <ColorSwatches
-            value={editForm.color || '#3B82F6'}
-            onChange={(color) => setEditForm((f) => ({ ...f, color }))}
-          />
-          {editError && (
-            <p className="text-sm text-destructive">{editError}</p>
-          )}
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => setEditModalOpen(false)}>Annulla</Button>
-            <Button type="submit" disabled={editSubmitting}>{editSubmitting ? 'Salvataggio...' : 'Salva Modifiche'}</Button>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal open={addMemberModalOpen} onClose={() => setAddMemberModalOpen(false)} title="Aggiungi Membri al Progetto" size="md">
-        <div className="space-y-4">
-          <MultiUserSelect
-            users={teamMembers.filter((u) => !(project.members || []).some((m) => m.userId === u.id))}
-            selected={memberUserIds}
-            onChange={setMemberUserIds}
-            label="Seleziona utenti"
-            placeholder="Cerca utenti..."
-          />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => setAddMemberModalOpen(false)}>Annulla</Button>
-            <Button onClick={handleAddMembers} disabled={addingMembers || memberUserIds.length === 0}>
-              {addingMembers ? 'Salvataggio...' : `Aggiungi ${memberUserIds.length > 0 ? `(${memberUserIds.length})` : ''}`}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <ProjectEditModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        projectId={projectId}
+        initialData={{ ...project, clientId: project.client?.id ?? null, workspaceId: project.workspace.id }}
+        clients={clients}
+        workspaces={workspaces}
+        onSaved={fetchProject}
+      />
 
       <TaskDetailModal
         taskId={taskDetailId}

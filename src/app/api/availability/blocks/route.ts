@@ -38,8 +38,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch events from all relevant calendars
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allEvents: any[] = []
+    interface BlockEvent {
+      id: string
+      summary?: string | null
+      start?: { dateTime?: string | null; date?: string | null } | null
+      end?: { dateTime?: string | null; date?: string | null } | null
+      recurringEventId?: string | null
+      recurrence?: string[] | null
+      _calendarId: string
+    }
+    const allEvents: BlockEvent[] = []
     const seen = new Set<string>()
 
     for (const calId of calendarIds) {

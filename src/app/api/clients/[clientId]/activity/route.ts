@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { ApiError, handleApiError } from '@/lib/api-error'
 import type { Role } from '@/generated/prisma/client'
 
 type Params = { params: Promise<{ clientId: string }> }
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     })
 
     if (!client) {
-      return NextResponse.json({ success: false, error: 'Cliente non trovato' }, { status: 404 })
+      throw new ApiError(404, 'Cliente non trovato')
     }
 
     // DB-level pagination: fetch only needed records with orderBy + take
@@ -293,10 +294,6 @@ export async function GET(request: NextRequest, { params }: Params) {
       limit,
     })
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
-      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
-    }
-    console.error('[activity/GET]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return handleApiError(e)
   }
 }

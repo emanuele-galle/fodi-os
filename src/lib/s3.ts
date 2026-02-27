@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { logger } from '@/lib/logger'
 
 // ---------------------------------------------------------------------------
 // MinIO — Local VPS storage (always configured)
@@ -102,7 +103,7 @@ export async function uploadFile(
         }),
       )
       .catch((err) =>
-        console.warn('[storage] MinIO local backup failed:', (err as Error).message),
+        logger.warn('[storage] MinIO local backup failed', { error: (err as Error).message }),
       )
 
     return `${r2PublicUrl}/${key}`
@@ -133,7 +134,7 @@ export async function deleteFile(key: string): Promise<void> {
       .send(new DeleteObjectCommand({ Bucket: minioBucket, Key: key }))
       .then(() => {})
       .catch((err) =>
-        console.warn('[storage] MinIO delete failed:', (err as Error).message),
+        logger.warn('[storage] MinIO delete failed', { error: (err as Error).message }),
       ),
   )
 
@@ -141,7 +142,7 @@ export async function deleteFile(key: string): Promise<void> {
   if (r2Active) {
     promises.push(
       r2Delete(key).catch((err) =>
-        console.warn('[storage] R2 delete failed:', (err as Error).message),
+        logger.warn('[storage] R2 delete failed', { error: (err as Error).message }),
       ),
     )
   }

@@ -6,8 +6,17 @@ import { prisma } from '@/lib/prisma'
 import { notifyUsers } from '@/lib/notifications'
 import { sendDataChanged } from '@/lib/sse'
 import { configureMeetSpace } from '@/lib/meet'
+import { ApiError, handleApiError } from '@/lib/api-error'
 import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
+import type { calendar_v3 } from 'googleapis'
+
+interface CalendarEvent extends calendar_v3.Schema$Event {
+  _ownerUserId?: string
+  _ownerName?: string
+  _calendarId?: string | null
+  _calendarColor?: string
+}
 
 const createEventSchema = z.object({
   summary: z.string().min(1, 'Titolo obbligatorio'),
@@ -34,11 +43,7 @@ export async function GET(request: NextRequest) {
     const role = request.headers.get('x-user-role') as Role
     requirePermission(role, 'pm', 'read')
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
-      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
-    }
-    console.error('[calendar/events]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return handleApiError(e)
   }
 
   const { searchParams } = request.nextUrl
@@ -97,19 +102,17 @@ export async function GET(request: NextRequest) {
             })
           )
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const userEvents: any[] = calResults
+          const userEvents = calResults
             .filter((r) => r.status === 'fulfilled')
-            .flatMap((r: any) => r.value)
+            .flatMap((r) => (r as PromiseFulfilledResult<CalendarEvent[]>).value)
 
           return { userId: user.id, events: userEvents }
         })
       )
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const allEvents: any[] = results
+      const allEvents: CalendarEvent[] = results
         .filter((r) => r.status === 'fulfilled')
-        .flatMap((r: any) => r.value.events)
+        .flatMap((r) => (r as PromiseFulfilledResult<{ userId: string; events: CalendarEvent[] }>).value.events)
 
       // Deduplicate by eventId + ownerUserId + calendarId
       const seen = new Set<string>()
@@ -177,10 +180,9 @@ export async function GET(request: NextRequest) {
         })
       )
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const allEvents: any[] = results
+      const allEvents: CalendarEvent[] = results
         .filter((r) => r.status === 'fulfilled')
-        .flatMap((r: any) => r.value.events)
+        .flatMap((r) => (r as PromiseFulfilledResult<{ calendarId: string; events: CalendarEvent[] }>).value.events)
 
       // Deduplicate by event id + calendarId
       const seen = new Set<string>()
@@ -242,11 +244,7 @@ export async function POST(request: NextRequest) {
     const role = request.headers.get('x-user-role') as Role
     requirePermission(role, 'pm', 'write')
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
-      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
-    }
-    console.error('[calendar/events]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return handleApiError(e)
   }
 
   const { client: auth, error: authError } = await checkAuthStatus(userId)

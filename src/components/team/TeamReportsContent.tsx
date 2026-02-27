@@ -8,6 +8,7 @@ import {
 import { Card, CardContent } from '@/components/ui/Card'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
+import { ROLE_LABELS_SHORT } from '@/lib/constants'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 
@@ -38,10 +39,7 @@ interface ReportItem {
   user: ReportUser
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Admin', DIR_COMMERCIALE: 'Dir. Comm.', DIR_TECNICO: 'Dir. Tech.', DIR_SUPPORT: 'Dir. Supp.',
-  COMMERCIALE: 'Comm.', PM: 'PM', DEVELOPER: 'Dev', CONTENT: 'Content', SUPPORT: 'Support',
-}
+const ROLE_LABELS = ROLE_LABELS_SHORT
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })

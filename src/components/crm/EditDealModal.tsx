@@ -132,7 +132,17 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
     setLoading(true)
 
     try {
-      const body: any = {
+      const body: {
+        title: string
+        description: string | null
+        value: number
+        stage: string
+        probability: number
+        expectedCloseDate: string | null
+        clientId: string | null
+        contactId: string | null
+        lostReason: string | null
+      } = {
         title: formData.title.trim(),
         description: formData.description.trim() || null,
         value: parseFloat(formData.value),

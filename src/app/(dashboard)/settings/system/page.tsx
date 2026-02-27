@@ -13,6 +13,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
+import { ROLE_LABELS, PROJECT_STATUS_LABELS } from '@/lib/constants'
 
 interface SystemStats {
   users: { total: number; active: number }
@@ -334,27 +335,6 @@ const CLIENT_STATUS_LABELS: Record<string, string> = {
   CHURNED: 'Perso',
 }
 
-const PROJECT_STATUS_LABELS: Record<string, string> = {
-  PLANNING: 'Pianificazione',
-  IN_PROGRESS: 'In Corso',
-  ON_HOLD: 'In Pausa',
-  REVIEW: 'Revisione',
-  COMPLETED: 'Completato',
-  CANCELLED: 'Annullato',
-}
-
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Admin',
-  DIR_COMMERCIALE: 'Dir. Commerciale',
-  DIR_TECNICO: 'Dir. Tecnico',
-  DIR_SUPPORT: 'Dir. Supporto',
-  COMMERCIALE: 'Commerciale',
-  PM: 'Resp. Progetto',
-  DEVELOPER: 'Sviluppatore',
-  CONTENT: 'Contenuti',
-  SUPPORT: 'Assistenza',
-  CLIENT: 'Cliente',
-}
 
 const STATUS_BAR_COLORS: Record<string, string> = {
   LEAD: 'bg-indigo-500',

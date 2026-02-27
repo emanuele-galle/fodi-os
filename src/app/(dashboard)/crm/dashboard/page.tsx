@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { useFetch } from '@/hooks/useFetch'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -149,28 +150,17 @@ function StatCardSkeleton() {
 }
 
 export default function CrmDashboardPage() {
-  const [stats, setStats] = useState<StatsData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [myTasks, setMyTasks] = useState<TaskItem[]>([])
-  const [deals, setDeals] = useState<DealItem[]>([])
+  const { data: statsRaw, loading } = useFetch<{ success: boolean; data: StatsData }>('/api/crm/stats')
+  const { data: tasksRaw } = useFetch<{ success: boolean; data?: TaskItem[]; items?: TaskItem[] }>(
+    '/api/tasks?mine=true&status=TODO,IN_PROGRESS&limit=5&sort=dueDate&order=asc'
+  )
+  const { data: dealsRaw } = useFetch<{ success: boolean; data?: DealItem[]; items?: DealItem[] }>(
+    '/api/deals?limit=100'
+  )
 
-  useEffect(() => {
-    fetch('/api/crm/stats')
-      .then((r) => r.json())
-      .then((res) => { if (res.success) setStats(res.data) })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-
-    fetch('/api/tasks?mine=true&status=TODO,IN_PROGRESS&limit=5&sort=dueDate&order=asc')
-      .then((r) => r.json())
-      .then((res) => { if (res.success) setMyTasks((res.data || res.items || []).slice(0, 5)) })
-      .catch(console.error)
-
-    fetch('/api/deals?limit=100')
-      .then((r) => r.json())
-      .then((res) => { if (res.success) setDeals(res.data || res.items || []) })
-      .catch(console.error)
-  }, [])
+  const stats = statsRaw?.success ? statsRaw.data : null
+  const myTasks = tasksRaw?.success ? (tasksRaw.data || tasksRaw.items || []).slice(0, 5) : []
+  const deals = dealsRaw?.success ? (dealsRaw.data || dealsRaw.items || []) : []
 
   if (loading) {
     return (

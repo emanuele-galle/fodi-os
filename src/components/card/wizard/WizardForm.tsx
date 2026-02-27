@@ -13,8 +13,8 @@ interface Field {
   helpText?: string | null
   isRequired: boolean
   sortOrder: number
-  options?: any
-  validation?: any
+  options?: unknown
+  validation?: unknown
   defaultValue?: string | null
 }
 

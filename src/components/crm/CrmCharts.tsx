@@ -82,11 +82,10 @@ export function DealsFunnelChart({ data }: { data: DealsByStageData[] }) {
             <XAxis type="number" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
             <YAxis dataKey="label" type="category" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={75} />
             <Tooltip
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={((value: number, name: string) => {
-                if (name === 'value') return formatCurrency(value)
+              formatter={(value, name) => {
+                if (name === 'value') return formatCurrency(Number(value))
                 return value
-              }) as any}
+              }}
               contentStyle={TOOLTIP_STYLE}
               cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }}
             />
@@ -114,8 +113,7 @@ export function WonDealsChart({ data }: { data: WonDealsData[] }) {
             <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
             <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
             <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={35} />
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <Tooltip formatter={((value: number) => formatCurrency(value)) as any} contentStyle={TOOLTIP_STYLE} />
+            <Tooltip formatter={(value) => formatCurrency(Number(value))} contentStyle={TOOLTIP_STYLE} />
             <Line type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2} dot={{ r: 4, fill: '#22c55e' }} activeDot={{ r: 6 }} name="Valore" />
           </LineChart>
         </ResponsiveContainer>

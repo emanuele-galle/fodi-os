@@ -3,6 +3,7 @@ import { google } from 'googleapis'
 import { prisma } from './prisma'
 import { getAuthenticatedClient, getDriveService } from './google'
 import { uploadFile as s3Upload, deleteFile as s3Delete, isR2Active } from './s3'
+import { logger } from '@/lib/logger'
 
 // Cached admin drive client (avoid DB query on every upload)
 let cachedAdminDrive: { drive: ReturnType<typeof google.drive>; expiresAt: number } | null = null
@@ -212,7 +213,7 @@ export async function uploadWithBackup(
       result.driveFileId = fileId
       result.webViewLink = webViewLink
     } catch (err) {
-      console.warn(`[storage] Google Drive backup upload failed for "${fileName}":`, (err as Error).message)
+      logger.warn(`[storage] Google Drive backup upload failed for "${fileName}"`, { error: (err as Error).message })
     }
   }
 
@@ -231,7 +232,7 @@ export async function deleteWithBackup(fileUrl: string, driveFileId?: string | n
     try {
       await deleteFromGDrive(driveFileId)
     } catch (err) {
-      console.warn(`[storage] Google Drive delete failed for "${driveFileId}":`, (err as Error).message)
+      logger.warn(`[storage] Google Drive delete failed for "${driveFileId}"`, { error: (err as Error).message })
     }
   }
 
@@ -242,7 +243,7 @@ export async function deleteWithBackup(fileUrl: string, driveFileId?: string | n
       await s3Delete(key)
     }
   } catch (err) {
-    console.warn(`[storage] MinIO delete failed for "${fileUrl}":`, (err as Error).message)
+    logger.warn(`[storage] MinIO delete failed for "${fileUrl}"`, { error: (err as Error).message })
   }
 }
 

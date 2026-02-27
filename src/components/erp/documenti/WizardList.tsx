@@ -125,10 +125,10 @@ export function WizardList() {
   }, [wizards, categoryFilter])
 
   const { sortKey, sortDir, handleSort, sortIcon } = useTableSort()
-  const getWizardValue = useCallback((item: any, key: string) => {
+  const getWizardValue = useCallback((item: WizardTemplate, key: string) => {
     if (key === 'steps') return item._count?.steps ?? 0
     if (key === 'submissions') return item._count?.submissions ?? 0
-    return item[key]
+    return item[key as keyof WizardTemplate]
   }, [])
   const sortedWizards = useMemo(() => sortData(filteredWizards, sortKey, sortDir, getWizardValue), [filteredWizards, sortKey, sortDir, getWizardValue])
 

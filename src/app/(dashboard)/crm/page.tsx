@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useFormPersist } from '@/hooks/useFormPersist'
+import { useState, useEffect, useCallback } from 'react'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Users, Plus, Search, ChevronLeft, ChevronRight, AlertCircle, Download, ChevronDown, Clock, Trash2, Tag, CheckSquare, Filter, X } from 'lucide-react'
@@ -16,8 +15,9 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Avatar } from '@/components/ui/Avatar'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, timeAgo } from '@/lib/utils'
 import { STATUS_OPTIONS, STATUS_LABELS, INDUSTRY_OPTIONS, SOURCE_OPTIONS } from '@/lib/crm-constants'
+import { CreateClientModal } from '@/components/crm/CreateClientModal'
 
 interface Client {
   id: string
@@ -30,18 +30,6 @@ interface Client {
   _count?: { contacts: number; projects: number }
   interactions?: { date: string; type: string }[]
   createdAt: string
-}
-
-function timeAgo(dateStr: string): string {
-  const now = new Date()
-  const date = new Date(dateStr)
-  const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  if (diffDays === 0) return 'Oggi'
-  if (diffDays === 1) return 'Ieri'
-  if (diffDays < 7) return `${diffDays}g fa`
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}sett. fa`
-  return `${Math.floor(diffDays / 30)}m fa`
 }
 
 function isNeglected(dateStr: string): boolean {
@@ -69,9 +57,7 @@ export default function CrmPage() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null)
-  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkAction, setBulkAction] = useState<string | null>(null)
   const [bulkTagInput, setBulkTagInput] = useState('')
@@ -85,22 +71,8 @@ export default function CrmPage() {
   const [tagFilter, setTagFilter] = useState('')
   const [createdAfter, setCreatedAfter] = useState('')
   const [createdBefore, setCreatedBefore] = useState('')
-  const duplicateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { confirm: confirmAction, confirmProps } = useConfirm()
   const limit = 20
-
-  const clientForm = useFormPersist('new-client', {
-    companyName: '',
-    vatNumber: '',
-    fiscalCode: '',
-    pec: '',
-    sdi: '',
-    website: '',
-    industry: '',
-    source: '',
-    status: 'LEAD',
-    notes: '',
-  })
 
   // Open modal if ?action=new is in URL
   useEffect(() => {
@@ -158,30 +130,6 @@ export default function CrmPage() {
 
   const totalPages = Math.ceil(total / limit)
 
-  // Duplicate detection (debounced)
-  function checkDuplicate(name: string) {
-    if (duplicateTimer.current) clearTimeout(duplicateTimer.current)
-    if (!name.trim() || name.trim().length < 3) {
-      setDuplicateWarning(null)
-      return
-    }
-    duplicateTimer.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/clients?search=${encodeURIComponent(name.trim())}&limit=3`)
-        if (res.ok) {
-          const data = await res.json()
-          const matches = (data.items || []) as Client[]
-          if (matches.length > 0) {
-            const names = matches.map((m: Client) => m.companyName).join(', ')
-            setDuplicateWarning(`Clienti simili trovati: ${names}`)
-          } else {
-            setDuplicateWarning(null)
-          }
-        }
-      } catch { /* ignore */ }
-    }, 500)
-  }
-
   async function handleQuickStatusChange(clientId: string, newStatus: string) {
     setStatusDropdownId(null)
     try {
@@ -219,30 +167,6 @@ export default function CrmPage() {
     a.download = `clienti-${new Date().toISOString().split('T')[0]}.csv`
     a.click()
     URL.revokeObjectURL(url)
-  }
-
-  async function handleCreateClient(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setSubmitting(true)
-    const body: Record<string, string> = {}
-    for (const [k, v] of Object.entries(clientForm.values)) {
-      if (typeof v === 'string' && v.trim()) body[k] = v.trim()
-    }
-    try {
-      const res = await fetch('/api/clients', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (res.ok) {
-        clientForm.reset()
-        setModalOpen(false)
-        setDuplicateWarning(null)
-        fetchClients()
-      }
-    } finally {
-      setSubmitting(false)
-    }
   }
 
   function toggleSelect(id: string) {
@@ -781,65 +705,11 @@ export default function CrmPage() {
         </>
       )}
 
-      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setDuplicateWarning(null) }} title="Nuovo Cliente" size="lg">
-        <form onSubmit={handleCreateClient} className="space-y-4">
-          {clientForm.hasPersistedData && (
-            <div className="flex items-center justify-between rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
-              <span>Bozza recuperata</span>
-              <button type="button" onClick={clientForm.reset} className="underline hover:no-underline">Scarta bozza</button>
-            </div>
-          )}
-          <div>
-            <Input
-              label="Ragione Sociale *"
-              required
-              value={clientForm.values.companyName}
-              onChange={(e) => {
-                clientForm.setValue('companyName', e.target.value)
-                checkDuplicate(e.target.value)
-              }}
-            />
-            {duplicateWarning && (
-              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-amber-600">
-                <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{duplicateWarning}</span>
-              </div>
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="P.IVA" value={clientForm.values.vatNumber} onChange={(e) => clientForm.setValue('vatNumber', e.target.value)} />
-            <Input label="Codice Fiscale" value={clientForm.values.fiscalCode} onChange={(e) => clientForm.setValue('fiscalCode', e.target.value)} />
-            <Input label="PEC" type="email" value={clientForm.values.pec} onChange={(e) => clientForm.setValue('pec', e.target.value)} />
-            <Input label="Codice SDI" value={clientForm.values.sdi} onChange={(e) => clientForm.setValue('sdi', e.target.value)} />
-            <Input label="Sito Web" value={clientForm.values.website} onChange={(e) => clientForm.setValue('website', e.target.value)} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select label="Settore" options={INDUSTRY_OPTIONS} value={clientForm.values.industry} onChange={(e) => clientForm.setValue('industry', e.target.value)} />
-            <Select label="Fonte" options={SOURCE_OPTIONS} value={clientForm.values.source} onChange={(e) => clientForm.setValue('source', e.target.value)} />
-          </div>
-          <Select
-            label="Stato"
-            value={clientForm.values.status}
-            onChange={(e) => clientForm.setValue('status', e.target.value)}
-            options={STATUS_OPTIONS.filter((o) => o.value !== '')}
-          />
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-foreground">Note</label>
-            <textarea
-              rows={3}
-              value={clientForm.values.notes}
-              onChange={(e) => clientForm.setValue('notes', e.target.value)}
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => { setModalOpen(false); setDuplicateWarning(null) }}>
-              Annulla
-            </Button>
-            <Button type="submit" loading={submitting}>Crea Cliente</Button>
-          </div>
-        </form>
-      </Modal>
+      <CreateClientModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreated={fetchClients}
+      />
       <ConfirmDialog {...confirmProps} />
     </div>
   )
