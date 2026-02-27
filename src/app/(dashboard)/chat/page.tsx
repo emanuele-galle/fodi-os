@@ -138,8 +138,14 @@ export default function ChatPage() {
       const msgChannelId = (event as { channelId?: string }).channelId || msg.channelId
 
       // Update channel list (last message, unread)
-      setChannels((prev) =>
-        prev.map((ch) => {
+      setChannels((prev) => {
+        const knownChannel = prev.find(ch => ch.id === msgChannelId)
+        if (!knownChannel) {
+          // Channel not in list (e.g. PROJECT channel with new unread) — re-fetch to include it
+          fetchChannels()
+          return prev
+        }
+        return prev.map((ch) => {
           if (ch.id !== msgChannelId) return ch
           return {
             ...ch,
@@ -156,7 +162,7 @@ export default function ChatPage() {
           const bTime = b.lastMessage?.createdAt || ''
           return new Date(bTime).getTime() - new Date(aTime).getTime()
         })
-      )
+      })
 
       // Append to thread if viewing that channel
       if (msgChannelId === selectedIdRef.current) {

@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
       where: {
         members: { some: { userId } },
         isArchived: false,
-        type: { not: 'PROJECT' },
       },
       include: {
         _count: { select: { members: true } },
@@ -63,6 +62,7 @@ export async function GET(request: NextRequest) {
         slug: ch.slug,
         description: ch.description,
         type: ch.type,
+        isProjectChannel: ch.type === 'PROJECT',
         memberCount: ch._count.members,
         ...(ch.type === 'DIRECT' ? { memberUserIds: ch.members.map(m => m.userId) } : {}),
         lastMessage: lastMessage
@@ -77,6 +77,10 @@ export async function GET(request: NextRequest) {
         unreadCount,
         updatedAt: ch.updatedAt,
       }
+    }).filter((item) => {
+      // Hide PROJECT channels with no unread messages (they stay accessible from the project page)
+      if (item.isProjectChannel && !item.hasUnread) return false
+      return true
     })
 
     // Sort: channels with unread first, then by latest message

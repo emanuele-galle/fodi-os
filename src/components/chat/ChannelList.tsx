@@ -340,6 +340,11 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                           )}>
                             {channel.name}
                           </span>
+                          {channel.type === 'PROJECT' && (
+                            <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-500 dark:text-violet-400 flex-shrink-0">
+                              Progetto
+                            </span>
+                          )}
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             {channel.lastMessage && (
                               <span className="text-[10px] text-muted/50">
