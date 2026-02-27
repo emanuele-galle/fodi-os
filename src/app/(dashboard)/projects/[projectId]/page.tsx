@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { useFormPersist } from '@/hooks/useFormPersist'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
@@ -260,6 +261,9 @@ export default function ProjectDetailPage() {
       else if (Array.isArray(usersData)) setTeamMembers(usersData)
     })
   }, [fetchProject, fetchFolders, projectId])
+
+  // Real-time refresh when task data changes via SSE
+  useRealtimeRefresh('task', fetchProject)
 
   async function handleProjectMeet() {
     if (creatingMeet || !project) return
