@@ -296,14 +296,14 @@ export function EntrateContent() {
           <Download className="h-4 w-4" />
           CSV
         </Button>
-        <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={incomes.length === 0} className="sm:hidden">
+        <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={incomes.length === 0} className="sm:hidden" aria-label="Esporta CSV">
           <Download className="h-4 w-4" />
         </Button>
         <Button size="sm" onClick={openCreate} className="hidden sm:flex">
           <Plus className="h-4 w-4" />
           Nuova Entrata
         </Button>
-        <Button onClick={openCreate} className="sm:hidden">
+        <Button onClick={openCreate} className="sm:hidden" aria-label="Nuova entrata">
           <Plus className="h-4 w-4" />
         </Button>
       </div>

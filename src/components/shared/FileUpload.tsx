@@ -304,6 +304,7 @@ export function FileUpload({
                     e.stopPropagation()
                     removeEntry(entry.id)
                   }}
+                  aria-label="Rimuovi file"
                 >
                   <X className="h-4 w-4 text-muted/60" />
                 </Button>

@@ -101,6 +101,7 @@ export function IncomingCallBanner() {
             variant="ghost"
             className="h-10 w-10 rounded-full bg-red-500/15 text-red-500 hover:bg-red-500/25"
             onClick={dismiss}
+            aria-label="Rifiuta chiamata"
           >
             <PhoneOff className="h-5 w-5" />
           </Button>
@@ -108,6 +109,7 @@ export function IncomingCallBanner() {
             size="icon"
             className="h-10 w-10 rounded-full bg-green-500 text-white hover:bg-green-600"
             onClick={answer}
+            aria-label="Rispondi alla chiamata"
           >
             <Phone className="h-5 w-5" />
           </Button>

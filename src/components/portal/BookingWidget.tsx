@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import { Calendar, Clock, Check, ChevronLeft, ChevronRight, User } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -186,9 +187,9 @@ export default function BookingWidget({ teamMembers, onBookingComplete }: Bookin
                 onClick={() => handleMemberSelect(member)}
                 className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-secondary/50 transition-colors text-left"
               >
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden relative">
                   {member.avatarUrl ? (
-                    <img src={member.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    <Image src={member.avatarUrl} alt="" fill className="object-cover" unoptimized />
                   ) : (
                     <User className="w-5 h-5 text-primary" />
                   )}
@@ -228,9 +229,9 @@ export default function BookingWidget({ teamMembers, onBookingComplete }: Bookin
           )}
           {selectedMember && (
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden relative">
                 {selectedMember.avatarUrl ? (
-                  <img src={selectedMember.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  <Image src={selectedMember.avatarUrl} alt="" fill className="object-cover" unoptimized />
                 ) : (
                   <User className="w-4 h-4 text-primary" />
                 )}

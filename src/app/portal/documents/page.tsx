@@ -39,7 +39,7 @@ export default function PortalDocumentsPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/portal')}>
+        <Button variant="ghost" size="icon" onClick={() => router.push('/portal')} aria-label="Torna indietro">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold">Documenti</h1>

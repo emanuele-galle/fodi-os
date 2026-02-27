@@ -93,7 +93,7 @@ export default function WizardSubmissionsPage({ params }: { params: Promise<{ wi
   return (
     <div className="animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.push(`/erp/wizards/${wizardId}`)}>
+        <Button variant="ghost" size="icon" onClick={() => router.push(`/erp/wizards/${wizardId}`)} aria-label="Torna al wizard">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-3 flex-1 min-w-0">

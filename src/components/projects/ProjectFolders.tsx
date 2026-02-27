@@ -179,10 +179,10 @@ function SortableFolderRow({
               onKeyDown={(e) => e.key === 'Enter' && onRename()}
               autoFocus
             />
-            <Button size="sm" onClick={onRename} disabled={submitting} className="h-7 px-1.5">
+            <Button size="sm" onClick={onRename} disabled={submitting} className="h-7 px-1.5" aria-label="Conferma rinomina">
               <Check className="h-3 w-3" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={onCancelEdit} className="h-7 px-1.5">
+            <Button variant="ghost" size="sm" onClick={onCancelEdit} className="h-7 px-1.5" aria-label="Annulla rinomina">
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -601,10 +601,10 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
           autoFocus
         />
-        <Button size="sm" onClick={handleCreate} disabled={submitting || !newName.trim()} className="h-8 px-2">
+        <Button size="sm" onClick={handleCreate} disabled={submitting || !newName.trim()} className="h-8 px-2" aria-label="Conferma creazione">
           <Check className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => { setCreating(false); setCreatingParentId(null) }} className="h-8 px-2">
+        <Button variant="ghost" size="sm" onClick={() => { setCreating(false); setCreatingParentId(null) }} className="h-8 px-2" aria-label="Annulla creazione">
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>

@@ -144,7 +144,7 @@ export function TemplateLineItemsEditor({ items, onChange }: TemplateLineItemsEd
                 <div className="w-24 text-right text-sm font-medium">
                   {formatCurrency(item.quantity * item.unitPrice)}
                 </div>
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(index)}>
+                <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(index)} aria-label="Rimuovi voce">
                   <Trash2 className="h-4 w-4 text-muted" />
                 </Button>
               </div>

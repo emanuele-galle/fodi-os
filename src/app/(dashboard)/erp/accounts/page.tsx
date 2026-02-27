@@ -302,10 +302,10 @@ export default function AccountsPage() {
             </Button>
           </div>
           <div className="sm:hidden flex items-center gap-2">
-            <Button variant="outline" onClick={openCreateTransfer}>
+            <Button variant="outline" onClick={openCreateTransfer} aria-label="Nuovo trasferimento">
               <ArrowRightLeft className="h-4 w-4" />
             </Button>
-            <Button onClick={openCreateAccount}>
+            <Button onClick={openCreateAccount} aria-label="Nuovo conto">
               <Plus className="h-4 w-4" />
             </Button>
           </div>

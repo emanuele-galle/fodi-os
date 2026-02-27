@@ -198,7 +198,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
                       placeholder="Valore"
                       className="flex-1 font-mono text-xs"
                     />
-                    <Button variant="ghost" size="icon" type="button" onClick={() => removeOption(i)}>
+                    <Button variant="ghost" size="icon" type="button" onClick={() => removeOption(i)} aria-label="Rimuovi opzione">
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>
                   </div>

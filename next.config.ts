@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 's3.fodivps1.cloud' },
       { protocol: 'https', hostname: 'storage.fodivps1.cloud' },
       { protocol: 'https', hostname: 'storage.fodivps2.cloud' },
+      { protocol: 'https', hostname: 'www.gstatic.com' },
       ...(process.env.ALLOWED_IMAGE_DOMAINS || '')
         .split(',')
         .filter(Boolean)

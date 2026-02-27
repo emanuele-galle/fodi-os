@@ -90,6 +90,7 @@ export function ConditionBuilder({ condition, onChange, availableFields }: Condi
         type="button"
         onClick={() => onChange(null)}
         className="flex-shrink-0 text-destructive"
+        aria-label="Rimuovi condizione"
       >
         <Trash2 className="h-4 w-4" />
       </Button>

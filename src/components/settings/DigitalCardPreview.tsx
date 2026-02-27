@@ -1,5 +1,6 @@
 'use client'
 import { brandClient } from '@/lib/branding-client'
+import Image from 'next/image'
 
 import { Card, CardContent } from '@/components/ui/Card'
 import { Linkedin, Instagram, Twitter, Github, Globe, MessageCircle, Facebook, Youtube, Send, Phone, Mail, UserPlus } from 'lucide-react'
@@ -97,7 +98,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
                 </div>
                 <div className="absolute inset-[3px] rounded-full overflow-hidden bg-[#12121a]">
                   {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+                    <Image src={user.avatarUrl} alt={fullName} fill className="object-cover" unoptimized />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-purple-600/30 to-indigo-600/30 flex items-center justify-center text-white/70 text-lg font-light">
                       {initials}

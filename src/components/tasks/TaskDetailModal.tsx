@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
@@ -9,92 +9,24 @@ import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { MultiUserSelect } from '@/components/ui/MultiUserSelect'
-import { Trash2, Send, Paperclip, FileText, Image, Download, X, UserCheck, ArrowRightLeft, FolderOpen, History, ListChecks, Plus, CheckCircle2, Circle } from 'lucide-react'
+import { Trash2, UserCheck } from 'lucide-react'
 import { TaskTimer } from '@/components/tasks/TaskTimer'
 import { TaskDependencies } from '@/components/tasks/TaskDependencies'
-
-interface TaskUser {
-  id: string
-  firstName: string
-  lastName: string
-  avatarUrl?: string | null
-}
-
-interface Comment {
-  id: string
-  content: string
-  createdAt: string
-  author: TaskUser
-}
-
-interface Attachment {
-  id: string
-  fileName: string
-  fileUrl: string
-  fileSize: number
-  mimeType: string
-  createdAt: string
-  uploadedBy: { id: string; firstName: string; lastName: string }
-}
-
-interface TaskAssignment {
-  id: string
-  role: string
-  user: TaskUser
-  assignedBy: string | null
-  assignedByUser: TaskUser | null
-  assignedAt: string
-}
-
-interface Subtask {
-  id: string
-  title: string
-  status: string
-  priority: string
-  assignee: TaskUser | null
-  assignments?: { id: string; role: string; user: TaskUser }[]
-}
-
-interface TaskDetail {
-  id: string
-  title: string
-  description: string | null
-  status: string
-  priority: string
-  boardColumn: string
-  assigneeId: string | null
-  assignee: TaskUser | null
-  assignments?: TaskAssignment[]
-  dueDate: string | null
-  isPersonal: boolean
-  folderId: string | null
-  project: { id: string; name: string } | null
-  comments: Comment[]
-  tags: string[]
-  timerStartedAt: string | null
-  timerUserId: string | null
-  subtasks?: Subtask[]
-  _count?: { subtasks: number }
-}
-
-interface TeamMember {
-  id: string
-  firstName: string
-  lastName: string
-  avatarUrl?: string | null
-}
-
-interface ActivityLogEntry {
-  id: string
-  action: string
-  metadata: {
-    title?: string
-    changedFields?: string
-    changes?: Array<{ field: string; from: unknown; to: unknown }>
-  } | null
-  createdAt: string
-  user: TaskUser
-}
+import { TaskComments } from '@/components/tasks/TaskComments'
+import { TaskAttachments } from '@/components/tasks/TaskAttachments'
+import { TaskSubtasks } from '@/components/tasks/TaskSubtasks'
+import { TaskActivityLog } from '@/components/tasks/TaskActivityLog'
+import { TaskMovePanel } from '@/components/tasks/TaskMovePanel'
+import {
+  STATUS_OPTIONS,
+  PRIORITY_OPTIONS,
+  type TaskDetail,
+  type TeamMember,
+  type Attachment,
+  type ActivityLogEntry,
+  type Subtask,
+  type TaskAssignment,
+} from './task-detail-types'
 
 interface TaskDetailModalProps {
   taskId: string | null
@@ -105,22 +37,6 @@ interface TaskDetailModalProps {
   userRole?: string
 }
 
-const STATUS_OPTIONS = [
-  { value: 'TODO', label: 'Da fare' },
-  { value: 'IN_PROGRESS', label: 'In Corso' },
-  { value: 'IN_REVIEW', label: 'In Revisione' },
-  { value: 'DONE', label: 'Completato' },
-  { value: 'CANCELLED', label: 'Cancellato' },
-]
-
-const PRIORITY_OPTIONS = [
-  { value: 'LOW', label: 'Bassa' },
-  { value: 'MEDIUM', label: 'Media' },
-  { value: 'HIGH', label: 'Alta' },
-  { value: 'URGENT', label: 'Urgente' },
-]
-
-
 export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onUpdated, userRole }: TaskDetailModalProps) {
   const [task, setTask] = useState<TaskDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -128,21 +44,9 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
-  const [commentText, setCommentText] = useState('')
-  const [sendingComment, setSendingComment] = useState(false)
   const [attachments, setAttachments] = useState<Attachment[]>([])
-  const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([])
-  const [showMovePanel, setShowMovePanel] = useState(false)
-  const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
-  const [folders, setFolders] = useState<{ id: string; name: string }[]>([])
-  const [moveProjectId, setMoveProjectId] = useState<string>('')
-  const [moveFolderId, setMoveFolderId] = useState<string>('')
-  const [moving, setMoving] = useState(false)
   const [subtasks, setSubtasks] = useState<Subtask[]>([])
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
-  const [addingSubtask, setAddingSubtask] = useState(false)
   const [subtaskDetailId, setSubtaskDetailId] = useState<string | null>(null)
   const [subtaskDetailOpen, setSubtaskDetailOpen] = useState(false)
 
@@ -170,7 +74,6 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
       if (res.ok) {
         const data: TaskDetail = await res.json()
         setTask(data)
-        // Only overwrite form if no persisted edits exist
         if (!editForm.hasPersistedData) {
           editForm.setValues({
             title: data.title,
@@ -235,7 +138,6 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     }
   }, [open, taskId, fetchTask, fetchAttachments, fetchActivity, fetchSubtasks])
 
-  // Scroll to specific comment when opened from notification deep link
   useEffect(() => {
     if (!highlightCommentId || !open || loading || !task) return
     const timer = setTimeout(() => {
@@ -308,176 +210,6 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     }
   }
 
-  async function handleAddComment() {
-    if (!taskId || !commentText.trim() || sendingComment) return
-    setSendingComment(true)
-    try {
-      const res = await fetch(`/api/tasks/${taskId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: commentText.trim() }),
-      })
-      if (res.ok) {
-        setCommentText('')
-        fetchTask()
-      }
-    } finally {
-      setSendingComment(false)
-    }
-  }
-
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!taskId || !e.target.files?.length) return
-    setUploading(true)
-    try {
-      for (const file of Array.from(e.target.files)) {
-        // Upload file su MinIO via /api/upload (FormData)
-        const formData = new FormData()
-        formData.append('file', file)
-        if (task?.project?.id) {
-          formData.append('projectId', task.project.id)
-        }
-
-        const assetRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!assetRes.ok) {
-          console.error('Asset upload failed:', await assetRes.text())
-          continue
-        }
-
-        const assetData = await assetRes.json()
-
-        // Collega il file alla task come attachment
-        await fetch(`/api/tasks/${taskId}/attachments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fileName: file.name,
-            fileUrl: assetData.fileUrl,
-            fileSize: file.size,
-            mimeType: file.type || 'application/octet-stream',
-          }),
-        })
-      }
-      fetchAttachments()
-    } finally {
-      setUploading(false)
-      e.target.value = ''
-    }
-  }
-
-  async function handleDeleteAttachment(attachmentId: string) {
-    if (!taskId) return
-    await fetch(`/api/tasks/${taskId}/attachments?attachmentId=${attachmentId}`, {
-      method: 'DELETE',
-    })
-    setAttachments((prev) => prev.filter((a) => a.id !== attachmentId))
-  }
-
-  async function loadProjects() {
-    try {
-      const res = await fetch('/api/projects?limit=100')
-      if (res.ok) {
-        const data = await res.json()
-        setProjects((data.items || data || []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })))
-      }
-    } catch {}
-  }
-
-  async function loadFolders(projectId: string) {
-    setFolders([])
-    if (!projectId) return
-    try {
-      const res = await fetch(`/api/projects/${projectId}/folders`)
-      if (res.ok) {
-        const data = await res.json()
-        setFolders((data.items || data || []).map((f: { id: string; name: string }) => ({ id: f.id, name: f.name })))
-      }
-    } catch {}
-  }
-
-  async function handleMoveTask() {
-    if (!taskId || moving) return
-    setMoving(true)
-    try {
-      const body: Record<string, unknown> = {}
-      const currentProjectId = task?.project?.id || null
-      const currentFolderId = task?.folderId || null
-
-      // Only send projectId if it actually changed
-      if (moveProjectId && moveProjectId !== currentProjectId) {
-        body.projectId = moveProjectId
-      } else if (!moveProjectId && currentProjectId) {
-        body.projectId = null
-      }
-
-      // Only send folderId if it actually changed
-      const newFolderId = moveFolderId || null
-      if (newFolderId !== currentFolderId) {
-        body.folderId = newFolderId
-      }
-      const res = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (res.ok) {
-        setShowMovePanel(false)
-        fetchTask()
-        onUpdated()
-      }
-    } finally {
-      setMoving(false)
-    }
-  }
-
-  function formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
-
-  async function handleAddSubtask() {
-    if (!taskId || !newSubtaskTitle.trim() || addingSubtask) return
-    setAddingSubtask(true)
-    try {
-      const res = await fetch(`/api/tasks/${taskId}/subtasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newSubtaskTitle.trim() }),
-      })
-      if (res.ok) {
-        setNewSubtaskTitle('')
-        fetchSubtasks()
-        fetchTask() // refresh _count
-      }
-    } finally {
-      setAddingSubtask(false)
-    }
-  }
-
-  async function handleToggleSubtask(subtaskId: string, currentStatus: string) {
-    const newStatus = currentStatus === 'DONE' ? 'TODO' : 'DONE'
-    // Optimistic update
-    setSubtasks((prev) => prev.map((s) => s.id === subtaskId ? { ...s, status: newStatus } : s))
-    try {
-      const res = await fetch(`/api/tasks/${subtaskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, boardColumn: newStatus === 'DONE' ? 'done' : 'todo' }),
-      })
-      if (!res.ok) {
-        // Revert on failure
-        setSubtasks((prev) => prev.map((s) => s.id === subtaskId ? { ...s, status: currentStatus } : s))
-      }
-    } catch {
-      setSubtasks((prev) => prev.map((s) => s.id === subtaskId ? { ...s, status: currentStatus } : s))
-    }
-  }
-
   return (
     <Modal open={open} onClose={onClose} title="Dettaglio Task" size="xl" preventAccidentalClose={editForm.isDirty}>
       {loading || !task ? (
@@ -533,7 +265,6 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             placeholder="Seleziona assegnatari..."
           />
 
-          {/* Assegnato da */}
           {task.assignments && task.assignments.some((a: TaskAssignment) => a.assignedByUser) && (
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted flex items-center gap-1.5">
@@ -584,78 +315,15 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             </div>
           )}
 
-          {/* Sposta Task (solo Admin/Manager) */}
           {isAdmin && (
-            <div className="border-t border-border pt-4">
-              {!showMovePanel ? (
-                <button
-                  onClick={() => {
-                    setShowMovePanel(true)
-                    setMoveProjectId(task.project?.id || '')
-                    setMoveFolderId(task.folderId || '')
-                    loadProjects()
-                    if (task.project?.id) loadFolders(task.project.id)
-                  }}
-                  className="flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
-                >
-                  <ArrowRightLeft className="h-4 w-4" />
-                  Sposta task
-                </button>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <ArrowRightLeft className="h-4 w-4" />
-                    Sposta Task
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-muted mb-1">Progetto destinazione</label>
-                    <select
-                      value={moveProjectId}
-                      onChange={(e) => {
-                        setMoveProjectId(e.target.value)
-                        setMoveFolderId('')
-                        loadFolders(e.target.value)
-                      }}
-                      className="w-full h-10 rounded-lg border border-border/60 bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    >
-                      <option value="">-- Nessun progetto (task personale) --</option>
-                      {projects.map((p) => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {moveProjectId && folders.length > 0 && (
-                    <div>
-                      <label className="block text-xs font-medium text-muted mb-1">
-                        <FolderOpen className="h-3.5 w-3.5 inline mr-1" />
-                        Cartella (opzionale)
-                      </label>
-                      <select
-                        value={moveFolderId}
-                        onChange={(e) => setMoveFolderId(e.target.value)}
-                        className="w-full h-10 rounded-lg border border-border/60 bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      >
-                        <option value="">-- Nessuna cartella --</option>
-                        {folders.map((f) => (
-                          <option key={f.id} value={f.id}>{f.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" onClick={handleMoveTask} disabled={moving}>
-                      {moving ? 'Spostamento...' : 'Sposta'}
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowMovePanel(false)}>
-                      Annulla
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <TaskMovePanel
+              taskId={task.id}
+              currentProjectId={task.project?.id}
+              currentFolderId={task.folderId}
+              onMoved={() => { fetchTask(); onUpdated() }}
+            />
           )}
 
-          {/* Timer */}
           <div className="flex items-center justify-between border-t border-border pt-4">
             <div className="flex items-center gap-2 text-sm text-muted">
               <span>Timer</span>
@@ -668,108 +336,17 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             />
           </div>
 
-          {/* Dependencies section */}
           <div className="border-t border-border pt-4">
             <TaskDependencies taskId={task.id} />
           </div>
 
-          {/* Subtasks section */}
-          <div className="border-t border-border pt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium flex items-center gap-1.5">
-                <ListChecks className="h-4 w-4" />
-                Subtask
-                {subtasks.length > 0 && (
-                  <span className="text-xs text-muted">
-                    ({subtasks.filter((s) => s.status === 'DONE').length}/{subtasks.length})
-                  </span>
-                )}
-              </h4>
-            </div>
+          <TaskSubtasks
+            taskId={task.id}
+            subtasks={subtasks}
+            onSubtasksChange={() => { fetchSubtasks(); fetchTask() }}
+            onSubtaskClick={(id) => { setSubtaskDetailId(id); setSubtaskDetailOpen(true) }}
+          />
 
-            {subtasks.length > 0 && (
-              <>
-                {/* Progress bar */}
-                <div className="mb-3">
-                  <div className="h-1.5 bg-secondary/60 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-500 transition-all duration-300 rounded-full"
-                      style={{ width: `${Math.round((subtasks.filter((s) => s.status === 'DONE').length / subtasks.length) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Subtask list */}
-                <div className="space-y-1 mb-3 max-h-48 overflow-y-auto">
-                  {subtasks.map((sub) => (
-                    <div
-                      key={sub.id}
-                      className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-secondary/30 transition-colors group"
-                    >
-                      <button
-                        onClick={() => handleToggleSubtask(sub.id, sub.status)}
-                        className="flex-shrink-0"
-                      >
-                        {sub.status === 'DONE' ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        ) : (
-                          <Circle className="h-4 w-4 text-muted hover:text-primary transition-colors" />
-                        )}
-                      </button>
-                      <span
-                        onClick={() => { setSubtaskDetailId(sub.id); setSubtaskDetailOpen(true) }}
-                        className={`flex-1 text-sm cursor-pointer hover:text-primary transition-colors truncate ${
-                          sub.status === 'DONE' ? 'line-through text-muted' : ''
-                        }`}
-                      >
-                        {sub.title}
-                      </span>
-                      {sub.assignee && (
-                        <Avatar
-                          name={`${sub.assignee.firstName} ${sub.assignee.lastName}`}
-                          src={sub.assignee.avatarUrl}
-                          size="xs"
-                        />
-                      )}
-                      <Badge status={sub.priority} className="text-[10px] px-1.5 py-0">
-                        {sub.priority === 'LOW' ? 'B' : sub.priority === 'MEDIUM' ? 'M' : sub.priority === 'HIGH' ? 'A' : 'U'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Quick add subtask */}
-            <div className="flex items-center gap-2">
-              <Plus className="h-4 w-4 text-muted flex-shrink-0" />
-              <input
-                type="text"
-                value={newSubtaskTitle}
-                onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleAddSubtask()
-                  }
-                }}
-                placeholder="Aggiungi subtask..."
-                className="flex-1 h-9 md:h-8 rounded-md border border-border bg-transparent px-3 text-base md:text-sm placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
-              />
-              {newSubtaskTitle.trim() && (
-                <Button
-                  size="sm"
-                  onClick={handleAddSubtask}
-                  disabled={addingSubtask}
-                  className="h-8"
-                >
-                  {addingSubtask ? '...' : 'Aggiungi'}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Subtask detail modal (recursive) */}
           {subtaskDetailId && (
             <TaskDetailModal
               taskId={subtaskDetailId}
@@ -780,241 +357,22 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             />
           )}
 
-          {/* Comments section */}
-          <div className="border-t border-border pt-4">
-            <h4 className="text-sm font-medium mb-3">Commenti</h4>
-            {task.comments && task.comments.length > 0 ? (
-              <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
-                {task.comments.map((c) => (
-                  <div key={c.id} id={`comment-${c.id}`} className="flex gap-3 transition-colors duration-500 rounded-md p-1 -m-1">
-                    <Avatar
-                      name={`${c.author.firstName} ${c.author.lastName}`}
-                      src={c.author.avatarUrl}
-                      size="sm"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-medium">
-                          {c.author.firstName} {c.author.lastName}
-                        </span>
-                        <span className="text-xs text-muted">
-                          {new Date(c.createdAt).toLocaleDateString('it-IT', {
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-sm text-foreground/80 mt-0.5">{c.content}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted mb-4">Nessun commento ancora.</p>
-            )}
+          <TaskComments
+            taskId={task.id}
+            comments={task.comments}
+            highlightCommentId={highlightCommentId}
+            onCommentAdded={fetchTask}
+          />
 
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleAddComment()
-                  }
-                }}
-                placeholder="Scrivi un commento..."
-                className="flex-1 h-11 md:h-9 rounded-md border border-border bg-transparent px-3 text-base md:text-sm placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
-              />
-              <Button
-                size="sm"
-                onClick={handleAddComment}
-                disabled={!commentText.trim() || sendingComment}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          <TaskAttachments
+            taskId={task.id}
+            projectId={task.project?.id}
+            attachments={attachments}
+            onAttachmentsChange={fetchAttachments}
+          />
 
-          {/* Attachments section */}
-          <div className="border-t border-border pt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium flex items-center gap-1.5">
-                <Paperclip className="h-4 w-4" />
-                Allegati
-                {attachments.length > 0 && (
-                  <span className="text-xs text-muted">({attachments.length})</span>
-                )}
-              </h4>
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="*/*"
-                  multiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                >
-                  <Paperclip className="h-3.5 w-3.5 mr-1" />
-                  {uploading ? 'Caricamento...' : 'Allega file'}
-                </Button>
-              </div>
-            </div>
+          <TaskActivityLog activityLog={activityLog} />
 
-            {attachments.length > 0 ? (
-              <div className="space-y-2 max-h-52 md:max-h-40 overflow-y-auto">
-                {attachments.map((att) => {
-                  const isImage = att.mimeType.startsWith('image/')
-                  const IconComp = isImage ? Image : FileText
-                  return (
-                    <div
-                      key={att.id}
-                      className="flex items-center gap-3 p-2 rounded-md border border-border bg-secondary/30 group"
-                    >
-                      <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center shrink-0">
-                        <IconComp className="h-4 w-4 text-muted" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{att.fileName}</p>
-                        <p className="text-xs text-muted">
-                          {formatFileSize(att.fileSize)} &middot; {att.uploadedBy.firstName} {att.uploadedBy.lastName}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                        <a
-                          href={att.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1 rounded hover:bg-secondary transition-colors"
-                          title="Scarica"
-                        >
-                          <Download className="h-3.5 w-3.5 text-muted" />
-                        </a>
-                        <button
-                          onClick={() => handleDeleteAttachment(att.id)}
-                          className="p-1 rounded hover:bg-destructive/10 transition-colors"
-                          title="Rimuovi"
-                        >
-                          <X className="h-3.5 w-3.5 text-destructive" />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-muted">Nessun allegato.</p>
-            )}
-          </div>
-
-          {/* Activity Log */}
-          {activityLog.length > 0 && (
-            <div className="border-t border-border pt-4">
-              <h4 className="text-sm font-medium mb-3 flex items-center gap-1.5">
-                <History className="h-4 w-4" />
-                Cronologia Attività
-              </h4>
-              <div className="space-y-3 max-h-48 overflow-y-auto">
-                {activityLog
-                  .filter((entry) => entry.action === 'UPDATE' && entry.metadata?.changes && (entry.metadata.changes as Array<{ field: string; from: unknown; to: unknown }>).length > 0)
-                  .map((entry) => {
-                    const entryChanges = (entry.metadata?.changes || []) as Array<{ field: string; from: unknown; to: unknown }>
-                    const statusMap: Record<string, string> = { TODO: 'Da fare', IN_PROGRESS: 'In Corso', IN_REVIEW: 'In Revisione', DONE: 'Completato', CANCELLED: 'Cancellato' }
-                    const priorityMap: Record<string, string> = { LOW: 'Bassa', MEDIUM: 'Media', HIGH: 'Alta', URGENT: 'Urgente' }
-                    const fieldLabels: Record<string, string> = {
-                      title: 'titolo', description: 'descrizione', status: 'stato', priority: 'priorità',
-                      dueDate: 'scadenza', assigneeId: 'assegnatario', projectId: 'progetto',
-                      folderId: 'cartella', milestoneId: 'milestone', tags: 'tag',
-                    }
-
-                    const formatValue = (field: string, val: unknown): string => {
-                      if (val === null || val === undefined) return 'nessuno'
-                      if (field === 'status') return statusMap[val as string] || (val as string)
-                      if (field === 'priority') return priorityMap[val as string] || (val as string)
-                      if (field === 'dueDate') {
-                        const d = new Date(val as string)
-                        return isNaN(d.getTime()) ? (val as string) : d.toLocaleDateString('it-IT')
-                      }
-                      if (field === 'description') return val === '...' ? '...' : (val ? '...' : 'vuota')
-                      if (field === 'tags' && Array.isArray(val)) return val.length ? val.join(', ') : 'nessuno'
-                      return val as string
-                    }
-
-                    return (
-                      <div key={entry.id} className="flex gap-3">
-                        <Avatar
-                          name={`${entry.user.firstName} ${entry.user.lastName}`}
-                          src={entry.user.avatarUrl}
-                          size="sm"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-sm font-medium">
-                              {entry.user.firstName} {entry.user.lastName}
-                            </span>
-                            <span className="text-xs text-muted">
-                              {new Date(entry.createdAt).toLocaleDateString('it-IT', {
-                                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-                              })}
-                            </span>
-                          </div>
-                          <div className="mt-0.5 space-y-0.5">
-                            {entryChanges.map((change, i) => (
-                              <p key={i} className="text-xs text-foreground/70">
-                                {change.field === 'description' ? (
-                                  'Ha modificato la descrizione'
-                                ) : (
-                                  <>
-                                    Ha cambiato {fieldLabels[change.field] || change.field}:{' '}
-                                    <span className="line-through text-muted">{formatValue(change.field, change.from)}</span>
-                                    {' → '}
-                                    <span className="font-medium text-foreground">{formatValue(change.field, change.to)}</span>
-                                  </>
-                                )}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                {activityLog.filter((e) => e.action === 'CREATE').map((entry) => (
-                  <div key={entry.id} className="flex gap-3">
-                    <Avatar
-                      name={`${entry.user.firstName} ${entry.user.lastName}`}
-                      src={entry.user.avatarUrl}
-                      size="sm"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-medium">
-                          {entry.user.firstName} {entry.user.lastName}
-                        </span>
-                        <span className="text-xs text-muted">
-                          {new Date(entry.createdAt).toLocaleDateString('it-IT', {
-                            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                      <p className="text-xs text-foreground/70 mt-0.5">Ha creato la task</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between pt-2 border-t border-border gap-3 md:gap-0">
             <div className="flex items-center gap-3 order-2 md:order-none">
               <Button variant="outline" onClick={onClose} className="flex-1 md:flex-none">

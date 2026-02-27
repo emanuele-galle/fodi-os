@@ -242,6 +242,7 @@ export function TemplateList() {
                             e.stopPropagation()
                             setActionMenuId(actionMenuId === t.id ? null : t.id)
                           }}
+                          aria-label="Azioni template"
                         >
                           <MoreVertical className="h-4 w-4" />
                         </Button>

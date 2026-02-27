@@ -55,7 +55,7 @@ export default function NewWizardPage() {
   return (
     <div className="animate-fade-in max-w-xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/erp/wizards')}>
+        <Button variant="ghost" size="icon" onClick={() => router.push('/erp/wizards')} aria-label="Torna ai wizard">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-3">

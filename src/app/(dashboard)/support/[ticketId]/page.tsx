@@ -227,7 +227,7 @@ export default function TicketDetailPage() {
     <div className="animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/support')}>
+        <Button variant="ghost" size="icon" onClick={() => router.push('/support')} aria-label="Torna al supporto">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
@@ -243,7 +243,7 @@ export default function TicketDetailPage() {
           </div>
         </div>
         {userRole === 'ADMIN' && (
-          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => setDeleteModalOpen(true)}>
+          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => setDeleteModalOpen(true)} aria-label="Elimina ticket">
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
@@ -329,6 +329,7 @@ export default function TicketDetailPage() {
                 type="submit"
                 size="icon"
                 disabled={submitting || !commentText.trim()}
+                aria-label="Invia commento"
               >
                 <Send className="h-4 w-4" />
               </Button>

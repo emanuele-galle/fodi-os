@@ -179,7 +179,7 @@ export default function KbDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           {canDelete && (
-            <Button variant="outline" size="sm" onClick={handleDelete} className="text-destructive hover:bg-destructive/10">
+            <Button variant="outline" size="sm" onClick={handleDelete} className="text-destructive hover:bg-destructive/10" aria-label="Elimina pagina">
               <Trash2 className="h-4 w-4" />
             </Button>
           )}

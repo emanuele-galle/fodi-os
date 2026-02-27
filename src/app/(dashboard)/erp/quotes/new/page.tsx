@@ -363,6 +363,7 @@ export default function NewQuotePage() {
                         size="icon"
                         onClick={() => removeLineItem(index)}
                         disabled={lineItems.length <= 1}
+                        aria-label="Rimuovi voce"
                       >
                         <Trash2 className="h-4 w-4 text-muted" />
                       </Button>
@@ -427,6 +428,7 @@ export default function NewQuotePage() {
                       onClick={() => removeLineItem(index)}
                       disabled={lineItems.length <= 1}
                       className="mt-0.5"
+                      aria-label="Rimuovi voce"
                     >
                       <Trash2 className="h-4 w-4 text-muted" />
                     </Button>

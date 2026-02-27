@@ -267,7 +267,7 @@ export function WizardBuilder({ wizardId }: WizardBuilderProps) {
     <div className="animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/erp/wizards')}>
+        <Button variant="ghost" size="icon" onClick={() => router.push('/erp/wizards')} aria-label="Torna ai wizard">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
@@ -306,7 +306,7 @@ export function WizardBuilder({ wizardId }: WizardBuilderProps) {
             )}
           </Button>
           {!wizard.isSystem && (
-            <Button variant="destructive" size="sm" onClick={deleteWizard}>
+            <Button variant="destructive" size="sm" onClick={deleteWizard} aria-label="Elimina wizard">
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
