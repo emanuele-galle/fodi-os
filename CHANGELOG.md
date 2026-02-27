@@ -2,6 +2,70 @@
 
 Tutte le modifiche significative al progetto sono documentate in questo file.
 
+## [0.8.0] - 2026-02-27
+
+### Nuove Funzionalità
+
+#### Integrazione Microsoft To Do
+- **Sync bidirezionale** — Le task di FODI OS si sincronizzano automaticamente con Microsoft To Do
+- **OAuth2 per account personali** — Collegamento tramite account Microsoft personale (non richiede M365)
+- **Sync iniziale automatico** — Alla connessione, tutte le task attive vengono pushate verso To Do
+- **Sync in tempo reale** — Webhook Microsoft Graph per notifiche istantanee + delta sync periodico
+- **Mapping completo** — Status, priorità, scadenze e descrizioni sincronizzati in entrambe le direzioni
+- **Conflict resolution** — Last-write-wins basato su timestamp per gestire modifiche simultanee
+- **Linked resources** — Ogni task su To Do ha un link diretto al gestionale
+- **UI in Impostazioni** — Card dedicata per collegare/scollegare/sincronizzare manualmente
+
+#### Progetti & Task
+- **Subtask a livelli** — Card task annidate sotto i task padre (layer system)
+- **Sottocartelle** — Supporto sottocartelle e subtask gerarchici
+- **Drag & drop cartelle** — Riordinamento e reparenting cartelle via drag & drop
+- **Collegamenti esterni** — Tab "Collegamenti" nei progetti per link esterni
+- **Pulsante Nuova Task** — Nell'header con assegnazione team nel quick input
+- **CSV export** — Esportazione task in formato CSV
+- **Activity log task** — Storico attività per ogni singolo task
+- **Auto-sync boardColumn** — La colonna kanban si aggiorna automaticamente al cambio status
+
+#### Calendario
+- **Vista giornaliera** — Day View completa con orari 0-23
+- **Calendario day-first** — Settimana parte dal lunedì
+
+#### Chat
+- **Canali progetto globali** — I canali progetto con messaggi non letti appaiono nella chat globale
+
+#### Contratti
+- **Template contratti** — Modelli riutilizzabili con generazione PDF e workflow firma
+
+#### Storage
+- **Cloudflare R2 CDN** — Storage primario con fallback MinIO locale
+
+#### Infrastruttura
+- **Cron scheduler integrato** — Digest giornaliero, report, deadline e reminder gestiti internamente
+- **Login con username** — Accesso sia con email che con username
+- **Upload fino a 1GB** — Limite body size aumentato per middleware e server actions
+- **Branding dinamico** — Tutte le referenze hardcoded sostituite con il sistema brand
+
+### Performance & Refactoring
+- Ottimizzazione query N+1, memory safety, error handling (Fase 2)
+- Ottimizzazione performance dashboard e infrastruttura
+- Centralizzazione costanti, hook useFetch, type safety, API errors
+- Centralizzazione email templates e PDF utilities
+- Split file giganti, loading states, accessibilità e ottimizzazione immagini
+
+### Bug Fix
+- Fix auto-logout da race condition token rotation
+- Fix push notifications e caricamento eventi calendario
+- Fix chat canali e timer intelligente
+- Fix realtime sync per pagina dettaglio progetto e riassegnazione task
+- Fix filtering task, display creatore, persistenza login
+- Fix ottimizzazione UI/UX mobile completa
+- Fix download proxy per allegati progetto
+
+### CI/CD
+- Docker cleanup automatico dopo deploy per liberare spazio disco
+
+---
+
 ## [0.7.0] - 2026-02-17
 
 ### Nuove Funzionalità
