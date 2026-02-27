@@ -17,8 +17,8 @@ export interface SessionPayload {
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 const REFRESH_SECRET = new TextEncoder().encode(process.env.REFRESH_SECRET!)
 
-const ACCESS_EXPIRES = '30m'
-const REFRESH_EXPIRES = '7d'
+const ACCESS_EXPIRES = '7d'
+const REFRESH_EXPIRES = '90d'
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12)
@@ -63,7 +63,7 @@ export async function setAuthCookies(accessToken: string, refreshToken: string):
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 30 * 60, // 30 minutes
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   })
 
   cookieStore.set(brand.cookies.refresh, refreshToken, {
@@ -71,7 +71,7 @@ export async function setAuthCookies(accessToken: string, refreshToken: string):
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: 90 * 24 * 60 * 60, // 90 days
   })
 }
 

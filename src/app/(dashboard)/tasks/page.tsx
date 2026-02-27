@@ -20,6 +20,7 @@ import {
   Flame,
   Search,
   Download,
+  ArrowRight,
 } from 'lucide-react'
 import {
   DndContext,
@@ -844,6 +845,13 @@ function MobileTaskCard({ task, activeTab, userId, onClick, expanded, subtasks, 
       </div>
       <div className="flex items-center justify-between text-xs text-muted">
         <div className="flex items-center gap-2">
+          {task.creator && task.creator.id !== userId && (
+            <div className="flex items-center gap-1">
+              <Avatar name={`${task.creator.firstName} ${task.creator.lastName}`} src={task.creator.avatarUrl} size="xs" />
+              <span className="text-[10px] text-muted">{task.creator.firstName}</span>
+              <ArrowRight className="h-3 w-3 text-muted" />
+            </div>
+          )}
           {(task.assignments?.length ?? 0) > 0 ? (
             <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
           ) : task.assignee ? (
@@ -978,22 +986,31 @@ function ListView({ tasks, activeTab, userId, onTaskClick, expandedTasks, subtas
                   </Badge>
                 </td>
                 <td className="px-4 py-3.5 hidden lg:table-cell">
-                  {(task.assignments?.length ?? 0) > 0 ? (
-                    <AvatarStack users={task.assignments!.map(a => a.user)} size="sm" max={4} />
-                  ) : task.assignee ? (
-                    <div className="flex items-center gap-2">
-                      <Avatar
-                        name={`${task.assignee.firstName} ${task.assignee.lastName}`}
-                        src={task.assignee.avatarUrl}
-                        size="sm"
-                      />
-                      <span className="text-sm text-muted">
-                        {task.assignee.firstName} {task.assignee.lastName}
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-muted">-</span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {task.creator && task.creator.id !== userId && (
+                      <>
+                        <Avatar name={`${task.creator.firstName} ${task.creator.lastName}`} src={task.creator.avatarUrl} size="sm" />
+                        <span className="text-xs text-muted">{task.creator.firstName}</span>
+                        <ArrowRight className="h-3 w-3 text-muted mx-0.5" />
+                      </>
+                    )}
+                    {(task.assignments?.length ?? 0) > 0 ? (
+                      <AvatarStack users={task.assignments!.map(a => a.user)} size="sm" max={4} />
+                    ) : task.assignee ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar
+                          name={`${task.assignee.firstName} ${task.assignee.lastName}`}
+                          src={task.assignee.avatarUrl}
+                          size="sm"
+                        />
+                        <span className="text-sm text-muted">
+                          {task.assignee.firstName} {task.assignee.lastName}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted">-</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3.5 hidden lg:table-cell">
                   {task.dueDate ? (
@@ -1154,17 +1171,25 @@ function DraggableTaskCard({ task, activeTab, userId, onClick, expanded, subtask
         )}
       </div>
       <div className="flex items-center justify-between mt-2">
-        {(task.assignments?.length ?? 0) > 0 ? (
-          <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
-        ) : task.assignee ? (
-          <Avatar
-            name={`${task.assignee.firstName} ${task.assignee.lastName}`}
-            src={task.assignee.avatarUrl}
-            size="sm"
-          />
-        ) : (
-          <span />
-        )}
+        <div className="flex items-center gap-1">
+          {task.creator && task.creator.id !== userId && (
+            <>
+              <Avatar name={`${task.creator.firstName} ${task.creator.lastName}`} src={task.creator.avatarUrl} size="xs" />
+              <ArrowRight className="h-3 w-3 text-muted" />
+            </>
+          )}
+          {(task.assignments?.length ?? 0) > 0 ? (
+            <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
+          ) : task.assignee ? (
+            <Avatar
+              name={`${task.assignee.firstName} ${task.assignee.lastName}`}
+              src={task.assignee.avatarUrl}
+              size="sm"
+            />
+          ) : (
+            <span />
+          )}
+        </div>
         {task.dueDate && (
           <span className={cn('text-xs', urgencyStyles.text, (urgency === 'overdue' || urgency === 'today') && 'font-medium')}>
             {new Date(task.dueDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}

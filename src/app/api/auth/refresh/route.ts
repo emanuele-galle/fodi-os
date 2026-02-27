@@ -40,10 +40,10 @@ export async function POST() {
             sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role, customRoleId: user.customRoleId,
           })
           cookieStore.set(brand.cookies.access, accessToken, {
-            httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60,
+            httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60,
           })
           cookieStore.set(brand.cookies.refresh, latestValid.token, {
-            httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60,
+            httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 90 * 24 * 60 * 60,
           })
           return NextResponse.json({ success: true })
         }
@@ -77,11 +77,11 @@ export async function POST() {
               sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role, customRoleId: user.customRoleId,
             })
             cookieStore.set(brand.cookies.access, accessToken, {
-              httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60,
+              httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60,
             })
             // Also set the latest refresh token cookie so next refresh uses the right one
             cookieStore.set(brand.cookies.refresh, latestToken.token, {
-              httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60,
+              httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 90 * 24 * 60 * 60,
             })
             return NextResponse.json({ success: true })
           }
@@ -146,7 +146,7 @@ export async function POST() {
       data: {
         token: newRefreshTokenJwt,
         userId: stored.userId,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
       },
     })
 
@@ -155,7 +155,7 @@ export async function POST() {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 30 * 60,
+      maxAge: 7 * 24 * 60 * 60,
     })
 
     cookieStore.set(brand.cookies.refresh, newRefreshTokenJwt, {
@@ -163,7 +163,7 @@ export async function POST() {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60,
+      maxAge: 90 * 24 * 60 * 60,
     })
 
     return NextResponse.json({ success: true })

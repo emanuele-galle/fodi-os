@@ -61,7 +61,8 @@ export async function GET(request: NextRequest) {
         where.OR = [
           ...(Array.isArray(where.OR) ? where.OR : []),
           { assigneeId: userId },
-          { assignments: { some: { userId: userId! } } },
+          // In assignments MA solo se non c'è un assignee principale diverso
+          { assigneeId: null, assignments: { some: { userId: userId! } } },
         ]
       } else if (scope === 'created') {
         where.creatorId = userId

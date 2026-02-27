@@ -9,8 +9,8 @@ import { useRouter } from 'next/navigation'
  * components or polling intervals (which would trigger token reuse detection
  * and revoke ALL tokens, causing unexpected logout).
  *
- * Access token: 30min. Proactive refresh: every 14min.
- * On tab focus: always refresh if token could be close to expiry.
+ * Access token: 7d. Proactive refresh: every 6h.
+ * On tab focus: refresh if last refresh was more than 1h ago.
  */
 
 // Global state shared across all hook instances (singleton)
@@ -54,17 +54,17 @@ export function useAuthRefresh() {
   useEffect(() => {
     mountedRef.current = true
 
-    // Proactive refresh: every 14 minutes (well before 30min token expiry)
+    // Proactive refresh: every 6 hours (well before 7d token expiry)
     const interval = setInterval(() => {
       doRefresh()
-    }, 14 * 60 * 1000)
+    }, 6 * 60 * 60 * 1000)
 
     // On tab focus: refresh if it's been more than 5 minutes since last refresh.
     // This catches the common case of returning to a backgrounded tab where
     // the interval timer was throttled by the browser.
     function onFocus() {
       const elapsed = Date.now() - lastRefreshTime
-      if (elapsed > 5 * 60 * 1000) {
+      if (elapsed > 60 * 60 * 1000) {
         doRefresh()
       }
     }
@@ -74,7 +74,7 @@ export function useAuthRefresh() {
     function onVisibilityChange() {
       if (document.visibilityState === 'visible') {
         const elapsed = Date.now() - lastRefreshTime
-        if (elapsed > 5 * 60 * 1000) {
+        if (elapsed > 60 * 60 * 1000) {
           doRefresh()
         }
       }
