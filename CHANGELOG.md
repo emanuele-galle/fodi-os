@@ -1,4 +1,4 @@
-# Changelog - FODI OS
+# Changelog - Muscari OS
 
 Tutte le modifiche significative al progetto sono documentate in questo file.
 
@@ -7,7 +7,7 @@ Tutte le modifiche significative al progetto sono documentate in questo file.
 ### Nuove Funzionalità
 
 #### Integrazione Microsoft To Do
-- **Sync bidirezionale** — Le task di FODI OS si sincronizzano automaticamente con Microsoft To Do
+- **Sync bidirezionale** — Le task di Muscari OS si sincronizzano automaticamente con Microsoft To Do
 - **OAuth2 per account personali** — Collegamento tramite account Microsoft personale (non richiede M365)
 - **Sync iniziale automatico** — Alla connessione, tutte le task attive vengono pushate verso To Do
 - **Sync in tempo reale** — Webhook Microsoft Graph per notifiche istantanee + delta sync periodico
