@@ -39,16 +39,18 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Upsert each preference
-    for (const pref of parsed.data.preferences) {
-      await prisma.notificationPreference.upsert({
-        where: {
-          userId_type_channel: { userId, type: pref.type, channel: pref.channel },
-        },
-        create: { userId, type: pref.type, channel: pref.channel, enabled: pref.enabled },
-        update: { enabled: pref.enabled },
-      })
-    }
+    // Batch upsert in a single transaction
+    await prisma.$transaction(
+      parsed.data.preferences.map((pref) =>
+        prisma.notificationPreference.upsert({
+          where: {
+            userId_type_channel: { userId, type: pref.type, channel: pref.channel },
+          },
+          create: { userId, type: pref.type, channel: pref.channel, enabled: pref.enabled },
+          update: { enabled: pref.enabled },
+        })
+      )
+    )
 
     // Clear cache
     clearPrefCache(userId)

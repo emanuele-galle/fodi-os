@@ -96,6 +96,7 @@ export default function TicketDetailPage() {
   const ticketId = params.ticketId as string
   const [ticket, setTicket] = useState<TicketDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [commentText, setCommentText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [updatingField, setUpdatingField] = useState<string | null>(null)
@@ -106,12 +107,17 @@ export default function TicketDetailPage() {
 
   const fetchTicket = useCallback(async () => {
     setLoading(true)
+    setError(null)
     try {
       const res = await fetch(`/api/tickets/${ticketId}`)
       if (res.ok) {
         const data = await res.json()
         setTicket(data)
+      } else {
+        setError(res.status === 404 ? 'Ticket non trovato.' : 'Errore nel caricamento del ticket.')
       }
+    } catch {
+      setError('Errore di connessione. Riprova.')
     } finally {
       setLoading(false)
     }
@@ -197,13 +203,20 @@ export default function TicketDetailPage() {
     )
   }
 
-  if (!ticket) {
+  if (error || !ticket) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted">Ticket non trovato.</p>
-        <Button variant="outline" className="mt-4" onClick={() => router.push('/support')}>
-          Torna alla lista
-        </Button>
+        <p className="text-muted">{error || 'Ticket non trovato.'}</p>
+        <div className="flex justify-center gap-3 mt-4">
+          {error && (
+            <Button variant="outline" onClick={fetchTicket}>
+              Riprova
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => router.push('/support')}>
+            Torna alla lista
+          </Button>
+        </div>
       </div>
     )
   }

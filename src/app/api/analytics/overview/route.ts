@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@/generated/prisma/client'
 import { requirePermission } from '@/lib/permissions'
 import { computeUserStats } from '@/lib/analytics-utils'
 import type { Role } from '@/generated/prisma/client'
@@ -23,7 +24,12 @@ export async function GET(request: NextRequest) {
     }
     if (projectId) taskWhere.projectId = projectId
 
-    // Parallel queries
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+    const projectFilter = projectId
+      ? Prisma.sql`AND "projectId" = ${projectId}`
+      : Prisma.sql``
+
+    // Parallel queries — raw SQL for monthly trend instead of loading 50k tasks
     const [
       tasks,
       timeEntries,
@@ -31,11 +37,11 @@ export async function GET(request: NextRequest) {
       expenses,
       activeClients,
       openDeals,
-      // Monthly trend: last 6 months regardless of filter
-      allTasksForTrend,
+      createdByMonth,
+      completedByMonth,
     ] = await Promise.all([
       prisma.task.findMany({
-        where: taskWhere,
+        where: taskWhere as Prisma.TaskWhereInput,
         select: {
           id: true,
           status: true,
@@ -79,17 +85,20 @@ export async function GET(request: NextRequest) {
         where: { stage: { notIn: ['CLOSED_WON', 'CLOSED_LOST'] } },
         select: { id: true, value: true, stage: true },
       }),
-      // For trend: tasks from last 6 months
-      prisma.task.findMany({
-        where: {
-          createdAt: {
-            gte: new Date(now.getFullYear(), now.getMonth() - 5, 1),
-          },
-          ...(projectId ? { projectId } : {}),
-        },
-        select: { status: true, createdAt: true, completedAt: true },
-        take: 50000,
-      }),
+      // Monthly trend: created tasks per month (raw SQL instead of 50k findMany)
+      prisma.$queryRaw<{ month: Date; count: bigint }[]>`
+        SELECT date_trunc('month', "createdAt") as month, COUNT(*) as count
+        FROM "Task"
+        WHERE "createdAt" >= ${sixMonthsAgo} ${projectFilter}
+        GROUP BY 1
+      `,
+      // Monthly trend: completed tasks per month
+      prisma.$queryRaw<{ month: Date; count: bigint }[]>`
+        SELECT date_trunc('month', "completedAt") as month, COUNT(*) as count
+        FROM "Task"
+        WHERE "completedAt" IS NOT NULL AND "completedAt" >= ${sixMonthsAgo} ${projectFilter}
+        GROUP BY 1
+      `,
     ])
 
     // === KPI ===
@@ -115,26 +124,27 @@ export async function GET(request: NextRequest) {
       completionRate,
     }
 
-    // === MONTHLY TREND (last 6 months) ===
+    // === MONTHLY TREND (from raw SQL) ===
     const monthLabels = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic']
     const monthlyTrend: { month: string; created: number; completed: number }[] = []
     for (let i = 5; i >= 0; i--) {
       const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const mEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999)
       const label = monthLabels[mStart.getMonth()]
 
-      const created = allTasksForTrend.filter(t => {
-        const d = new Date(t.createdAt)
-        return d >= mStart && d <= mEnd
-      }).length
+      const created = createdByMonth.find(r => {
+        const d = new Date(r.month)
+        return d.getMonth() === mStart.getMonth() && d.getFullYear() === mStart.getFullYear()
+      })
+      const completed = completedByMonth.find(r => {
+        const d = new Date(r.month)
+        return d.getMonth() === mStart.getMonth() && d.getFullYear() === mStart.getFullYear()
+      })
 
-      const completed = allTasksForTrend.filter(t => {
-        if (!t.completedAt) return false
-        const d = new Date(t.completedAt)
-        return d >= mStart && d <= mEnd
-      }).length
-
-      monthlyTrend.push({ month: label, created, completed })
+      monthlyTrend.push({
+        month: label,
+        created: created ? Number(created.count) : 0,
+        completed: completed ? Number(completed.count) : 0,
+      })
     }
 
     // === TOP 5 PROJECTS ===

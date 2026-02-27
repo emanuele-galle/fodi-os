@@ -9,9 +9,10 @@ import { generateReportPdf, type DailyReportData, type ReportCompanyInfo, type R
 import { fetchLogoBytes } from '@/lib/pdf-generator'
 
 export async function POST(req: NextRequest) {
-  // Auth: same pattern as /api/digest/send
-  const secret = req.headers.get('x-digest-secret')
-  if (!secret || secret !== process.env.DIGEST_SECRET) {
+  // Auth: unified CRON_SECRET pattern (same as check-deadlines, digest)
+  const auth = req.headers.get('authorization')
+  const secret = process.env.CRON_SECRET
+  if (!secret || auth !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -357,32 +358,43 @@ export async function POST(req: NextRequest) {
 
 // ─── Email with attachments ─────────────────────────────────
 
+// Singleton transporter — created once, reused across all sendReportEmail calls
+let _transporter: ReturnType<typeof import('nodemailer').createTransport> | null = null
+
+function getTransporter() {
+  if (_transporter) return _transporter
+
+  const SMTP_HOST = process.env.SMTP_HOST
+  const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587')
+  const SMTP_USER = process.env.SMTP_USER
+  const SMTP_PASS = process.env.SMTP_PASS
+
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const nodemailer = require('nodemailer')
+  _transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_PORT === 465,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+  })
+  return _transporter
+}
+
 async function sendReportEmail(
   to: string,
   subject: string,
   html: string,
   attachments: { name: string; content: Buffer }[]
 ): Promise<void> {
-  const SMTP_HOST = process.env.SMTP_HOST
-  const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587')
-  const SMTP_USER = process.env.SMTP_USER
-  const SMTP_PASS = process.env.SMTP_PASS
-  const SMTP_FROM = process.env.SMTP_FROM || brand.email.from
-
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+  const transporter = getTransporter()
+  if (!transporter) {
     console.log(`[daily-reports] SMTP non configurato, email simulata a ${to}`)
     return
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const nodemailer = require('nodemailer')
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_PORT === 465,
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-  })
-
+  const SMTP_FROM = process.env.SMTP_FROM || brand.email.from
   await transporter.sendMail({
     from: SMTP_FROM,
     to,

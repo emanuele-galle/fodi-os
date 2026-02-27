@@ -36,9 +36,12 @@ export async function GET(request: NextRequest, { params }: Params) {
       return NextResponse.json({ success: false, error: 'Cliente non trovato' }, { status: 404 })
     }
 
-    // Fetch all activity types in parallel
-    const [interactions, activityLogs, tasks, deals, documents] = await Promise.all([
-      // 1. Interactions
+    // DB-level pagination: fetch only needed records with orderBy + take
+    // Over-fetch slightly to fill the page across all types, then merge and trim
+    const perTypeLimit = limit + 1 // fetch 1 extra to know if there are more
+
+    const [interactions, activityLogs, tasks, deals, documents, counts] = await Promise.all([
+      // 1. Interactions (ordered by date desc, limited)
       prisma.interaction.findMany({
         where: { clientId },
         select: {
@@ -54,6 +57,8 @@ export async function GET(request: NextRequest, { params }: Params) {
             },
           },
         },
+        orderBy: { date: 'desc' },
+        take: perTypeLimit,
       }),
 
       // 2. Activity logs
@@ -74,6 +79,8 @@ export async function GET(request: NextRequest, { params }: Params) {
             },
           },
         },
+        orderBy: { createdAt: 'desc' },
+        take: perTypeLimit,
       }),
 
       // 3. Completed tasks
@@ -93,6 +100,8 @@ export async function GET(request: NextRequest, { params }: Params) {
             },
           },
         },
+        orderBy: { completedAt: 'desc' },
+        take: perTypeLimit,
       }),
 
       // 4. Deals
@@ -111,6 +120,8 @@ export async function GET(request: NextRequest, { params }: Params) {
             },
           },
         },
+        orderBy: { updatedAt: 'desc' },
+        take: perTypeLimit,
       }),
 
       // 5. Documents
@@ -122,7 +133,18 @@ export async function GET(request: NextRequest, { params }: Params) {
           category: true,
           createdAt: true,
         },
+        orderBy: { createdAt: 'desc' },
+        take: perTypeLimit,
       }),
+
+      // Total counts for accurate pagination
+      Promise.all([
+        prisma.interaction.count({ where: { clientId } }),
+        prisma.activityLog.count({ where: { entityType: 'CLIENT', entityId: clientId } }),
+        prisma.task.count({ where: { clientId, status: 'DONE' } }),
+        prisma.deal.count({ where: { clientId } }),
+        prisma.document.count({ where: { clientId } }),
+      ]),
     ])
 
     // Normalize all items to unified format
@@ -258,11 +280,10 @@ export async function GET(request: NextRequest, { params }: Params) {
     // Sort by date descending
     items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-    // Pagination
-    const total = items.length
+    // Pagination: slice merged items, use DB counts for accurate total
+    const total = counts.reduce((s, c) => s + c, 0)
     const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedItems = items.slice(startIndex, endIndex)
+    const paginatedItems = items.slice(startIndex, startIndex + limit)
 
     return NextResponse.json({
       success: true,

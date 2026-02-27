@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requirePermission } from '@/lib/permissions'
+import { Prisma } from '@/generated/prisma/client'
 import { computeUserStats } from '@/lib/analytics-utils'
 import type { Role } from '@/generated/prisma/client'
 
@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
     // PM:read o ADMIN hanno accesso
+    const { requirePermission } = await import('@/lib/permissions')
     requirePermission(role, 'pm', 'read')
 
     const { searchParams } = request.nextUrl
@@ -31,62 +32,74 @@ export async function GET(request: NextRequest) {
       if (dateTo) (where.createdAt as Record<string, unknown>).lte = new Date(dateTo + 'T23:59:59.999Z')
     }
 
-    // Fetch task con filtri (safety limit 10000)
-    const tasks = await prisma.task.findMany({
-      where,
-      take: 10000,
-      include: {
-        assignee: { select: { id: true, firstName: true, lastName: true } },
-        assignments: {
-          include: {
-            user: { select: { id: true, firstName: true, lastName: true } },
-          },
-        },
-        timeEntries: { select: { hours: true } },
-        project: { select: { id: true, name: true } },
-      },
-    })
-
     const now = new Date()
+    const overdueWhere = {
+      ...where,
+      dueDate: { lt: now },
+      status: { notIn: ['DONE', 'CANCELLED'] as string[] },
+    }
 
-    // === SUMMARY ===
-    const total = tasks.length
-    const completed = tasks.filter((t) => t.status === 'DONE').length
-    const inProgress = tasks.filter((t) => t.status === 'IN_PROGRESS').length
-    const overdue = tasks.filter(
-      (t) => t.dueDate && new Date(t.dueDate) < now && t.status !== 'DONE' && t.status !== 'CANCELLED'
-    ).length
+    // Parallel: groupBy for counts + slimmer findMany for user/project stats
+    const [byStatusRaw, byPriorityRaw, overdueCount, avgRaw, tasks] = await Promise.all([
+      prisma.task.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+        where: where as Prisma.TaskWhereInput,
+      }),
+      prisma.task.groupBy({
+        by: ['priority'],
+        _count: { _all: true },
+        where: where as Prisma.TaskWhereInput,
+      }),
+      prisma.task.count({
+        where: overdueWhere as Prisma.TaskWhereInput,
+      }),
+      // Avg completion days via raw SQL
+      prisma.$queryRaw<[{ avg_days: number | null }]>`
+        SELECT AVG(EXTRACT(EPOCH FROM ("completedAt" - "createdAt")) / 86400)::float as avg_days
+        FROM "Task"
+        WHERE "status" = 'DONE' AND "completedAt" IS NOT NULL
+        ${projectId ? Prisma.sql`AND "projectId" = ${projectId}` : Prisma.sql``}
+        ${userId ? Prisma.sql`AND ("assigneeId" = ${userId} OR "id" IN (SELECT "taskId" FROM "TaskAssignment" WHERE "userId" = ${userId}))` : Prisma.sql``}
+        ${dateFrom ? Prisma.sql`AND "createdAt" >= ${new Date(dateFrom)}` : Prisma.sql``}
+        ${dateTo ? Prisma.sql`AND "createdAt" <= ${new Date(dateTo + 'T23:59:59.999Z')}` : Prisma.sql``}
+      `,
+      // Still need tasks for byUser, hoursComparison, weeklyTrend
+      prisma.task.findMany({
+        where: where as Prisma.TaskWhereInput,
+        take: 10000,
+        select: {
+          status: true,
+          dueDate: true,
+          createdAt: true,
+          completedAt: true,
+          estimatedHours: true,
+          assignee: { select: { id: true, firstName: true, lastName: true } },
+          assignments: {
+            include: {
+              user: { select: { id: true, firstName: true, lastName: true } },
+            },
+          },
+          timeEntries: { select: { hours: true } },
+          project: { select: { id: true, name: true } },
+        },
+      }),
+    ])
 
+    // === SUMMARY (from groupBy) ===
+    const total = byStatusRaw.reduce((s, g) => s + g._count._all, 0)
+    const completed = byStatusRaw.find(g => g.status === 'DONE')?._count._all || 0
+    const inProgress = byStatusRaw.find(g => g.status === 'IN_PROGRESS')?._count._all || 0
+    const avgCompletionDays = avgRaw[0]?.avg_days ? Math.round(avgRaw[0].avg_days) : 0
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
 
-    // Tempo medio completamento (giorni)
-    const completedTasks = tasks.filter((t) => t.status === 'DONE' && t.completedAt)
-    const avgCompletionDays =
-      completedTasks.length > 0
-        ? Math.round(
-            completedTasks.reduce((sum, t) => {
-              const created = new Date(t.createdAt).getTime()
-              const done = new Date(t.completedAt!).getTime()
-              return sum + (done - created) / (1000 * 60 * 60 * 24)
-            }, 0) / completedTasks.length
-          )
-        : 0
+    const summary = { total, completed, inProgress, overdue: overdueCount, completionRate, avgCompletionDays }
 
-    const summary = { total, completed, inProgress, overdue, completionRate, avgCompletionDays }
+    // === BY STATUS (from groupBy) ===
+    const byStatus = byStatusRaw.map(g => ({ status: g.status, count: g._count._all }))
 
-    // === BY STATUS ===
-    const statusCounts: Record<string, number> = {}
-    for (const t of tasks) {
-      statusCounts[t.status] = (statusCounts[t.status] || 0) + 1
-    }
-    const byStatus = Object.entries(statusCounts).map(([status, count]) => ({ status, count }))
-
-    // === BY PRIORITY ===
-    const priorityCounts: Record<string, number> = {}
-    for (const t of tasks) {
-      priorityCounts[t.priority] = (priorityCounts[t.priority] || 0) + 1
-    }
-    const byPriority = Object.entries(priorityCounts).map(([priority, count]) => ({ priority, count }))
+    // === BY PRIORITY (from groupBy) ===
+    const byPriority = byPriorityRaw.map(g => ({ priority: g.priority, count: g._count._all }))
 
     // === BY USER ===
     const byUser = computeUserStats(tasks, now)
