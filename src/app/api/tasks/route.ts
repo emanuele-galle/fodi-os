@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { createTaskSchema } from '@/lib/validation'
 import { dispatchNotification } from '@/lib/notifications'
 import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
+import { pushTaskToMicrosoftTodo } from '@/lib/microsoft-sync'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -262,6 +263,9 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    // Sync to Microsoft To Do (fire-and-forget)
+    pushTaskToMicrosoftTodo(task.id, 'create').catch(() => {})
 
     return NextResponse.json({ success: true, data: fullTask }, { status: 201 })
   } catch (e) {

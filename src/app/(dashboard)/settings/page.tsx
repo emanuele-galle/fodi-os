@@ -38,6 +38,16 @@ export default function SettingsPage() {
         setMessage(`Errore connessione Google: ${reason || 'sconosciuto'}`)
       }
     }
+
+    const microsoftResult = searchParams.get('microsoft')
+    if (microsoftResult === 'connected') {
+      setMessage('Microsoft To Do connesso con successo!')
+      setActiveSection('integrations')
+    } else if (microsoftResult === 'error') {
+      const reason = searchParams.get('reason')
+      setMessage(`Errore connessione Microsoft: ${reason || 'sconosciuto'}`)
+      setActiveSection('integrations')
+    }
   }, [searchParams])
 
   if (!loaded) return (

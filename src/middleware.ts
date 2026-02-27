@@ -5,7 +5,7 @@ import { getClientIp } from '@/lib/ip'
 
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!)
 
-const PUBLIC_PATHS = ['/login', '/forgot-password', '/verify-ip', '/api/auth/', '/api/health', '/sign/', '/c/', '/api/c/']
+const PUBLIC_PATHS = ['/login', '/forgot-password', '/verify-ip', '/api/auth/', '/api/health', '/sign/', '/c/', '/api/c/', '/api/integrations/microsoft/authorize', '/api/integrations/microsoft/callback', '/api/integrations/microsoft/webhook']
 const PORTAL_PATHS = ['/portal']
 
 function isPublic(pathname: string): boolean {

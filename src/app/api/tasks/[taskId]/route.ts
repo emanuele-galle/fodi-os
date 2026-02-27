@@ -5,6 +5,7 @@ import { logActivity } from '@/lib/activity-log'
 import { updateTaskSchema } from '@/lib/validation'
 import { getTaskParticipants, dispatchNotification, NotificationBatch } from '@/lib/notifications'
 import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
+import { pushTaskToMicrosoftTodo } from '@/lib/microsoft-sync'
 import { ApiError, handleApiError } from '@/lib/api-error'
 import { TASK_STATUS_LABELS } from '@/lib/constants'
 import type { Role } from '@/generated/prisma/client'
@@ -462,6 +463,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
+    // Sync to Microsoft To Do (fire-and-forget)
+    pushTaskToMicrosoftTodo(taskId, 'update').catch(() => {})
+
     return NextResponse.json({ success: true, data: fullTask })
   } catch (e) {
     return handleApiError(e)
@@ -500,6 +504,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       ...(existing.assigneeId ? [existing.assigneeId] : []),
       ...existing.assignments.map((a) => a.userId),
     ]
+
+    // Sync deletion to Microsoft To Do before deleting (fire-and-forget)
+    pushTaskToMicrosoftTodo(taskId, 'delete').catch(() => {})
 
     await prisma.task.delete({ where: { id: taskId } })
 

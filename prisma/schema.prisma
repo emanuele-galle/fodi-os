@@ -56,6 +56,7 @@ model User {
   assignedLeads    Lead[]          @relation("LeadAssignee")
   ownedDeals       Deal[]          @relation("DealOwner")
   googleToken      GoogleToken?
+  microsoftToken   MicrosoftToken?
   chatChannels     ChatChannel[]   @relation("ChannelCreator")
   chatMemberships  ChatMember[]
   chatMessages     ChatMessage[]
@@ -495,6 +496,8 @@ model Task {
   tags             String[]   @default([])
   timerStartedAt   DateTime?
   timerUserId      String?
+  microsoftTodoId    String?   @unique
+  microsoftLastSync  DateTime?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -531,6 +534,7 @@ model Task {
   @@index([createdAt])
   @@index([updatedAt])
   @@index([status, assigneeId])
+  @@index([microsoftTodoId])
   @@map("tasks")
 }
 
@@ -1606,4 +1610,24 @@ model ProjectLink {
   @@index([creatorId])
   @@index([createdAt])
   @@map("project_links")
+}
+
+model MicrosoftToken {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  accessToken   String    @db.Text
+  refreshToken  String    @db.Text
+  expiresAt     DateTime
+  scope         String
+  email         String?
+  todoListId    String?
+  webhookSubId  String?
+  webhookExpiry DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("microsoft_tokens")
 }
