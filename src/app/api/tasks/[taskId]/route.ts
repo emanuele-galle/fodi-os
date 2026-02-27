@@ -346,6 +346,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           skipDuplicates: true,
         })
       }
+      // Sync assigneeId field with first assignee (keep in sync with assignments)
+      if (assigneeId === undefined) {
+        await prisma.task.update({
+          where: { id: taskId },
+          data: { assigneeId: assigneeIds[0] || null },
+        })
+      }
     }
 
     // Build detailed changes array for activity log

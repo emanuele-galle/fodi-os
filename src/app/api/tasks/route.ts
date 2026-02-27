@@ -58,23 +58,14 @@ export async function GET(request: NextRequest) {
 
     if (mine === 'true' && userId) {
       if (scope === 'assigned') {
-        where.OR = [
-          ...(Array.isArray(where.OR) ? where.OR : []),
-          { assigneeId: userId },
-          // In assignments MA solo se non c'è un assignee principale diverso
-          { assigneeId: null, assignments: { some: { userId: userId! } } },
-        ]
+        // Task effettivamente assegnate a me (assignments è la fonte di verità)
+        where.assignments = { some: { userId: userId! } }
       } else if (scope === 'created') {
         where.creatorId = userId
       } else if (scope === 'delegated') {
-        // Tasks created by me but assigned to someone else
+        // Tasks created by me but where I'm NOT in the assignments
         where.creatorId = userId
-        where.NOT = {
-          OR: [
-            { assigneeId: userId },
-            { assignments: { some: { userId: userId! } } },
-          ],
-        }
+        where.assignments = { none: { userId: userId! } }
       } else {
         // Default: all my tasks (created + assigned + in assignments)
         where.OR = [
