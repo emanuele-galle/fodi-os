@@ -40,13 +40,26 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
       </div>
 
       {/* Content */}
-      <div className={cn('flex flex-col gap-1 max-w-[80%]', isUser && 'items-end')}>
-        {/* Tool indicators */}
+      <div className={cn('flex flex-col gap-1 max-w-[85%] sm:max-w-[80%]', isUser && 'items-end')}>
+        {/* Tool indicators (deduplicated) */}
         {message.toolCalls && message.toolCalls.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-1">
-            {message.toolCalls.map((tc) => (
-              <AiToolIndicator key={tc.id} name={tc.name} status={tc.status} />
-            ))}
+            {(() => {
+              const grouped = new Map<string, { status: string; count: number }>()
+              for (const tc of message.toolCalls) {
+                const existing = grouped.get(tc.name)
+                if (existing) {
+                  existing.count++
+                  if (tc.status === 'running') existing.status = 'running'
+                  else if (tc.status === 'ERROR' && existing.status !== 'running') existing.status = 'ERROR'
+                } else {
+                  grouped.set(tc.name, { status: tc.status || 'running', count: 1 })
+                }
+              }
+              return Array.from(grouped.entries()).map(([name, { status, count }]) => (
+                <AiToolIndicator key={name} name={name} status={status} count={count} />
+              ))
+            })()}
           </div>
         )}
 
@@ -56,7 +69,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
             <div className={cn(
               'rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
               isUser
-                ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-tr-md'
+                ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/15 rounded-tr-md'
                 : 'bg-muted/80 backdrop-blur-sm border border-white/5 text-foreground rounded-tl-md',
             )}>
               {isUser ? (
@@ -100,15 +113,15 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
                       ),
                       // Table
                       table: ({ children }) => (
-                        <div className="overflow-x-auto my-2">
-                          <table className="w-full text-xs border-collapse">{children}</table>
+                        <div className="overflow-x-auto my-2 max-w-full scrollbar-thin scrollbar-thumb-border">
+                          <table className="w-full text-[11px] border-collapse">{children}</table>
                         </div>
                       ),
                       th: ({ children }) => (
-                        <th className="border border-border/30 px-2 py-1 text-left font-semibold bg-background/30">{children}</th>
+                        <th className="border border-border/30 px-1.5 py-1 text-left font-semibold bg-background/30 whitespace-nowrap">{children}</th>
                       ),
                       td: ({ children }) => (
-                        <td className="border border-border/30 px-2 py-1">{children}</td>
+                        <td className="border border-border/30 px-1.5 py-1">{children}</td>
                       ),
                       // Links
                       a: ({ href, children }) => (
@@ -136,17 +149,19 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
 
             {/* Copy button for assistant messages */}
             {!isUser && (
-              <button
-                onClick={handleCopy}
-                className="absolute -top-2 -right-2 p-1.5 rounded-lg bg-background border border-border/50 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted"
-                title="Copia"
-              >
-                {copied ? (
-                  <Check className="h-3 w-3 text-emerald-500" />
-                ) : (
-                  <Copy className="h-3 w-3 text-muted-foreground" />
-                )}
-              </button>
+              <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={handleCopy}
+                  className="p-1 rounded-md hover:bg-background/50 transition-colors"
+                  title="Copia"
+                >
+                  {copied ? (
+                    <Check className="h-3 w-3 text-emerald-500" />
+                  ) : (
+                    <Copy className="h-3 w-3 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -169,7 +184,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
         {/* Timestamp */}
         {timestamp && (
           <span className={cn(
-            'text-[10px] text-muted-foreground/50',
+            'text-[11px] text-muted-foreground/70',
             isUser ? 'pr-1' : 'pl-1',
           )}>
             {timestamp}

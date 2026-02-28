@@ -240,20 +240,49 @@ function getToolIcon(toolName: string) {
   return CheckCircle2
 }
 
+// Module color for left border
+function getModuleColor(toolName: string): string {
+  if (toolName.includes('task') || toolName.includes('project')) return 'border-l-blue-400'
+  if (toolName.includes('lead') || toolName.includes('deal') || toolName.includes('client') || toolName.includes('contact') || toolName.includes('crm')) return 'border-l-emerald-400'
+  if (toolName.includes('quote') || toolName.includes('expense') || toolName.includes('income') || toolName.includes('financial') || toolName.includes('monthly') || toolName.includes('recurring') || toolName.includes('invoice')) return 'border-l-violet-400'
+  if (toolName.includes('ticket')) return 'border-l-amber-400'
+  if (toolName.includes('time')) return 'border-l-cyan-400'
+  if (toolName.includes('calendar') || toolName.includes('event') || toolName.includes('slot')) return 'border-l-orange-400'
+  return 'border-l-muted-foreground'
+}
+
 // Summary text for collapsed state
 function getResultSummary(toolName: string, result: { success: boolean; data?: unknown }): string {
   if (!result.success) return 'Errore'
   const data = result.data as Record<string, unknown> | undefined
   if (!data) return 'Completato'
 
-  if (data.total !== undefined) return `${data.total} risultati`
-  if (data.tasks && Array.isArray(data.tasks)) return `${(data.tasks as unknown[]).length} task`
-  if (data.leads && Array.isArray(data.leads)) return `${(data.leads as unknown[]).length} lead`
-  if (data.deals && Array.isArray(data.deals)) return `${(data.deals as unknown[]).length} trattative`
-  if (data.quotes && Array.isArray(data.quotes)) return `${(data.quotes as unknown[]).length} preventivi`
-  if (data.tickets && Array.isArray(data.tickets)) return `${(data.tickets as unknown[]).length} ticket`
-  if (data.entries && Array.isArray(data.entries)) return `${(data.entries as unknown[]).length} registrazioni`
+  if (data.tasks && Array.isArray(data.tasks)) {
+    const count = data.total !== undefined ? data.total : (data.tasks as unknown[]).length
+    return `${count} task trovati`
+  }
+  if (data.leads && Array.isArray(data.leads)) {
+    const count = data.total !== undefined ? data.total : (data.leads as unknown[]).length
+    return `${count} lead trovati`
+  }
+  if (data.deals && Array.isArray(data.deals)) {
+    const count = data.total !== undefined ? data.total : (data.deals as unknown[]).length
+    return `${count} trattative`
+  }
+  if (data.quotes && Array.isArray(data.quotes)) {
+    const count = data.total !== undefined ? data.total : (data.quotes as unknown[]).length
+    return `${count} preventivi`
+  }
+  if (data.tickets && Array.isArray(data.tickets)) {
+    const count = data.total !== undefined ? data.total : (data.tickets as unknown[]).length
+    return `${count} ticket`
+  }
+  if (data.entries && Array.isArray(data.entries)) {
+    const count = data.total !== undefined ? data.total : (data.entries as unknown[]).length
+    return `${count} registrazioni ore`
+  }
   if (data.currentMonth) return 'Riepilogo finanziario'
+  if (data.total !== undefined) return `${data.total} risultati`
   if (data.id) return `Creato ${toolName.includes('task') ? 'task' : toolName.includes('quote') ? 'preventivo' : toolName.includes('ticket') ? 'ticket' : 'elemento'}`
 
   return 'Completato'
@@ -290,7 +319,7 @@ export function AiToolResultCard({ toolName, result, defaultExpanded = false }: 
   }
 
   return (
-    <div className="rounded-xl border border-white/5 bg-muted/30 overflow-hidden">
+    <div className={cn('rounded-xl border border-white/5 bg-muted/30 overflow-hidden border-l-2', getModuleColor(toolName))}>
       {/* Header - always visible */}
       <button
         onClick={() => setExpanded(!expanded)}

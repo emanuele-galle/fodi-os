@@ -125,7 +125,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-violet-500/10 via-purple-500/5 to-transparent">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-violet-500/10 via-purple-500/8 to-fuchsia-500/5 shadow-[0_1px_0_0_rgba(139,92,246,0.1)]">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
             <Bot className="h-4 w-4 text-violet-400" />
@@ -276,9 +276,9 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
             onClick={() => handleSend()}
             disabled={!input.trim() || isLoading}
             className={cn(
-              'flex-shrink-0 p-2 rounded-xl transition-colors',
+              'flex-shrink-0 p-2.5 rounded-xl transition-all',
               input.trim() && !isLoading
-                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:shadow-lg hover:shadow-violet-500/20 hover:scale-105 active:scale-95'
                 : 'bg-muted text-muted-foreground',
             )}
           >

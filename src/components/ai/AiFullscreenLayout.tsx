@@ -190,8 +190,10 @@ export function AiFullscreenLayout() {
                         key={conv.id}
                         onClick={() => setSelectedId(conv.id)}
                         className={cn(
-                          'w-full text-left px-3 py-2.5 flex items-center gap-2 hover:bg-muted/60 transition-colors group',
-                          selectedId === conv.id && 'bg-muted',
+                          'w-full text-left px-3 py-2.5 flex items-center gap-2 hover:bg-muted/60 transition-all group',
+                          selectedId === conv.id
+                            ? 'bg-violet-500/10 border-l-2 border-violet-500'
+                            : 'border-l-2 border-transparent',
                         )}
                       >
                         <MessageSquare className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
@@ -245,8 +247,8 @@ function WelcomeScreen({ onAction }: { onAction: (msg: string) => void }) {
       <div className="max-w-3xl w-full space-y-8">
         {/* Greeting */}
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-4">
-            <Bot className="h-8 w-8 text-violet-400" />
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-violet-500/20">
+            <Bot className="h-10 w-10 text-violet-400" />
           </div>
           <h1 className="text-2xl font-bold mb-2">Buongiorno!</h1>
           <p className="text-muted-foreground text-sm">Come posso aiutarti oggi? Seleziona un&apos;azione rapida o inizia una conversazione.</p>

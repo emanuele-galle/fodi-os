@@ -50,9 +50,10 @@ const TOOL_LABELS: Record<string, string> = {
 interface AiToolIndicatorProps {
   name: string
   status?: string
+  count?: number
 }
 
-export function AiToolIndicator({ name, status }: AiToolIndicatorProps) {
+export function AiToolIndicator({ name, status, count }: AiToolIndicatorProps) {
   const label = TOOL_LABELS[name] || name
   const [expanded, setExpanded] = useState(false)
   const isCompleted = status === 'SUCCESS'
@@ -72,7 +73,7 @@ export function AiToolIndicator({ name, status }: AiToolIndicatorProps) {
       {status === 'SUCCESS' && <CheckCircle2 className="h-3 w-3" />}
       {status === 'ERROR' && <XCircle className="h-3 w-3" />}
       {status === 'DENIED' && <ShieldAlert className="h-3 w-3" />}
-      <span>{label}</span>
+      <span>{label}{count && count > 1 ? ` ×${count}` : ''}</span>
       {isCompleted && (
         <ChevronDown className={cn(
           'h-3 w-3 transition-transform',
