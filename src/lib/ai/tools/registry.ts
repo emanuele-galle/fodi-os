@@ -12,6 +12,7 @@ import { supportTools } from './modules/support'
 import { timeTools } from './modules/time'
 import { projectTools } from './modules/projects'
 import { coordinationTools } from './modules/coordination'
+import { chatTools } from './modules/chat'
 
 const ALL_TOOLS: AiToolDefinition[] = [
   ...taskTools,
@@ -24,6 +25,7 @@ const ALL_TOOLS: AiToolDefinition[] = [
   ...timeTools,
   ...projectTools,
   ...coordinationTools,
+  ...chatTools,
 ]
 
 /**

@@ -65,6 +65,13 @@ const TOOL_FOLLOWUPS: Record<string, string[]> = {
   send_team_notification: ['Stato task', 'Follow-up', 'Notifica altro membro'],
   suggest_task_breakdown: ['Crea il progetto', 'Modifica suddivisione', 'Assegna al team'],
   get_team_skills: ['Assegna task', 'Carico di lavoro', 'Crea progetto'],
+  // Chat
+  list_chat_channels: ['Invia un messaggio', 'Cerca nei messaggi', 'Apri canale'],
+  send_chat_message: ['Invia altro messaggio', 'Lista canali', 'Cerca messaggi'],
+  send_direct_message: ['Invia un altro DM', 'Lista membri team', 'Notifica utente'],
+  search_chat_messages: ['Vedi messaggio completo', 'Rispondi nel canale', 'Cerca di nuovo'],
+  list_team_members: ['Invia DM', 'Assegna task', 'Notifica membro'],
+  send_notification: ['Invia altra notifica', 'Lista team', 'Stato task'],
 }
 
 interface AiAttachment {

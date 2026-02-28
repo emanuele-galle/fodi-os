@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { getTaskParticipants, dispatchNotification } from '@/lib/notifications'
 import type { AiToolDefinition, AiToolInput, AiToolContext } from '../types'
 
 export const taskTools: AiToolDefinition[] = [
@@ -89,14 +90,33 @@ export const taskTools: AiToolDefinition[] = [
       })
 
       // Create assignment
+      const assigneeId = (input.assigneeId as string) || context.userId
       await prisma.taskAssignment.create({
         data: {
           taskId: task.id,
-          userId: (input.assigneeId as string) || context.userId,
+          userId: assigneeId,
           role: 'assignee',
           assignedBy: context.userId,
         },
       })
+
+      // Notify assignee if different from creator
+      if (assigneeId !== context.userId) {
+        const creator = await prisma.user.findUnique({
+          where: { id: context.userId },
+          select: { firstName: true, lastName: true },
+        })
+        const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Assistente AI'
+        await dispatchNotification({
+          type: 'task_assigned',
+          title: 'Nuovo task assegnato',
+          message: `${creatorName} ti ha assegnato "${task.title}"`,
+          link: `/tasks?taskId=${task.id}`,
+          projectId: (input.projectId as string) || undefined,
+          recipientIds: [assigneeId],
+          excludeUserId: context.userId,
+        })
+      }
 
       return { success: true, data: { id: task.id, title: task.title, status: task.status } }
     },
@@ -120,6 +140,7 @@ export const taskTools: AiToolDefinition[] = [
     module: 'pm',
     requiredPermission: 'write',
     execute: async (input: AiToolInput, context: AiToolContext) => {
+      const taskId = input.taskId as string
       const data: Record<string, unknown> = {}
       if (input.status) data.status = input.status
       if (input.priority) data.priority = input.priority
@@ -129,12 +150,39 @@ export const taskTools: AiToolDefinition[] = [
       if (input.status === 'DONE') data.completedAt = new Date()
 
       const task = await prisma.task.update({
-        where: { id: input.taskId as string },
+        where: { id: taskId },
         data,
-        select: { id: true, title: true, status: true, priority: true },
+        select: { id: true, title: true, status: true, priority: true, projectId: true },
       })
 
-      return { success: true, data: task }
+      // Notify participants about task updates
+      const recipients = await getTaskParticipants(taskId)
+      const actor = await prisma.user.findUnique({
+        where: { id: context.userId },
+        select: { firstName: true, lastName: true },
+      })
+      const actorName = actor ? `${actor.firstName} ${actor.lastName}` : 'Assistente AI'
+
+      const changes: string[] = []
+      if (input.status) changes.push(`stato → ${input.status}`)
+      if (input.priority) changes.push(`priorità → ${input.priority}`)
+      if (input.assigneeId) changes.push('riassegnato')
+
+      if (changes.length > 0) {
+        await dispatchNotification({
+          type: 'task_updated',
+          title: 'Task aggiornato',
+          message: `${actorName} ha aggiornato "${task.title}": ${changes.join(', ')}`,
+          link: `/tasks?taskId=${taskId}`,
+          projectId: task.projectId ?? undefined,
+          groupKey: `task_update:${taskId}`,
+          actorName,
+          recipientIds: recipients,
+          excludeUserId: context.userId,
+        })
+      }
+
+      return { success: true, data: { id: task.id, title: task.title, status: task.status, priority: task.priority } }
     },
   },
 
@@ -196,19 +244,37 @@ export const taskTools: AiToolDefinition[] = [
     module: 'pm',
     requiredPermission: 'write',
     execute: async (input: AiToolInput, context: AiToolContext) => {
-      const task = await prisma.task.findUnique({ where: { id: input.taskId as string }, select: { id: true } })
+      const taskId = input.taskId as string
+      const task = await prisma.task.findUnique({ where: { id: taskId }, select: { id: true, title: true, projectId: true } })
       if (!task) return { success: false, error: 'Task non trovato' }
 
       const comment = await prisma.comment.create({
         data: {
-          taskId: input.taskId as string,
+          taskId,
           authorId: context.userId,
           content: input.content as string,
         },
-        select: { id: true, content: true, createdAt: true },
+        include: {
+          author: { select: { id: true, firstName: true, lastName: true } },
+        },
       })
 
-      return { success: true, data: comment }
+      // Notify task participants (same as regular comment flow)
+      const recipients = await getTaskParticipants(taskId)
+      const authorName = `${comment.author.firstName} ${comment.author.lastName}`
+      await dispatchNotification({
+        type: 'task_comment',
+        title: 'Nuovo commento',
+        message: `${authorName} ha commentato "${task.title}"`,
+        link: `/tasks?taskId=${taskId}&commentId=${comment.id}`,
+        projectId: task.projectId ?? undefined,
+        groupKey: `task_comment:${taskId}`,
+        actorName: authorName,
+        recipientIds: recipients,
+        excludeUserId: context.userId,
+      })
+
+      return { success: true, data: { id: comment.id, content: comment.content, createdAt: comment.createdAt } }
     },
   },
 
