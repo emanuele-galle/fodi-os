@@ -53,6 +53,7 @@ export function useAiChat(): UseAiChatReturn {
     res: Response,
     assistantId: string,
     currentConversationId: string | null,
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
   ) => {
     const reader = res.body?.getReader()
     if (!reader) throw new Error('Stream non disponibile')

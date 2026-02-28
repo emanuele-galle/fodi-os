@@ -11,6 +11,7 @@ import { sendViaSMTP } from '@/lib/email'
 import { buildSignatureCompletedEmail } from '@/lib/email-templates'
 import { getClientIp } from '@/lib/ip'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }

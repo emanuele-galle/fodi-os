@@ -55,6 +55,7 @@ function getPageLabel(pathname: string): string | undefined {
   return match ? PAGE_LABELS[match] : undefined
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConversationId, initialMessage }: AiChatPanelProps) {
   const pathname = usePathname()
   const currentPage = getPageLabel(pathname)

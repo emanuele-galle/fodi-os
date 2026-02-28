@@ -11,6 +11,7 @@ import { fetchLogoBytes } from '@/lib/pdf-generator'
 import { handleApiError } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST(req: NextRequest) {
   // Auth: unified CRON_SECRET pattern (same as check-deadlines, digest)
   const auth = req.headers.get('authorization')

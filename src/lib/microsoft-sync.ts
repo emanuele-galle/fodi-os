@@ -91,6 +91,7 @@ function stripHtml(html: string | null | undefined): string {
  * Called after task create/update/delete in the API routes.
  * Runs async (fire-and-forget) to not block the API response.
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function pushTaskToMicrosoftTodo(taskId: string, action: 'create' | 'update' | 'delete'): Promise<void> {
   if (!isMicrosoftConfigured()) return
 
@@ -260,6 +261,7 @@ export async function initialSyncToMicrosoftTodo(userId: string): Promise<number
  * Pull changes from Microsoft To Do for a specific user.
  * Compares lastModifiedDateTime with microsoftLastSync to detect changes.
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function pullFromMicrosoftTodo(userId: string): Promise<number> {
   if (!isMicrosoftConfigured()) return 0
 

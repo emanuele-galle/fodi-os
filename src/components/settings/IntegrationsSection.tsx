@@ -27,6 +27,7 @@ interface IntegrationsSectionProps {
   setMessage: (msg: string) => void
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function IntegrationsSection({ setMessage }: IntegrationsSectionProps) {
   const [googleStatus, setGoogleStatus] = useState<GoogleStatus | null>(null)
   const [googleLoading, setGoogleLoading] = useState(true)

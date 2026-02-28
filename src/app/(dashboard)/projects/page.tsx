@@ -28,6 +28,7 @@ import { ProjectKanbanView } from '@/components/projects/ProjectKanbanView'
 import { ProjectActionMenu } from '@/components/projects/ProjectActionMenu'
 import { CreateProjectModal } from '@/components/projects/CreateProjectModal'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export default function ProjectsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()

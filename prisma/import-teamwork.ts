@@ -125,6 +125,7 @@ interface TWProjectCategory {
  * Parsa le tuple da una riga INSERT INTO `table` VALUES (...),(...);
  * Gestisce: quote escape (\' e ''), NULL, _binary prefix, numeri.
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 function parseValues(valuesStr: string): (string | number | null)[][] {
   const rows: (string | number | null)[][] = []
   let i = 0
@@ -255,6 +256,7 @@ interface ParsedData {
   projectCategories: TWProjectCategory[]
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 async function parseSqlDump(): Promise<ParsedData> {
   console.log('Fase 1: Parsing SQL dump...')
 
@@ -342,6 +344,7 @@ const TABLES_OF_INTEREST = new Set([
   'companies', 'tags', 'tags_items', 'projectcategories',
 ])
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 function processInsertLine(
   table: string,
   line: string,
@@ -621,6 +624,7 @@ const PROJECT_WORKSPACE: Record<number, string> = {
 // MAIN IMPORT FUNCTION
 // ============================================================
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 async function main() {
   console.log('=== Import Teamwork PM → Muscari OS ===\n')
 

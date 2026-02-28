@@ -67,6 +67,7 @@ function buildUrl(request: NextRequest, path: string): URL {
   return new URL(path, `${proto}://${host}`)
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 

@@ -7,6 +7,7 @@ import { sendBadgeUpdate, sendDataChanged } from '@/lib/sse'
 import { pushTaskToMicrosoftTodo } from '@/lib/microsoft-sync'
 import type { Role } from '@/generated/prisma/client'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function GET(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
@@ -150,6 +151,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role

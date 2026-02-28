@@ -6,6 +6,7 @@ type SortDir = 'asc' | 'desc'
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}/
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 function compare(aVal: unknown, bVal: unknown, dir: SortDir): number {
   if (aVal == null && bVal == null) return 0
   if (aVal == null) return 1

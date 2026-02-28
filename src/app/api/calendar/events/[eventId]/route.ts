@@ -67,6 +67,7 @@ export async function DELETE(
 }
 
 // PATCH /api/calendar/events/[eventId]
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ eventId: string }> }

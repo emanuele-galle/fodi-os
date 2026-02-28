@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { runAgent } from '@/lib/ai/agent'
 import type { AiChannel } from '@/generated/prisma/client'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()

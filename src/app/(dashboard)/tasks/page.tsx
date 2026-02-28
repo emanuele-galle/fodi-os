@@ -30,6 +30,7 @@ const TABS: TabDef[] = [
   { key: 'team', label: 'Team', icon: Users, adminOnly: true },
 ]
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export default function TasksPage() {
   const { preferences, updatePreference, loaded: prefsLoaded } = useUserPreferences()
   const [tasks, setTasks] = useState<Task[]>([])

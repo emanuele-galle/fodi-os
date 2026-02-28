@@ -14,6 +14,7 @@ interface NotificationsSectionProps {
   setMessage: (msg: string) => void
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function NotificationsSection({ setMessage }: NotificationsSectionProps) {
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)

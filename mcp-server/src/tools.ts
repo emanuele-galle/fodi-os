@@ -106,6 +106,7 @@ export const toolDefinitions = [
   },
 ]
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function executeTool(name: string, args: Record<string, unknown>): Promise<ToolResult> {
   switch (name) {
     case 'fodi_list_tasks': {

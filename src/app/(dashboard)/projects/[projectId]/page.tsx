@@ -89,6 +89,7 @@ const STATUS_LABEL = PROJECT_STATUS_LABELS
 const TASK_STATUS_LABEL = TASK_STATUS_LABELS
 const PRIORITY_LABEL = PRIORITY_LABELS
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()

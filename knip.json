@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "src/app/**/page.{ts,tsx}",
+    "src/app/**/layout.{ts,tsx}",
+    "src/app/**/route.{ts,tsx}",
+    "next.config.{js,mjs,ts}",
+    "prisma/seed.{ts,js}"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "prisma/**/*.ts"],
+  "ignore": ["remotion/**", "audit/**", "mcp-server/**"],
+  "ignoreDependencies": ["@types/*", "@prisma/client", "tailwindcss"]
+}

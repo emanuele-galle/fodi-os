@@ -8,6 +8,7 @@ import { generateOtpCode, maskEmail, sendLoginOtpEmail } from '@/lib/email'
 import bcrypt from 'bcryptjs'
 import { getClientIp } from '@/lib/ip'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request)

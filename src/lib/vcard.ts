@@ -23,6 +23,7 @@ function escapeVCard(value: string): string {
   return value.replace(/[\\;,]/g, (match) => `\\${match}`).replace(/\n/g, '\\n')
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function generateVCard(data: VCardData): string {
   const lines: string[] = [
     'BEGIN:VCARD',

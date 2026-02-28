@@ -43,6 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ ticketId: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role

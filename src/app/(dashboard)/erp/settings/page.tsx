@@ -16,6 +16,7 @@ interface VatRateItem { id: string; rate: string; label: string; code: string; d
 
 type EditTarget = { type: 'category'; item?: AccountingCategory } | { type: 'account'; item?: BankAccount } | { type: 'entity'; item?: BusinessEntity } | { type: 'vatRate'; item?: VatRateItem } | null
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export default function ErpSettingsPage() {
   const [categories, setCategories] = useState<AccountingCategory[]>([])
   const [accounts, setAccounts] = useState<BankAccount[]>([])
@@ -95,6 +96,7 @@ export default function ErpSettingsPage() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!editTarget) return

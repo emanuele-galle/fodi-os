@@ -91,6 +91,7 @@ interface AgentResult {
   model: string
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function runAgent(params: AgentParams): Promise<AgentResult> {
   const { conversationId, userMessage, userId, role, customModulePermissions, currentPage, attachments, onEvent } = params
 
@@ -295,11 +296,9 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
       if (event.type === 'content_block_delta' && event.delta?.type === 'thinking_delta' && event.delta?.thinking) {
         currentThinkingBlock += event.delta.thinking
         onEvent?.({ type: 'thinking_delta', data: { text: event.delta.thinking } })
-      } else if (event.type === 'content_block_stop') {
-        if (currentThinkingBlock) {
-          onEvent?.({ type: 'thinking_done', data: { text: currentThinkingBlock } })
-          currentThinkingBlock = ''
-        }
+      } else if (event.type === 'content_block_stop' && currentThinkingBlock) {
+        onEvent?.({ type: 'thinking_done', data: { text: currentThinkingBlock } })
+        currentThinkingBlock = ''
       }
     })
 

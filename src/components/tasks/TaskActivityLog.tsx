@@ -17,6 +17,7 @@ export function TaskActivityLog({ activityLog }: TaskActivityLogProps) {
     folderId: 'cartella', milestoneId: 'milestone', tags: 'tag',
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
   const formatValue = (field: string, val: unknown): string => {
     if (val === null || val === undefined) return 'nessuno'
     if (field === 'status') return statusMap[val as string] || (val as string)

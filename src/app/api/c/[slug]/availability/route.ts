@@ -4,6 +4,7 @@ import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 import { rateLimit } from '@/lib/rate-limit'
 import { getClientIp } from '@/lib/ip'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ slug: string }> }

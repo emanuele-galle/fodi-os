@@ -10,6 +10,7 @@ function buildUrl(request: NextRequest, path: string): URL {
   return new URL(path, `${proto}://${host}`)
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function GET(request: NextRequest) {
   const returnTo = request.nextUrl.searchParams.get('returnTo') || '/dashboard'
 

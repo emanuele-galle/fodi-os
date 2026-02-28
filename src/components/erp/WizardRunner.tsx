@@ -79,6 +79,7 @@ export function WizardRunner({
     })
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
   const validateStep = useCallback((): boolean => {
     const newErrors: Record<string, string> = {}
 

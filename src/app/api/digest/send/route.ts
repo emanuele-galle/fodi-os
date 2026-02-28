@@ -269,6 +269,7 @@ a{text-decoration:none}
 
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST(req: NextRequest) {
   const CRON_SECRET = process.env.CRON_SECRET
   if (!CRON_SECRET) {

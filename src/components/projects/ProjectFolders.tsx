@@ -476,6 +476,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     }
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
     const activeNestTarget = nestTargetId

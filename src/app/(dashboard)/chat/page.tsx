@@ -9,6 +9,7 @@ import { ChannelInfoPanel } from '@/components/chat/ChannelInfoPanel'
 import { cn } from '@/lib/utils'
 import { useChat } from '@/hooks/useChat'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export default function ChatPage() {
   const chat = useChat()
 

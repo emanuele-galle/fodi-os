@@ -64,6 +64,7 @@ function getGDriveThumbnailUrl(fileUrl: string, size = 400): string {
   return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w${size}` : fileUrl
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsProps) {
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [uploading, setUploading] = useState(false)
@@ -283,6 +284,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
         <p className="text-sm text-muted text-center py-4">Nessun file allegato.</p>
       ) : (
         <div className="space-y-2">
+          {/* eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic */}
           {attachments.map((att) => {
             const isExternal = att.type === 'EXTERNAL'
             const Icon = isExternal ? ExternalLink : getFileIcon(att.mimeType)

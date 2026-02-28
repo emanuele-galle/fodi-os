@@ -47,6 +47,7 @@ export interface ContractPdfData {
 
 // ─── Main Generator ─────────────────────────────────────────
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function generateContractPdf(data: ContractPdfData): Promise<Uint8Array> {
   const doc = await PDFDocument.create()
   const helvetica = await doc.embedFont(StandardFonts.Helvetica)

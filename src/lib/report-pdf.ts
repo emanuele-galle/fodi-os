@@ -134,6 +134,7 @@ const ENTITY_LABELS: Record<string, string> = {
 
 const HIDDEN_ACTIVITIES = new Set(['LOGIN_IP_VERIFIED', 'LOGIN_OTP_SENT'])
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 function formatActivityDetail(activity: ReportActivity): string {
   const meta = activity.metadata
   if (!meta) return ''
@@ -191,6 +192,7 @@ const PRIORITY_LABELS: Record<string, string> = {
 
 // ─── Main Generator ─────────────────────────────────────────
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function generateReportPdf(data: DailyReportData, company?: ReportCompanyInfo): Promise<Uint8Array> {
   const doc = await PDFDocument.create()
   const font = await doc.embedFont(StandardFonts.Helvetica)

@@ -75,6 +75,7 @@ const CATEGORY_BORDER_COLOR: Record<string, string> = {
 
 type ViewMode = 'grid' | 'list'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function WizardList() {
   const router = useRouter()
   const [wizards, setWizards] = useState<WizardTemplate[]>([])

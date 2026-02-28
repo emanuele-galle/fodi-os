@@ -92,6 +92,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
 
 // ─── Main Generator ─────────────────────────────────────────
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function generateDocumentPdf(data: PdfDocumentData): Promise<Uint8Array> {
   const doc = await PDFDocument.create()
   const helvetica = await doc.embedFont(StandardFonts.Helvetica)

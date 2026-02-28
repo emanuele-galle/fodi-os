@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { User, Copy, Check, FileText, ExternalLink, Volume2 } from 'lucide-react'
 import { AiToolIndicator } from './AiToolIndicator'
@@ -81,7 +81,7 @@ export function AiMessageBubble({ message, onSpeak, isSpeaking }: AiMessageBubbl
 
   const timestamp = message.createdAt ? formatTimestamp(message.createdAt) : null
 
-  const extractText = useCallback(extractTextFromNode, [])
+  const extractText = extractTextFromNode
 
   return (
     <div className={cn('flex gap-3 ai-bubble-in', isUser && 'flex-row-reverse')}>

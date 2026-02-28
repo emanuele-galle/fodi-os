@@ -15,6 +15,7 @@ interface UserStats {
   hoursLogged: number
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function computeUserStats(tasks: TaskWithUsers[], now: Date): UserStats[] {
   const userMap: Record<string, { userName: string; assigned: number; completed: number; overdue: number; hoursLogged: number }> = {}
 

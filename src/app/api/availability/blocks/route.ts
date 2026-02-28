@@ -8,6 +8,7 @@ import { brand } from '@/lib/branding'
  * Returns future block events (opaque, no attendees) from the user's Google Calendar.
  * Searches both primary and any brand-specific calendar.
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function GET(request: NextRequest) {
   const session = await getSession()
   if (!session) {

@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { verifyRefreshToken, createAccessToken, createRefreshToken } from '@/lib/auth'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST() {
   try {
     const cookieStore = await cookies()

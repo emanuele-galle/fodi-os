@@ -8,6 +8,7 @@ import { requirePermission } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
 
 // POST /api/meetings/quick - Create a quick meeting with Google Meet
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {

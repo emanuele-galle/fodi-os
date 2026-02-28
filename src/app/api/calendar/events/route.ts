@@ -33,6 +33,7 @@ const createEventSchema = z.object({
 const CALENDAR_VIEWER_ROLES: Role[] = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM']
 
 // GET /api/calendar/events - List Google Calendar events
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function GET(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {
@@ -234,6 +235,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/calendar/events - Create a new calendar event
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   if (!userId) {

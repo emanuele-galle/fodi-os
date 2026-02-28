@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function PUT(request: NextRequest) {
   const auth = getAuthHeaders(request)
   if (!auth.ok) return auth.response

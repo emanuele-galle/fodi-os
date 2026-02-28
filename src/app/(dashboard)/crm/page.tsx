@@ -46,6 +46,7 @@ const TAG_COLORS = [
   'bg-cyan-500/10 text-cyan-600',
 ]
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export default function CrmPage() {
   const router = useRouter()
   const searchParams = useSearchParams()

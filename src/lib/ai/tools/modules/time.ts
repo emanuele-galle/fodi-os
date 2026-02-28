@@ -128,6 +128,7 @@ export const timeTools: AiToolDefinition[] = [
     },
     module: 'pm',
     requiredPermission: 'read',
+    // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
     execute: async (input: AiToolInput) => {
       const groupBy = input.groupBy as 'user' | 'project' | 'task'
       const startDate = new Date(input.startDate as string)

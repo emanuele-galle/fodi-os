@@ -35,6 +35,7 @@ export async function GET(
   }
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

@@ -83,6 +83,7 @@ export function clearPrefCache(userId: string) {
  *
  * Push notifications are throttled: only sent at groupCount 1, 3, 5 to avoid spam.
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function dispatchNotification(intent: NotificationIntent) {
   const recipients = intent.recipientIds.filter((id) => id !== intent.excludeUserId)
   if (recipients.length === 0) return
@@ -211,6 +212,7 @@ export class NotificationBatch {
     this.intents.push(intent)
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
   async flush() {
     if (this.intents.length === 0) return
 

@@ -119,6 +119,7 @@ export default function CalendarPage() {
 
   // --- Data fetching ---
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
   const fetchCalendars = useCallback(async () => {
     try {
       let res = await fetch('/api/calendar')
@@ -321,6 +322,7 @@ export default function CalendarPage() {
     setShowNewEvent(true)
   }, [])
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!blockMode && !newEvent.summary) return

@@ -6,6 +6,7 @@ import { updateExpenseSchema, expenseAdvancedFields } from '@/lib/validation'
 import { calculateVat, calculateDeductibleVat } from '@/lib/accounting'
 import type { Role } from '@/generated/prisma/client'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

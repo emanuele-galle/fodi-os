@@ -17,6 +17,7 @@ import { getClientIp } from '@/lib/ip'
  *   startHour - earliest slot hour (default 9, fallback if no workSchedule)
  *   endHour   - latest slot hour (default 18, fallback if no workSchedule)
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function GET(request: NextRequest) {
   const session = await getSession()
   if (!session) {

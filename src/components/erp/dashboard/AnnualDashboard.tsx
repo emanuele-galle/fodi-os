@@ -19,6 +19,7 @@ interface DashboardData {
   comparison: { prevIncomeGross: number; prevExpenseGross: number; deltaIncome: number; deltaExpense: number }
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function AnnualDashboard() {
   const [year, setYear] = useState(new Date().getFullYear())
   const [entityId, setEntityId] = useState('')

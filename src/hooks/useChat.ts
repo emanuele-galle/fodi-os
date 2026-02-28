@@ -122,6 +122,7 @@ export function useChat() {
   }, [])
 
   // SSE real-time
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
   useSSE(useCallback((event) => {
     if (event.type === 'new_message' && event.data) {
       const msg = event.data as Message & { channelId?: string }

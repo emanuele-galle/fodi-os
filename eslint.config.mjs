@@ -12,6 +12,15 @@ const eslintConfig = defineConfig([
   ...fixupConfigRules(nextVitals),
   ...fixupConfigRules(nextTs),
   ...guardrails,
+  // Downgrade React Compiler rules that flag legitimate patterns (sync state from props, localStorage init, fetch-in-effect)
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/static-components": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/refs": "warn",
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",

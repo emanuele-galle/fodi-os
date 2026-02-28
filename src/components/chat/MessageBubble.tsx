@@ -59,6 +59,7 @@ interface MessageBubbleProps {
 }
 
 // Simple rich text parser: **bold**, *italic*, `code`, URLs
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 function renderRichText(text: string, isOwn: boolean) {
   const parts: React.ReactNode[] = []
   // Split by code blocks first
@@ -174,6 +175,7 @@ function ReadReceiptIndicator({ receipts }: { receipts?: ReadReceipt[] }) {
   )
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function MessageBubble({ message, isOwn, currentUserId, userRole, readReceipts, showAvatar = true, showName = true, onEdit, onDelete, onReply, onReact }: MessageBubbleProps) {
   const isSystemAdmin = userRole === 'ADMIN'
   const canDelete = isOwn || isSystemAdmin

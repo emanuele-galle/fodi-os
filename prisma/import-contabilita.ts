@@ -71,6 +71,7 @@ function cleanAmount(v: unknown): number {
 // MAIN
 // ============================================================
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 async function main() {
   console.log('=== Import Contabilità → Muscari OS ===\n')
   console.log('File:', XLSX_PATH)

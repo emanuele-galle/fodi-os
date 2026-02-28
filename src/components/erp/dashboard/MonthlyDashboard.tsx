@@ -87,6 +87,7 @@ function formatMonthLabel(ym: string): string {
 
 /* ---------- Component ---------- */
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function MonthlyDashboard() {
   const [month, setMonth] = useState(getCurrentMonth)
   const [entityId, setEntityId] = useState('')

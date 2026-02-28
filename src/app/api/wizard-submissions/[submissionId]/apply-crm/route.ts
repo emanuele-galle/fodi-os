@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { slugify } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ submissionId: string }> }

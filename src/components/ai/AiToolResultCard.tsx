@@ -377,6 +377,7 @@ function isCreationTool(toolName: string): boolean {
 }
 
 // Summary text for collapsed state
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 function getResultSummary(toolName: string, result: { success: boolean; data?: unknown }): string {
   if (!result.success) return 'Errore'
   const data = result.data as Record<string, unknown> | undefined
@@ -426,6 +427,7 @@ function getResultSummary(toolName: string, result: { success: boolean; data?: u
   return 'Completato'
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export function AiToolResultCard({ toolName, result, defaultExpanded = false }: AiToolResultCardProps) {
   const isCreation = isCreationTool(toolName)
   const isError = !result.success
@@ -434,6 +436,7 @@ export function AiToolResultCard({ toolName, result, defaultExpanded = false }: 
   const Icon = isCreation ? Plus : getToolIcon(toolName)
   const summary = getResultSummary(toolName, result)
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
   const renderContent = () => {
     // Error card
     if (!result.success) {

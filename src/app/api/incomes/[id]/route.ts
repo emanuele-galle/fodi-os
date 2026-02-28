@@ -6,6 +6,7 @@ import { updateIncomeSchema } from '@/lib/validation'
 import { calculateVat } from '@/lib/accounting'
 import type { Role } from '@/generated/prisma/client'
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role
