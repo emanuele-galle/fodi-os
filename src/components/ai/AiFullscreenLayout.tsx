@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   Search, Plus, MessageSquare, Trash2, ChevronLeft,
   CheckSquare, Users, Calendar, Receipt,
-  BarChart3, Bot, Loader2
+  BarChart3, Bot, Loader2, Send
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AiChatPanel } from './AiChatPanel'
@@ -102,6 +102,7 @@ interface AiFullscreenLayoutProps {
 export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -253,9 +254,14 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
         {selectedId ? (
-          <AiChatPanel key={selectedId} initialConversationId={selectedId} />
+          <AiChatPanel
+            key={selectedId + (pendingMessage || '')}
+            initialConversationId={selectedId !== 'new' ? selectedId : undefined}
+            initialMessage={pendingMessage || undefined}
+          />
         ) : (
-          <WelcomeScreen userName={userName} onAction={() => {
+          <WelcomeScreen userName={userName} onAction={(msg) => {
+            setPendingMessage(msg)
             setSelectedId('new')
           }} />
         )}
@@ -272,6 +278,16 @@ function getGreeting(): string {
 }
 
 function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (msg: string) => void }) {
+  const [input, setInput] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleSend = () => {
+    const msg = input.trim()
+    if (!msg) return
+    setInput('')
+    onAction(msg)
+  }
+
   return (
     <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
       {/* Animated gradient orbs */}
@@ -374,6 +390,31 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
             </motion.div>
           ))}
         </div>
+
+        {/* Input bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="relative max-w-lg mx-auto w-full"
+        >
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
+            placeholder="Scrivi un messaggio..."
+            className="w-full pl-4 pr-12 py-3 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-white/[0.08] focus:outline-none focus:ring-1 focus:ring-violet-500/40 focus:border-violet-500/30 text-sm placeholder:text-muted-foreground/40 transition-all"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!input.trim()}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white disabled:opacity-30 hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </motion.div>
 
         {/* Developer badge */}
         <motion.div

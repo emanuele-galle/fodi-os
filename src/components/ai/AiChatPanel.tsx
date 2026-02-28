@@ -24,6 +24,7 @@ interface AiChatPanelProps {
   onExpand?: () => void
   onCollapse?: () => void
   initialConversationId?: string
+  initialMessage?: string
 }
 
 const PAGE_LABELS: Record<string, string> = {
@@ -52,7 +53,7 @@ function getPageLabel(pathname: string): string | undefined {
   return match ? PAGE_LABELS[match] : undefined
 }
 
-export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConversationId }: AiChatPanelProps) {
+export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConversationId, initialMessage }: AiChatPanelProps) {
   const pathname = usePathname()
   const currentPage = getPageLabel(pathname)
   const { messages, isLoading, error, suggestedFollowups, conversationId, sendMessage, sendMessageWithFiles, loadConversation, clearMessages } = useAiChat()
@@ -76,6 +77,15 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
       loadConversation(initialConversationId)
     }
   }, [initialConversationId, loadConversation])
+
+  // Send initial message if provided (from quick actions)
+  const initialMessageSent = useRef(false)
+  useEffect(() => {
+    if (initialMessage && !initialMessageSent.current) {
+      initialMessageSent.current = true
+      sendMessage(initialMessage, currentPage)
+    }
+  }, [initialMessage, sendMessage, currentPage])
 
   // Auto-scroll to bottom
   useEffect(() => {

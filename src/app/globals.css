@@ -400,7 +400,7 @@ html {
 }
 
 .ai-fab-glow {
-  position: relative;
+  position: fixed !important;
 }
 
 .ai-fab-glow::before {
