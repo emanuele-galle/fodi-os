@@ -43,7 +43,6 @@ import {
   buildRruleString,
   getDaysInMonth,
   getFirstDayOfMonth,
-  getEventDate,
   addHour,
   getWeekDates,
   getEventColor as getEventColorUtil,
@@ -472,9 +471,27 @@ export default function CalendarPage() {
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>()
     events.forEach((ev) => {
-      const key = getEventDate(ev)
-      if (!map.has(key)) map.set(key, [])
-      map.get(key)!.push(ev)
+      const startStr = ev.start.dateTime || ev.start.date || ''
+      const endStr = ev.end.dateTime || ev.end.date || ''
+      const startDate = new Date(startStr.split('T')[0] + 'T00:00:00')
+      const endDate = new Date(endStr.split('T')[0] + 'T00:00:00')
+
+      // Per eventi all-day, la end date di Google è esclusiva (es: 1-3 marzo → end=4 marzo)
+      const isAllDay = !!ev.start.date
+      if (isAllDay) endDate.setDate(endDate.getDate() - 1)
+
+      // Per eventi timed che finiscono esattamente a mezzanotte, non contare quel giorno
+      if (!isAllDay && endStr.includes('T') && endStr.split('T')[1].startsWith('00:00')) {
+        endDate.setDate(endDate.getDate() - 1)
+      }
+
+      const current = new Date(startDate)
+      while (current <= endDate) {
+        const key = current.toISOString().split('T')[0]
+        if (!map.has(key)) map.set(key, [])
+        map.get(key)!.push(ev)
+        current.setDate(current.getDate() + 1)
+      }
     })
     return map
   }, [events])

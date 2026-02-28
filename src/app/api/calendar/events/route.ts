@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   const timeMin = searchParams.get('timeMin') || new Date().toISOString()
   const timeMax = searchParams.get('timeMax')
   const calendarId = searchParams.get('calendarId') || 'primary'
-  const maxResults = Math.min(250, parseInt(searchParams.get('maxResults') || '100'))
+  const maxResults = Math.min(250, parseInt(searchParams.get('maxResults') || '250'))
   const userIdsParam = searchParams.get('userIds')
   const role = request.headers.get('x-user-role') as Role
 

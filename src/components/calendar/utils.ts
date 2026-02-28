@@ -77,11 +77,6 @@ export function formatDateFull(dateStr?: string) {
   })
 }
 
-export function getEventDate(event: CalendarEvent): string {
-  const dt = event.start.dateTime || event.start.date || ''
-  return dt.split('T')[0]
-}
-
 export function addHour(time: string): string {
   const [h, m] = time.split(':').map(Number)
   const newH = Math.min(h + 1, 23)

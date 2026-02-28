@@ -88,7 +88,7 @@ export function MonthView({
                     </div>
                     {/* Mobile: show dots only */}
                     <div className="md:hidden flex gap-0.5 flex-wrap">
-                      {dayEvents.slice(0, 4).map((ev) => {
+                      {dayEvents.slice(0, 5).map((ev) => {
                         const color = getEventColor(ev)
                         return (
                           <div
@@ -101,7 +101,7 @@ export function MonthView({
                     </div>
                     {/* Desktop: event pills with border-left style */}
                     <div className="hidden md:block space-y-0.5">
-                      {dayEvents.slice(0, 3).map((ev) => {
+                      {dayEvents.slice(0, 4).map((ev) => {
                         const color = getEventColor(ev)
                         const isAllDay = !!ev.start.date
 
@@ -124,15 +124,17 @@ export function MonthView({
                           </button>
                         )
                       })}
-                      {dayEvents.length > 3 && (
+                      {dayEvents.length > 4 && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (dayEvents[3]) setSelectedEvent(dayEvents[3])
+                            setSelectedDayKey(cellDate!)
+                            setDesktopView('day')
+                            setMobileView('day')
                           }}
-                          className="text-[10px] text-muted pl-1 hover:text-foreground transition-colors"
+                          className="text-[10px] text-primary font-medium pl-1 hover:underline transition-colors"
                         >
-                          +{dayEvents.length - 3} altri
+                          +{dayEvents.length - 4} altri
                         </button>
                       )}
                     </div>
