@@ -175,4 +175,81 @@ export const calendarTools: AiToolDefinition[] = [
       return { success: true, data: { date: dateStr, duration, slots, totalFreeSlots: slots.length } }
     },
   },
+
+  {
+    name: 'update_calendar_event',
+    description: 'Modifica un evento esistente nel calendario Google (titolo, data/ora, luogo, partecipanti).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        eventId: { type: 'string', description: 'ID dell\'evento Google Calendar (obbligatorio)' },
+        summary: { type: 'string', description: 'Nuovo titolo' },
+        startDateTime: { type: 'string', description: 'Nuova data/ora inizio (ISO 8601)' },
+        endDateTime: { type: 'string', description: 'Nuova data/ora fine (ISO 8601)' },
+        description: { type: 'string', description: 'Nuova descrizione' },
+        location: { type: 'string', description: 'Nuovo luogo' },
+      },
+      required: ['eventId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput, context: AiToolContext) => {
+      const client = await getAuthenticatedClient(context.userId)
+      if (!client) return { success: false, error: 'Google Calendar non collegato.' }
+
+      const calendar = getCalendarService(client)
+      const requestBody: Record<string, unknown> = {}
+      if (input.summary) requestBody.summary = input.summary
+      if (input.description !== undefined) requestBody.description = input.description
+      if (input.location !== undefined) requestBody.location = input.location
+      if (input.startDateTime) requestBody.start = { dateTime: input.startDateTime as string, timeZone: 'Europe/Rome' }
+      if (input.endDateTime) requestBody.end = { dateTime: input.endDateTime as string, timeZone: 'Europe/Rome' }
+
+      const event = await withRetry(() =>
+        calendar.events.patch({
+          calendarId: 'primary',
+          eventId: input.eventId as string,
+          requestBody,
+        })
+      )
+
+      return {
+        success: true,
+        data: {
+          id: event.data.id,
+          summary: event.data.summary,
+          start: event.data.start?.dateTime,
+          end: event.data.end?.dateTime,
+        },
+      }
+    },
+  },
+
+  {
+    name: 'delete_calendar_event',
+    description: 'Elimina un evento dal calendario Google.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        eventId: { type: 'string', description: 'ID dell\'evento da eliminare (obbligatorio)' },
+      },
+      required: ['eventId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput, context: AiToolContext) => {
+      const client = await getAuthenticatedClient(context.userId)
+      if (!client) return { success: false, error: 'Google Calendar non collegato.' }
+
+      const calendar = getCalendarService(client)
+      await withRetry(() =>
+        calendar.events.delete({
+          calendarId: 'primary',
+          eventId: input.eventId as string,
+        })
+      )
+
+      return { success: true, data: { eventId: input.eventId, deleted: true } }
+    },
+  },
 ]

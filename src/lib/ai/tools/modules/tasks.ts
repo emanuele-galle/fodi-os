@@ -181,4 +181,59 @@ export const taskTools: AiToolDefinition[] = [
       return { success: true, data: task }
     },
   },
+
+  {
+    name: 'add_task_comment',
+    description: 'Aggiunge un commento a un task esistente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'ID del task (obbligatorio)' },
+        content: { type: 'string', description: 'Testo del commento (obbligatorio)' },
+      },
+      required: ['taskId', 'content'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput, context: AiToolContext) => {
+      const task = await prisma.task.findUnique({ where: { id: input.taskId as string }, select: { id: true } })
+      if (!task) return { success: false, error: 'Task non trovato' }
+
+      const comment = await prisma.comment.create({
+        data: {
+          taskId: input.taskId as string,
+          authorId: context.userId,
+          content: input.content as string,
+        },
+        select: { id: true, content: true, createdAt: true },
+      })
+
+      return { success: true, data: comment }
+    },
+  },
+
+  {
+    name: 'delete_task',
+    description: 'Elimina un task. Attenzione: l\'eliminazione è permanente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'ID del task da eliminare (obbligatorio)' },
+      },
+      required: ['taskId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const task = await prisma.task.findUnique({
+        where: { id: input.taskId as string },
+        select: { id: true, title: true, _count: { select: { subtasks: true } } },
+      })
+      if (!task) return { success: false, error: 'Task non trovato' }
+
+      await prisma.task.delete({ where: { id: input.taskId as string } })
+
+      return { success: true, data: { id: task.id, title: task.title, deleted: true } }
+    },
+  },
 ]

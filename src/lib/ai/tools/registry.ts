@@ -10,6 +10,7 @@ import { dailyTools } from './modules/daily'
 import { erpTools } from './modules/erp'
 import { supportTools } from './modules/support'
 import { timeTools } from './modules/time'
+import { projectTools } from './modules/projects'
 
 const ALL_TOOLS: AiToolDefinition[] = [
   ...taskTools,
@@ -20,6 +21,7 @@ const ALL_TOOLS: AiToolDefinition[] = [
   ...erpTools,
   ...supportTools,
   ...timeTools,
+  ...projectTools,
 ]
 
 /**

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { slugify } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
 
-// Get the chat channel for a project (no auto-creation)
+// Get or auto-create the chat channel for a project
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
@@ -17,7 +18,7 @@ export async function GET(
     const folderId = request.nextUrl.searchParams.get('folderId') || null
 
     // Find existing PROJECT channel (filtered by folderId)
-    const channel = await prisma.chatChannel.findFirst({
+    let channel = await prisma.chatChannel.findFirst({
       where: {
         projectId,
         folderId,
@@ -29,8 +30,50 @@ export async function GET(
       },
     })
 
+    // Auto-create channel if it doesn't exist
     if (!channel) {
-      return NextResponse.json(null)
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        select: { name: true },
+      })
+      if (!project) {
+        return NextResponse.json(null)
+      }
+
+      let folderName = ''
+      if (folderId) {
+        const folder = await prisma.folder.findUnique({
+          where: { id: folderId },
+          select: { name: true },
+        })
+        folderName = folder?.name || ''
+      }
+
+      const channelName = folderId && folderName
+        ? `Chat - ${folderName}`
+        : `Chat - ${project.name}`
+      const baseSlug = slugify(channelName)
+      const existing = await prisma.chatChannel.findUnique({ where: { slug: baseSlug } })
+      const slug = existing ? `${baseSlug}-${Date.now()}` : baseSlug
+
+      channel = await prisma.chatChannel.create({
+        data: {
+          name: channelName,
+          slug,
+          type: 'PROJECT',
+          projectId,
+          folderId,
+          createdById: userId,
+          members: {
+            create: { userId, role: 'ADMIN' },
+          },
+        },
+        include: {
+          _count: { select: { members: true, messages: true } },
+        },
+      })
+
+      return NextResponse.json(channel)
     }
 
     // Ensure current user is a member

@@ -5,12 +5,12 @@ import { motion, AnimatePresence } from 'motion/react'
 import {
   Search, Plus, MessageSquare, Trash2, ChevronLeft,
   CheckSquare, Users, Calendar, Receipt,
-  BarChart3, Bot, Loader2, Send
+  BarChart3, Bot, Loader2, Send, Paperclip, Mic, X,
+  FileText, Image as ImageIcon
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AiChatPanel } from './AiChatPanel'
 import { AiAnimatedAvatar } from './AiAnimatedAvatar'
-import GradientText from '@/components/ui/GradientText'
 
 interface Conversation {
   id: string
@@ -19,56 +19,11 @@ interface Conversation {
   _count: { messages: number }
 }
 
-interface QuickAction {
-  label: string
-  subtitle: string
-  icon: typeof CheckSquare
-  message: string
-  color: string
-  bgColor: string
-}
-
-const QUICK_ACTION_GROUPS: { title: string; actions: QuickAction[] }[] = [
-  {
-    title: 'Task & Progetti',
-    actions: [
-      { label: 'Task in scadenza', subtitle: 'Verifica le scadenze', icon: CheckSquare, message: 'Quali sono i miei task in scadenza?', color: 'text-blue-400', bgColor: 'group-hover:shadow-blue-500/10' },
-      { label: 'Crea task', subtitle: 'Nuovo task rapido', icon: CheckSquare, message: 'Crea un nuovo task', color: 'text-blue-400', bgColor: 'group-hover:shadow-blue-500/10' },
-      { label: 'Stato progetto', subtitle: 'Overview progetto', icon: BarChart3, message: 'Mostra lo stato dei progetti attivi', color: 'text-blue-400', bgColor: 'group-hover:shadow-blue-500/10' },
-    ],
-  },
-  {
-    title: 'CRM',
-    actions: [
-      { label: 'Pipeline deal', subtitle: 'Trattative attive', icon: Users, message: 'Mostrami la pipeline deal', color: 'text-emerald-400', bgColor: 'group-hover:shadow-emerald-500/10' },
-      { label: 'Lead recenti', subtitle: 'Ultimi contatti', icon: Users, message: 'Lead ricevuti questo mese', color: 'text-emerald-400', bgColor: 'group-hover:shadow-emerald-500/10' },
-      { label: 'Cerca cliente', subtitle: 'Trova nel CRM', icon: Users, message: 'Cerca cliente', color: 'text-emerald-400', bgColor: 'group-hover:shadow-emerald-500/10' },
-    ],
-  },
-  {
-    title: 'Calendario',
-    actions: [
-      { label: 'Agenda di oggi', subtitle: 'Eventi del giorno', icon: Calendar, message: 'Cosa ho in calendario oggi?', color: 'text-orange-400', bgColor: 'group-hover:shadow-orange-500/10' },
-      { label: 'Slot libero', subtitle: 'Trova disponibilita', icon: Calendar, message: 'Trova uno slot libero questa settimana', color: 'text-orange-400', bgColor: 'group-hover:shadow-orange-500/10' },
-      { label: 'Crea evento', subtitle: 'Nuovo appuntamento', icon: Calendar, message: 'Crea un evento in calendario', color: 'text-orange-400', bgColor: 'group-hover:shadow-orange-500/10' },
-    ],
-  },
-  {
-    title: 'ERP & Finanza',
-    actions: [
-      { label: 'Fatturato mensile', subtitle: 'Entrate del mese', icon: Receipt, message: 'Mostra il fatturato mensile', color: 'text-violet-400', bgColor: 'group-hover:shadow-violet-500/10' },
-      { label: 'Preventivi in attesa', subtitle: 'Da approvare', icon: Receipt, message: 'Preventivi in attesa di approvazione', color: 'text-violet-400', bgColor: 'group-hover:shadow-violet-500/10' },
-      { label: 'Spese recenti', subtitle: 'Ultime spese', icon: Receipt, message: 'Spese registrate questo mese', color: 'text-violet-400', bgColor: 'group-hover:shadow-violet-500/10' },
-    ],
-  },
-  {
-    title: 'Riepilogo',
-    actions: [
-      { label: 'La mia giornata', subtitle: 'Riepilogo completo', icon: Bot, message: 'Riepilogo della mia giornata', color: 'text-pink-400', bgColor: 'group-hover:shadow-pink-500/10' },
-      { label: 'Report settimanale', subtitle: 'Panoramica settimana', icon: BarChart3, message: 'Report panoramica settimanale', color: 'text-pink-400', bgColor: 'group-hover:shadow-pink-500/10' },
-      { label: 'Carico team', subtitle: 'Distribuzione lavoro', icon: Users, message: 'Mostra il carico di lavoro del team', color: 'text-pink-400', bgColor: 'group-hover:shadow-pink-500/10' },
-    ],
-  },
+const QUICK_PILLS: { label: string; icon: typeof CheckSquare; message: string; color: string }[] = [
+  { label: 'Task', icon: CheckSquare, message: 'Quali sono i miei task in scadenza?', color: 'text-blue-400' },
+  { label: 'CRM', icon: Users, message: 'Mostrami la pipeline deal e i lead recenti', color: 'text-emerald-400' },
+  { label: 'Calendario', icon: Calendar, message: 'Cosa ho in calendario oggi?', color: 'text-orange-400' },
+  { label: 'Finanza', icon: Receipt, message: 'Mostra il fatturato mensile e i preventivi in attesa', color: 'text-violet-400' },
 ]
 
 function groupByDate(conversations: Conversation[]): { label: string; items: Conversation[] }[] {
@@ -279,30 +234,65 @@ function getGreeting(): string {
 
 function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (msg: string) => void }) {
   const [input, setInput] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [isDragOver, setIsDragOver] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSend = () => {
     const msg = input.trim()
     if (!msg) return
     setInput('')
+    setPendingFiles([])
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
     onAction(msg)
   }
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value)
+    e.target.style.height = 'auto'
+    e.target.style.height = Math.min(e.target.scrollHeight, 160) + 'px'
+  }
+
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files) return
+    setPendingFiles(prev => [...prev, ...Array.from(files)].slice(0, 3))
+  }
+
+  const removeFile = (index: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
   return (
-    <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
+    <div
+      className="flex-1 flex items-center justify-center p-6 relative overflow-hidden"
+      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true) }}
+      onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false) }}
+      onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFileSelect(e.dataTransfer.files) }}
+    >
+      {/* Drag overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 z-20 bg-violet-500/10 border-2 border-dashed border-violet-400/40 rounded-xl flex items-center justify-center backdrop-blur-sm">
+          <div className="text-center">
+            <Paperclip className="h-8 w-8 text-violet-400 mx-auto mb-2" />
+            <p className="text-sm font-medium text-violet-300">Rilascia per allegare</p>
+          </div>
+        </div>
+      )}
+
       {/* Animated gradient orbs */}
       <div className="ai-orb ai-orb-1" />
       <div className="ai-orb ai-orb-2" />
       <div className="ai-orb ai-orb-3" />
 
       {/* Floating particles */}
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
           className="ai-particle"
           style={{
-            left: `${15 + i * 10}%`,
-            bottom: '20%',
+            left: `${20 + i * 12}%`,
+            bottom: '25%',
             '--particle-x': `${(i % 2 === 0 ? 1 : -1) * (10 + i * 5)}px`,
             '--particle-duration': `${3 + i * 0.5}s`,
             '--particle-delay': `${i * 0.7}s`,
@@ -315,112 +305,171 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
         />
       ))}
 
-      <div className="max-w-3xl w-full space-y-10 relative z-10">
-        {/* Greeting hero */}
+      <div className="max-w-2xl w-full space-y-8 relative z-10">
+        {/* Greeting - Claude style */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          {/* Animated AI avatar */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="relative inline-flex mb-6"
-          >
-            <AiAnimatedAvatar size="xl" />
-            {/* Glow ring */}
-            <div className="absolute -inset-3 rounded-2xl bg-gradient-to-br from-violet-500/15 to-purple-500/15 blur-xl -z-10" />
-          </motion.div>
-
-          <h1 className="text-3xl font-bold mb-2">
-            <GradientText
-              colors={['#a78bfa', '#c084fc', '#818cf8', '#e879f9', '#a78bfa']}
-              animationSpeed={6}
-              className="text-3xl font-bold"
-            >
-              {getGreeting()}{userName ? `, ${userName}` : ''}!
-            </GradientText>
+          <h1 className="text-3xl font-light tracking-tight text-foreground/90 mb-2">
+            {getGreeting()}
+            {userName && (
+              <span className="relative inline-block ml-1">
+                <span className="font-normal">{userName}</span>
+                {/* Decorative SVG underline */}
+                <svg
+                  className="absolute -bottom-1 left-0 w-full"
+                  viewBox="0 0 100 8"
+                  preserveAspectRatio="none"
+                  fill="none"
+                >
+                  <path
+                    d="M0 5 Q25 0 50 4 Q75 8 100 3"
+                    stroke="rgba(139, 92, 246, 0.5)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                </svg>
+              </span>
+            )}
           </h1>
-          <p className="text-muted-foreground/70 text-sm max-w-md mx-auto">
-            Come posso aiutarti oggi? Seleziona un&apos;azione rapida o inizia una conversazione.
+          <p className="text-muted-foreground/50 text-sm">
+            Come posso aiutarti oggi?
           </p>
         </motion.div>
 
-        {/* Quick action grid */}
-        <div className="space-y-5">
-          {QUICK_ACTION_GROUPS.map((group, gi) => (
-            <motion.div
-              key={group.title}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + gi * 0.08 }}
-            >
-              <h3 className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-widest mb-2 pl-1">{group.title}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {group.actions.map((action, i) => (
-                  <motion.button
-                    key={action.label}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + gi * 0.08 + i * 0.03 }}
-                    onClick={() => onAction(action.message)}
-                    className={cn(
-                      'group flex items-start gap-3 text-left p-3.5 rounded-xl',
-                      'ai-glass shadow-lg shadow-transparent',
-                      'hover:shadow-xl transition-all duration-300',
-                      action.bgColor,
+        {/* Premium input container */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="ai-fade-in-blur"
+          style={{ animationDelay: '0.2s' }}
+        >
+          <div className="ai-input-container rounded-2xl border border-border/60 bg-card/80 backdrop-blur-xl">
+            {/* File preview cards */}
+            {pendingFiles.length > 0 && (
+              <div className="flex gap-2 px-4 pt-3 pb-1">
+                {pendingFiles.map((file, i) => (
+                  <div key={i} className="relative group">
+                    {file.type.startsWith('image/') ? (
+                      <div className="ai-file-card w-24 h-24 rounded-xl overflow-hidden border border-border/40">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="ai-file-card w-24 h-24 rounded-xl border border-border/40 bg-secondary/50 flex flex-col items-center justify-center gap-1 p-2">
+                        <FileText className="h-5 w-5 text-muted-foreground/60" />
+                        <span className="text-[9px] text-muted-foreground/70 truncate w-full text-center">{file.name}</span>
+                        <span className="text-[8px] text-muted-foreground/40">{(file.size / 1024).toFixed(0)} KB</span>
+                      </div>
                     )}
-                  >
-                    <div className={cn(
-                      'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors',
-                      'bg-white/[0.04] group-hover:bg-white/[0.08]',
-                    )}>
-                      <action.icon className={cn('h-4 w-4', action.color)} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{action.label}</p>
-                      <p className="text-[10px] text-muted-foreground/50 mt-0.5">{action.subtitle}</p>
-                    </div>
-                  </motion.button>
+                    <button
+                      onClick={() => removeFile(i)}
+                      className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-foreground/80 text-background opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
                 ))}
               </div>
-            </motion.div>
-          ))}
-        </div>
+            )}
 
-        {/* Input bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="relative max-w-lg mx-auto w-full"
-        >
+            {/* Textarea */}
+            <div className="px-4 py-3">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={handleInputChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend()
+                  }
+                }}
+                placeholder="Scrivi un messaggio..."
+                rows={1}
+                className="w-full resize-none bg-transparent text-sm leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
+              />
+            </div>
+
+            {/* Action bar */}
+            <div className="flex items-center justify-between px-3 pb-3">
+              <div className="flex items-center gap-0.5">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={pendingFiles.length >= 3}
+                  className="p-2 rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-30"
+                  title="Allega file"
+                >
+                  <Plus className="h-4 w-4 text-muted-foreground/60" />
+                </button>
+                <button
+                  className="p-2 rounded-lg hover:bg-secondary/80 transition-colors"
+                  title="Messaggio vocale"
+                >
+                  <Mic className="h-4 w-4 text-muted-foreground/60" />
+                </button>
+              </div>
+              <button
+                onClick={handleSend}
+                disabled={!input.trim()}
+                className={cn(
+                  'p-2.5 rounded-xl transition-all duration-200',
+                  input.trim()
+                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
+                    : 'bg-secondary/60 text-muted-foreground/30',
+                )}
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Hidden file input */}
           <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
-            placeholder="Scrivi un messaggio..."
-            className="w-full pl-4 pr-12 py-3 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-white/[0.08] focus:outline-none focus:ring-1 focus:ring-violet-500/40 focus:border-violet-500/30 text-sm placeholder:text-muted-foreground/40 transition-all"
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              handleFileSelect(e.target.files)
+              e.target.value = ''
+            }}
           />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim()}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white disabled:opacity-30 hover:shadow-lg hover:shadow-violet-500/25 transition-all"
-          >
-            <Send className="h-4 w-4" />
-          </button>
+        </motion.div>
+
+        {/* Quick category pills */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="flex flex-wrap items-center justify-center gap-2"
+        >
+          {QUICK_PILLS.map((pill) => (
+            <button
+              key={pill.label}
+              onClick={() => onAction(pill.message)}
+              className="group flex items-center gap-2 px-4 py-2 rounded-full border border-border/40 bg-card/50 hover:bg-card hover:border-violet-500/30 hover:shadow-md transition-all duration-200"
+            >
+              <pill.icon className={cn('h-3.5 w-3.5', pill.color)} />
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{pill.label}</span>
+            </button>
+          ))}
         </motion.div>
 
         {/* Developer badge */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.7 }}
           className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/30"
         >
           <span>Sviluppato da</span>

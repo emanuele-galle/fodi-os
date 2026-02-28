@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { slugify } from '@/lib/utils'
 import type { AiToolDefinition, AiToolInput, AiToolContext } from '../types'
 
 export const crmTools: AiToolDefinition[] = [
@@ -285,6 +286,138 @@ export const crmTools: AiToolDefinition[] = [
       })
 
       return { success: true, data: { id: interaction.id, type: interaction.type, subject: interaction.subject } }
+    },
+  },
+
+  {
+    name: 'create_deal',
+    description: 'Crea una nuova trattativa (deal) nella pipeline commerciale con titolo, valore, cliente e fase.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Titolo della trattativa (obbligatorio)' },
+        value: { type: 'number', description: 'Valore in euro (default: 0)' },
+        stage: { type: 'string', description: 'Fase: QUALIFICATION, PROPOSAL, NEGOTIATION (default: QUALIFICATION)' },
+        probability: { type: 'number', description: 'Probabilità di chiusura 0-100 (default: 50)' },
+        clientId: { type: 'string', description: 'ID del cliente associato' },
+        contactId: { type: 'string', description: 'ID del contatto di riferimento' },
+        description: { type: 'string', description: 'Descrizione della trattativa' },
+        expectedCloseDate: { type: 'string', description: 'Data chiusura prevista (ISO 8601)' },
+      },
+      required: ['title'],
+    },
+    module: 'crm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput, context: AiToolContext) => {
+      const deal = await prisma.deal.create({
+        data: {
+          title: input.title as string,
+          description: (input.description as string) || null,
+          value: input.value ? input.value as number : 0,
+          stage: (input.stage as 'QUALIFICATION' | 'PROPOSAL' | 'NEGOTIATION') || 'QUALIFICATION',
+          probability: input.probability !== undefined ? Number(input.probability) : 50,
+          clientId: (input.clientId as string) || null,
+          contactId: (input.contactId as string) || null,
+          expectedCloseDate: input.expectedCloseDate ? new Date(input.expectedCloseDate as string) : null,
+          ownerId: context.userId,
+        },
+        select: { id: true, title: true, stage: true, value: true },
+      })
+
+      return { success: true, data: deal }
+    },
+  },
+
+  {
+    name: 'create_client',
+    description: 'Crea un nuovo cliente nel CRM con nome azienda, P.IVA, settore, sito web e note.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        companyName: { type: 'string', description: 'Nome azienda (obbligatorio)' },
+        vatNumber: { type: 'string', description: 'Partita IVA' },
+        fiscalCode: { type: 'string', description: 'Codice fiscale' },
+        pec: { type: 'string', description: 'PEC' },
+        sdi: { type: 'string', description: 'Codice SDI (fatturazione elettronica)' },
+        website: { type: 'string', description: 'Sito web' },
+        industry: { type: 'string', description: 'Settore/industria' },
+        source: { type: 'string', description: 'Sorgente acquisizione (es. referral, web, social)' },
+        status: { type: 'string', description: 'Stato: LEAD, PROSPECT, ACTIVE (default: ACTIVE)' },
+        notes: { type: 'string', description: 'Note aggiuntive' },
+      },
+      required: ['companyName'],
+    },
+    module: 'crm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const companyName = input.companyName as string
+      const slug = slugify(companyName)
+
+      // Check slug uniqueness
+      const existing = await prisma.client.findUnique({ where: { slug } })
+      if (existing) {
+        return { success: false, error: `Esiste già un cliente con slug "${slug}". Controlla se il cliente esiste già.` }
+      }
+
+      const client = await prisma.client.create({
+        data: {
+          companyName,
+          slug,
+          vatNumber: (input.vatNumber as string) || null,
+          fiscalCode: (input.fiscalCode as string) || null,
+          pec: (input.pec as string) || null,
+          sdi: (input.sdi as string) || null,
+          website: (input.website as string) || null,
+          industry: (input.industry as string) || null,
+          source: (input.source as string) || null,
+          status: (input.status as 'LEAD' | 'PROSPECT' | 'ACTIVE') || 'ACTIVE',
+          notes: (input.notes as string) || null,
+        },
+        select: { id: true, companyName: true, slug: true, status: true },
+      })
+
+      return { success: true, data: client }
+    },
+  },
+
+  {
+    name: 'update_client',
+    description: 'Aggiorna i dati di un cliente esistente (stato, settore, P.IVA, note, ecc.).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente (obbligatorio)' },
+        companyName: { type: 'string', description: 'Nuovo nome azienda' },
+        status: { type: 'string', description: 'Nuovo stato: LEAD, PROSPECT, ACTIVE, INACTIVE, CHURNED' },
+        vatNumber: { type: 'string', description: 'Partita IVA' },
+        pec: { type: 'string', description: 'PEC' },
+        sdi: { type: 'string', description: 'Codice SDI' },
+        website: { type: 'string', description: 'Sito web' },
+        industry: { type: 'string', description: 'Settore' },
+        notes: { type: 'string', description: 'Note' },
+      },
+      required: ['clientId'],
+    },
+    module: 'crm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const data: Record<string, unknown> = {}
+      if (input.companyName) data.companyName = input.companyName
+      if (input.status) data.status = input.status
+      if (input.vatNumber !== undefined) data.vatNumber = input.vatNumber || null
+      if (input.pec !== undefined) data.pec = input.pec || null
+      if (input.sdi !== undefined) data.sdi = input.sdi || null
+      if (input.website !== undefined) data.website = input.website || null
+      if (input.industry !== undefined) data.industry = input.industry || null
+      if (input.notes !== undefined) data.notes = input.notes || null
+
+      const client = await prisma.client.update({
+        where: { id: input.clientId as string },
+        data,
+        select: { id: true, companyName: true, status: true },
+      })
+
+      return { success: true, data: client }
     },
   },
 ]

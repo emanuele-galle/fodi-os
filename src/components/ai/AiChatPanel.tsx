@@ -358,29 +358,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
       </div>
 
       {/* Input */}
-      <div className="px-4 py-3 border-t border-white/[0.06]">
-        {/* File preview area */}
-        {pendingFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2">
-            {pendingFiles.map((file, i) => (
-              <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-xs">
-                {file.type.startsWith('image/') ? (
-                  <ImageIcon className="h-3.5 w-3.5 text-violet-400" />
-                ) : (
-                  <FileText className="h-3.5 w-3.5 text-violet-400" />
-                )}
-                <span className="truncate max-w-[120px] text-muted-foreground">{file.name}</span>
-                <button
-                  onClick={() => removeFile(i)}
-                  className="p-0.5 rounded hover:bg-white/[0.08] text-muted-foreground/60 hover:text-muted-foreground"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
+      <div className="px-3 py-3 border-t border-white/[0.06]">
         {/* Voice recording UI */}
         {isRecording ? (
           <AiVoiceRecorder duration={duration} onStop={handleVoiceStop} />
@@ -390,53 +368,89 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
             <span className="text-sm text-muted-foreground">Trascrizione in corso...</span>
           </div>
         ) : (
-          <div className="flex items-end gap-2 bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-2xl px-4 py-2.5 ai-input-glow">
-            {/* Attach + mic buttons */}
-            <div className="flex items-center gap-0.5 flex-shrink-0 pb-0.5">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading || pendingFiles.length >= 3}
-                className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors disabled:opacity-30"
-                title="Allega file"
-              >
-                <Paperclip className="h-4 w-4 text-muted-foreground/50" />
-              </button>
-              <button
-                onClick={startRecording}
+          <div className="ai-input-container rounded-2xl border border-border/50 bg-card/60 backdrop-blur-xl">
+            {/* File preview cards */}
+            {pendingFiles.length > 0 && (
+              <div className="flex gap-2 px-3 pt-3 pb-1">
+                {pendingFiles.map((file, i) => (
+                  <div key={i} className="relative group">
+                    {file.type.startsWith('image/') ? (
+                      <div className="ai-file-card w-20 h-20 rounded-xl overflow-hidden border border-border/40">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="ai-file-card w-20 h-20 rounded-xl border border-border/40 bg-secondary/50 flex flex-col items-center justify-center gap-1 p-2">
+                        <FileText className="h-4 w-4 text-muted-foreground/60" />
+                        <span className="text-[8px] text-muted-foreground/70 truncate w-full text-center">{file.name}</span>
+                        <span className="text-[7px] text-muted-foreground/40">{(file.size / 1024).toFixed(0)} KB</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => removeFile(i)}
+                      className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-foreground/80 text-background opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Textarea */}
+            <div className="px-3 py-2.5">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Scrivi un messaggio..."
+                rows={1}
                 disabled={isLoading}
-                className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors disabled:opacity-30"
-                title="Messaggio vocale"
-              >
-                <Mic className="h-4 w-4 text-muted-foreground/50" />
-              </button>
+                className={cn(
+                  'w-full resize-none bg-transparent text-sm leading-relaxed',
+                  'placeholder:text-muted-foreground/40 focus:outline-none',
+                  'disabled:opacity-50',
+                )}
+              />
             </div>
 
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Scrivi un messaggio..."
-              rows={1}
-              disabled={isLoading}
-              className={cn(
-                'flex-1 resize-none bg-transparent text-sm leading-relaxed',
-                'placeholder:text-muted-foreground/40 focus:outline-none',
-                'disabled:opacity-50',
-              )}
-            />
-            <button
-              onClick={() => handleSend()}
-              disabled={(!input.trim() && pendingFiles.length === 0) || isLoading}
-              className={cn(
-                'flex-shrink-0 p-2.5 rounded-xl transition-all duration-200',
-                (input.trim() || pendingFiles.length > 0) && !isLoading
-                  ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
-                  : 'bg-white/[0.04] text-muted-foreground/30',
-              )}
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </button>
+            {/* Action bar */}
+            <div className="flex items-center justify-between px-2.5 pb-2.5">
+              <div className="flex items-center gap-0.5">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading || pendingFiles.length >= 3}
+                  className="p-1.5 rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-30"
+                  title="Allega file"
+                >
+                  <Paperclip className="h-4 w-4 text-muted-foreground/50" />
+                </button>
+                <button
+                  onClick={startRecording}
+                  disabled={isLoading}
+                  className="p-1.5 rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-30"
+                  title="Messaggio vocale"
+                >
+                  <Mic className="h-4 w-4 text-muted-foreground/50" />
+                </button>
+              </div>
+              <button
+                onClick={() => handleSend()}
+                disabled={(!input.trim() && pendingFiles.length === 0) || isLoading}
+                className={cn(
+                  'p-2.5 rounded-xl transition-all duration-200',
+                  (input.trim() || pendingFiles.length > 0) && !isLoading
+                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
+                    : 'bg-secondary/60 text-muted-foreground/30',
+                )}
+              >
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
         )}
 
