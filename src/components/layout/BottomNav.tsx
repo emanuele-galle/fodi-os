@@ -17,6 +17,10 @@ import {
   UsersRound,
   Building2,
   Settings,
+  Bot,
+  Bell,
+  Library,
+  BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
@@ -40,13 +44,17 @@ interface MenuItem {
 }
 
 const MENU_ITEMS: MenuItem[] = [
-  { label: 'CRM', href: '/crm', icon: Users, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'SUPPORT'] as Role[], category: 'indigo' },
-  { label: 'Progetti Clienti', href: '/projects', icon: FolderKanban, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT'] as Role[], category: 'emerald' },
+  { label: 'Assistente AI', href: '/ai', icon: Bot, category: 'violet' },
+  { label: 'Notifiche', href: '/notifications', icon: Bell, category: 'rose' },
   { label: 'Calendario', href: '/calendar', icon: CalendarDays, category: 'violet' },
-  { label: 'Contabilita', href: '/erp', icon: Euro, roles: ['ADMIN', 'DIR_COMMERCIALE', 'COMMERCIALE'] as Role[], category: 'amber' },
+  { label: 'CRM', href: '/crm', icon: Users, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'SUPPORT'] as Role[], category: 'indigo' },
+  { label: 'Progetti', href: '/projects', icon: FolderKanban, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT'] as Role[], category: 'emerald' },
+  { label: 'Contabilità', href: '/erp', icon: Euro, roles: ['ADMIN', 'DIR_COMMERCIALE', 'COMMERCIALE'] as Role[], category: 'amber' },
   { label: 'Supporto', href: '/support', icon: LifeBuoy, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM', 'DEVELOPER', 'SUPPORT'] as Role[], category: 'rose' },
   { label: 'Team', href: '/team', icon: UsersRound, category: 'indigo' },
+  { label: 'Knowledge Base', href: '/kb', icon: Library, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'] as Role[], category: 'emerald' },
   { label: 'Azienda', href: '/internal', icon: Building2, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'] as Role[], category: 'amber' },
+  { label: 'Guida', href: '/guide', icon: BookOpen, category: 'slate' },
   { label: 'Impostazioni', href: '/settings', icon: Settings, category: 'slate' },
 ]
 
