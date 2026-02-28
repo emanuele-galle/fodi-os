@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const config = await prisma.aiAgentConfig.findUnique({
       where: { brandSlug: brand.slug },
-      select: { welcomeMessage: true, name: true },
+      select: { welcomeMessage: true, name: true, voiceAgentEnabled: true },
     })
 
     return NextResponse.json({ success: true, data: config })

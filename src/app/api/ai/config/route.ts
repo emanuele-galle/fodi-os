@@ -38,6 +38,7 @@ export async function PUT(request: NextRequest) {
       name, systemPrompt, model, temperature, maxTokens, enabledTools, welcomeMessage, isActive,
       enableThinking, thinkingEffort,
       ttsProvider, ttsVoice, autoPlayVoice,
+      voiceAgentId, voiceAgentEnabled,
     } = body
 
     const config = await prisma.aiAgentConfig.upsert({
@@ -57,6 +58,8 @@ export async function PUT(request: NextRequest) {
         ttsProvider: ttsProvider || 'disabled',
         ttsVoice: ttsVoice || null,
         autoPlayVoice: autoPlayVoice ?? false,
+        voiceAgentId: voiceAgentId || null,
+        voiceAgentEnabled: voiceAgentEnabled ?? false,
       },
       update: {
         ...(name !== undefined && { name }),
@@ -72,6 +75,8 @@ export async function PUT(request: NextRequest) {
         ...(ttsProvider !== undefined && { ttsProvider }),
         ...(ttsVoice !== undefined && { ttsVoice }),
         ...(autoPlayVoice !== undefined && { autoPlayVoice }),
+        ...(voiceAgentId !== undefined && { voiceAgentId }),
+        ...(voiceAgentEnabled !== undefined && { voiceAgentEnabled }),
       },
     })
 

@@ -1689,6 +1689,9 @@ model AiAgentConfig {
   ttsProvider     String   @default("disabled") // disabled | openai | elevenlabs | cartesia
   ttsVoice        String?
   autoPlayVoice   Boolean  @default(false)
+  // Phase 3: Conversational Voice Agent (ElevenLabs)
+  voiceAgentId      String?
+  voiceAgentEnabled Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

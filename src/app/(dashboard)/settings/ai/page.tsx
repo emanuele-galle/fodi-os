@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Bot, Save, Loader2, RefreshCw, Brain, Volume2, Wrench, MessageSquare,
-  Sparkles, Zap, Settings2, ChevronDown, ChevronRight, Check,
+  Sparkles, Zap, Settings2, ChevronDown, ChevronRight, Check, Phone,
 } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -25,6 +25,8 @@ interface AiConfig {
   ttsProvider: string
   ttsVoice: string | null
   autoPlayVoice: boolean
+  voiceAgentId: string | null
+  voiceAgentEnabled: boolean
 }
 
 interface ToolInfo {
@@ -87,6 +89,8 @@ export default function AiSettingsPage() {
   const [ttsProvider, setTtsProvider] = useState('disabled')
   const [ttsVoice, setTtsVoice] = useState('')
   const [autoPlayVoice, setAutoPlayVoice] = useState(false)
+  const [voiceAgentId, setVoiceAgentId] = useState('')
+  const [voiceAgentEnabled, setVoiceAgentEnabled] = useState(false)
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({})
 
   const loadConfig = useCallback(async () => {
@@ -119,6 +123,8 @@ export default function AiSettingsPage() {
           setTtsProvider(data.ttsProvider || 'disabled')
           setTtsVoice(data.ttsVoice || '')
           setAutoPlayVoice(data.autoPlayVoice ?? false)
+          setVoiceAgentId(data.voiceAgentId || '')
+          setVoiceAgentEnabled(data.voiceAgentEnabled ?? false)
         }
       }
     } finally {
@@ -144,6 +150,7 @@ export default function AiSettingsPage() {
           enabledTools, isActive,
           enableThinking, thinkingEffort,
           ttsProvider, ttsVoice: ttsVoice || null, autoPlayVoice,
+          voiceAgentId: voiceAgentId || null, voiceAgentEnabled,
         }),
       })
 
@@ -510,6 +517,56 @@ export default function AiSettingsPage() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Assistente Vocale Conversazionale */}
+          <Card className="lg:col-span-2">
+            <CardContent>
+              <div className="flex items-center gap-2 mb-5">
+                <Phone className="h-4 w-4 text-cyan-400" />
+                <CardTitle>Assistente Vocale (Giusy)</CardTitle>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+                  <div>
+                    <p className="text-sm font-medium">Abilita assistente vocale</p>
+                    <p className="text-xs text-muted">
+                      {voiceAgentEnabled
+                        ? 'Gli utenti possono parlare con Giusy tramite il pulsante microfono'
+                        : 'L\'assistente vocale è disabilitato'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setVoiceAgentEnabled(!voiceAgentEnabled)}
+                    className={cn(
+                      'relative w-11 h-6 rounded-full transition-colors',
+                      voiceAgentEnabled ? 'bg-cyan-500' : 'bg-secondary',
+                    )}
+                  >
+                    <span className={cn(
+                      'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform',
+                      voiceAgentEnabled && 'translate-x-5',
+                    )} />
+                  </button>
+                </div>
+
+                {voiceAgentEnabled && (
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Agent ID (ElevenLabs)</label>
+                    <input
+                      type="text"
+                      value={voiceAgentId}
+                      onChange={e => setVoiceAgentId(e.target.value)}
+                      className="w-full rounded-lg border border-border/40 bg-secondary/30 px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                      placeholder="agent_xxxxxxxx"
+                    />
+                    <p className="text-xs text-muted mt-1.5">
+                      ID dell&apos;agente configurato su ElevenLabs Conversational AI
+                    </p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
