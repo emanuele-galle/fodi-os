@@ -24,9 +24,10 @@ interface BuildPromptParams {
   userRole: Role
   agentName?: string
   customPrompt?: string | null
+  currentPage?: string
 }
 
-export function buildSystemPrompt({ userName, userRole, agentName, customPrompt }: BuildPromptParams): string {
+export function buildSystemPrompt({ userName, userRole, agentName, customPrompt, currentPage }: BuildPromptParams): string {
   const brandSlug = brand.slug
   const brandPrompt = BRAND_PROMPTS[brandSlug] || ''
 
@@ -72,6 +73,11 @@ export function buildSystemPrompt({ userName, userRole, agentName, customPrompt 
   // Add brand-specific context
   if (brandPrompt) {
     prompt += '\n' + brandPrompt
+  }
+
+  // Add page context
+  if (currentPage) {
+    prompt += `\n\n## Contesto pagina\nL'utente sta visualizzando: ${currentPage}`
   }
 
   // Add custom prompt from admin config

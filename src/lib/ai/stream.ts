@@ -3,7 +3,7 @@
  */
 
 export interface AiStreamEvent {
-  type: 'text_delta' | 'tool_use_start' | 'tool_result' | 'suggested_followups' | 'error' | 'done'
+  type: 'text_delta' | 'tool_use_start' | 'tool_result' | 'tool_progress' | 'suggested_followups' | 'error' | 'done'
   data: unknown
 }
 

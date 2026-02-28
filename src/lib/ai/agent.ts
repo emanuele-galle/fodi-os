@@ -23,6 +23,24 @@ const TOOL_FOLLOWUPS: Record<string, string[]> = {
   get_crm_stats: ['Top clienti per fatturato', 'Lead conversion rate', 'Pipeline per fase'],
   get_team_workload: ['Chi ha il carico maggiore?', 'Task non assegnati', 'Ore registrate questa settimana'],
   search_platform: ['Cerca in un ambito specifico', 'Mostra dettagli del risultato', 'Filtra per stato'],
+  // ERP
+  get_financial_summary: ['Dettaglio spese per categoria', 'Confronto con mese scorso', 'Entrate per cliente'],
+  list_quotes: ['Crea un nuovo preventivo', 'Preventivi in scadenza', 'Fatturato mensile'],
+  get_quote_details: ['Aggiorna stato preventivo', 'Crea preventivo simile', 'Contatta il cliente'],
+  list_expenses: ['Registra una spesa', 'Spese per categoria', 'Spese ricorrenti attive'],
+  list_income: ['Registra un\'entrata', 'Fatture non pagate', 'Entrate per periodo'],
+  get_monthly_report: ['Confronto anno su anno', 'Dettaglio entrate', 'Obiettivi di profitto'],
+  list_recurring_invoices: ['Prossime scadenze', 'Spesa ricorrente totale', 'Fatture da rinnovare'],
+  list_invoice_monitoring: ['Sollecita pagamento', 'Fatture scadute', 'Riepilogo incassi'],
+  create_quote: ['Invia preventivo al cliente', 'Crea altro preventivo', 'Lista preventivi'],
+  // Support
+  list_tickets: ['Crea un ticket', 'Ticket urgenti aperti', 'Ticket non assegnati'],
+  get_ticket_details: ['Aggiorna stato ticket', 'Assegna ticket', 'Rispondi al ticket'],
+  create_ticket: ['Lista ticket aperti', 'Assegna a un collega', 'Ticket per cliente'],
+  // Time Tracking
+  list_time_entries: ['Registra ore', 'Riepilogo settimanale', 'Ore per progetto'],
+  log_time: ['Riepilogo ore oggi', 'Ore registrate questa settimana', 'Task attivi'],
+  get_time_summary: ['Dettaglio per utente', 'Ore fatturabili', 'Confronto con settimana scorsa'],
 }
 
 interface AgentParams {
@@ -31,6 +49,7 @@ interface AgentParams {
   userId: string
   role: Role
   customModulePermissions?: Record<string, string[]> | null
+  currentPage?: string
   onEvent?: (event: AiStreamEvent) => void
 }
 
@@ -42,7 +61,7 @@ interface AgentResult {
 }
 
 export async function runAgent(params: AgentParams): Promise<AgentResult> {
-  const { conversationId, userMessage, userId, role, customModulePermissions, onEvent } = params
+  const { conversationId, userMessage, userId, role, customModulePermissions, currentPage, onEvent } = params
 
   // Rate limit
   if (!rateLimit(`ai:chat:${userId}`, 30, 60000)) {
@@ -66,6 +85,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
     userRole: role,
     agentName: config?.name || undefined,
     customPrompt: config?.systemPrompt,
+    currentPage,
   })
 
   // Get tools for user role
@@ -166,7 +186,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     const startMs = Date.now()
 
-    const response = await anthropic.messages.create({
+    const stream = anthropic.messages.stream({
       model: modelId,
       max_tokens: config?.maxTokens || Number(process.env.AI_MAX_TOKENS) || 4096,
       temperature: config?.temperature ?? 0.7,
@@ -175,26 +195,37 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
       messages: messages as Parameters<typeof anthropic.messages.create>[0]['messages'],
     })
 
-    totalInputTokens += response.usage.input_tokens
-    totalOutputTokens += response.usage.output_tokens
-
-    const latencyMs = Date.now() - startMs
-
-    // Process response content blocks
     const textParts: string[] = []
     const toolUses: { id: string; name: string; input: unknown }[] = []
+    let currentTextBlock = ''
 
-    for (const block of response.content) {
+    stream.on('text', (text) => {
+      currentTextBlock += text
+      onEvent?.({ type: 'text_delta', data: { text } })
+    })
+
+    stream.on('contentBlock', (block) => {
       if (block.type === 'text') {
-        textParts.push(block.text)
-        onEvent?.({ type: 'text_delta', data: { text: block.text } })
+        textParts.push(currentTextBlock)
+        currentTextBlock = ''
       } else if (block.type === 'tool_use') {
         toolUses.push({ id: block.id, name: block.name, input: block.input })
         usedToolNames.push(block.name)
         onEvent?.({ type: 'tool_use_start', data: { id: block.id, name: block.name } })
       }
-      // thinking blocks are internal, we don't expose them
+    })
+
+    const response = await stream.finalMessage()
+
+    // Push any remaining text
+    if (currentTextBlock) {
+      textParts.push(currentTextBlock)
     }
+
+    totalInputTokens += response.usage.input_tokens
+    totalOutputTokens += response.usage.output_tokens
+
+    const latencyMs = Date.now() - startMs
 
     const text = textParts.join('')
 

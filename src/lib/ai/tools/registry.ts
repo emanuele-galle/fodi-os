@@ -7,6 +7,9 @@ import { crmTools } from './modules/crm'
 import { calendarTools } from './modules/calendar'
 import { reportTools } from './modules/reports'
 import { dailyTools } from './modules/daily'
+import { erpTools } from './modules/erp'
+import { supportTools } from './modules/support'
+import { timeTools } from './modules/time'
 
 const ALL_TOOLS: AiToolDefinition[] = [
   ...taskTools,
@@ -14,6 +17,9 @@ const ALL_TOOLS: AiToolDefinition[] = [
   ...calendarTools,
   ...reportTools,
   ...dailyTools,
+  ...erpTools,
+  ...supportTools,
+  ...timeTools,
 ]
 
 /**

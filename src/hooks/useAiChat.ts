@@ -2,11 +2,18 @@
 
 import { useState, useCallback, useRef } from 'react'
 
+export interface AiToolCall {
+  id: string
+  name: string
+  status?: string
+  result?: { success: boolean; data?: unknown; error?: string }
+}
+
 export interface AiChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
-  toolCalls?: { id: string; name: string; status?: string }[]
+  toolCalls?: AiToolCall[]
   createdAt: string
 }
 
@@ -16,7 +23,8 @@ interface UseAiChatReturn {
   conversationId: string | null
   error: string | null
   suggestedFollowups: string[]
-  sendMessage: (text: string) => Promise<void>
+  activeToolName: string | null
+  sendMessage: (text: string, currentPage?: string) => Promise<void>
   setConversationId: (id: string | null) => void
   loadConversation: (id: string) => Promise<void>
   clearMessages: () => void
@@ -28,12 +36,14 @@ export function useAiChat(): UseAiChatReturn {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [suggestedFollowups, setSuggestedFollowups] = useState<string[]>([])
+  const [activeToolName, setActiveToolName] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, currentPage?: string) => {
     if (!text.trim() || isLoading) return
     setError(null)
     setSuggestedFollowups([])
+    setActiveToolName(null)
 
     // Add user message immediately
     const userMsg: AiChatMessage = {
@@ -58,7 +68,7 @@ export function useAiChat(): UseAiChatReturn {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, conversationId }),
+        body: JSON.stringify({ message: text, conversationId, currentPage }),
         signal: abortRef.current.signal,
       })
 
@@ -99,6 +109,7 @@ export function useAiChat(): UseAiChatReturn {
                 )
               }
             } else if (event.type === 'tool_use_start') {
+              setActiveToolName(event.data.name)
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantId
@@ -107,13 +118,14 @@ export function useAiChat(): UseAiChatReturn {
                 )
               )
             } else if (event.type === 'tool_result') {
+              setActiveToolName(null)
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantId
                     ? {
                         ...m,
                         toolCalls: (m.toolCalls || []).map((tc) =>
-                          tc.id === event.data.id ? { ...tc, status: event.data.status } : tc
+                          tc.id === event.data.id ? { ...tc, status: event.data.status, result: event.data.result } : tc
                         ),
                       }
                     : m
@@ -179,6 +191,7 @@ export function useAiChat(): UseAiChatReturn {
     conversationId,
     error,
     suggestedFollowups,
+    activeToolName,
     sendMessage,
     setConversationId,
     loadConversation,

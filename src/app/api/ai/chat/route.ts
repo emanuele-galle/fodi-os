@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   if (!auth.ok) return auth.response
 
   try {
-    const { message, conversationId } = await request.json()
+    const { message, conversationId, currentPage } = await request.json()
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return NextResponse.json({ error: 'Messaggio vuoto' }, { status: 400 })
@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
       userId: auth.userId,
       role: auth.role,
       customModulePermissions,
+      currentPage: currentPage || undefined,
       onEvent: enqueue,
     })
       .then(() => close())

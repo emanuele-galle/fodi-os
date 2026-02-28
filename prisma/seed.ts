@@ -269,6 +269,26 @@ async function main() {
   console.log('  - Ticket')
   console.log('  - Time entries')
 
+  // ============================================================
+  // AI AGENT CONFIG
+  // ============================================================
+  const brandSlug = process.env.BRAND_SLUG || 'fodi'
+  await prisma.aiAgentConfig.upsert({
+    where: { brandSlug },
+    update: {},
+    create: {
+      brandSlug,
+      name: brandSlug === 'fodi' ? 'FODI Assistant' : 'Muscari Assistant',
+      model: 'claude-sonnet-4-6',
+      temperature: 0.7,
+      maxTokens: 4096,
+      enabledTools: [],
+      welcomeMessage: 'Ciao! Sono il tuo assistente AI. Posso aiutarti a gestire task, CRM, calendario e report. Come posso aiutarti?',
+      isActive: true,
+    },
+  })
+  console.log('  - AI Agent Config')
+
   await pool.end()
 }
 

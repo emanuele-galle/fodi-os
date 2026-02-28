@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Send, Plus, Loader2, AlertCircle, History, X, Bot, Maximize2, Minimize2 } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAiChat } from '@/hooks/useAiChat'
 import { AiMessageBubble } from './AiMessageBubble'
@@ -19,16 +20,54 @@ interface AiChatPanelProps {
   compact?: boolean
   onExpand?: () => void
   onCollapse?: () => void
+  initialConversationId?: string
 }
 
-export function AiChatPanel({ compact = false, onExpand, onCollapse }: AiChatPanelProps) {
-  const { messages, isLoading, error, suggestedFollowups, sendMessage, loadConversation, clearMessages } = useAiChat()
+const PAGE_LABELS: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/tasks': 'Task & Progetti',
+  '/projects': 'Progetti',
+  '/crm': 'CRM',
+  '/crm/leads': 'CRM > Lead',
+  '/crm/deals': 'CRM > Pipeline Deal',
+  '/crm/clients': 'CRM > Clienti',
+  '/calendar': 'Calendario',
+  '/erp': 'ERP & Finanza',
+  '/erp/quotes': 'ERP > Preventivi',
+  '/erp/expenses': 'ERP > Spese',
+  '/erp/income': 'ERP > Entrate',
+  '/support': 'Support > Ticket',
+  '/time': 'Time Tracking',
+  '/ai': 'Assistente AI',
+}
+
+function getPageLabel(pathname: string): string | undefined {
+  if (PAGE_LABELS[pathname]) return PAGE_LABELS[pathname]
+  const match = Object.keys(PAGE_LABELS)
+    .sort((a, b) => b.length - a.length)
+    .find((key) => pathname.startsWith(key))
+  return match ? PAGE_LABELS[match] : undefined
+}
+
+export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConversationId }: AiChatPanelProps) {
+  const pathname = usePathname()
+  const currentPage = getPageLabel(pathname)
+  const { messages, isLoading, error, suggestedFollowups, conversationId, sendMessage, loadConversation, clearMessages } = useAiChat()
   const [input, setInput] = useState('')
   const [showHistory, setShowHistory] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const initialLoadDone = useRef(false)
+
+  // Load initial conversation if provided
+  useEffect(() => {
+    if (initialConversationId && initialConversationId !== 'new' && !initialLoadDone.current) {
+      initialLoadDone.current = true
+      loadConversation(initialConversationId)
+    }
+  }, [initialConversationId, loadConversation])
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -47,8 +86,8 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse }: AiChatPan
     if (!msg || isLoading) return
     setInput('')
     if (inputRef.current) inputRef.current.style.height = 'auto'
-    await sendMessage(msg)
-  }, [input, isLoading, sendMessage])
+    await sendMessage(msg, currentPage)
+  }, [input, isLoading, sendMessage, currentPage])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -76,20 +115,29 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse }: AiChatPan
     await loadConversation(id)
   }, [loadConversation])
 
-  // Show typing indicator when loading AND no text streamed yet
+  // Determine active tool name for typing indicator
   const lastMessage = messages[messages.length - 1]
   const showTyping = isLoading && lastMessage?.role === 'assistant' && !lastMessage.content
+  const activeToolName = isLoading && lastMessage?.toolCalls?.length
+    ? lastMessage.toolCalls.find(tc => tc.status === 'running')?.name
+    : undefined
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-violet-500/10 via-purple-500/5 to-transparent">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
             <Bot className="h-4 w-4 text-violet-400" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold">Assistente AI</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold">Assistente AI</h2>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+            </div>
             {!compact && (
               <p className="text-xs text-muted-foreground">Gestisci task, CRM, calendario e report</p>
             )}
@@ -166,7 +214,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse }: AiChatPan
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center gap-4">
             <div>
@@ -178,7 +226,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse }: AiChatPan
                 Posso gestire task, cercare clienti, controllare il calendario, generare report e molto altro.
               </p>
             </div>
-            <AiSuggestions onSelect={(s) => handleSend(s)} variant="empty" />
+            <AiSuggestions onSelect={(s) => handleSend(s)} variant="empty" currentPage={currentPage} />
           </div>
         )}
 
@@ -186,7 +234,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse }: AiChatPan
           <AiMessageBubble key={msg.id} message={msg} />
         ))}
 
-        {showTyping && <AiTypingIndicator />}
+        {showTyping && <AiTypingIndicator activeToolName={activeToolName} />}
 
         {error && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs">
@@ -208,8 +256,8 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse }: AiChatPan
       </div>
 
       {/* Input */}
-      <div className="px-4 py-3 border-t border-border">
-        <div className="flex items-end gap-2">
+      <div className="px-4 py-3 border-t border-white/10">
+        <div className="flex items-end gap-2 bg-background/60 backdrop-blur-xl border border-white/10 rounded-2xl px-3 py-2 shadow-lg shadow-violet-500/5">
           <textarea
             ref={inputRef}
             value={input}
@@ -219,8 +267,8 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse }: AiChatPan
             rows={1}
             disabled={isLoading}
             className={cn(
-              'flex-1 resize-none rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm',
-              'placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring',
+              'flex-1 resize-none bg-transparent text-sm',
+              'placeholder:text-muted-foreground focus:outline-none',
               'disabled:opacity-50',
             )}
           />
