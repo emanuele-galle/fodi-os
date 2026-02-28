@@ -43,6 +43,12 @@ const TOOL_FOLLOWUPS: Record<string, string[]> = {
   get_time_summary: ['Dettaglio per utente', 'Ore fatturabili', 'Confronto con settimana scorsa'],
 }
 
+interface AiAttachment {
+  url: string
+  mimeType: string
+  fileName: string
+}
+
 interface AgentParams {
   conversationId: string
   userMessage: string
@@ -50,6 +56,7 @@ interface AgentParams {
   role: Role
   customModulePermissions?: Record<string, string[]> | null
   currentPage?: string
+  attachments?: AiAttachment[]
   onEvent?: (event: AiStreamEvent) => void
 }
 
@@ -61,7 +68,7 @@ interface AgentResult {
 }
 
 export async function runAgent(params: AgentParams): Promise<AgentResult> {
-  const { conversationId, userMessage, userId, role, customModulePermissions, currentPage, onEvent } = params
+  const { conversationId, userMessage, userId, role, customModulePermissions, currentPage, attachments, onEvent } = params
 
   // Rate limit
   if (!rateLimit(`ai:chat:${userId}`, 30, 60000)) {
@@ -125,7 +132,11 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
 
   // Build messages array
   type MessageParam = { role: 'user' | 'assistant'; content: string | ContentBlock[] }
-  type ContentBlock = { type: 'text'; text: string } | { type: 'tool_use'; id: string; name: string; input: unknown } | { type: 'tool_result'; tool_use_id: string; content: string }
+  type ContentBlock =
+    | { type: 'text'; text: string }
+    | { type: 'image'; source: { type: 'url'; url: string } }
+    | { type: 'tool_use'; id: string; name: string; input: unknown }
+    | { type: 'tool_result'; tool_use_id: string; content: string }
 
   const messages: MessageParam[] = []
 
@@ -164,8 +175,35 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
     }
   }))
 
-  // Add current user message
-  messages.push({ role: 'user', content: userMessage })
+  // Add current user message (with multimodal content if attachments)
+  if (attachments && attachments.length > 0) {
+    const contentBlocks: ContentBlock[] = []
+
+    // Add image attachments as image blocks
+    for (const att of attachments) {
+      if (att.mimeType.startsWith('image/')) {
+        contentBlocks.push({
+          type: 'image' as const,
+          source: { type: 'url' as const, url: att.url },
+        } as unknown as ContentBlock)
+      } else {
+        // For non-image files (PDF etc), add as text reference
+        contentBlocks.push({
+          type: 'text' as const,
+          text: `[File allegato: ${att.fileName} (${att.mimeType})]`,
+        })
+      }
+    }
+
+    // Add text message
+    if (userMessage) {
+      contentBlocks.push({ type: 'text' as const, text: userMessage })
+    }
+
+    messages.push({ role: 'user', content: contentBlocks })
+  } else {
+    messages.push({ role: 'user', content: userMessage })
+  }
 
   // Save user message
   await prisma.aiMessage.create({
@@ -173,6 +211,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
       conversationId,
       role: 'USER',
       content: userMessage,
+      attachments: attachments && attachments.length > 0 ? attachments as unknown as Prisma.InputJsonValue : undefined,
     },
   })
 

@@ -23,6 +23,9 @@ const PwaInstallPrompt = dynamic(() => import('@/components/layout/PwaInstallPro
 const AiChatSidebar = dynamic(() => import('@/components/ai/AiChatSidebar').then(m => ({ default: m.AiChatSidebar })), {
   ssr: false,
 })
+const AiFloatingButton = dynamic(() => import('@/components/ai/AiFloatingButton').then(m => ({ default: m.AiFloatingButton })), {
+  ssr: false,
+})
 const OnboardingWizard = dynamic(() => import('@/components/layout/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })), { ssr: false })
 import { useAuthRefresh } from '@/hooks/useAuthRefresh'
 import type { Role } from '@/generated/prisma/client'
@@ -274,6 +277,7 @@ export default function DashboardLayout({
         />
       )}
       <PwaInstallPrompt />
+      {!aiSidebarOpen && <AiFloatingButton onClick={toggleAiSidebar} />}
       <AiChatSidebar open={aiSidebarOpen} onClose={() => setAiSidebarOpen(false)} />
     </div>
     </SSEProvider>

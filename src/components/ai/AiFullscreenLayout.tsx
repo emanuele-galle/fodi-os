@@ -93,7 +93,11 @@ function groupByDate(conversations: Conversation[]): { label: string; items: Con
   return groups.filter(g => g.items.length > 0)
 }
 
-export function AiFullscreenLayout() {
+interface AiFullscreenLayoutProps {
+  userName?: string
+}
+
+export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -249,7 +253,7 @@ export function AiFullscreenLayout() {
         {selectedId ? (
           <AiChatPanel key={selectedId} initialConversationId={selectedId} />
         ) : (
-          <WelcomeScreen onAction={() => {
+          <WelcomeScreen userName={userName} onAction={() => {
             setSelectedId('new')
           }} />
         )}
@@ -258,7 +262,14 @@ export function AiFullscreenLayout() {
   )
 }
 
-function WelcomeScreen({ onAction }: { onAction: (msg: string) => void }) {
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Buongiorno'
+  if (hour < 18) return 'Buon pomeriggio'
+  return 'Buonasera'
+}
+
+function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (msg: string) => void }) {
   return (
     <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
       {/* Animated gradient orbs */}
@@ -296,7 +307,7 @@ function WelcomeScreen({ onAction }: { onAction: (msg: string) => void }) {
           </motion.div>
 
           <h1 className="text-3xl font-bold mb-2">
-            <span className="ai-gradient-text">Buongiorno!</span>
+            <span className="ai-gradient-text">{getGreeting()}{userName ? `, ${userName}` : ''}!</span>
           </h1>
           <p className="text-muted-foreground/70 text-sm max-w-md mx-auto">
             Come posso aiutarti oggi? Seleziona un&apos;azione rapida o inizia una conversazione.

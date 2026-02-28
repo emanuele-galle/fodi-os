@@ -1705,6 +1705,7 @@ model AiMessage {
   role           AiRole
   content        String   @db.Text
   toolCalls      Json?
+  attachments    Json?
   tokenInput     Int?
   tokenOutput    Int?
   latencyMs      Int?

@@ -9,11 +9,19 @@ export async function POST(request: NextRequest) {
   if (!auth.ok) return auth.response
 
   try {
-    const { message, conversationId, currentPage } = await request.json()
+    const { message, conversationId, currentPage, attachments } = await request.json()
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return NextResponse.json({ error: 'Messaggio vuoto' }, { status: 400 })
     }
+
+    // Validate attachments if present
+    const validAttachments = Array.isArray(attachments)
+      ? attachments.filter(
+          (a: { url?: string; mimeType?: string; fileName?: string }) =>
+            typeof a.url === 'string' && typeof a.mimeType === 'string' && typeof a.fileName === 'string'
+        ).slice(0, 3)
+      : undefined
 
     // Get or create conversation
     let convId = conversationId
@@ -62,6 +70,7 @@ export async function POST(request: NextRequest) {
       role: auth.role,
       customModulePermissions,
       currentPage: currentPage || undefined,
+      attachments: validAttachments,
       onEvent: enqueue,
     })
       .then(() => close())
