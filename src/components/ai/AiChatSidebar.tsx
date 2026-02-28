@@ -2,21 +2,47 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { X, GripVertical } from 'lucide-react'
+import { X, GripVertical, MessageSquare, Mic } from 'lucide-react'
 import { AiChatPanel } from './AiChatPanel'
+import { AiVoiceWidget } from './AiVoiceWidget'
 import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
+
+type TabType = 'chat' | 'voice'
 
 interface AiChatSidebarProps {
   open: boolean
   onClose: () => void
+  initialTab?: TabType
 }
 
-export function AiChatSidebar({ open, onClose }: AiChatSidebarProps) {
+export function AiChatSidebar({ open, onClose, initialTab = 'chat' }: AiChatSidebarProps) {
   const router = useRouter()
   const [width, setWidth] = useState(380)
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab)
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
   const isResizing = useRef(false)
   const startX = useRef(0)
   const startWidth = useRef(380)
+  const prevOpen = useRef(open)
+
+  // Check if voice agent is enabled
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/ai/config/public')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!cancelled && data?.data?.voiceAgentEnabled) setVoiceEnabled(true)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  // Sync initialTab when sidebar opens
+  if (open && !prevOpen.current) {
+    setActiveTab(initialTab)
+  }
+  prevOpen.current = open
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isResizing.current = true
@@ -82,13 +108,48 @@ export function AiChatSidebar({ open, onClose }: AiChatSidebarProps) {
               <X className="h-4 w-4" />
             </button>
 
-            <AiChatPanel
-              compact
-              onExpand={() => {
-                onClose()
-                router.push('/ai')
-              }}
-            />
+            {/* Tab switcher */}
+            {voiceEnabled && (
+              <div className="flex border-b border-border/50 px-3 pt-2 gap-1">
+                <button
+                  onClick={() => setActiveTab('chat')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg transition-colors',
+                    activeTab === 'chat'
+                      ? 'bg-violet-500/10 text-violet-400 border-b-2 border-violet-500'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                  )}
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Chat
+                </button>
+                <button
+                  onClick={() => setActiveTab('voice')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg transition-colors',
+                    activeTab === 'voice'
+                      ? 'bg-violet-500/10 text-violet-400 border-b-2 border-violet-500'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                  )}
+                >
+                  <Mic className="h-3.5 w-3.5" />
+                  Voce
+                </button>
+              </div>
+            )}
+
+            {/* Content */}
+            {activeTab === 'chat' ? (
+              <AiChatPanel
+                compact
+                onExpand={() => {
+                  onClose()
+                  router.push('/ai')
+                }}
+              />
+            ) : (
+              <AiVoiceWidget />
+            )}
           </motion.div>
         </>
       )}

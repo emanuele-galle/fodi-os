@@ -1,45 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Mic } from 'lucide-react'
-import { cn } from '@/lib/utils'
-
 interface AiFloatingButtonProps {
   onClick: () => void
-  onVoiceClick?: () => void
 }
 
-export function AiFloatingButton({ onClick, onVoiceClick }: AiFloatingButtonProps) {
-  const [voiceEnabled, setVoiceEnabled] = useState(false)
-
-  useEffect(() => {
-    fetch('/api/ai/config/public')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.data?.voiceAgentEnabled) setVoiceEnabled(true)
-      })
-      .catch(() => {})
-  }, [])
-
+export function AiFloatingButton({ onClick }: AiFloatingButtonProps) {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-3 max-md:bottom-20">
-      {/* Voice FAB (above main FAB) */}
-      {voiceEnabled && onVoiceClick && (
-        <button
-          onClick={onVoiceClick}
-          className={cn(
-            'w-11 h-11 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white',
-            'shadow-lg shadow-cyan-500/20 flex items-center justify-center',
-            'hover:shadow-xl hover:shadow-cyan-500/30 hover:scale-110 active:scale-95',
-            'transition-all duration-300',
-          )}
-          title="Parla con Giusy"
-          aria-label="Apri assistente vocale"
-        >
-          <Mic className="w-4.5 h-4.5 drop-shadow-[0_0_4px_rgba(255,255,255,0.4)]" />
-        </button>
-      )}
-
       {/* Main AI FAB */}
       <button
         onClick={onClick}

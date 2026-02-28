@@ -26,9 +26,6 @@ const AiChatSidebar = dynamic(() => import('@/components/ai/AiChatSidebar').then
 const AiFloatingButton = dynamic(() => import('@/components/ai/AiFloatingButton').then(m => ({ default: m.AiFloatingButton })), {
   ssr: false,
 })
-const AiVoiceAgent = dynamic(() => import('@/components/ai/AiVoiceAgent').then(m => ({ default: m.AiVoiceAgent })), {
-  ssr: false,
-})
 const OnboardingWizard = dynamic(() => import('@/components/layout/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })), { ssr: false })
 import { useAuthRefresh } from '@/hooks/useAuthRefresh'
 import type { Role } from '@/generated/prisma/client'
@@ -69,10 +66,8 @@ export default function DashboardLayout({
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [mobileNotificationsOpen, setMobileNotificationsOpen] = useState(false)
   const [aiSidebarOpen, setAiSidebarOpen] = useState(false)
-  const [voiceAgentOpen, setVoiceAgentOpen] = useState(false)
   const openCommandPalette = useCallback(() => setCommandPaletteOpen(true), [])
   const toggleAiSidebar = useCallback(() => setAiSidebarOpen(prev => !prev), [])
-  const openVoiceAgent = useCallback(() => setVoiceAgentOpen(true), [])
   const openMobileNotifications = useCallback(() => setMobileNotificationsOpen(true), [])
 
   // Proactive token refresh: prevents auto-logout
@@ -282,9 +277,8 @@ export default function DashboardLayout({
         />
       )}
       <PwaInstallPrompt />
-      {!aiSidebarOpen && <AiFloatingButton onClick={toggleAiSidebar} onVoiceClick={openVoiceAgent} />}
+      {!aiSidebarOpen && <AiFloatingButton onClick={toggleAiSidebar} />}
       <AiChatSidebar open={aiSidebarOpen} onClose={() => setAiSidebarOpen(false)} />
-      <AiVoiceAgent open={voiceAgentOpen} onClose={() => setVoiceAgentOpen(false)} />
     </div>
     </SSEProvider>
   )
