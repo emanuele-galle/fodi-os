@@ -1,10 +1,11 @@
 import type { Role } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { brand } from '@/lib/branding'
-import { ROLE_PERMISSIONS, type Module, type Permission } from '@/lib/permissions'
+import { ROLE_PERMISSIONS, type Permission } from '@/lib/permissions'
 import { BASE_SYSTEM_PROMPT } from './base'
 import { FODI_BRAND_PROMPT } from './brands/fodi'
 import { MUSCARI_BRAND_PROMPT } from './brands/muscari'
+import { getAllSkillPrompts } from './skills'
 
 const BRAND_PROMPTS: Record<string, string> = {
   fodi: FODI_BRAND_PROMPT,
@@ -74,6 +75,12 @@ export async function buildSystemPrompt({ userName, userRole, agentName, customP
   // Add brand-specific context
   if (brandPrompt) {
     prompt += '\n' + brandPrompt
+  }
+
+  // Add skill prompts (chat, notifications, coordination, etc.)
+  const skillPrompts = getAllSkillPrompts()
+  if (skillPrompts) {
+    prompt += '\n\n## Linee guida operative' + skillPrompts
   }
 
   // Add page context

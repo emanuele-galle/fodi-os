@@ -76,6 +76,17 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
   const fileInputRef = useRef<HTMLInputElement>(null)
   const initialLoadDone = useRef(false)
 
+  // Load AI config (welcome message)
+  const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null)
+  useEffect(() => {
+    fetch('/api/ai/config/public')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.data?.welcomeMessage) setWelcomeMessage(data.data.welcomeMessage)
+      })
+      .catch(() => {})
+  }, [])
+
   // Load voice config
   useEffect(() => {
     loadVoiceConfig()
@@ -263,7 +274,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
               <h2 className="text-sm font-semibold">Assistente AI</h2>
             </div>
             {!compact && (
-              <p className="text-[10px] text-muted-foreground/50">Gestisci task, CRM, calendario e report</p>
+              <p className="text-[10px] text-muted-foreground/50">Task, CRM, chat, calendario, report e team</p>
             )}
           </div>
         </div>
@@ -357,7 +368,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
             <div>
               <p className="text-sm font-medium mb-1">Come posso aiutarti?</p>
               <p className="text-xs text-muted-foreground/50 max-w-[280px]">
-                Posso gestire task, cercare clienti, controllare il calendario, generare report e molto altro.
+                {welcomeMessage || 'Posso gestire task, coordinare il team, inviare messaggi, controllare il calendario, generare report e molto altro.'}
               </p>
             </div>
             <AiSuggestions onSelect={(s) => handleSend(s)} variant="empty" currentPage={currentPage} />

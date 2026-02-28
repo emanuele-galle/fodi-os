@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Bot, Save, Loader2, ToggleLeft, ToggleRight, RefreshCw } from 'lucide-react'
+import { Bot, Save, Loader2, ToggleLeft, ToggleRight, RefreshCw, Brain, Volume2 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardHeading } from '@/components/ui/Card'
 
 interface AiConfig {
@@ -14,6 +14,11 @@ interface AiConfig {
   enabledTools: string[]
   welcomeMessage: string | null
   isActive: boolean
+  enableThinking: boolean
+  thinkingEffort: string
+  ttsProvider: string
+  ttsVoice: string | null
+  autoPlayVoice: boolean
 }
 
 interface ToolInfo {
@@ -44,6 +49,11 @@ export default function AiSettingsPage() {
   const [welcomeMessage, setWelcomeMessage] = useState('')
   const [enabledTools, setEnabledTools] = useState<string[]>([])
   const [isActive, setIsActive] = useState(true)
+  const [enableThinking, setEnableThinking] = useState(true)
+  const [thinkingEffort, setThinkingEffort] = useState('medium')
+  const [ttsProvider, setTtsProvider] = useState('disabled')
+  const [ttsVoice, setTtsVoice] = useState('')
+  const [autoPlayVoice, setAutoPlayVoice] = useState(false)
 
   const loadConfig = useCallback(async () => {
     setLoading(true)
@@ -70,6 +80,11 @@ export default function AiSettingsPage() {
           setWelcomeMessage(data.welcomeMessage || '')
           setEnabledTools(data.enabledTools || [])
           setIsActive(data.isActive)
+          setEnableThinking(data.enableThinking ?? true)
+          setThinkingEffort(data.thinkingEffort || 'medium')
+          setTtsProvider(data.ttsProvider || 'disabled')
+          setTtsVoice(data.ttsVoice || '')
+          setAutoPlayVoice(data.autoPlayVoice ?? false)
         }
       }
     } finally {
@@ -97,6 +112,11 @@ export default function AiSettingsPage() {
           welcomeMessage: welcomeMessage || null,
           enabledTools,
           isActive,
+          enableThinking,
+          thinkingEffort,
+          ttsProvider,
+          ttsVoice: ttsVoice || null,
+          autoPlayVoice,
         }),
       })
 
@@ -295,6 +315,97 @@ export default function AiSettingsPage() {
                 </label>
               ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Thinking / Reasoning */}
+        <Card>
+          <CardHeader>
+            <CardHeading>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-4 w-4 text-violet-400" />
+                Ragionamento AI
+              </CardTitle>
+              <CardDescription>Abilita il pensiero esteso per risposte più ragionate</CardDescription>
+            </CardHeading>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Extended Thinking</p>
+                <p className="text-xs text-muted-foreground">L&apos;agente ragiona prima di rispondere</p>
+              </div>
+              <button onClick={() => setEnableThinking(!enableThinking)} className="text-primary">
+                {enableThinking ? <ToggleRight className="h-8 w-8" /> : <ToggleLeft className="h-8 w-8 text-muted-foreground" />}
+              </button>
+            </div>
+
+            {enableThinking && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">Livello di ragionamento</label>
+                <select
+                  value={thinkingEffort}
+                  onChange={e => setThinkingEffort(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="low">Basso — risposte rapide</option>
+                  <option value="medium">Medio — bilanciato</option>
+                  <option value="high">Alto — analisi approfondita</option>
+                </select>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Voice / TTS */}
+        <Card>
+          <CardHeader>
+            <CardHeading>
+              <CardTitle className="flex items-center gap-2">
+                <Volume2 className="h-4 w-4 text-violet-400" />
+                Voce
+              </CardTitle>
+              <CardDescription>Configura la sintesi vocale delle risposte</CardDescription>
+            </CardHeading>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Provider TTS</label>
+              <select
+                value={ttsProvider}
+                onChange={e => setTtsProvider(e.target.value)}
+                className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="disabled">Disabilitato</option>
+                <option value="openai">OpenAI TTS</option>
+                <option value="elevenlabs">ElevenLabs</option>
+              </select>
+            </div>
+
+            {ttsProvider !== 'disabled' && (
+              <>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Voice ID</label>
+                  <input
+                    type="text"
+                    value={ttsVoice}
+                    onChange={e => setTtsVoice(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    placeholder={ttsProvider === 'openai' ? 'alloy, echo, fable, onyx, nova, shimmer' : 'Voice ID ElevenLabs'}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Auto-play</p>
+                    <p className="text-xs text-muted-foreground">Riproduci automaticamente le risposte</p>
+                  </div>
+                  <button onClick={() => setAutoPlayVoice(!autoPlayVoice)} className="text-primary">
+                    {autoPlayVoice ? <ToggleRight className="h-8 w-8" /> : <ToggleLeft className="h-8 w-8 text-muted-foreground" />}
+                  </button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

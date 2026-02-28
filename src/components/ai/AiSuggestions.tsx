@@ -1,14 +1,14 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { Sparkles, CheckSquare, Users, Calendar, Receipt, Headphones, Clock } from 'lucide-react'
+import { Sparkles, CheckSquare, Users, Calendar, Receipt, Headphones, Clock, MessageCircle, FolderPlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const DEFAULT_SUGGESTIONS = [
-  'Quali sono i miei task in scadenza?',
-  'Mostrami la pipeline CRM',
-  'Cosa ho in calendario oggi?',
-  'Report panoramica settimanale',
+  'Riepilogo della mia giornata',
+  'Crea un progetto per un nuovo cliente',
+  'Cosa c\'è in scadenza questa settimana?',
+  'Invia un messaggio a un collega',
 ]
 
 const PAGE_SUGGESTIONS: Record<string, string[]> = {
@@ -34,6 +34,8 @@ function getSuggestionIcon(text: string): { icon: typeof Sparkles; color: string
   if (lower.includes('report') || lower.includes('fattur') || lower.includes('spese') || lower.includes('preventiv') || lower.includes('entrat')) return { icon: Receipt, color: 'text-violet-400' }
   if (lower.includes('ticket') || lower.includes('support')) return { icon: Headphones, color: 'text-amber-400' }
   if (lower.includes('ore') || lower.includes('tempo') || lower.includes('time')) return { icon: Clock, color: 'text-cyan-400' }
+  if (lower.includes('messaggio') || lower.includes('chat') || lower.includes('invia') || lower.includes('scrivi')) return { icon: MessageCircle, color: 'text-pink-400' }
+  if (lower.includes('crea un progetto') || lower.includes('nuovo progetto')) return { icon: FolderPlus, color: 'text-teal-400' }
   return { icon: Sparkles, color: 'text-violet-400' }
 }
 
