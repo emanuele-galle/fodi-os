@@ -72,6 +72,7 @@ model User {
   wikiPages            WikiPage[]
   dailyReports         DailyReport[]
   projectLinks         ProjectLink[]    @relation("ProjectLinkCreator")
+  aiConversations      AiConversation[]
 
   workSchedule     Json?    @default("{\"1\":{\"start\":9,\"end\":18},\"2\":{\"start\":9,\"end\":18},\"3\":{\"start\":9,\"end\":18},\"4\":{\"start\":9,\"end\":18},\"5\":{\"start\":9,\"end\":18}}")
 
@@ -1630,4 +1631,109 @@ model MicrosoftToken {
 
   @@index([userId])
   @@map("microsoft_tokens")
+}
+
+// ============================================================
+// AI AGENT
+// ============================================================
+
+enum AiChannel {
+  WEB
+  WHATSAPP
+  TELEGRAM
+  API
+}
+
+enum AiRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL_RESULT
+}
+
+enum AiToolStatus {
+  PENDING
+  SUCCESS
+  ERROR
+  DENIED
+}
+
+model AiAgentConfig {
+  id              String   @id @default(uuid())
+  brandSlug       String   @unique
+  name            String   @default("Assistente AI")
+  systemPrompt    String?  @db.Text
+  model           String   @default("claude-sonnet-4-6")
+  temperature     Float    @default(0.7)
+  maxTokens       Int      @default(4096)
+  enabledTools    String[] @default([])
+  welcomeMessage  String?  @db.Text
+  metadata        Json?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([brandSlug])
+  @@map("ai_agent_configs")
+}
+
+model AiConversation {
+  id          String    @id @default(uuid())
+  userId      String
+  channel     AiChannel @default(WEB)
+  title       String?
+  summary     String?   @db.Text
+  externalId  String?
+  isArchived  Boolean   @default(false)
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AiMessage[]
+
+  @@index([userId])
+  @@index([channel])
+  @@index([externalId])
+  @@index([createdAt])
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  role           AiRole
+  content        String   @db.Text
+  toolCalls      Json?
+  tokenInput     Int?
+  tokenOutput    Int?
+  latencyMs      Int?
+  model          String?
+  createdAt      DateTime @default(now())
+
+  conversation   AiConversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  toolExecutions AiToolExecution[]
+
+  @@index([conversationId, createdAt])
+  @@map("ai_messages")
+}
+
+model AiToolExecution {
+  id         String       @id @default(uuid())
+  messageId  String
+  toolName   String
+  input      Json
+  output     Json?
+  status     AiToolStatus @default(PENDING)
+  durationMs Int?
+  error      String?      @db.Text
+  createdAt  DateTime     @default(now())
+
+  message AiMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([toolName])
+  @@index([status])
+  @@index([createdAt])
+  @@map("ai_tool_executions")
 }

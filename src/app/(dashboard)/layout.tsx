@@ -20,6 +20,9 @@ const CommandPalette = dynamic(() => import('@/components/layout/CommandPalette'
 const PwaInstallPrompt = dynamic(() => import('@/components/layout/PwaInstallPrompt').then(m => ({ default: m.PwaInstallPrompt })), {
   ssr: false,
 })
+const AiChatSidebar = dynamic(() => import('@/components/ai/AiChatSidebar').then(m => ({ default: m.AiChatSidebar })), {
+  ssr: false,
+})
 const OnboardingWizard = dynamic(() => import('@/components/layout/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })), { ssr: false })
 import { useAuthRefresh } from '@/hooks/useAuthRefresh'
 import type { Role } from '@/generated/prisma/client'
@@ -59,7 +62,9 @@ export default function DashboardLayout({
 
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [mobileNotificationsOpen, setMobileNotificationsOpen] = useState(false)
+  const [aiSidebarOpen, setAiSidebarOpen] = useState(false)
   const openCommandPalette = useCallback(() => setCommandPaletteOpen(true), [])
+  const toggleAiSidebar = useCallback(() => setAiSidebarOpen(prev => !prev), [])
   const openMobileNotifications = useCallback(() => setMobileNotificationsOpen(true), [])
 
   // Proactive token refresh: prevents auto-logout
@@ -212,6 +217,7 @@ export default function DashboardLayout({
           <Topbar
             user={user}
             onOpenCommandPalette={openCommandPalette}
+            onToggleAiSidebar={toggleAiSidebar}
           />
         </div>
 
@@ -268,6 +274,7 @@ export default function DashboardLayout({
         />
       )}
       <PwaInstallPrompt />
+      <AiChatSidebar open={aiSidebarOpen} onClose={() => setAiSidebarOpen(false)} />
     </div>
     </SSEProvider>
   )

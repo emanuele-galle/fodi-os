@@ -18,6 +18,7 @@ import {
   BookOpen,
   Library,
   Settings,
+  Bot,
   ChevronRight,
   ChevronLeft,
   PanelLeftClose,
@@ -67,6 +68,7 @@ const navigation: NavItem[] = [
     group: 'main',
   },
   { label: 'Chat', href: '/chat', icon: MessageCircle, group: 'main' },
+  { label: 'Assistente AI', href: '/ai', icon: Bot, group: 'main' },
   { label: 'Notifiche', href: '/notifications', icon: Bell, group: 'main' },
   // Lavoro
   {
@@ -149,6 +151,7 @@ const navigation: NavItem[] = [
       { label: 'Profilo', href: '/settings' },
       { label: 'Fatturazione', href: '/settings/billing' },
       { label: 'Utenti', href: '/settings/users' },
+      { label: 'Assistente AI', href: '/settings/ai' },
       { label: 'Sistema', href: '/settings/system' },
     ],
     group: 'system',

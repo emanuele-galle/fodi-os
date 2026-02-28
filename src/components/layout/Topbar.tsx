@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search, LogOut, Video } from 'lucide-react'
+import { Bell, Search, LogOut, Video, Bot } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -19,9 +19,10 @@ interface TopbarProps {
     avatarUrl?: string | null
   }
   onOpenCommandPalette: () => void
+  onToggleAiSidebar?: () => void
 }
 
-export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
+export function Topbar({ user, onOpenCommandPalette, onToggleAiSidebar }: TopbarProps) {
   const router = useRouter()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -152,6 +153,18 @@ export function Topbar({ user, onOpenCommandPalette }: TopbarProps) {
       {/* Right side */}
       <div className="flex items-center gap-3">
         <ThemeSwitcher />
+
+        {/* AI Assistant Toggle */}
+        {onToggleAiSidebar && (
+          <button
+            onClick={onToggleAiSidebar}
+            className="p-2 rounded-lg hover:bg-secondary/60 transition-all duration-200"
+            title="Assistente AI"
+            aria-label="Assistente AI"
+          >
+            <Bot className="h-[18px] w-[18px] text-violet-400" />
+          </button>
+        )}
 
         {/* Quick Meet */}
         <button
