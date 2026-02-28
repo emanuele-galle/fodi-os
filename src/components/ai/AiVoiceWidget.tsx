@@ -20,7 +20,7 @@ export function AiVoiceWidget() {
     }
     scriptLoaded.current = true
     const script = document.createElement('script')
-    script.src = 'https://cdn.elevenlabs.io/convai-widget-embed.js'
+    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
     script.async = true
     document.body.appendChild(script)
   }, [])
