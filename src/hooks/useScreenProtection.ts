@@ -16,7 +16,7 @@ export function useScreenProtection(lessonId?: string) {
     eventsBuffer.current.push({ type, timestamp: Date.now(), details })
   }, [])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- sets protection flag after registering event listeners
+   
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {

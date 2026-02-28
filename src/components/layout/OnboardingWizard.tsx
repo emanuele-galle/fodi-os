@@ -101,7 +101,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
   }, [])
 
   // PWA install prompt
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- detect browser capabilities on mount
+   
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches
     setIsPWA(standalone)

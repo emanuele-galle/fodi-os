@@ -23,7 +23,7 @@ export function SetupBanner() {
   const [subscribing, setSubscribing] = useState(false)
 
   // Check dismissed state from localStorage
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- init from localStorage on mount
+   
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_DISMISSED_KEY)
@@ -36,7 +36,7 @@ export function SetupBanner() {
   }, [])
 
   // Check notification permission
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- init from Notification API on mount
+   
   useEffect(() => {
     if (typeof Notification !== 'undefined') {
       setStatus((s) => ({ ...s, notifications: Notification.permission as SetupStatus['notifications'] }))

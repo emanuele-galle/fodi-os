@@ -46,7 +46,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
   }, [open, attemptClose])
 
   // Reset confirm state when modal opens/closes
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- reset UI state when modal closes
+   
   useEffect(() => {
     if (!open) setShowCloseConfirm(false)
   }, [open])

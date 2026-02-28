@@ -48,7 +48,7 @@ function UsersPageContent() {
     .map((r) => ({ id: r.id, name: r.name, color: r.color }))
 
   // Sync fetched users into local state (needed for optimistic updates after PATCH)
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- sync SWR data to local state for optimistic updates
+   
   useEffect(() => {
     if (usersRaw?.users) setUsers(usersRaw.users)
   }, [usersRaw])
