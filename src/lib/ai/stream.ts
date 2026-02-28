@@ -2,8 +2,16 @@
  * SSE stream helpers for AI chat responses.
  */
 
+export type ThinkingBudgetTokens = { low: number; medium: number; high: number }
+
+export const THINKING_BUDGETS: ThinkingBudgetTokens = {
+  low: 2048,
+  medium: 5120,
+  high: 10240,
+}
+
 export interface AiStreamEvent {
-  type: 'text_delta' | 'tool_use_start' | 'tool_result' | 'tool_progress' | 'suggested_followups' | 'error' | 'done'
+  type: 'text_delta' | 'thinking_delta' | 'thinking_done' | 'tool_use_start' | 'tool_result' | 'tool_progress' | 'suggested_followups' | 'error' | 'done'
   data: unknown
 }
 

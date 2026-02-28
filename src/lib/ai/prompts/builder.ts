@@ -1,4 +1,5 @@
 import type { Role } from '@/generated/prisma/client'
+import { prisma } from '@/lib/prisma'
 import { brand } from '@/lib/branding'
 import { ROLE_PERMISSIONS, type Module, type Permission } from '@/lib/permissions'
 import { BASE_SYSTEM_PROMPT } from './base'
@@ -27,7 +28,7 @@ interface BuildPromptParams {
   currentPage?: string
 }
 
-export function buildSystemPrompt({ userName, userRole, agentName, customPrompt, currentPage }: BuildPromptParams): string {
+export async function buildSystemPrompt({ userName, userRole, agentName, customPrompt, currentPage }: BuildPromptParams): Promise<string> {
   const brandSlug = brand.slug
   const brandPrompt = BRAND_PROMPTS[brandSlug] || ''
 
@@ -83,6 +84,24 @@ export function buildSystemPrompt({ userName, userRole, agentName, customPrompt,
   // Add custom prompt from admin config
   if (customPrompt) {
     prompt += '\n\n## Istruzioni personalizzate\n' + customPrompt
+  }
+
+  // Load knowledge base
+  try {
+    const knowledgePages = await prisma.aiKnowledgePage.findMany({
+      where: { brandSlug: brand.slug, isActive: true },
+      orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }],
+      select: { title: true, content: true, category: true },
+    })
+
+    if (knowledgePages.length > 0) {
+      prompt += '\n\n## Knowledge Base aziendale\nUsa queste informazioni per rispondere con contesto aziendale accurato.\n'
+      for (const page of knowledgePages) {
+        prompt += `\n### ${page.title} [${page.category}]\n${page.content}\n`
+      }
+    }
+  } catch {
+    // Knowledge base loading is best-effort
   }
 
   return prompt

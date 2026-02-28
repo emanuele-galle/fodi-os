@@ -29,6 +29,7 @@ export function ClientTimelineTab({ clientId }: ClientTimelineTabProps) {
       .finally(() => setLoading(false))
   }, [clientId])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch on mount
   useEffect(() => { fetchTimeline(1) }, [fetchTimeline])
 
   if (loading) return <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>

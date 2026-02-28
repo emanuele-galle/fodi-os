@@ -29,13 +29,11 @@ function loadPreferences(): UserPreferences {
 }
 
 export function useUserPreferences() {
-  const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES)
-  const [loaded, setLoaded] = useState(false)
-
-  useEffect(() => {
-    setPreferences(loadPreferences())
-    setLoaded(true)
-  }, [])
+  const [preferences, setPreferences] = useState<UserPreferences>(() => {
+    if (typeof window === 'undefined') return DEFAULT_PREFERENCES
+    return loadPreferences()
+  })
+  const [loaded] = useState(() => typeof window !== 'undefined')
 
   const updatePreference = useCallback(<K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
     setPreferences((prev) => {

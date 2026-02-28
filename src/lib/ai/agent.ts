@@ -8,6 +8,7 @@ import { anthropic } from './anthropic'
 import { buildSystemPrompt } from './prompts/builder'
 import { getToolsForRole, findTool, toAnthropicTools } from './tools/registry'
 import type { AiStreamEvent } from './stream'
+import { THINKING_BUDGETS } from './stream'
 import type { AiToolContext } from './tools/types'
 
 const MAX_TOOL_ROUNDS = 10
@@ -57,6 +58,13 @@ const TOOL_FOLLOWUPS: Record<string, string[]> = {
   // Calendar actions
   update_calendar_event: ['Calendario di oggi', 'Slot liberi', 'Dettagli evento'],
   delete_calendar_event: ['Calendario di domani', 'Crea evento', 'Agenda settimanale'],
+  // Coordination
+  create_project_from_brief: ['Assegna task al team', 'Stato del progetto', 'Aggiungi altri task'],
+  auto_assign_tasks: ['Stato team', 'Task non assegnati', 'Carico di lavoro'],
+  check_team_progress: ['Task in ritardo', 'Assegna task', 'Report dettagliato'],
+  send_team_notification: ['Stato task', 'Follow-up', 'Notifica altro membro'],
+  suggest_task_breakdown: ['Crea il progetto', 'Modifica suddivisione', 'Assegna al team'],
+  get_team_skills: ['Assegna task', 'Carico di lavoro', 'Crea progetto'],
 }
 
 interface AiAttachment {
@@ -103,7 +111,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
   })
 
   // Build system prompt
-  const systemPrompt = buildSystemPrompt({
+  const systemPrompt = await buildSystemPrompt({
     userName: user ? `${user.firstName} ${user.lastName}` : 'Utente',
     userRole: role,
     agentName: config?.name || undefined,
@@ -238,25 +246,61 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
   const modelId = config?.model || process.env.AI_DEFAULT_MODEL || 'claude-sonnet-4-6'
   const usedToolNames: string[] = []
 
+  // Thinking configuration
+  const enableThinking = config?.enableThinking ?? true
+  const thinkingEffort = (config?.thinkingEffort as 'low' | 'medium' | 'high') || 'medium'
+  const thinkingBudget = THINKING_BUDGETS[thinkingEffort] || THINKING_BUDGETS.medium
+  const maxTokens = config?.maxTokens || Number(process.env.AI_MAX_TOKENS) || 4096
+  // When thinking is enabled, max_tokens must be > budget_tokens
+  const effectiveMaxTokens = enableThinking ? Math.max(maxTokens, thinkingBudget + 1024) : maxTokens
+
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     const startMs = Date.now()
 
-    const stream = anthropic.messages.stream({
+    // Build stream params
+    const streamParams: Record<string, unknown> = {
       model: modelId,
-      max_tokens: config?.maxTokens || Number(process.env.AI_MAX_TOKENS) || 4096,
-      temperature: config?.temperature ?? 0.7,
+      max_tokens: effectiveMaxTokens,
       system: systemPrompt,
       tools: anthropicTools.length > 0 ? anthropicTools : undefined,
       messages: messages as Parameters<typeof anthropic.messages.create>[0]['messages'],
-    })
+    }
+
+    if (enableThinking) {
+      // Adaptive thinking with budget
+      streamParams.thinking = { type: 'enabled', budget_tokens: thinkingBudget }
+      // Temperature must be 1 when thinking is enabled
+      streamParams.temperature = 1
+    } else {
+      streamParams.temperature = config?.temperature ?? 0.7
+    }
+
+    const stream = anthropic.messages.stream(
+      streamParams as Parameters<typeof anthropic.messages.stream>[0],
+    )
 
     const textParts: string[] = []
     const toolUses: { id: string; name: string; input: unknown }[] = []
     let currentTextBlock = ''
+    let currentThinkingBlock = ''
 
     stream.on('text', (text) => {
       currentTextBlock += text
       onEvent?.({ type: 'text_delta', data: { text } })
+    })
+
+    // Stream thinking content via raw SSE events
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(stream as any).on('event', (event: any) => {
+      if (event.type === 'content_block_delta' && event.delta?.type === 'thinking_delta' && event.delta?.thinking) {
+        currentThinkingBlock += event.delta.thinking
+        onEvent?.({ type: 'thinking_delta', data: { text: event.delta.thinking } })
+      } else if (event.type === 'content_block_stop') {
+        if (currentThinkingBlock) {
+          onEvent?.({ type: 'thinking_done', data: { text: currentThinkingBlock } })
+          currentThinkingBlock = ''
+        }
+      }
     })
 
     stream.on('contentBlock', (block) => {

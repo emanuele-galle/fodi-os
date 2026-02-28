@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ReactBits community component
 // @ts-nocheck
 // Source: ReactBits (reactbits.dev) - GradientText component
 import { useState, useCallback, useEffect, useRef, ReactNode } from 'react';

@@ -13,6 +13,7 @@ export function useFormPersist<T extends Record<string, unknown>>(
 } {
   const storageKey = `form-persist:${key}`
   const initialRef = useRef(initialValues)
+  const initialSnapshot = initialValues
 
   const [hasPersistedData, setHasPersistedData] = useState(false)
 
@@ -86,7 +87,7 @@ export function useFormPersist<T extends Record<string, unknown>>(
   }, [storageKey])
 
   const isDirty =
-    JSON.stringify(values) !== JSON.stringify(initialRef.current)
+    JSON.stringify(values) !== JSON.stringify(initialSnapshot)
 
   // Warn on page unload if dirty
   useEffect(() => {

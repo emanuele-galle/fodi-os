@@ -294,15 +294,12 @@ export async function pullFromMicrosoftTodo(userId: string): Promise<number> {
 
       if (todoModified <= lastSync) continue // No changes from To Do side
 
-      // Check if OS was also modified after last sync (conflict)
-      if (osTask.updatedAt > lastSync && todoModified > lastSync) {
-        // Both modified — last-write-wins
-        if (osTask.updatedAt > todoModified) {
-          // OS wins, push our version back
-          continue
-        }
-        // To Do wins, apply below
+      // Check if OS was also modified after last sync (conflict) — both modified, last-write-wins
+      if (osTask.updatedAt > lastSync && todoModified > lastSync && osTask.updatedAt > todoModified) {
+        // OS wins, push our version back
+        continue
       }
+      // To Do wins (or no conflict), apply below
 
       const updates: Record<string, unknown> = {}
 

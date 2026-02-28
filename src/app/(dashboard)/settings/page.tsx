@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Settings, Bell, Lock, User, Palette, Shield, CreditCard, ArrowRight } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -14,8 +14,6 @@ import { IntegrationsSection } from '@/components/settings/IntegrationsSection'
 export default function SettingsPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const [message, setMessage] = useState('')
-  const [activeSection, setActiveSection] = useState('profile')
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
@@ -26,29 +24,34 @@ export default function SettingsPage() {
       })
   }, [])
 
-  useEffect(() => {
+  const initialMessage = useMemo(() => {
     const googleResult = searchParams.get('google')
-    if (googleResult === 'connected') {
-      setMessage('Google connesso con successo!')
-    } else if (googleResult === 'error') {
+    if (googleResult === 'connected') return 'Google connesso con successo!'
+    if (googleResult === 'error') {
       const reason = searchParams.get('reason')
       if (reason === 'insufficient_scopes') {
-        setMessage('Devi accettare TUTTI i permessi richiesti da Google (Calendario, Drive, Meet). Riprova e assicurati di selezionare tutte le caselle.')
-      } else {
-        setMessage(`Errore connessione Google: ${reason || 'sconosciuto'}`)
+        return 'Devi accettare TUTTI i permessi richiesti da Google (Calendario, Drive, Meet). Riprova e assicurati di selezionare tutte le caselle.'
       }
+      return `Errore connessione Google: ${reason || 'sconosciuto'}`
     }
-
     const microsoftResult = searchParams.get('microsoft')
-    if (microsoftResult === 'connected') {
-      setMessage('Microsoft To Do connesso con successo!')
-      setActiveSection('integrations')
-    } else if (microsoftResult === 'error') {
+    if (microsoftResult === 'connected') return 'Microsoft To Do connesso con successo!'
+    if (microsoftResult === 'error') {
       const reason = searchParams.get('reason')
-      setMessage(`Errore connessione Microsoft: ${reason || 'sconosciuto'}`)
-      setActiveSection('integrations')
+      return `Errore connessione Microsoft: ${reason || 'sconosciuto'}`
     }
+    return ''
   }, [searchParams])
+
+  const [message, setMessage] = useState(initialMessage)
+
+  const initialSection = useMemo(() => {
+    const microsoftResult = searchParams.get('microsoft')
+    if (microsoftResult === 'connected' || microsoftResult === 'error') return 'integrations'
+    return 'profile'
+  }, [searchParams])
+
+  const [activeSection, setActiveSection] = useState(initialSection)
 
   if (!loaded) return (
     <div className="animate-fade-in space-y-6">

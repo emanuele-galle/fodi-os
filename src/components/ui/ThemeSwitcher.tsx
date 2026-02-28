@@ -26,15 +26,14 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeSwitcher() {
-  const [theme, setTheme] = useState<Theme>('light')
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'light'
+    const stored = getStoredTheme()
+    applyTheme(stored)
+    return stored
+  })
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const stored = getStoredTheme()
-    setTheme(stored)
-    applyTheme(stored)
-  }, [])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

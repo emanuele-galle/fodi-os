@@ -79,8 +79,7 @@ export async function GET(request: NextRequest) {
       }
     }).filter((item) => {
       // Hide PROJECT channels with no unread messages (they stay accessible from the project page)
-      if (item.isProjectChannel && !item.hasUnread) return false
-      return true
+      return !(item.isProjectChannel && !item.hasUnread)
     })
 
     // Sort: channels with unread first, then by latest message

@@ -33,7 +33,11 @@ export async function PUT(request: NextRequest) {
     requirePermission(auth.role, 'admin', 'admin')
 
     const body = await request.json()
-    const { name, systemPrompt, model, temperature, maxTokens, enabledTools, welcomeMessage, isActive } = body
+    const {
+      name, systemPrompt, model, temperature, maxTokens, enabledTools, welcomeMessage, isActive,
+      enableThinking, thinkingEffort,
+      ttsProvider, ttsVoice, autoPlayVoice,
+    } = body
 
     const config = await prisma.aiAgentConfig.upsert({
       where: { brandSlug: brand.slug },
@@ -47,6 +51,11 @@ export async function PUT(request: NextRequest) {
         enabledTools: enabledTools || [],
         welcomeMessage: welcomeMessage || null,
         isActive: isActive ?? true,
+        enableThinking: enableThinking ?? true,
+        thinkingEffort: thinkingEffort || 'medium',
+        ttsProvider: ttsProvider || 'disabled',
+        ttsVoice: ttsVoice || null,
+        autoPlayVoice: autoPlayVoice ?? false,
       },
       update: {
         ...(name !== undefined && { name }),
@@ -57,6 +66,11 @@ export async function PUT(request: NextRequest) {
         ...(enabledTools !== undefined && { enabledTools }),
         ...(welcomeMessage !== undefined && { welcomeMessage }),
         ...(isActive !== undefined && { isActive }),
+        ...(enableThinking !== undefined && { enableThinking }),
+        ...(thinkingEffort !== undefined && { thinkingEffort }),
+        ...(ttsProvider !== undefined && { ttsProvider }),
+        ...(ttsVoice !== undefined && { ttsVoice }),
+        ...(autoPlayVoice !== undefined && { autoPlayVoice }),
       },
     })
 

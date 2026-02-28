@@ -6,10 +6,12 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAiChat } from '@/hooks/useAiChat'
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder'
+import { useVoiceSynthesis } from '@/hooks/useVoiceSynthesis'
 import { AiMessageBubble } from './AiMessageBubble'
 import { AiTypingIndicator } from './AiTypingIndicator'
 import { AiSuggestions } from './AiSuggestions'
 import { AiVoiceRecorder } from './AiVoiceRecorder'
+import { AiVoiceToggle } from './AiVoiceToggle'
 import { AiAnimatedAvatar } from './AiAnimatedAvatar'
 
 interface Conversation {
@@ -58,6 +60,9 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
   const currentPage = getPageLabel(pathname)
   const { messages, isLoading, error, suggestedFollowups, conversationId, sendMessage, sendMessageWithFiles, loadConversation, clearMessages } = useAiChat()
   const { isRecording, duration, startRecording, stopRecording, error: voiceError } = useVoiceRecorder()
+  const { isPlaying, config: voiceConfig, speak, stop: stopSpeaking, loadConfig: loadVoiceConfig } = useVoiceSynthesis()
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const lastSpokenMessageRef = useRef<string | null>(null)
   const [input, setInput] = useState('')
   const [showHistory, setShowHistory] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -69,6 +74,30 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const initialLoadDone = useRef(false)
+
+  // Load voice config
+  useEffect(() => {
+    loadVoiceConfig()
+  }, [loadVoiceConfig])
+
+  // Set auto-play from config
+  useEffect(() => {
+    if (voiceConfig?.autoPlay) {
+      setVoiceEnabled(true)
+    }
+  }, [voiceConfig?.autoPlay])
+
+  // Auto-play voice for new assistant messages when voice is enabled
+  useEffect(() => {
+    if (!voiceEnabled || !voiceConfig || voiceConfig.provider === 'disabled') return
+    if (isLoading) return
+
+    const lastMsg = messages[messages.length - 1]
+    if (lastMsg?.role === 'assistant' && lastMsg.content && lastMsg.id !== lastSpokenMessageRef.current) {
+      lastSpokenMessageRef.current = lastMsg.id
+      speak(lastMsg.content, lastMsg.id)
+    }
+  }, [messages, isLoading, voiceEnabled, voiceConfig, speak])
 
   // Load initial conversation if provided
   useEffect(() => {
@@ -256,6 +285,15 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
               <Minimize2 className="h-4 w-4 text-muted-foreground/60" />
             </button>
           )}
+          {voiceConfig && voiceConfig.provider !== 'disabled' && (
+            <AiVoiceToggle
+              enabled={voiceEnabled}
+              onToggle={() => {
+                if (voiceEnabled) stopSpeaking()
+                setVoiceEnabled(!voiceEnabled)
+              }}
+            />
+          )}
           <button
             onClick={loadHistory}
             className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
@@ -326,7 +364,12 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         )}
 
         {messages.map((msg) => (
-          <AiMessageBubble key={msg.id} message={msg} />
+          <AiMessageBubble
+            key={msg.id}
+            message={msg}
+            onSpeak={voiceConfig && voiceConfig.provider !== 'disabled' ? speak : undefined}
+            isSpeaking={isPlaying}
+          />
         ))}
 
         {showTyping && <AiTypingIndicator activeToolName={activeToolName} />}

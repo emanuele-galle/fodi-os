@@ -52,6 +52,7 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
   const shouldAutoScroll = useRef(true)
 
   // Update local read status from props (SSE updates)
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- sync SSE read status to local state
   useEffect(() => {
     if (readStatus) {
       setLocalReadStatus((prev) => ({ ...prev, ...readStatus }))
@@ -82,6 +83,7 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
   }, [channelId])
 
   // Load initial messages
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting state on channel change
   useEffect(() => {
     let cancelled = false
     setLoading(true)
@@ -109,10 +111,11 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
   }, [channelId, fetchMessages])
 
   // Handle new SSE messages (new, edited, deleted, reactions)
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- sync SSE messages to local state
   useEffect(() => {
     if (newMessages.length === 0) return
     setMessages((prev) => {
-      let updated = [...prev]
+      const updated = [...prev]
       for (const msg of newMessages) {
         const existingIndex = updated.findIndex((m) => m.id === msg.id)
         if (existingIndex >= 0) {

@@ -30,6 +30,7 @@ export function AnnualDashboard() {
     fetch('/api/business-entities').then(r => r.json()).then(d => setEntities(d.items || []))
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data on param change
   useEffect(() => {
     setLoading(true)
     const params = new URLSearchParams({ period: 'annual', year: String(year) })

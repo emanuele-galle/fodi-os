@@ -15,6 +15,7 @@ export function PwaInstallPrompt() {
   const [isIOS, setIsIOS] = useState(false)
   const [showIOSGuide, setShowIOSGuide] = useState(false)
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- detect platform and PWA capabilities on mount
   useEffect(() => {
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) return

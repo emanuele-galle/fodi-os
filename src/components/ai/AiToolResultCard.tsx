@@ -430,6 +430,7 @@ export function AiToolResultCard({ toolName, result, defaultExpanded = false }: 
   const isCreation = isCreationTool(toolName)
   const isError = !result.success
   const [expanded, setExpanded] = useState(defaultExpanded || isCreation || isError)
+  // eslint-disable-next-line react-hooks/static-components -- dynamic icon based on tool type
   const Icon = isCreation ? Plus : getToolIcon(toolName)
   const summary = getResultSummary(toolName, result)
 

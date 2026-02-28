@@ -19,6 +19,8 @@ export interface AiChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
+  thinking?: string
+  isThinking?: boolean
   toolCalls?: AiToolCall[]
   attachments?: AiAttachment[]
   createdAt: string
@@ -71,7 +73,19 @@ export function useAiChat(): UseAiChatReturn {
         try {
           const event = JSON.parse(line.slice(6))
 
-          if (event.type === 'text_delta') {
+          if (event.type === 'thinking_delta') {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId ? { ...m, thinking: (m.thinking || '') + event.data.text, isThinking: true } : m
+              )
+            )
+          } else if (event.type === 'thinking_done') {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId ? { ...m, isThinking: false } : m
+              )
+            )
+          } else if (event.type === 'text_delta') {
             if (event.data.conversationId && !currentConversationId) {
               setConversationId(event.data.conversationId)
               currentConversationId = event.data.conversationId
@@ -79,7 +93,7 @@ export function useAiChat(): UseAiChatReturn {
             if (event.data.text) {
               setMessages((prev) =>
                 prev.map((m) =>
-                  m.id === assistantId ? { ...m, content: m.content + event.data.text } : m
+                  m.id === assistantId ? { ...m, content: m.content + event.data.text, isThinking: false } : m
                 )
               )
             }

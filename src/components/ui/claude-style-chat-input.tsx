@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- 21st.dev community component
 // @ts-nocheck
 /**
  * Claude-style Chat Input - REFERENCE COMPONENT

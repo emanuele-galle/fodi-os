@@ -7,7 +7,8 @@ describe('Utils - cn (classnames merge)', () => {
   })
 
   it('gestisce conditional classes', () => {
-    expect(cn('base', false && 'hidden', 'visible')).toBe('base visible')
+    const condition = false
+    expect(cn('base', condition && 'hidden', 'visible')).toBe('base visible')
   })
 
   it('merge tailwind classes senza duplicati', () => {

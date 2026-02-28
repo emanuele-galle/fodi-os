@@ -1682,11 +1682,43 @@ model AiAgentConfig {
   welcomeMessage  String?  @db.Text
   metadata        Json?
   isActive        Boolean  @default(true)
+  // Phase 1: Thinking
+  enableThinking  Boolean  @default(true)
+  thinkingEffort  String   @default("medium") // low | medium | high
+  // Phase 2: Voice
+  ttsProvider     String   @default("disabled") // disabled | openai | elevenlabs | cartesia
+  ttsVoice        String?
+  autoPlayVoice   Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([brandSlug])
   @@map("ai_agent_configs")
+}
+
+enum AiKnowledgeCategory {
+  SERVICES
+  PRICING
+  PROCESSES
+  TEAM
+  FAQ
+  OTHER
+}
+
+model AiKnowledgePage {
+  id         String               @id @default(uuid())
+  brandSlug  String
+  title      String
+  content    String               @db.Text
+  category   AiKnowledgeCategory  @default(OTHER)
+  isActive   Boolean              @default(true)
+  sortOrder  Int                  @default(0)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@index([brandSlug, isActive])
+  @@index([category])
+  @@map("ai_knowledge_pages")
 }
 
 model AiConversation {

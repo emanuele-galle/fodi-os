@@ -43,7 +43,7 @@ function parseDeductibility(s: string | null | undefined): string {
   return m ? m[1] : '100'
 }
 
-function parseDate(v: any): Date | null {
+function parseDate(v: unknown): Date | null {
   if (!v) return null
   if (v instanceof Date) return v
   // XLSX serial date number
@@ -51,16 +51,16 @@ function parseDate(v: any): Date | null {
     const d = XLSX.SSF.parse_date_code(v)
     if (d) return new Date(d.y, d.m - 1, d.d)
   }
-  const d = new Date(v)
+  const d = new Date(String(v))
   return isNaN(d.getTime()) ? null : d
 }
 
-function cleanStr(v: any): string {
+function cleanStr(v: unknown): string {
   if (v === null || v === undefined) return ''
   return String(v).trim()
 }
 
-function cleanAmount(v: any): number {
+function cleanAmount(v: unknown): number {
   if (v === null || v === undefined) return 0
   if (typeof v === 'number') return v
   const n = parseFloat(String(v).replace(/[^0-9.,-]/g, '').replace(',', '.'))
@@ -212,7 +212,7 @@ async function main() {
   console.log('\nFase 4: Importing incomes (ENTRATE)...')
 
   const wsEntrate = wb.Sheets['ENTRATE']
-  const entrateData = XLSX.utils.sheet_to_json<any>(wsEntrate, { header: 1, defval: null, raw: false, dateNF: 'yyyy-mm-dd' })
+  const entrateData = XLSX.utils.sheet_to_json<unknown[]>(wsEntrate, { header: 1, defval: null, raw: false, dateNF: 'yyyy-mm-dd' })
   // Data rows start at row 18 (0-indexed: 17), header at row 17 (0-indexed: 16)
   // Cols: C=2(active), D=3(paid), E=4(client ID), F=5(description), G=6(date),
   //   H=7(conto), J=9(attività), K=10(categoria), L=11(recurring icon),
@@ -220,7 +220,7 @@ async function main() {
 
   // Re-read with raw values for proper date/number handling
   const wsE = wb.Sheets['ENTRATE']
-  const entrateRaw = XLSX.utils.sheet_to_json<any>(wsE, { header: 1, defval: null, raw: true })
+  const entrateRaw = XLSX.utils.sheet_to_json<unknown[]>(wsE, { header: 1, defval: null, raw: true })
 
   let incomesCreated = 0
   let incomesSkipped = 0
@@ -276,8 +276,8 @@ async function main() {
         },
       })
       incomesCreated++
-    } catch (e: any) {
-      console.log('  ERR income row ' + (i + 1) + ': ' + (e.message || '').substring(0, 80))
+    } catch (e: unknown) {
+      console.log('  ERR income row ' + (i + 1) + ': ' + ((e as Error).message || '').substring(0, 80))
       incomesSkipped++
     }
   }
@@ -289,7 +289,7 @@ async function main() {
   console.log('\nFase 5: Importing expenses (SPESE)...')
 
   const wsS = wb.Sheets['SPESE']
-  const speseRaw = XLSX.utils.sheet_to_json<any>(wsS, { header: 1, defval: null, raw: true })
+  const speseRaw = XLSX.utils.sheet_to_json<unknown[]>(wsS, { header: 1, defval: null, raw: true })
   // Cols: C=2(active), D=3(paid), E=4(supplier ID), F=5(desc?), G=6(date),
   //   H=7(conto), J=9(attività), K=10(categoria), L=11(recurring icon),
   //   M=12(importo), N=13(iva%), O=14(deducibilità%), Q=16(netto), R=17(iva_detr),
@@ -357,8 +357,8 @@ async function main() {
         },
       })
       expensesCreated++
-    } catch (e: any) {
-      console.log('  ERR expense row ' + (i + 1) + ': ' + (e.message || '').substring(0, 80))
+    } catch (e: unknown) {
+      console.log('  ERR expense row ' + (i + 1) + ': ' + ((e as Error).message || '').substring(0, 80))
       expensesSkipped++
     }
   }

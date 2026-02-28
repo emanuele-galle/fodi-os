@@ -32,6 +32,7 @@ export function TemplateSelector({ open, onClose, onSelect, clientId }: Template
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch templates when dialog opens
   useEffect(() => {
     if (!open) return
     setLoading(true)

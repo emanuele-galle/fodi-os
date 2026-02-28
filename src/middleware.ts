@@ -121,7 +121,7 @@ export async function middleware(request: NextRequest) {
       if (payload) {
         const response = NextResponse.next()
         let effectiveUserId = payload.sub
-        let effectiveRole = payload.role
+        const effectiveRole = payload.role
 
         // Impersonation: if admin has impersonate cookie, override user context.
         // Security decision: admin keeps ADMIN role during impersonation so they

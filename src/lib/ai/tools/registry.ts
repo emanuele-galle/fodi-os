@@ -11,6 +11,7 @@ import { erpTools } from './modules/erp'
 import { supportTools } from './modules/support'
 import { timeTools } from './modules/time'
 import { projectTools } from './modules/projects'
+import { coordinationTools } from './modules/coordination'
 
 const ALL_TOOLS: AiToolDefinition[] = [
   ...taskTools,
@@ -22,6 +23,7 @@ const ALL_TOOLS: AiToolDefinition[] = [
   ...supportTools,
   ...timeTools,
   ...projectTools,
+  ...coordinationTools,
 ]
 
 /**

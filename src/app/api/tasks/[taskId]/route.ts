@@ -132,10 +132,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { title, description, status, priority, boardColumn, assigneeId, assigneeIds, projectId, folderId, milestoneId, dueDate, estimatedHours, sortOrder, tags, parentId } = parsed.data
 
     // Only ADMIN/DIR_TECNICO can move tasks between projects
-    if (projectId !== undefined) {
-      if (role !== 'ADMIN' && role !== 'DIR_TECNICO') {
-        throw new ApiError(403, 'Solo Admin e Direttore Tecnico possono spostare task tra progetti')
-      }
+    if (projectId !== undefined && role !== 'ADMIN' && role !== 'DIR_TECNICO') {
+      throw new ApiError(403, 'Solo Admin e Direttore Tecnico possono spostare task tra progetti')
     }
 
     // Fetch previous state for change tracking and auto-logging

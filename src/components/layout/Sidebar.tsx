@@ -173,6 +173,7 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
   const [expanded, setExpanded] = useState(true)
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- sync sidebar state from user preferences
   useEffect(() => {
     if (loaded) setExpanded(!preferences.sidebarCollapsed)
   }, [loaded, preferences.sidebarCollapsed])

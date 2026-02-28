@@ -91,21 +91,19 @@ export async function POST(
       }
 
       // Create contact if we have data and a client
-      if (Object.keys(contactData).length > 0 && clientId) {
-        if (contactData.firstName || contactData.lastName) {
-          const contact = await tx.contact.create({
-            data: {
-              clientId,
-              firstName: contactData.firstName || '',
-              lastName: contactData.lastName || '',
-              email: contactData.email,
-              phone: contactData.phone,
-              role: contactData.role,
-              notes: contactData.notes,
-            },
-          })
-          contactId = contact.id
-        }
+      if (Object.keys(contactData).length > 0 && clientId && (contactData.firstName || contactData.lastName)) {
+        const contact = await tx.contact.create({
+          data: {
+            clientId,
+            firstName: contactData.firstName || '',
+            lastName: contactData.lastName || '',
+            email: contactData.email,
+            phone: contactData.phone,
+            role: contactData.role,
+            notes: contactData.notes,
+          },
+        })
+        contactId = contact.id
       }
 
       return { clientId, contactId }

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate username from firstName (lowercase, no spaces)
-    let baseUsername = firstName.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const baseUsername = firstName.toLowerCase().replace(/[^a-z0-9]/g, '')
     let username = baseUsername
     let suffix = 1
     while (await prisma.user.findUnique({ where: { username }, select: { id: true } })) {

@@ -35,6 +35,7 @@ export function StatisticsDashboard() {
   const [goals, setGoals] = useState<ProfitGoal[]>([])
   const [loading, setLoading] = useState(true)
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data on year change
   useEffect(() => {
     setLoading(true)
     Promise.all([

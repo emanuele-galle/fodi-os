@@ -8,17 +8,13 @@ type CardWalletButtonsProps = {
 }
 
 function useOS() {
-  const [os, setOs] = useState<'ios' | 'android' | 'desktop'>('desktop')
-
-  useEffect(() => {
+  const [os] = useState<'ios' | 'android' | 'desktop'>(() => {
+    if (typeof window === 'undefined') return 'desktop'
     const ua = navigator.userAgent
-    if (/iPad|iPhone|iPod/.test(ua)) {
-      setOs('ios')
-    } else if (/android/i.test(ua)) {
-      setOs('android')
-    }
-  }, [])
-
+    if (/iPad|iPhone|iPod/.test(ua)) return 'ios'
+    if (/android/i.test(ua)) return 'android'
+    return 'desktop'
+  })
   return os
 }
 

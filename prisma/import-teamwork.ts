@@ -818,7 +818,7 @@ async function main() {
 
     const clientId = p.companyId ? twCompanyToMuscariClient.get(p.companyId) || null : null
 
-    let slug = slugify(p.projectname)
+    const slug = slugify(p.projectname)
     // Check for duplicate slug
     let finalSlug = slug
     let counter = 2

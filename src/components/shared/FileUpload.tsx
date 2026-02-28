@@ -58,41 +58,7 @@ export function FileUpload({
   const [dragging, setDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const addFiles = useCallback((fileList: FileList | File[]) => {
-    const files = Array.from(fileList)
-    const remaining = maxFiles - entries.length
-    const toAdd = files.slice(0, remaining)
-
-    const newEntries: FileEntry[] = toAdd.map((file) => {
-      const entry: FileEntry = {
-        file,
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        progress: 0,
-        status: 'pending',
-      }
-
-      if (maxSize > 0 && file.size > maxSize) {
-        entry.status = 'error'
-        entry.error = `File troppo grande (max ${formatFileSize(maxSize)})`
-      }
-
-      if (file.type.startsWith('image/')) {
-        entry.previewUrl = URL.createObjectURL(file)
-      }
-
-      return entry
-    })
-
-    setEntries((prev) => [...prev, ...newEntries])
-
-    for (const entry of newEntries) {
-      if (entry.status !== 'error') {
-        uploadFile(entry)
-      }
-    }
-  }, [entries.length, maxFiles, maxSize])
-
-  function uploadFile(entry: FileEntry) {
+  const uploadFile = useCallback((entry: FileEntry) => {
     setEntries((prev) =>
       prev.map((e) => (e.id === entry.id ? { ...e, status: 'uploading' as const, progress: 0 } : e))
     )
@@ -174,7 +140,41 @@ export function FileUpload({
 
     xhr.open('POST', '/api/upload')
     xhr.send(formData)
-  }
+  }, [projectId, onUpload])
+
+  const addFiles = useCallback((fileList: FileList | File[]) => {
+    const files = Array.from(fileList)
+    const remaining = maxFiles - entries.length
+    const toAdd = files.slice(0, remaining)
+
+    const newEntries: FileEntry[] = toAdd.map((file) => {
+      const entry: FileEntry = {
+        file,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        progress: 0,
+        status: 'pending',
+      }
+
+      if (maxSize > 0 && file.size > maxSize) {
+        entry.status = 'error'
+        entry.error = `File troppo grande (max ${formatFileSize(maxSize)})`
+      }
+
+      if (file.type.startsWith('image/')) {
+        entry.previewUrl = URL.createObjectURL(file)
+      }
+
+      return entry
+    })
+
+    setEntries((prev) => [...prev, ...newEntries])
+
+    for (const entry of newEntries) {
+      if (entry.status !== 'error') {
+        uploadFile(entry)
+      }
+    }
+  }, [entries.length, maxFiles, maxSize, uploadFile])
 
   function removeEntry(id: string) {
     setEntries((prev) => {

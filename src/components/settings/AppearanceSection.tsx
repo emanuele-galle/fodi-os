@@ -27,11 +27,10 @@ function applyTheme(theme: Theme) {
 }
 
 export function AppearanceSection() {
-  const [currentTheme, setCurrentTheme] = useState<Theme>('light')
-
-  useEffect(() => {
-    setCurrentTheme(getStoredTheme())
-  }, [])
+  const [currentTheme, setCurrentTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'light'
+    return getStoredTheme()
+  })
 
   function selectTheme(theme: Theme) {
     setCurrentTheme(theme)

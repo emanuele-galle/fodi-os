@@ -2,17 +2,30 @@
 
 import { useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
-import { User, Copy, Check, FileText, ExternalLink } from 'lucide-react'
+import { User, Copy, Check, FileText, ExternalLink, Volume2 } from 'lucide-react'
 import { AiToolIndicator } from './AiToolIndicator'
 import { AiToolResultCard } from './AiToolResultCard'
 import { AiAnimatedAvatar } from './AiAnimatedAvatar'
+import { AiThinkingBlock } from './AiThinkingBlock'
 import type { AiChatMessage } from '@/hooks/useAiChat'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractTextFromNode(node: any): string {
+  if (typeof node === 'string') return node
+  if (Array.isArray(node)) return node.map(extractTextFromNode).join('')
+  if (node && typeof node === 'object' && node.props) {
+    return extractTextFromNode(node.props.children)
+  }
+  return ''
+}
+
 interface AiMessageBubbleProps {
   message: AiChatMessage
+  onSpeak?: (text: string, messageId: string) => void
+  isSpeaking?: boolean
 }
 
 function CodeCopyButton({ code }: { code: string }) {
@@ -55,7 +68,7 @@ function formatTimestamp(createdAt: string | Date): string {
   return time
 }
 
-export function AiMessageBubble({ message }: AiMessageBubbleProps) {
+export function AiMessageBubble({ message, onSpeak, isSpeaking }: AiMessageBubbleProps) {
   const isUser = message.role === 'user'
   const [copied, setCopied] = useState(false)
 
@@ -68,16 +81,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
 
   const timestamp = message.createdAt ? formatTimestamp(message.createdAt) : null
 
-  // Extract text from pre children for copy button
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const extractText = useCallback((node: any): string => {
-    if (typeof node === 'string') return node
-    if (Array.isArray(node)) return node.map(extractText).join('')
-    if (node && typeof node === 'object' && node.props) {
-      return extractText(node.props.children)
-    }
-    return ''
-  }, [])
+  const extractText = useCallback(extractTextFromNode, [])
 
   return (
     <div className={cn('flex gap-3 ai-bubble-in', isUser && 'flex-row-reverse')}>
@@ -112,6 +116,11 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
               ))
             })()}
           </div>
+        )}
+
+        {/* Thinking block (assistant only) */}
+        {!isUser && message.thinking && (
+          <AiThinkingBlock thinking={message.thinking} isThinking={message.isThinking} />
         )}
 
         {/* Attachments preview (user messages) */}
@@ -237,9 +246,21 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
               )}
             </div>
 
-            {/* Copy button for assistant messages */}
+            {/* Action buttons for assistant messages */}
             {!isUser && (
-              <div className="flex justify-end mt-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+              <div className="flex justify-end gap-0.5 mt-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                {onSpeak && (
+                  <button
+                    onClick={() => onSpeak(message.content, message.id)}
+                    className={cn(
+                      'p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors',
+                      isSpeaking && 'text-violet-400',
+                    )}
+                    title={isSpeaking ? 'Ferma audio' : 'Ascolta'}
+                  >
+                    <Volume2 className="h-3 w-3 text-muted-foreground/40" />
+                  </button>
+                )}
                 <button
                   onClick={handleCopy}
                   className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
