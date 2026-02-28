@@ -84,6 +84,27 @@ class SSEManager {
       }
     }
   }
+
+  getConnectedUserIds(): string[] {
+    return Array.from(this.clients.keys()).filter(
+      (uid) => (this.clients.get(uid)?.size ?? 0) > 0
+    )
+  }
+
+  broadcastToAll(event: SSEEvent) {
+    const payload = `data: ${JSON.stringify(event)}\n\n`
+    const encoded = new TextEncoder().encode(payload)
+
+    for (const controllers of this.clients.values()) {
+      for (const controller of controllers) {
+        try {
+          controller.enqueue(encoded)
+        } catch {
+          // Client disconnected
+        }
+      }
+    }
+  }
 }
 
 const globalForSSE = globalThis as unknown as { sseManager: SSEManager }
@@ -104,6 +125,13 @@ interface BadgeUpdate {
 
 export function sendBadgeUpdate(userId: string, badge: BadgeUpdate) {
   sseManager.sendToUser(userId, { type: 'badge_update', data: badge })
+}
+
+export function sendPresenceUpdate(userId: string, status: 'online' | 'offline') {
+  sseManager.broadcastToAll({
+    type: 'presence',
+    data: { userId, status, timestamp: new Date().toISOString() },
+  })
 }
 
 type DataEntity = 'task' | 'notification' | 'ticket' | 'project' | 'calendar'

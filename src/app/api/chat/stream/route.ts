@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { sseManager } from '@/lib/sse'
+import { sseManager, sendPresenceUpdate } from '@/lib/sse'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +33,10 @@ export async function GET(request: NextRequest) {
       request.signal.addEventListener('abort', () => {
         clearInterval(heartbeat)
         sseManager.removeClient(userId, controller)
+        // If user has no more connections, broadcast offline
+        if (!sseManager.isUserConnected(userId)) {
+          sendPresenceUpdate(userId, 'offline')
+        }
         try { controller.close() } catch { /* already closed */ }
       })
     },

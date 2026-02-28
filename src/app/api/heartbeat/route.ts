@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getClientIp } from '@/lib/ip'
+import { sendPresenceUpdate } from '@/lib/sse'
 
 // Gap threshold: if no heartbeat for 5 minutes, session is considered ended
 const SESSION_GAP_MS = 5 * 60 * 1000
@@ -60,6 +61,9 @@ export async function POST(request: NextRequest) {
       data: { userId, clockIn: now, lastHeartbeat: now },
     })
   }
+
+  // Broadcast online presence to all connected clients
+  sendPresenceUpdate(userId, 'online')
 
   return NextResponse.json({ ok: true })
 }

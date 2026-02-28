@@ -87,14 +87,22 @@ export function useChat() {
       })
   }, [])
 
-  // Fetch team members
-  useEffect(() => {
-    fetch('/api/team')
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
+  // Fetch team members (initial + periodic refresh for presence)
+  const fetchTeamMembers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/team')
+      if (res.ok) {
+        const data = await res.json()
         if (data?.items) setTeamMembers(data.items)
-      })
+      }
+    } catch { /* ignore */ }
   }, [])
+
+  useEffect(() => {
+    fetchTeamMembers()
+    const interval = setInterval(fetchTeamMembers, 60000)
+    return () => clearInterval(interval)
+  }, [fetchTeamMembers])
 
   // Fetch channels
   const fetchChannels = useCallback(async () => {
@@ -186,6 +194,17 @@ export function useChat() {
           [userId]: { ...prev[userId], lastReadAt },
         }))
       }
+    }
+
+    if (event.type === 'presence' && event.data) {
+      const { userId, status, timestamp } = event.data as { userId: string; status: string; timestamp: string }
+      setTeamMembers((prev) =>
+        prev.map((m) =>
+          m.id === userId
+            ? { ...m, lastActiveAt: status === 'online' ? timestamp : m.lastActiveAt }
+            : m
+        )
+      )
     }
 
     if (event.type === 'typing' && event.data) {
