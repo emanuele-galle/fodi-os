@@ -29,7 +29,7 @@ const PRIVATE_IP_RANGES = [
   /^fe80:/i,
 ]
 
-export interface LinkValidationResult {
+interface LinkValidationResult {
   valid: boolean
   provider: string
   error?: string

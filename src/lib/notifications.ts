@@ -17,7 +17,7 @@ interface CreateNotificationParams {
   projectId?: string
 }
 
-export interface NotificationIntent {
+interface NotificationIntent {
   type: string
   title: string
   message: string
@@ -352,7 +352,7 @@ export async function getTaskParticipants(taskId: string): Promise<string[]> {
 /**
  * Get all member user IDs for a project.
  */
-export async function getProjectMembers(projectId: string): Promise<string[]> {
+async function getProjectMembers(projectId: string): Promise<string[]> {
   const members = await prisma.projectMember.findMany({
     where: { projectId },
     select: { userId: true },

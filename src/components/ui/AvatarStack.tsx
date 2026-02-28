@@ -4,14 +4,14 @@ import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/Avatar'
 import { User } from 'lucide-react'
 
-export interface AvatarStackUser {
+interface AvatarStackUser {
   id: string
   firstName: string
   lastName: string
   avatarUrl?: string | null
 }
 
-export interface AvatarStackProps {
+interface AvatarStackProps {
   users: AvatarStackUser[]
   max?: number
   size?: 'xs' | 'sm' | 'md'

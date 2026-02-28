@@ -5,7 +5,7 @@ import { hexToRgb, drawText, drawTextCenter as centerText, wrapText } from '@/li
 
 // ─── Types ──────────────────────────────────────────────────
 
-export interface ContractPdfData {
+interface ContractPdfData {
   template: ContractTemplate
   contractNumber: string
   date: string

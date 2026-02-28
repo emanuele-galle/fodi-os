@@ -98,7 +98,7 @@ const ROLE_PERMISSIONS: Record<Role, PermissionMap> = {
 }
 
 export const ADMIN_ROLES: Role[] = ['ADMIN']
-export const DIRECTOR_ROLES: Role[] = ['DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT']
+const DIRECTOR_ROLES: Role[] = ['DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT']
 
 export function hasPermission(
   role: Role,

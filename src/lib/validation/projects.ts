@@ -36,7 +36,7 @@ export const updateProjectSchema = z.object({
   workspaceId: z.string().uuid('Workspace ID non valido').optional().nullable(),
 })
 
-export const createMilestoneSchema = z.object({
+const createMilestoneSchema = z.object({
   name: z.string().min(1, 'Nome milestone obbligatorio').max(200),
   dueDate: z.string().datetime().optional(),
   status: z.string().default('pending'),

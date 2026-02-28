@@ -25,8 +25,6 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@prisma/adapter-pg": "^7.4.1",
     "@prisma/client": "^7.4.1",
-    "@radix-ui/react-context-menu": "^2.2.16",
-    "@radix-ui/react-separator": "^1.1.8",
     "@tiptap/extension-link": "^3.20.0",
     "@tiptap/extension-placeholder": "^3.20.0",
     "@tiptap/react": "^3.20.0",
@@ -45,7 +43,6 @@
     "passkit-generator": "^3.5.7",
     "pdf-lib": "^1.17.1",
     "pg": "8.18.0",
-    "radix-ui": "^1.4.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-dropzone": "^15.0.0",
@@ -64,8 +61,6 @@
     "@eslint/compat": "^2.0.2",
     "@tailwindcss/postcss": "^4.2.1",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "3.0.0",
     "@types/node": "^25.3.0",
     "@types/nodemailer": "^7.0.10",
@@ -84,8 +79,7 @@
     "tailwindcss": "^4.2.1",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
-    "vitest": "^4.0.18",
-    "xlsx": "^0.18.5"
+    "vitest": "^4.0.18"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

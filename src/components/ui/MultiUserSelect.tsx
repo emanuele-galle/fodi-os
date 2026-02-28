@@ -5,14 +5,14 @@ import { Avatar } from '@/components/ui/Avatar'
 import { X, Check, Search } from 'lucide-react'
 import { useState, useRef, useEffect, useCallback } from 'react'
 
-export interface MultiUserSelectUser {
+interface MultiUserSelectUser {
   id: string
   firstName: string
   lastName: string
   avatarUrl?: string | null
 }
 
-export interface MultiUserSelectProps {
+interface MultiUserSelectProps {
   users: MultiUserSelectUser[]
   selected: string[]
   onChange: (ids: string[]) => void

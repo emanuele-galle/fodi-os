@@ -19,13 +19,13 @@ const fieldValidationSchema = z.object({
   pattern: z.string().optional(),
 }).optional().nullable()
 
-export const FIELD_TYPES = [
+const FIELD_TYPES = [
   'TEXT', 'TEXTAREA', 'EMAIL', 'PHONE', 'NUMBER',
   'SELECT', 'MULTISELECT', 'RADIO', 'CHECKBOX',
   'DATE', 'FILE', 'RATING', 'SCALE',
 ] as const
 
-export const CRM_MAPPINGS = [
+const CRM_MAPPINGS = [
   'client.companyName', 'client.vatNumber', 'client.fiscalCode',
   'client.pec', 'client.sdi', 'client.website', 'client.industry',
   'client.source', 'client.notes',

@@ -22,7 +22,7 @@ export function invalidateCustomRoleCache(customRoleId?: string) {
   }
 }
 
-export async function resolvePermissions(
+async function resolvePermissions(
   role: Role,
   customRoleId: string | null | undefined
 ): Promise<ResolvedPermissions> {

@@ -666,6 +666,6 @@ export function getContractTemplate(id: string): ContractTemplate | undefined {
   return CONTRACT_TEMPLATES.find((t) => t.id === id)
 }
 
-export function getContractTemplatesByCategory(category: string): ContractTemplate[] {
+function getContractTemplatesByCategory(category: string): ContractTemplate[] {
   return CONTRACT_TEMPLATES.filter((t) => t.category === category)
 }

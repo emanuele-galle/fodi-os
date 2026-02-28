@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import type { Role } from '@/generated/prisma/client'
 
-export interface SessionPayload {
+interface SessionPayload {
   sub: string
   email: string
   name: string
@@ -45,7 +45,7 @@ export async function createRefreshToken(payload: Omit<SessionPayload, 'type'>):
     .sign(REFRESH_SECRET)
 }
 
-export async function verifyAccessToken(token: string): Promise<SessionPayload> {
+async function verifyAccessToken(token: string): Promise<SessionPayload> {
   const { payload } = await jwtVerify(token, ACCESS_SECRET)
   return payload as unknown as SessionPayload
 }

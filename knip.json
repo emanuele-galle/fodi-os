@@ -8,6 +8,5 @@
     "prisma/seed.{ts,js}"
   ],
   "project": ["src/**/*.{ts,tsx}", "prisma/**/*.ts"],
-  "ignore": ["remotion/**", "audit/**", "mcp-server/**"],
-  "ignoreDependencies": ["@types/*", "@prisma/client", "tailwindcss"]
+  "ignoreDependencies": ["@types/*", "@prisma/client", "tailwindcss", "postcss", "postcss-load-config", "tw-animate-css"]
 }

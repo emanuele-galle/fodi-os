@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils'
 import { Check } from 'lucide-react'
 
-export const PROJECT_COLORS = [
+const PROJECT_COLORS = [
   { value: '#3B82F6', label: 'Blu' },
   { value: '#10B981', label: 'Verde' },
   { value: '#F59E0B', label: 'Giallo' },

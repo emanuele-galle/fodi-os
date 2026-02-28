@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSSE } from '@/hooks/useSSE'
 import type { ReadStatusMap } from '@/components/chat/MessageThread'
 
-export interface ChannelItem {
+interface ChannelItem {
   id: string
   name: string
   type: string
@@ -19,7 +19,7 @@ export interface ChannelItem {
   hasUnread: boolean
 }
 
-export interface Message {
+interface Message {
   id: string
   content: string
   createdAt: string
@@ -34,7 +34,7 @@ export interface Message {
   }
 }
 
-export interface TeamMember {
+interface TeamMember {
   id: string
   firstName: string
   lastName: string
@@ -44,7 +44,7 @@ export interface TeamMember {
   lastActiveAt: string | null
 }
 
-export interface ReplyTo {
+interface ReplyTo {
   id: string
   content: string
   authorName: string

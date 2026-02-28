@@ -29,7 +29,7 @@ export function getMicrosoftAuthUrl(state: string): string {
   return `${AUTH_URL}?${params}`
 }
 
-export function getMicrosoftRedirectUri(): string {
+function getMicrosoftRedirectUri(): string {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   return `${siteUrl}/api/integrations/microsoft/callback`
 }
@@ -249,7 +249,7 @@ export async function deleteTodoTask(userId: string, listId: string, todoTaskId:
   }
 }
 
-export async function getTodoTask(userId: string, listId: string, todoTaskId: string) {
+async function getTodoTask(userId: string, listId: string, todoTaskId: string) {
   const res = await graphFetch(userId, `/me/todo/lists/${listId}/tasks/${todoTaskId}`)
   if (!res.ok) return null
   return res.json()

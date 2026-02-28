@@ -174,5 +174,4 @@ function mergeSectionAccess(custom: SectionAccessMap): SectionAccessMap {
   return map
 }
 
-export { ROLE_SECTION_VIEW }
 

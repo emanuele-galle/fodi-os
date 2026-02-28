@@ -72,7 +72,7 @@ export function CardContent({
   )
 }
 
-export function CardFooter({
+function CardFooter({
   className,
   children,
   ...props
@@ -96,7 +96,7 @@ export function CardHeading({
   )
 }
 
-export function CardToolbar({
+function CardToolbar({
   className,
   children,
   ...props
@@ -108,7 +108,7 @@ export function CardToolbar({
   )
 }
 
-export function CardTable({
+function CardTable({
   className,
   children,
   ...props

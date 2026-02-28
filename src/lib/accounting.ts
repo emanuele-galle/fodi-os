@@ -14,7 +14,7 @@ export function calculateDeductibleVat(vatAmount: number, deductibility: string)
 }
 
 /** Formatta numero in stile contabile italiano (es. "1.234,56 €") */
-export function formatAccountingNumber(n: number): string {
+function formatAccountingNumber(n: number): string {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n)
 }
 
@@ -43,7 +43,7 @@ export async function generateInvoiceNumber(
 }
 
 /** Calcola stato scadenza */
-export function getDueDateStatus(dueDate: string | null, isPaid: boolean): 'paid' | 'due_soon' | 'overdue' | 'ok' | null {
+function getDueDateStatus(dueDate: string | null, isPaid: boolean): 'paid' | 'due_soon' | 'overdue' | 'ok' | null {
   if (!dueDate) return null
   if (isPaid) return 'paid'
   const due = new Date(dueDate)

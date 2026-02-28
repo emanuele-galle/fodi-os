@@ -9,7 +9,6 @@ import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { formatCurrency } from '@/lib/utils'
 import { useTableSort, sortData } from '@/hooks/useTableSort'
 
-interface RevenueDataPoint { month: string; revenue: number }
 interface ExpenseDataPoint { category: string; amount: number }
 interface TrendPoint { month: string; created: number; completed: number }
 interface HoursProjectPoint { name: string; hours: number }
@@ -33,56 +32,6 @@ const STAGE_LABELS: Record<string, string> = {
   QUALIFICATION: 'Qualifica',
   PROPOSAL: 'Proposta',
   NEGOTIATION: 'Negoziazione',
-}
-
-export function RevenueBarChart({ data }: { data: RevenueDataPoint[] }) {
-  return (
-    <Card>
-      <CardContent>
-        <CardTitle className="mb-4 text-base md:text-lg">Andamento Revenue</CardTitle>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={data} margin={{ left: -10, right: 5 }}>
-            <defs>
-              <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.9} />
-                <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0.5} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={35} />
-            <Tooltip formatter={(value) => formatCurrency(Number(value))} contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
-            <Bar dataKey="revenue" fill="url(#gradRevenue)" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  )
-}
-
-export function ExpenseBarChart({ data }: { data: ExpenseDataPoint[] }) {
-  return (
-    <Card>
-      <CardContent>
-        <CardTitle className="mb-4 text-base md:text-lg">Distribuzione Spese</CardTitle>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={data} layout="vertical" margin={{ left: 0, right: 5 }}>
-            <defs>
-              <linearGradient id="gradExpense" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.5} />
-                <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0.9} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="4 8" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis type="number" tickFormatter={(v) => `€${v}`} tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis type="category" dataKey="category" width={70} tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <Tooltip formatter={(value) => formatCurrency(Number(value))} contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
-            <Bar dataKey="amount" fill="url(#gradExpense)" radius={[0, 6, 6, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  )
 }
 
 export function MonthlyTrendChart({ data }: { data: TrendPoint[] }) {
@@ -188,51 +137,6 @@ export function DealsPipelineChart({ data }: { data: PipelinePoint[] }) {
             <Legend wrapperStyle={{ fontSize: 13 }} />
             <Bar dataKey="count" name="Deals" fill="#6366f1" radius={[6, 6, 0, 0]} />
           </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  )
-}
-
-/* ── Accounting Charts ── */
-
-interface IncomeExpensePoint { month: string; income: number; expense: number }
-interface ProfitPoint { month: string; profit: number }
-
-export function IncomeExpenseBarChart({ data }: { data: IncomeExpensePoint[] }) {
-  return (
-    <Card>
-      <CardContent>
-        <CardTitle className="mb-4 text-base md:text-lg">Entrate vs Spese Mensili</CardTitle>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data} margin={{ left: -10, right: 10, top: 5 }}>
-            <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={40} />
-            <Tooltip formatter={(value) => formatCurrency(Number(value))} contentStyle={TOOLTIP_STYLE} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
-            <Legend wrapperStyle={{ fontSize: 13 }} />
-            <Bar dataKey="income" name="Entrate" fill="#22c55e" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="expense" name="Spese" fill="#ef4444" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  )
-}
-
-export function ProfitTrendLine({ data }: { data: ProfitPoint[] }) {
-  return (
-    <Card>
-      <CardContent>
-        <CardTitle className="mb-4 text-base md:text-lg">Andamento Profitto Mensile</CardTitle>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data} margin={{ left: -10, right: 10, top: 5 }}>
-            <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-            <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
-            <YAxis tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={40} />
-            <Tooltip formatter={(value) => formatCurrency(Number(value))} contentStyle={TOOLTIP_STYLE} />
-            <Line type="monotone" dataKey="profit" name="Profitto" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 4, fill: '#3b82f6' }} />
-          </LineChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>

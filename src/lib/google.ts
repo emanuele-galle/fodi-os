@@ -92,9 +92,9 @@ export async function getAuthenticatedClient(userId: string, requireCalendar = t
   return client
 }
 
-export type AuthErrorReason = 'no_token' | 'scopes' | 'token_expired' | null
+type AuthErrorReason = 'no_token' | 'scopes' | 'token_expired' | null
 
-export interface AuthCheckResult {
+interface AuthCheckResult {
   client: InstanceType<typeof google.auth.OAuth2> | null
   error: AuthErrorReason
 }

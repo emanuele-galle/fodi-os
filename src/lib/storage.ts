@@ -13,7 +13,7 @@ let cachedAdminDrive: { drive: ReturnType<typeof google.drive>; expiresAt: numbe
  * Uses GOOGLE_DRIVE_ADMIN_ID if set, otherwise the first ADMIN with Google connected.
  * Caches the client for 5 minutes.
  */
-export async function getAdminDriveClient() {
+async function getAdminDriveClient() {
   // Return cached client if still valid
   if (cachedAdminDrive && cachedAdminDrive.expiresAt > Date.now()) {
     return cachedAdminDrive.drive
@@ -49,7 +49,7 @@ export async function getAdminDriveClient() {
  * Check if Google Drive is available (configured and admin connected).
  * Returns false without throwing if GDrive is not available.
  */
-export async function isGDriveAvailable(): Promise<boolean> {
+async function isGDriveAvailable(): Promise<boolean> {
   if (!process.env.GOOGLE_CLIENT_ID) return false
   try {
     await getAdminDriveClient()
@@ -63,7 +63,7 @@ export async function isGDriveAvailable(): Promise<boolean> {
  * Ensure a folder exists on Google Drive, creating it if necessary.
  * Returns the folder ID.
  */
-export async function ensureGDriveFolder(
+async function ensureGDriveFolder(
   drive: ReturnType<typeof google.drive>,
   folderName: string,
   parentId?: string
@@ -110,7 +110,7 @@ export async function ensureGDriveFolder(
  * @param folderPath - Can be a simple name like "ProjectName" (default: Progetti/ProjectName)
  *                     or a path like "CRM/CompanyName" for CRM documents
  */
-export async function uploadToGDrive(
+async function uploadToGDrive(
   fileName: string,
   buffer: Buffer,
   mimeType: string,
@@ -177,7 +177,7 @@ export async function uploadToGDrive(
   }
 }
 
-export interface UploadResult {
+interface UploadResult {
   fileUrl: string
   driveFileId?: string
   webViewLink?: string
@@ -283,7 +283,7 @@ export async function renameOnGDrive(fileId: string, newName: string): Promise<v
 /**
  * Delete a file from Google Drive by its file ID.
  */
-export async function deleteFromGDrive(fileId: string): Promise<void> {
+async function deleteFromGDrive(fileId: string): Promise<void> {
   const drive = await getAdminDriveClient()
   await drive.files.delete({ fileId })
 }

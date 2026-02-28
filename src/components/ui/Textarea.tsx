@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils'
 import { forwardRef } from 'react'
 
-export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string
   error?: string
 }

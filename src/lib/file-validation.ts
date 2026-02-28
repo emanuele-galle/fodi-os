@@ -21,12 +21,12 @@ const MAGIC_BYTES: Record<string, { bytes: number[]; offset?: number }> = {
   'application/gzip': { bytes: [0x1F, 0x8B] },
 }
 
-export interface FileValidationError {
+interface FileValidationError {
   code: 'FILE_TOO_LARGE' | 'BLOCKED_EXTENSION' | 'INVALID_MIME' | 'MIME_MISMATCH'
   message: string
 }
 
-export interface ValidateFileOptions {
+interface ValidateFileOptions {
   maxSizeBytes?: number
   allowedMimeTypes?: string[]
 }

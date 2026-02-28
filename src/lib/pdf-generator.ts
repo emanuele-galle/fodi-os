@@ -3,14 +3,14 @@ import { hexToRgb, drawText, drawTextRight as rightAlignText, wrapText, formatEu
 
 // ─── Types ──────────────────────────────────────────────────
 
-export interface PdfLineItem {
+interface PdfLineItem {
   description: string
   quantity: number
   unitPrice: number | string
   total: number | string
 }
 
-export interface PdfDocumentData {
+interface PdfDocumentData {
   documentType: 'PREVENTIVO' | 'FATTURA' | 'NOTA_DI_CREDITO'
   number: string
   title: string

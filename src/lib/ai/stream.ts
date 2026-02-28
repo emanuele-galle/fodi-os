@@ -2,7 +2,7 @@
  * SSE stream helpers for AI chat responses.
  */
 
-export type ThinkingBudgetTokens = { low: number; medium: number; high: number }
+type ThinkingBudgetTokens = { low: number; medium: number; high: number }
 
 export const THINKING_BUDGETS: ThinkingBudgetTokens = {
   low: 2048,
@@ -15,7 +15,7 @@ export interface AiStreamEvent {
   data: unknown
 }
 
-export function encodeSSE(event: AiStreamEvent): Uint8Array {
+function encodeSSE(event: AiStreamEvent): Uint8Array {
   const payload = `data: ${JSON.stringify(event)}\n\n`
   return new TextEncoder().encode(payload)
 }

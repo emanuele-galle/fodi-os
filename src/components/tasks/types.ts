@@ -77,7 +77,7 @@ export const KANBAN_COLUMNS = [
   { key: 'DONE', label: 'Completato', color: 'border-emerald-500', headerBg: 'bg-emerald-500/10', headerText: 'text-emerald-600 dark:text-emerald-400' },
 ]
 
-export const PRIORITY_ORDER: Record<string, number> = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
+const PRIORITY_ORDER: Record<string, number> = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
 
 export type ViewMode = 'list' | 'kanban'
 export type TabKey = 'mine' | 'delegated' | 'team'

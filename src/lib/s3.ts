@@ -154,7 +154,7 @@ export async function deleteFile(key: string): Promise<void> {
  * Upload directly to MinIO only (bypasses R2).
  * Useful for internal/dev files that only need local VPS access.
  */
-export async function uploadToMinioOnly(
+async function uploadToMinioOnly(
   key: string,
   body: Buffer | Uint8Array,
   contentType: string,

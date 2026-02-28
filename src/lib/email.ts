@@ -47,7 +47,7 @@ function getTransporter() {
 
 // ─── Public API ────────────────────────────────────────────
 
-export interface EmailAttachment {
+interface EmailAttachment {
   name: string
   content: Buffer
   contentType?: string

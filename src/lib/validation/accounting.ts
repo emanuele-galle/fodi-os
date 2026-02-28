@@ -77,4 +77,3 @@ export const expenseAdvancedFields = z.object({
   paymentMethod: z.enum(paymentMethods).optional().nullable(),
 })
 
-export { paymentMethods }

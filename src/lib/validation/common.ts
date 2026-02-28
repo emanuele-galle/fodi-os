@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 // Pagination schema per query GET con searchParams
-export const paginationSchema = z.object({
+const paginationSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().optional(),
@@ -10,6 +10,6 @@ export const paginationSchema = z.object({
 })
 
 // UUID param validation
-export const idParamSchema = z.object({
+const idParamSchema = z.object({
   id: z.string().uuid('ID non valido'),
 })

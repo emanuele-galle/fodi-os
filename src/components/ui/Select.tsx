@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils'
 import { forwardRef } from 'react'
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
   error?: string
   options: { value: string; label: string }[]
