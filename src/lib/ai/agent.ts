@@ -41,6 +41,22 @@ const TOOL_FOLLOWUPS: Record<string, string[]> = {
   list_time_entries: ['Registra ore', 'Riepilogo settimanale', 'Ore per progetto'],
   log_time: ['Riepilogo ore oggi', 'Ore registrate questa settimana', 'Task attivi'],
   get_time_summary: ['Dettaglio per utente', 'Ore fatturabili', 'Confronto con settimana scorsa'],
+  // Projects
+  list_projects: ['Crea un nuovo progetto', 'Progetti in ritardo', 'Stato progetto'],
+  create_project: ['Aggiungi task al progetto', 'Imposta budget', 'Aggiungi membri'],
+  update_project: ['Vedi dettagli progetto', 'Task del progetto', 'Archivia progetto'],
+  get_project_details: ['Aggiorna stato', 'Task aperti del progetto', 'Ore registrate'],
+  archive_project: ['Lista progetti attivi', 'Progetti archiviati', 'Ripristina progetto'],
+  // CRM creation
+  create_deal: ['Pipeline completa', 'Associa cliente', 'Aggiorna fase deal'],
+  create_client: ['Crea deal per il cliente', 'Aggiungi contatto', 'Lista clienti'],
+  update_client: ['Dettagli cliente', 'Deal del cliente', 'Interazioni recenti'],
+  // Task actions
+  add_task_comment: ['Vedi dettagli task', 'Aggiorna stato task', 'Altri commenti'],
+  delete_task: ['Lista task', 'Crea nuovo task', 'Task completati'],
+  // Calendar actions
+  update_calendar_event: ['Calendario di oggi', 'Slot liberi', 'Dettagli evento'],
+  delete_calendar_event: ['Calendario di domani', 'Crea evento', 'Agenda settimanale'],
 }
 
 interface AiAttachment {
@@ -388,11 +404,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
   // Update conversation title if first message
   const userMsgCount = await prisma.aiMessage.count({ where: { conversationId, role: 'USER' } })
   if (userMsgCount <= 1) {
-    const title = userMessage.slice(0, 80) + (userMessage.length > 80 ? '...' : '')
-    await prisma.aiConversation.update({
-      where: { id: conversationId },
-      data: { title },
-    })
+    generateTitle(conversationId, userMessage).catch(() => {})
   }
 
   // Summarize if conversation is getting long
@@ -436,6 +448,34 @@ function generateFollowups(usedToolNames: string[]): string[] {
 
   // Return max 3 suggestions
   return allFollowups.slice(0, 3)
+}
+
+async function generateTitle(conversationId: string, userMessage: string) {
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 30,
+      messages: [{
+        role: 'user',
+        content: `Genera un titolo breve (5-8 parole, in italiano) per una conversazione che inizia con questo messaggio. Rispondi SOLO con il titolo, senza virgolette:\n\n${userMessage.slice(0, 200)}`,
+      }],
+    })
+
+    const title = response.content[0]?.type === 'text' ? response.content[0].text.trim() : ''
+    if (title) {
+      await prisma.aiConversation.update({
+        where: { id: conversationId },
+        data: { title: title.slice(0, 100) },
+      })
+    }
+  } catch {
+    // Fallback to truncation
+    const title = userMessage.slice(0, 80) + (userMessage.length > 80 ? '...' : '')
+    await prisma.aiConversation.update({
+      where: { id: conversationId },
+      data: { title },
+    })
+  }
 }
 
 async function summarizeConversation(conversationId: string) {

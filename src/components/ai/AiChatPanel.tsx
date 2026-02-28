@@ -169,8 +169,8 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         setInput((prev) => (prev ? `${prev} ${text}` : text))
         inputRef.current?.focus()
       }
-    } catch {
-      // Silently fail - user can retry
+    } catch (err) {
+      console.error('Transcription error:', err)
     } finally {
       setTranscribing(false)
     }
@@ -204,7 +204,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
 
   return (
     <div
-      className="flex flex-col h-full"
+      className="flex flex-col h-full relative"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

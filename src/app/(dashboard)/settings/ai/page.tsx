@@ -112,11 +112,22 @@ export default function AiSettingsPage() {
   }
 
   const toggleTool = (toolName: string) => {
-    setEnabledTools(prev =>
-      prev.includes(toolName)
-        ? prev.filter(t => t !== toolName)
-        : [...prev, toolName]
-    )
+    setEnabledTools(prev => {
+      // If all tools are enabled (empty array), clicking one should disable ONLY that tool
+      // by populating the array with all tools EXCEPT the clicked one
+      if (prev.length === 0) {
+        return tools.map(t => t.name).filter(t => t !== toolName)
+      }
+      // Normal toggle
+      if (prev.includes(toolName)) {
+        const next = prev.filter(t => t !== toolName)
+        // If removing leaves all tools selected, reset to empty (= all enabled)
+        return next.length === tools.length ? [] : next
+      }
+      const next = [...prev, toolName]
+      // If adding makes all tools selected, reset to empty (= all enabled)
+      return next.length === tools.length ? [] : next
+    })
   }
 
   if (loading) {

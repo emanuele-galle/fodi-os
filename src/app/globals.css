@@ -886,3 +886,52 @@ body,
     @apply bg-background text-foreground;
   }
 }
+
+/* Syntax highlight theme (Tokyo Night inspired) for rehype-highlight */
+.hljs {
+  color: #a9b1d6;
+}
+.hljs-keyword,
+.hljs-built_in,
+.hljs-type {
+  color: #bb9af7;
+}
+.hljs-string,
+.hljs-template-variable {
+  color: #9ece6a;
+}
+.hljs-number,
+.hljs-literal {
+  color: #ff9e64;
+}
+.hljs-comment {
+  color: #565f89;
+  font-style: italic;
+}
+.hljs-function .hljs-title,
+.hljs-title.function_ {
+  color: #7aa2f7;
+}
+.hljs-variable,
+.hljs-attr {
+  color: #e0af68;
+}
+.hljs-params {
+  color: #c0caf5;
+}
+.hljs-tag {
+  color: #f7768e;
+}
+.hljs-attribute {
+  color: #bb9af7;
+}
+.hljs-selector-class,
+.hljs-selector-id {
+  color: #7dcfff;
+}
+.hljs-meta {
+  color: #565f89;
+}
+.hljs-regexp {
+  color: #b4f9f8;
+}

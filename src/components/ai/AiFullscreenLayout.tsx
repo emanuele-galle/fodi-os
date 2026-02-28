@@ -11,6 +11,8 @@ import {
 import { cn } from '@/lib/utils'
 import { AiChatPanel } from './AiChatPanel'
 import { AiAnimatedAvatar } from './AiAnimatedAvatar'
+import { AiVoiceRecorder } from './AiVoiceRecorder'
+import { useVoiceRecorder } from '@/hooks/useVoiceRecorder'
 
 interface Conversation {
   id: string
@@ -201,7 +203,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
       {/* Toggle sidebar button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="absolute top-3 left-2 z-10 p-1 rounded-lg hover:bg-muted transition-colors md:hidden"
+        className="absolute top-3 left-2 z-10 p-1 rounded-lg hover:bg-muted transition-colors"
       >
         <ChevronLeft className={cn('h-4 w-4 transition-transform', !sidebarOpen && 'rotate-180')} />
       </button>
@@ -236,8 +238,11 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
   const [input, setInput] = useState('')
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
+  const [transcribing, setTranscribing] = useState(false)
+  const [voiceError, setVoiceError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { isRecording, duration, startRecording, stopRecording } = useVoiceRecorder()
 
   const handleSend = () => {
     const msg = input.trim()
@@ -246,6 +251,34 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
     setPendingFiles([])
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     onAction(msg)
+  }
+
+  const handleVoiceStop = async () => {
+    const blob = await stopRecording()
+    if (!blob) return
+
+    setTranscribing(true)
+    setVoiceError(null)
+    try {
+      const formData = new FormData()
+      formData.append('audio', blob, 'audio.webm')
+
+      const res = await fetch('/api/ai/transcribe', { method: 'POST', body: formData })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || 'Errore trascrizione')
+      }
+      const { text } = await res.json()
+      if (text) {
+        setInput((prev) => (prev ? `${prev} ${text}` : text))
+        textareaRef.current?.focus()
+      }
+    } catch (err) {
+      setVoiceError((err as Error).message || 'Errore durante la trascrizione')
+      setTimeout(() => setVoiceError(null), 5000)
+    } finally {
+      setTranscribing(false)
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -381,55 +414,77 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
               </div>
             )}
 
-            {/* Textarea */}
-            <div className="px-4 py-3">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSend()
-                  }
-                }}
-                placeholder="Scrivi un messaggio..."
-                rows={1}
-                className="w-full resize-none bg-transparent text-sm leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
-              />
-            </div>
-
-            {/* Action bar */}
-            <div className="flex items-center justify-between px-3 pb-3">
-              <div className="flex items-center gap-0.5">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={pendingFiles.length >= 3}
-                  className="p-2 rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-30"
-                  title="Allega file"
-                >
-                  <Plus className="h-4 w-4 text-muted-foreground/60" />
-                </button>
-                <button
-                  className="p-2 rounded-lg hover:bg-secondary/80 transition-colors"
-                  title="Messaggio vocale"
-                >
-                  <Mic className="h-4 w-4 text-muted-foreground/60" />
-                </button>
+            {/* Voice recording UI */}
+            {isRecording ? (
+              <div className="px-4 py-3">
+                <AiVoiceRecorder duration={duration} onStop={handleVoiceStop} />
               </div>
-              <button
-                onClick={handleSend}
-                disabled={!input.trim()}
-                className={cn(
-                  'p-2.5 rounded-xl transition-all duration-200',
-                  input.trim()
-                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
-                    : 'bg-secondary/60 text-muted-foreground/30',
-                )}
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </div>
+            ) : transcribing ? (
+              <div className="flex items-center gap-2 px-4 py-3">
+                <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
+                <span className="text-sm text-muted-foreground">Trascrizione in corso...</span>
+              </div>
+            ) : (
+              <>
+                {/* Textarea */}
+                <div className="px-4 py-3">
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={handleInputChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleSend()
+                      }
+                    }}
+                    placeholder="Scrivi un messaggio..."
+                    rows={1}
+                    className="w-full resize-none bg-transparent text-sm leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
+                  />
+                </div>
+
+                {/* Action bar */}
+                <div className="flex items-center justify-between px-3 pb-3">
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={pendingFiles.length >= 3}
+                      className="p-2 rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-30"
+                      title="Allega file"
+                    >
+                      <Plus className="h-4 w-4 text-muted-foreground/60" />
+                    </button>
+                    <button
+                      onClick={startRecording}
+                      className="p-2 rounded-lg hover:bg-secondary/80 transition-colors"
+                      title="Messaggio vocale"
+                    >
+                      <Mic className="h-4 w-4 text-muted-foreground/60" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleSend}
+                    disabled={!input.trim()}
+                    className={cn(
+                      'p-2.5 rounded-xl transition-all duration-200',
+                      input.trim()
+                        ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
+                        : 'bg-secondary/60 text-muted-foreground/30',
+                    )}
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Voice error */}
+            {voiceError && (
+              <div className="px-4 pb-3">
+                <p className="text-xs text-red-400">{voiceError}</p>
+              </div>
+            )}
           </div>
 
           {/* Hidden file input */}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { User, Copy, Check, FileText, ExternalLink } from 'lucide-react'
 import { AiToolIndicator } from './AiToolIndicator'
@@ -15,6 +15,46 @@ interface AiMessageBubbleProps {
   message: AiChatMessage
 }
 
+function CodeCopyButton({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(code)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="absolute top-2 right-2 p-1.5 rounded-md bg-white/[0.08] hover:bg-white/[0.15] transition-colors text-muted-foreground/60 hover:text-muted-foreground"
+      title="Copia codice"
+    >
+      {copied ? (
+        <Check className="h-3 w-3 text-emerald-400" />
+      ) : (
+        <Copy className="h-3 w-3" />
+      )}
+    </button>
+  )
+}
+
+function formatTimestamp(createdAt: string | Date): string {
+  const date = new Date(createdAt)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const is24hAgo = diffMs > 24 * 60 * 60 * 1000
+
+  const time = date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+
+  if (is24hAgo) {
+    const dateStr = date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
+    return `${dateStr}, ${time}`
+  }
+
+  return time
+}
+
 export function AiMessageBubble({ message }: AiMessageBubbleProps) {
   const isUser = message.role === 'user'
   const [copied, setCopied] = useState(false)
@@ -26,9 +66,18 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const timestamp = message.createdAt
-    ? new Date(message.createdAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
-    : null
+  const timestamp = message.createdAt ? formatTimestamp(message.createdAt) : null
+
+  // Extract text from pre children for copy button
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const extractText = useCallback((node: any): string => {
+    if (typeof node === 'string') return node
+    if (Array.isArray(node)) return node.map(extractText).join('')
+    if (node && typeof node === 'object' && node.props) {
+      return extractText(node.props.children)
+    }
+    return ''
+  }, [])
 
   return (
     <div className={cn('flex gap-3 ai-bubble-in', isUser && 'flex-row-reverse')}>
@@ -145,9 +194,12 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
                         )
                       },
                       pre: ({ children }) => (
-                        <pre className="rounded-lg bg-black/20 border border-white/[0.04] p-3 my-2 overflow-x-auto text-xs">
-                          {children}
-                        </pre>
+                        <div className="relative group/code my-2">
+                          <pre className="rounded-lg bg-black/20 border border-white/[0.04] p-3 overflow-x-auto text-xs">
+                            {children}
+                          </pre>
+                          <CodeCopyButton code={extractText(children)} />
+                        </div>
                       ),
                       // Table
                       table: ({ children }) => (
@@ -187,7 +239,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
 
             {/* Copy button for assistant messages */}
             {!isUser && (
-              <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex justify-end mt-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={handleCopy}
                   className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
@@ -208,12 +260,13 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
         {!isUser && message.toolCalls && message.toolCalls.length > 0 && (
           <div className="flex flex-col gap-1.5 w-full">
             {message.toolCalls
-              .filter((tc) => tc.result && tc.status === 'SUCCESS')
+              .filter((tc) => tc.result && (tc.status === 'SUCCESS' || tc.status === 'ERROR'))
               .map((tc) => (
                 <AiToolResultCard
                   key={tc.id}
                   toolName={tc.name}
                   result={tc.result!}
+                  defaultExpanded={tc.name.startsWith('create_')}
                 />
               ))}
           </div>
