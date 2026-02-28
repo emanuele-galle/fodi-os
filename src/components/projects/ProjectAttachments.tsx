@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, Trash2, Download, FileText, Image, File, Eye, Pencil, X, Check } from 'lucide-react'
+import { Upload, Trash2, Download, FileText, Image, File, Eye, Pencil, X, Check, ExternalLink, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useConfirm } from '@/hooks/useConfirm'
+import { MAX_UPLOAD_SIZE_MB, MAX_UPLOAD_SIZE_BYTES } from '@/lib/upload-constants'
 
 interface Attachment {
   id: string
@@ -15,6 +16,8 @@ interface Attachment {
   fileUrl: string
   fileSize: number
   mimeType: string
+  type?: 'FILE' | 'EXTERNAL'
+  linkProvider?: string | null
   createdAt: string
   uploadedBy: { id: string; firstName: string; lastName: string }
 }
@@ -70,6 +73,11 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [renaming, setRenaming] = useState(false)
+  const [showLinkForm, setShowLinkForm] = useState(false)
+  const [linkUrl, setLinkUrl] = useState('')
+  const [linkName, setLinkName] = useState('')
+  const [addingLink, setAddingLink] = useState(false)
+  const [linkError, setLinkError] = useState<string | null>(null)
   const { confirm, confirmProps } = useConfirm()
 
   const fetchAttachments = useCallback(async () => {
@@ -114,6 +122,12 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
 
   const onDrop = useCallback(async (acceptedFiles: globalThis.File[]) => {
     if (acceptedFiles.length === 0) return
+    // Client-side size check
+    const oversized = acceptedFiles.find(f => f.size > MAX_UPLOAD_SIZE_BYTES)
+    if (oversized) {
+      alert(`Il file "${oversized.name}" supera il limite di ${MAX_UPLOAD_SIZE_MB} MB. Per file più grandi, usa Link Esterno.`)
+      return
+    }
     setUploading(true)
     try {
       for (let i = 0; i < acceptedFiles.length; i++) {
@@ -133,7 +147,32 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    maxSize: MAX_UPLOAD_SIZE_BYTES,
   })
+
+  async function handleAddLink() {
+    if (!linkUrl.trim()) return
+    setAddingLink(true)
+    setLinkError(null)
+    try {
+      const res = await fetch(`/api/projects/${projectId}/attachments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: linkUrl.trim(), name: linkName.trim() || undefined, folderId }),
+      })
+      if (res.ok) {
+        setShowLinkForm(false)
+        setLinkUrl('')
+        setLinkName('')
+        fetchAttachments()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setLinkError(data.error || 'Errore durante l\'aggiunta del link')
+      }
+    } finally {
+      setAddingLink(false)
+    }
+  }
 
   async function handleDelete(attachmentId: string) {
     const ok = await confirm({ message: 'Eliminare questo file?', variant: 'danger' })
@@ -195,7 +234,48 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
         ) : isDragActive ? (
           <p className="text-sm text-primary">Rilascia i file qui...</p>
         ) : (
-          <p className="text-sm text-muted">Trascina i file qui o clicca per selezionare</p>
+          <div>
+            <p className="text-sm text-muted">Trascina i file qui o clicca per selezionare</p>
+            <p className="text-xs text-muted/60 mt-1">Max {MAX_UPLOAD_SIZE_MB} MB per file</p>
+          </div>
+        )}
+      </div>
+
+      {/* Link esterno button + form */}
+      <div className="mb-4">
+        {!showLinkForm ? (
+          <button
+            onClick={() => setShowLinkForm(true)}
+            className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors"
+          >
+            <Link2 className="h-4 w-4" />
+            + Link Esterno
+          </button>
+        ) : (
+          <div className="border border-border rounded-lg p-3 space-y-2">
+            <Input
+              placeholder="https://drive.google.com/..."
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAddLink(); if (e.key === 'Escape') setShowLinkForm(false) }}
+            />
+            <Input
+              placeholder="Nome (opzionale)"
+              value={linkName}
+              onChange={(e) => setLinkName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAddLink() }}
+            />
+            {linkError && <p className="text-xs text-destructive">{linkError}</p>}
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={handleAddLink} disabled={addingLink || !linkUrl.trim()}>
+                {addingLink ? 'Aggiunta...' : 'Aggiungi'}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { setShowLinkForm(false); setLinkError(null) }}>
+                Annulla
+              </Button>
+            </div>
+          </div>
         )}
       </div>
 
@@ -204,15 +284,18 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
       ) : (
         <div className="space-y-2">
           {attachments.map((att) => {
-            const Icon = getFileIcon(att.mimeType)
-            const canPreview = isPreviewable(att.mimeType) || att.fileUrl.includes('drive.google.com')
+            const isExternal = att.type === 'EXTERNAL'
+            const Icon = isExternal ? ExternalLink : getFileIcon(att.mimeType)
+            const canPreview = !isExternal && (isPreviewable(att.mimeType) || att.fileUrl.includes('drive.google.com'))
             const isRenaming = renamingId === att.id
             return (
               <div
                 key={att.id}
                 className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-secondary/30 transition-colors"
               >
-                {att.mimeType.startsWith('image/') ? (
+                {isExternal ? (
+                  <ExternalLink className="h-5 w-5 text-primary flex-shrink-0" />
+                ) : att.mimeType.startsWith('image/') ? (
                   <button
                     onClick={() => setPreviewAttachment(att)}
                     className="flex-shrink-0 w-10 h-10 rounded overflow-hidden bg-secondary/50 hover:opacity-80 transition-opacity"
@@ -260,7 +343,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                     <>
                       <p className="text-sm font-medium truncate">{att.fileName}</p>
                       <p className="text-xs text-muted">
-                        {formatFileSize(att.fileSize)} - {att.uploadedBy.firstName} {att.uploadedBy.lastName} - {new Date(att.createdAt).toLocaleDateString('it-IT')}
+                        {isExternal ? (att.linkProvider && att.linkProvider !== 'other' ? att.linkProvider.replace('_', ' ') : 'Link esterno') : formatFileSize(att.fileSize)} - {att.uploadedBy.firstName} {att.uploadedBy.lastName} - {new Date(att.createdAt).toLocaleDateString('it-IT')}
                       </p>
                     </>
                   )}
@@ -284,15 +367,27 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                     >
                       <Pencil className="h-4 w-4 text-muted" />
                     </button>
-                    <a
-                      href={`/api/projects/${projectId}/attachments/${att.id}/download`}
-                      className="p-1.5 rounded hover:bg-primary/10 transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                      title="Scarica"
-                      download
-                    >
-                      <Download className="h-4 w-4 text-muted" />
-                    </a>
+                    {isExternal ? (
+                      <a
+                        href={att.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded hover:bg-primary/10 transition-colors"
+                        title="Apri"
+                      >
+                        <ExternalLink className="h-4 w-4 text-primary" />
+                      </a>
+                    ) : (
+                      <a
+                        href={`/api/projects/${projectId}/attachments/${att.id}/download`}
+                        className="p-1.5 rounded hover:bg-primary/10 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Scarica"
+                        download
+                      >
+                        <Download className="h-4 w-4 text-muted" />
+                      </a>
+                    )}
                     <button
                       onClick={() => handleDelete(att.id)}
                       className="p-1.5 rounded hover:bg-destructive/10 transition-colors"

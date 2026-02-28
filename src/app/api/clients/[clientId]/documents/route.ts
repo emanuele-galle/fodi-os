@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { uploadWithBackup } from '@/lib/storage'
 import { validateFile } from '@/lib/file-validation'
+import { validateExternalLink } from '@/lib/link-validation'
 import type { Role } from '@/generated/prisma/client'
 
 type Params = { params: Promise<{ clientId: string }> }
@@ -63,7 +64,53 @@ export async function POST(request: NextRequest, { params }: Params) {
     requirePermission(role, 'crm', 'write')
 
     const { clientId } = await params
+    const contentType = request.headers.get('content-type') || ''
 
+    // External link flow (JSON body)
+    if (contentType.includes('application/json')) {
+      const body = await request.json()
+      const { url, name, category: linkCategory } = body as { url?: string; name?: string; category?: string }
+
+      if (!url) {
+        return NextResponse.json({ success: false, error: 'URL obbligatorio' }, { status: 400 })
+      }
+
+      const linkResult = validateExternalLink(url)
+      if (!linkResult.valid) {
+        return NextResponse.json({ success: false, error: linkResult.error }, { status: 400 })
+      }
+
+      const client = await prisma.client.findUnique({ where: { id: clientId }, select: { id: true } })
+      if (!client) {
+        return NextResponse.json({ success: false, error: 'Cliente non trovato' }, { status: 404 })
+      }
+
+      const document = await prisma.document.create({
+        data: {
+          clientId,
+          name: name || url,
+          fileUrl: url,
+          fileSize: 0,
+          mimeType: 'application/x-external-link',
+          type: 'EXTERNAL',
+          linkProvider: linkResult.provider,
+          category: linkCategory || 'general',
+          isClientVisible: false,
+        },
+      })
+
+      logActivity({
+        userId,
+        action: 'ADD_EXTERNAL_LINK',
+        entityType: 'CLIENT',
+        entityId: clientId,
+        metadata: { documentId: document.id, url, provider: linkResult.provider },
+      })
+
+      return NextResponse.json({ success: true, data: document }, { status: 201 })
+    }
+
+    // File upload flow (FormData)
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const category = (formData.get('category') as string) || 'general'

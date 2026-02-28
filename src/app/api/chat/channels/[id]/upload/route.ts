@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { uploadFile } from '@/lib/s3'
+import { validateFile } from '@/lib/file-validation'
+import { validateExternalLink } from '@/lib/link-validation'
 import { sseManager } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
@@ -23,6 +25,59 @@ export async function POST(
       return NextResponse.json({ error: 'Non sei membro di questo canale' }, { status: 403 })
     }
 
+    const contentType = request.headers.get('content-type') || ''
+
+    // External link flow (JSON body)
+    if (contentType.includes('application/json')) {
+      const body = await request.json()
+      const { url, name } = body as { url?: string; name?: string }
+
+      if (!url) {
+        return NextResponse.json({ error: 'URL obbligatorio' }, { status: 400 })
+      }
+
+      const linkResult = validateExternalLink(url)
+      if (!linkResult.valid) {
+        return NextResponse.json({ error: linkResult.error }, { status: 400 })
+      }
+
+      const message = await prisma.chatMessage.create({
+        data: {
+          channelId,
+          authorId: userId,
+          content: name || url,
+          type: 'EXTERNAL_LINK',
+          metadata: {
+            url,
+            provider: linkResult.provider,
+            name: name || null,
+          },
+        },
+        include: {
+          author: {
+            select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          },
+        },
+      })
+
+      await prisma.chatChannel.update({
+        where: { id: channelId },
+        data: { updatedAt: new Date() },
+      })
+
+      const members = await prisma.chatMember.findMany({
+        where: { channelId },
+        select: { userId: true },
+      })
+      sseManager.broadcast(channelId, members.map((m) => m.userId), {
+        type: 'new_message',
+        data: message,
+      })
+
+      return NextResponse.json(message, { status: 201 })
+    }
+
+    // File upload flow (FormData)
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     if (!file) {
@@ -35,6 +90,13 @@ export async function POST(
 
     // Upload to S3
     const buffer = Buffer.from(await file.arrayBuffer())
+
+    // Validate file
+    const validationError = validateFile(safeName, file.size, file.type || 'application/octet-stream', buffer)
+    if (validationError) {
+      return NextResponse.json({ error: validationError.message }, { status: 400 })
+    }
+
     const key = `chat/${channelId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`
 
     const fileUrl = await uploadFile(key, buffer, file.type)

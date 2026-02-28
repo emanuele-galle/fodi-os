@@ -3,14 +3,17 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { deleteFile } from '@/lib/s3'
+import { validateExternalLink } from '@/lib/link-validation'
 import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
 const createAttachmentSchema = z.object({
   fileName: z.string().min(1, 'Nome file obbligatorio'),
   fileUrl: z.string().min(1, 'URL file obbligatorio'),
-  fileSize: z.number().int().positive('Dimensione file non valida'),
+  fileSize: z.number().int().nonnegative('Dimensione file non valida'),
   mimeType: z.string().min(1, 'Tipo MIME obbligatorio'),
+  type: z.enum(['FILE', 'EXTERNAL']).optional(),
+  linkProvider: z.string().optional(),
 })
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
@@ -54,7 +57,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    const { fileName, fileUrl, fileSize, mimeType } = parsed.data
+    const { fileName, fileUrl, fileSize, mimeType, type, linkProvider } = parsed.data
+
+    // Validate external link if type is EXTERNAL
+    if (type === 'EXTERNAL') {
+      const linkResult = validateExternalLink(fileUrl)
+      if (!linkResult.valid) {
+        return NextResponse.json({ error: linkResult.error }, { status: 400 })
+      }
+    }
 
     // Verify task exists
     const task = await prisma.task.findUnique({ where: { id: taskId }, select: { id: true } })
@@ -70,6 +81,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         fileUrl,
         fileSize,
         mimeType,
+        type: type || 'FILE',
+        linkProvider: linkProvider || null,
       },
       include: {
         uploadedBy: { select: { id: true, firstName: true, lastName: true } },
@@ -115,15 +128,17 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Allegato non trovato' }, { status: 404 })
     }
 
-    // Delete file from MinIO (best-effort)
-    try {
-      const url = new URL(attachment.fileUrl)
-      const keyMatch = url.pathname.match(/^\/[^/]+\/(.+)$/)
-      if (keyMatch) {
-        await deleteFile(keyMatch[1])
+    // Skip storage deletion for external links
+    if (attachment.type !== 'EXTERNAL') {
+      try {
+        const url = new URL(attachment.fileUrl)
+        const keyMatch = url.pathname.match(/^\/[^/]+\/(.+)$/)
+        if (keyMatch) {
+          await deleteFile(keyMatch[1])
+        }
+      } catch (err) {
+        console.warn(`[tasks/:taskId/attachments] Failed to delete S3 file for attachment ${attachmentId}:`, (err as Error).message)
       }
-    } catch (err) {
-      console.warn(`[tasks/:taskId/attachments] Failed to delete S3 file for attachment ${attachmentId}:`, (err as Error).message)
     }
 
     await prisma.taskAttachment.delete({ where: { id: attachmentId } })

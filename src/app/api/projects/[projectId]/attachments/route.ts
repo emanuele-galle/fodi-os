@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { uploadWithBackup, deleteWithBackup, renameOnGDrive } from '@/lib/storage'
 import { validateFile } from '@/lib/file-validation'
+import { validateExternalLink } from '@/lib/link-validation'
 import { logActivity } from '@/lib/activity-log'
 import type { Role } from '@/generated/prisma/client'
 
@@ -48,6 +49,56 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { projectId } = await params
 
+    const contentType = request.headers.get('content-type') || ''
+
+    // External link flow (JSON body)
+    if (contentType.includes('application/json')) {
+      const body = await request.json()
+      const { url, name, folderId: linkFolderId } = body as { url?: string; name?: string; folderId?: string }
+
+      if (!url) {
+        return NextResponse.json({ error: 'URL obbligatorio' }, { status: 400 })
+      }
+
+      const linkResult = validateExternalLink(url)
+      if (!linkResult.valid) {
+        return NextResponse.json({ error: linkResult.error }, { status: 400 })
+      }
+
+      const project = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true } })
+      if (!project) {
+        return NextResponse.json({ error: 'Progetto non trovato' }, { status: 404 })
+      }
+
+      const attachment = await prisma.projectAttachment.create({
+        data: {
+          projectId,
+          uploadedById: userId,
+          folderId: linkFolderId || null,
+          fileName: name || url,
+          fileUrl: url,
+          fileSize: 0,
+          mimeType: 'application/x-external-link',
+          type: 'EXTERNAL',
+          linkProvider: linkResult.provider,
+        },
+        include: {
+          uploadedBy: { select: { id: true, firstName: true, lastName: true } },
+        },
+      })
+
+      logActivity({
+        userId,
+        action: 'ADD_EXTERNAL_LINK',
+        entityType: 'PROJECT',
+        entityId: projectId,
+        metadata: { attachmentId: attachment.id, url, provider: linkResult.provider },
+      })
+
+      return NextResponse.json(attachment, { status: 201 })
+    }
+
+    // File upload flow (FormData)
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const folderId = formData.get('folderId') as string | null
@@ -195,8 +246,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Allegato non trovato' }, { status: 404 })
     }
 
-    // Delete from both MinIO and GDrive
-    await deleteWithBackup(attachment.fileUrl, attachment.driveFileId)
+    // Skip storage deletion for external links
+    if (attachment.type !== 'EXTERNAL') {
+      await deleteWithBackup(attachment.fileUrl, attachment.driveFileId)
+    }
 
     await prisma.projectAttachment.delete({ where: { id: attachmentId } })
 

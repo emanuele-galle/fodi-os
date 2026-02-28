@@ -203,6 +203,21 @@ export function ProjectChat({ projectId, folderId }: ProjectChatProps) {
     }
   }
 
+  // Send external link in chat
+  async function handleSendLink(url: string) {
+    if (!channelId || sending) return
+    setSending(true)
+    try {
+      await fetch(`/api/chat/channels/${channelId}/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      })
+    } finally {
+      setSending(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -277,6 +292,7 @@ export function ProjectChat({ projectId, folderId }: ProjectChatProps) {
       <MessageInput
         onSend={handleSend}
         onSendFile={handleSendFile}
+        onSendLink={handleSendLink}
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
         disabled={sending}

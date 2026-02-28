@@ -29,5 +29,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "prisma", "remotion", "mcp-server"]
+  "exclude": ["node_modules", "prisma", "remotion", "mcp-server", "scripts"]
 }

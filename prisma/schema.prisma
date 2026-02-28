@@ -556,14 +556,16 @@ model TaskAssignment {
 }
 
 model TaskAttachment {
-  id           String   @id @default(uuid())
+  id           String         @id @default(uuid())
   taskId       String
   uploadedById String
   fileName     String
   fileUrl      String
   fileSize     Int
   mimeType     String
-  createdAt    DateTime @default(now())
+  type         AttachmentType @default(FILE)
+  linkProvider String?
+  createdAt    DateTime       @default(now())
 
   task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
   uploadedBy User @relation(fields: [uploadedById], references: [id])
@@ -610,7 +612,7 @@ model Folder {
 }
 
 model ProjectAttachment {
-  id           String   @id @default(uuid())
+  id           String         @id @default(uuid())
   projectId    String
   uploadedById String
   folderId     String?
@@ -619,7 +621,9 @@ model ProjectAttachment {
   fileSize     Int
   mimeType     String
   driveFileId  String?
-  createdAt    DateTime @default(now())
+  type         AttachmentType @default(FILE)
+  linkProvider String?
+  createdAt    DateTime       @default(now())
 
   project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   uploadedBy User    @relation(fields: [uploadedById], references: [id])
@@ -1028,7 +1032,7 @@ model Comment {
 }
 
 model Document {
-  id              String   @id @default(uuid())
+  id              String         @id @default(uuid())
   clientId        String?
   projectId       String?
   name            String
@@ -1036,10 +1040,12 @@ model Document {
   fileSize        Int?
   mimeType        String?
   driveFileId     String?
-  category        String   @default("general")
-  isClientVisible Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  type            AttachmentType @default(FILE)
+  linkProvider    String?
+  category        String         @default("general")
+  isClientVisible Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   client  Client?  @relation(fields: [clientId], references: [id])
   project Project? @relation(fields: [projectId], references: [id])
@@ -1232,6 +1238,12 @@ enum ChatMessageType {
   TEXT
   SYSTEM
   FILE_LINK
+  EXTERNAL_LINK
+}
+
+enum AttachmentType {
+  FILE
+  EXTERNAL
 }
 
 model CompanyProfile {

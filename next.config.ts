@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 's3.fodivps1.cloud' },
       { protocol: 'https', hostname: 'storage.fodivps1.cloud' },
       { protocol: 'https', hostname: 'storage.fodivps2.cloud' },
+      { protocol: 'https', hostname: 'files.fodisrl.it' },
       { protocol: 'https', hostname: 'www.gstatic.com' },
       ...(process.env.ALLOWED_IMAGE_DOMAINS || '')
         .split(',')
@@ -39,9 +40,9 @@ const nextConfig: NextConfig = {
     ]
   },
   experimental: {
-    middlewareClientMaxBodySize: '50mb',
+    middlewareClientMaxBodySize: '100mb',
     serverActions: {
-      bodySizeLimit: '50mb',
+      bodySizeLimit: '100mb',
     },
     optimizePackageImports: [
       'lucide-react',

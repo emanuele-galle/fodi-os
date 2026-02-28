@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/utils'
-import { Check, CheckCheck, FileText, Edit2, Trash2, MoreHorizontal, Reply, SmilePlus, Video } from 'lucide-react'
+import { Check, CheckCheck, FileText, Edit2, Trash2, MoreHorizontal, Reply, SmilePlus, Video, ExternalLink } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '😮', '😢']
@@ -245,6 +245,72 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
         <span className="text-[11px] text-muted-foreground/60 bg-secondary/50 px-4 py-1.5 rounded-full font-medium">
           {message.content}
         </span>
+      </div>
+    )
+  }
+
+  // EXTERNAL_LINK messages
+  if (message.type === 'EXTERNAL_LINK') {
+    const linkMeta = message.metadata as { url?: string; provider?: string; name?: string; reactions?: Record<string, string[]> } | null
+    const linkReactions = parseReactions(message.metadata)
+    const providerLabel = linkMeta?.provider && linkMeta.provider !== 'other' ? linkMeta.provider.replace('_', ' ') : 'Link esterno'
+    return (
+      <div className={cn(
+        'flex gap-3 px-4 md:px-6 group hover:bg-secondary/30 transition-colors duration-100',
+        isOwn && 'flex-row-reverse',
+        showName ? 'py-1' : 'py-0.5'
+      )}>
+        {showAvatar ? (
+          <Avatar src={message.author.avatarUrl} name={authorName} size="sm" className="flex-shrink-0 mt-0.5 ring-1 ring-border/50" />
+        ) : (
+          <div className="w-8 flex-shrink-0" />
+        )}
+        <div className={cn('max-w-[85%] md:max-w-[75%] min-w-0', isOwn && 'flex flex-col items-end')}>
+          {showName && (
+            <div className={cn('flex items-baseline gap-2 mb-0.5', isOwn && 'flex-row-reverse')}>
+              <span className={cn('text-[12px] font-semibold', isOwn ? 'text-primary/60' : 'text-foreground/80')}>
+                {isOwn ? 'Tu' : authorName}
+              </span>
+              <span className="text-[10px] text-muted-foreground/40 font-medium">{time}</span>
+            </div>
+          )}
+          <div className={cn(
+            'rounded-2xl overflow-hidden shadow-sm',
+            isOwn ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-card border border-border/60 text-foreground rounded-bl-md'
+          )}>
+            <a
+              href={linkMeta?.url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-2.5"
+            >
+              <ExternalLink className="h-5 w-5 flex-shrink-0 opacity-70" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{linkMeta?.name || message.content}</p>
+                <p className="text-xs opacity-60 capitalize">{providerLabel}</p>
+              </div>
+            </a>
+          </div>
+          {linkReactions.length > 0 && (
+            <div className={cn('flex flex-wrap gap-1 mt-1', isOwn && 'justify-end')}>
+              {linkReactions.map(({ emoji, count, userIds }) => (
+                <button
+                  key={emoji}
+                  onClick={() => onReact?.(message.id, emoji)}
+                  className={cn(
+                    'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-colors',
+                    currentUserId && userIds.includes(currentUserId)
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'bg-secondary/60 border-border/40 hover:bg-secondary/80'
+                  )}
+                >
+                  <span>{emoji}</span>
+                  <span className="font-medium">{count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     )
   }

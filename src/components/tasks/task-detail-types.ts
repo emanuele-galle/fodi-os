@@ -18,6 +18,8 @@ export interface Attachment {
   fileUrl: string
   fileSize: number
   mimeType: string
+  type?: 'FILE' | 'EXTERNAL'
+  linkProvider?: string | null
   createdAt: string
   uploadedBy: { id: string; firstName: string; lastName: string }
 }

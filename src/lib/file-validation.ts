@@ -3,7 +3,7 @@
  * Validates file size, extension blocklist, and magic bytes.
  */
 
-const MAX_FILE_SIZE_BYTES = (parseInt(process.env.MAX_FILE_SIZE_MB || '1024', 10)) * 1024 * 1024 // default 1GB
+const MAX_FILE_SIZE_BYTES = (parseInt(process.env.MAX_FILE_SIZE_MB || '100', 10)) * 1024 * 1024 // default 100MB
 
 const BLOCKED_EXTENSIONS = new Set([
   '.exe', '.bat', '.cmd', '.sh', '.ps1', '.msi', '.dll', '.com',

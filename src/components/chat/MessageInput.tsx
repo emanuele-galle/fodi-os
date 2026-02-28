@@ -21,13 +21,14 @@ interface ReplyTo {
 interface MessageInputProps {
   onSend: (content: string) => void
   onSendFile?: (file: File) => void
+  onSendLink?: (url: string) => void
   onTyping?: () => void
   replyTo?: ReplyTo | null
   onCancelReply?: () => void
   disabled?: boolean
 }
 
-export function MessageInput({ onSend, onSendFile, onTyping, replyTo, onCancelReply, disabled }: MessageInputProps) {
+export function MessageInput({ onSend, onSendFile, onSendLink, onTyping, replyTo, onCancelReply, disabled }: MessageInputProps) {
   const [value, setValue] = useState('')
   const [emojiOpen, setEmojiOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -58,7 +59,17 @@ export function MessageInput({ onSend, onSendFile, onTyping, replyTo, onCancelRe
   function handleSubmit() {
     const trimmed = value.trim()
     if (!trimmed || disabled) return
-    onSend(trimmed)
+    // Auto-detect external link: if entire message is a URL, send as link
+    if (onSendLink && /^https:\/\/\S+$/.test(trimmed) && (
+      trimmed.includes('drive.google.com') || trimmed.includes('dropbox.com') ||
+      trimmed.includes('wetransfer.com') || trimmed.includes('we.tl') ||
+      trimmed.includes('onedrive.live.com') || trimmed.includes('1drv.ms') ||
+      trimmed.includes('sharepoint.com')
+    )) {
+      onSendLink(trimmed)
+    } else {
+      onSend(trimmed)
+    }
     setValue('')
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'

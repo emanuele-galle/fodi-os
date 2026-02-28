@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission } from '@/lib/permissions'
 import { uploadFile } from '@/lib/s3'
+import { validateFile } from '@/lib/file-validation'
 import type { Role } from '@/generated/prisma/client'
 
 export async function POST(request: NextRequest) {
@@ -21,9 +22,17 @@ export async function POST(request: NextRequest) {
     const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
 
     const buffer = Buffer.from(await file.arrayBuffer())
+    const mimeType = file.type || 'application/octet-stream'
+
+    // Validate file
+    const validationError = validateFile(safeName, file.size, mimeType, buffer)
+    if (validationError) {
+      return NextResponse.json({ error: validationError.message }, { status: 400 })
+    }
+
     const key = `chat/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
-    const fileUrl = await uploadFile(key, buffer, file.type || 'application/octet-stream')
+    const fileUrl = await uploadFile(key, buffer, mimeType)
 
     return NextResponse.json({
       fileName: safeName,
