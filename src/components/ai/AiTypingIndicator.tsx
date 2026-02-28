@@ -1,7 +1,6 @@
 'use client'
 
-import { motion } from 'motion/react'
-import { Bot } from 'lucide-react'
+import { AiAnimatedAvatar } from './AiAnimatedAvatar'
 
 const TOOL_MESSAGES: Record<string, string> = {
   list_tasks: 'Sto cercando i tuoi task...',
@@ -49,27 +48,22 @@ export function AiTypingIndicator({ activeToolName }: AiTypingIndicatorProps) {
     : 'Sto pensando...'
 
   return (
-    <div className="flex gap-3">
-      <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-violet-500/20 text-violet-400">
-        <Bot className="h-4 w-4" />
-      </div>
+    <div className="flex gap-3 ai-bubble-in">
+      <AiAnimatedAvatar size="sm" className="flex-shrink-0" />
       <div className="flex flex-col gap-1.5">
-        <div className="rounded-2xl rounded-tl-md bg-muted px-4 py-3 flex items-center gap-1">
+        <div className="rounded-2xl rounded-tl-md bg-white/[0.04] backdrop-blur-sm border border-white/[0.06] px-4 py-3 flex items-center gap-1.5">
           {[0, 1, 2].map((i) => (
-            <motion.div
+            <div
               key={i}
-              className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-violet-400 to-purple-500"
-              animate={{ opacity: [0.3, 1, 0.3], scale: [0.85, 1.1, 0.85] }}
-              transition={{
-                duration: 1.2,
-                repeat: Infinity,
-                delay: i * 0.2,
-                ease: 'easeInOut',
-              }}
+              className="w-2 h-2 rounded-full bg-gradient-to-r from-violet-400 to-purple-500 ai-wave-dot"
+              style={{ animationDelay: `${i * 0.15}s` }}
             />
           ))}
         </div>
-        <span className="text-[10px] text-muted-foreground/60 pl-1">{contextMessage}</span>
+        <span className="text-[10px] text-muted-foreground/60 pl-1 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-violet-400/50 animate-pulse" />
+          {contextMessage}
+        </span>
       </div>
     </div>
   )

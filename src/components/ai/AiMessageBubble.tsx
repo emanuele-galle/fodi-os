@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Bot, User, Copy, Check, FileText, ExternalLink } from 'lucide-react'
+import { User, Copy, Check, FileText, ExternalLink } from 'lucide-react'
 import { AiToolIndicator } from './AiToolIndicator'
 import { AiToolResultCard } from './AiToolResultCard'
+import { AiAnimatedAvatar } from './AiAnimatedAvatar'
 import type { AiChatMessage } from '@/hooks/useAiChat'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -32,14 +33,13 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
   return (
     <div className={cn('flex gap-3 ai-bubble-in', isUser && 'flex-row-reverse')}>
       {/* Avatar */}
-      <div className={cn(
-        'flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center border',
-        isUser
-          ? 'bg-gradient-to-br from-violet-500/20 to-purple-600/20 border-violet-400/10 text-violet-300'
-          : 'bg-white/[0.04] border-white/[0.06] text-muted-foreground/60',
-      )}>
-        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-      </div>
+      {isUser ? (
+        <div className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center border bg-gradient-to-br from-violet-500/20 to-purple-600/20 border-violet-400/10 text-violet-300">
+          <User className="h-4 w-4" />
+        </div>
+      ) : (
+        <AiAnimatedAvatar size="sm" className="flex-shrink-0" />
+      )}
 
       {/* Content */}
       <div className={cn('flex flex-col gap-1.5 max-w-[85%] sm:max-w-[80%]', isUser && 'items-end')}>

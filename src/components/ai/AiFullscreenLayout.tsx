@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from 'motion/react'
 import {
   Search, Plus, MessageSquare, Trash2, ChevronLeft,
   CheckSquare, Users, Calendar, Receipt,
-  BarChart3, Bot, Loader2, Sparkles
+  BarChart3, Bot, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AiChatPanel } from './AiChatPanel'
+import { AiAnimatedAvatar } from './AiAnimatedAvatar'
+import GradientText from '@/components/ui/GradientText'
 
 interface Conversation {
   id: string
@@ -277,6 +279,26 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
       <div className="ai-orb ai-orb-2" />
       <div className="ai-orb ai-orb-3" />
 
+      {/* Floating particles */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className="ai-particle"
+          style={{
+            left: `${15 + i * 10}%`,
+            bottom: '20%',
+            '--particle-x': `${(i % 2 === 0 ? 1 : -1) * (10 + i * 5)}px`,
+            '--particle-duration': `${3 + i * 0.5}s`,
+            '--particle-delay': `${i * 0.7}s`,
+            background: i % 3 === 0
+              ? 'rgba(139, 92, 246, 0.4)'
+              : i % 3 === 1
+                ? 'rgba(168, 85, 247, 0.3)'
+                : 'rgba(99, 102, 241, 0.4)',
+          } as React.CSSProperties}
+        />
+      ))}
+
       <div className="max-w-3xl w-full space-y-10 relative z-10">
         {/* Greeting hero */}
         <motion.div
@@ -285,29 +307,26 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          {/* Animated bot icon */}
+          {/* Animated AI avatar */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="relative inline-flex mb-6"
           >
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/30 to-purple-600/30 flex items-center justify-center shadow-2xl shadow-violet-500/20 border border-violet-400/20">
-              <Bot className="h-10 w-10 text-violet-300" />
-            </div>
+            <AiAnimatedAvatar size="xl" />
             {/* Glow ring */}
-            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 blur-lg -z-10" />
-            {/* Online indicator */}
-            <div className="absolute -bottom-1 -right-1 flex items-center justify-center">
-              <span className="relative flex h-4 w-4">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
-                <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-background" />
-              </span>
-            </div>
+            <div className="absolute -inset-3 rounded-2xl bg-gradient-to-br from-violet-500/15 to-purple-500/15 blur-xl -z-10" />
           </motion.div>
 
           <h1 className="text-3xl font-bold mb-2">
-            <span className="ai-gradient-text">{getGreeting()}{userName ? `, ${userName}` : ''}!</span>
+            <GradientText
+              colors={['#a78bfa', '#c084fc', '#818cf8', '#e879f9', '#a78bfa']}
+              animationSpeed={6}
+              className="text-3xl font-bold"
+            >
+              {getGreeting()}{userName ? `, ${userName}` : ''}!
+            </GradientText>
           </h1>
           <p className="text-muted-foreground/70 text-sm max-w-md mx-auto">
             Come posso aiutarti oggi? Seleziona un&apos;azione rapida o inizia una conversazione.
@@ -356,15 +375,15 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
           ))}
         </div>
 
-        {/* Powered by badge */}
+        {/* Developer badge */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
           className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/30"
         >
-          <Sparkles className="h-3 w-3" />
-          <span>Powered by AI</span>
+          <span>Sviluppato da</span>
+          <a href="https://www.fodisrl.it" target="_blank" rel="noopener noreferrer" className="text-violet-400/40 hover:text-violet-400/70 transition-colors font-medium">Fodi S.r.l.</a>
         </motion.div>
       </div>
     </div>

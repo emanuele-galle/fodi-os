@@ -356,6 +356,111 @@ html {
   background: rgba(139, 92, 246, 0.4);
 }
 
+/* ===== AI Animated Avatar Orb ===== */
+
+@property --orb-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes ai-orb-rotate {
+  from { --orb-angle: 0deg; }
+  to { --orb-angle: 360deg; }
+}
+
+.ai-avatar-orb {
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 102, 241, 0.2));
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.ai-avatar-orb-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    conic-gradient(
+      from var(--orb-angle) at 50% 50%,
+      rgba(139, 92, 246, 0.5) 0deg,
+      rgba(168, 85, 247, 0.3) 90deg,
+      rgba(99, 102, 241, 0.5) 180deg,
+      rgba(139, 92, 246, 0.3) 270deg,
+      rgba(168, 85, 247, 0.5) 360deg
+    );
+  filter: blur(6px);
+  animation: ai-orb-rotate 8s linear infinite;
+  opacity: 0.8;
+}
+
+/* FAB animated gradient border */
+@keyframes ai-fab-border-spin {
+  from { --orb-angle: 0deg; }
+  to { --orb-angle: 360deg; }
+}
+
+.ai-fab-glow {
+  position: relative;
+}
+
+.ai-fab-glow::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from var(--orb-angle),
+    rgba(139, 92, 246, 0.6),
+    rgba(168, 85, 247, 0.2),
+    rgba(99, 102, 241, 0.6),
+    rgba(139, 92, 246, 0.2),
+    rgba(168, 85, 247, 0.6)
+  );
+  animation: ai-fab-border-spin 4s linear infinite;
+  z-index: -1;
+  filter: blur(3px);
+}
+
+/* Floating particles */
+@keyframes ai-particle-float {
+  0% {
+    transform: translateY(0) translateX(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-120px) translateX(var(--particle-x, 20px)) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.ai-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.5);
+  pointer-events: none;
+  animation: ai-particle-float var(--particle-duration, 4s) ease-out infinite;
+  animation-delay: var(--particle-delay, 0s);
+}
+
+/* Wave typing dots */
+@keyframes ai-wave-dot {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.ai-wave-dot {
+  animation: ai-wave-dot 1.4s ease-in-out infinite;
+}
+
 /* Header shimmer animation */
 @keyframes ai-header-shimmer {
   0% { background-position: -200% 0; }

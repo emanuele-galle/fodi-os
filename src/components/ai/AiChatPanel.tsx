@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Plus, Loader2, AlertCircle, History, X, Bot, Maximize2, Minimize2, Sparkles, Paperclip, Mic, FileText, Image as ImageIcon } from 'lucide-react'
+import { Send, Plus, Loader2, AlertCircle, History, X, Maximize2, Minimize2, Paperclip, Mic, FileText, Image as ImageIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAiChat } from '@/hooks/useAiChat'
@@ -10,6 +10,7 @@ import { AiMessageBubble } from './AiMessageBubble'
 import { AiTypingIndicator } from './AiTypingIndicator'
 import { AiSuggestions } from './AiSuggestions'
 import { AiVoiceRecorder } from './AiVoiceRecorder'
+import { AiAnimatedAvatar } from './AiAnimatedAvatar'
 
 interface Conversation {
   id: string
@@ -216,15 +217,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
 
         <div className="flex items-center gap-3 relative">
-          <div className="relative">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/25 to-purple-600/25 flex items-center justify-center border border-violet-400/10">
-              <Bot className="h-4.5 w-4.5 text-violet-300" />
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-background" />
-            </span>
-          </div>
+          <AiAnimatedAvatar size="md" />
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold">Assistente AI</h2>
@@ -309,10 +302,8 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center gap-4">
             <div className="relative">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-600/20 flex items-center justify-center border border-violet-400/10">
-                <Bot className="h-7 w-7 text-violet-300" />
-              </div>
-              <div className="absolute -inset-2 rounded-2xl bg-violet-500/10 blur-xl -z-10" />
+              <AiAnimatedAvatar size="lg" />
+              <div className="absolute -inset-3 rounded-2xl bg-violet-500/10 blur-xl -z-10" />
             </div>
             <div>
               <p className="text-sm font-medium mb-1">Come posso aiutarti?</p>
@@ -453,9 +444,9 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         />
 
         {!compact && !isRecording && !transcribing && (
-          <div className="flex items-center justify-center gap-1 mt-1.5 text-[9px] text-muted-foreground/25">
-            <Sparkles className="h-2.5 w-2.5" />
-            <span>AI puo fare errori. Verifica le informazioni importanti.</span>
+          <div className="flex items-center justify-center gap-1.5 mt-1.5 text-[9px] text-muted-foreground/25">
+            <span>Sviluppato da</span>
+            <a href="https://www.fodisrl.it" target="_blank" rel="noopener noreferrer" className="text-violet-400/40 hover:text-violet-400/70 transition-colors font-medium">Fodi S.r.l.</a>
           </div>
         )}
       </div>
