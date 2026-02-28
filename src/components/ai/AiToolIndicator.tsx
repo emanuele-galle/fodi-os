@@ -61,11 +61,11 @@ export function AiToolIndicator({ name, status, count }: AiToolIndicatorProps) {
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-all cursor-default',
-        status === 'running' && 'bg-blue-500/10 text-blue-400 ai-shimmer',
-        status === 'SUCCESS' && 'bg-emerald-500/10 text-emerald-400 cursor-pointer hover:bg-emerald-500/15',
-        status === 'ERROR' && 'bg-red-500/10 text-red-400',
-        status === 'DENIED' && 'bg-amber-500/10 text-amber-400',
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all cursor-default border',
+        status === 'running' && 'bg-blue-500/[0.07] text-blue-400 border-blue-500/10 ai-shimmer',
+        status === 'SUCCESS' && 'bg-emerald-500/[0.07] text-emerald-400 border-emerald-500/10 cursor-pointer hover:bg-emerald-500/[0.12]',
+        status === 'ERROR' && 'bg-red-500/[0.07] text-red-400 border-red-500/10',
+        status === 'DENIED' && 'bg-amber-500/[0.07] text-amber-400 border-amber-500/10',
       )}
       onClick={isCompleted ? () => setExpanded(!expanded) : undefined}
     >

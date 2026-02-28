@@ -319,15 +319,20 @@ export function AiToolResultCard({ toolName, result, defaultExpanded = false }: 
   }
 
   return (
-    <div className={cn('rounded-xl border border-white/5 bg-muted/30 overflow-hidden border-l-2', getModuleColor(toolName))}>
+    <div className={cn('rounded-xl bg-white/[0.02] border border-white/[0.06] overflow-hidden border-l-2', getModuleColor(toolName))}>
       {/* Header - always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted/50 transition-colors"
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs hover:bg-white/[0.03] transition-colors"
       >
-        <Icon className={cn('h-3.5 w-3.5', result.success ? 'text-emerald-400' : 'text-red-400')} />
-        <span className="flex-1 text-left text-muted-foreground">{summary}</span>
-        <ChevronDown className={cn('h-3 w-3 text-muted-foreground transition-transform', expanded && 'rotate-180')} />
+        <div className={cn(
+          'w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0',
+          result.success ? 'bg-emerald-500/10' : 'bg-red-500/10',
+        )}>
+          <Icon className={cn('h-3 w-3', result.success ? 'text-emerald-400' : 'text-red-400')} />
+        </div>
+        <span className="flex-1 text-left text-foreground/70 font-medium">{summary}</span>
+        <ChevronDown className={cn('h-3 w-3 text-muted-foreground/40 transition-transform', expanded && 'rotate-180')} />
       </button>
 
       {/* Expandable content */}
@@ -340,7 +345,7 @@ export function AiToolResultCard({ toolName, result, defaultExpanded = false }: 
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-3 pt-1 border-t border-white/5">
+            <div className="px-3 pb-3 pt-1 border-t border-white/[0.04]">
               {renderContent()}
             </div>
           </motion.div>

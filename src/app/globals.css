@@ -236,7 +236,7 @@ html {
   will-change: background-position;
 }
 
-/* ===== AI Tool Shimmer ===== */
+/* ===== AI Assistente Premium ===== */
 
 .ai-shimmer {
   background: linear-gradient(
@@ -247,6 +247,113 @@ html {
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Animated gradient orb for welcome screen */
+@keyframes ai-orb-float {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  33% { transform: translate(-48%, -52%) scale(1.05); }
+  66% { transform: translate(-52%, -48%) scale(0.95); }
+}
+
+@keyframes ai-orb-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes ai-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.ai-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: ai-orb-float 8s ease-in-out infinite, ai-orb-pulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.ai-orb-1 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+  top: 30%;
+  left: 50%;
+}
+
+.ai-orb-2 {
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+  top: 60%;
+  left: 35%;
+  animation-delay: -2s;
+}
+
+.ai-orb-3 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+  top: 20%;
+  left: 65%;
+  animation-delay: -4s;
+}
+
+/* Glassmorphism card */
+.ai-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ai-glass:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Input glow effect */
+.ai-input-glow {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.ai-input-glow:focus-within {
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+/* Mesh grid background for AI page */
+.ai-mesh-bg {
+  background-image:
+    radial-gradient(at 40% 20%, rgba(139, 92, 246, 0.06) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(168, 85, 247, 0.04) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(99, 102, 241, 0.04) 0px, transparent 50%);
+}
+
+/* Gradient text */
+.ai-gradient-text {
+  background: linear-gradient(135deg, #a78bfa 0%, #c084fc 50%, #818cf8 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: ai-gradient-shift 4s ease infinite;
+}
+
+/* Scrollbar for AI chat */
+.ai-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.ai-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ai-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.2);
+  border-radius: 4px;
+}
+.ai-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.4);
 }
 
 /* ===== Enterprise Card Utilities ===== */

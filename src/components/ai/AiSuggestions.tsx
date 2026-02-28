@@ -34,7 +34,7 @@ function getSuggestionIcon(text: string): { icon: typeof Sparkles; color: string
   if (lower.includes('report') || lower.includes('fattur') || lower.includes('spese') || lower.includes('preventiv') || lower.includes('entrat')) return { icon: Receipt, color: 'text-violet-400' }
   if (lower.includes('ticket') || lower.includes('support')) return { icon: Headphones, color: 'text-amber-400' }
   if (lower.includes('ore') || lower.includes('tempo') || lower.includes('time')) return { icon: Clock, color: 'text-cyan-400' }
-  return { icon: Sparkles, color: 'text-muted-foreground' }
+  return { icon: Sparkles, color: 'text-violet-400' }
 }
 
 interface AiSuggestionsProps {
@@ -58,9 +58,9 @@ export function AiSuggestions({ suggestions, onSelect, variant = 'empty', curren
               key={s}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: i * 0.08 }}
               onClick={() => onSelect(s)}
-              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full border border-border/50 bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground hover:border-border transition-all"
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-muted-foreground/70 hover:bg-white/[0.06] hover:text-foreground hover:border-white/[0.1] transition-all duration-200"
             >
               <Icon className={cn('h-3 w-3', color)} />
               {s}
@@ -72,9 +72,9 @@ export function AiSuggestions({ suggestions, onSelect, variant = 'empty', curren
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Sparkles className="h-3 w-3" />
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground/40">
+        <Sparkles className="h-3 w-3 text-violet-400/50" />
         <span>Suggerimenti</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -85,11 +85,13 @@ export function AiSuggestions({ suggestions, onSelect, variant = 'empty', curren
               key={s}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: i * 0.08 }}
               onClick={() => onSelect(s)}
-              className="flex items-center gap-2 text-left text-xs px-3 py-2.5 rounded-xl border border-white/5 bg-muted/20 backdrop-blur-sm text-foreground/80 hover:bg-muted/60 hover:border-border transition-all"
+              className="flex items-center gap-2.5 text-left text-xs px-3.5 py-3 rounded-xl bg-white/[0.02] border border-white/[0.05] text-foreground/70 hover:bg-white/[0.05] hover:border-white/[0.1] hover:text-foreground transition-all duration-200 group"
             >
-              <Icon className={cn('h-3.5 w-3.5 flex-shrink-0', color)} />
+              <div className="w-7 h-7 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0 group-hover:bg-white/[0.08] transition-colors">
+                <Icon className={cn('h-3.5 w-3.5', color)} />
+              </div>
               {s}
             </motion.button>
           )

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import {
   Search, Plus, MessageSquare, Trash2, ChevronLeft,
   CheckSquare, Users, Calendar, Receipt,
-  BarChart3, Bot, Loader2
+  BarChart3, Bot, Loader2, Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AiChatPanel } from './AiChatPanel'
@@ -23,47 +23,48 @@ interface QuickAction {
   icon: typeof CheckSquare
   message: string
   color: string
+  bgColor: string
 }
 
 const QUICK_ACTION_GROUPS: { title: string; actions: QuickAction[] }[] = [
   {
     title: 'Task & Progetti',
     actions: [
-      { label: 'Task in scadenza', subtitle: 'Verifica le scadenze', icon: CheckSquare, message: 'Quali sono i miei task in scadenza?', color: 'text-blue-400' },
-      { label: 'Crea task', subtitle: 'Nuovo task rapido', icon: CheckSquare, message: 'Crea un nuovo task', color: 'text-blue-400' },
-      { label: 'Stato progetto', subtitle: 'Overview progetto', icon: BarChart3, message: 'Mostra lo stato dei progetti attivi', color: 'text-blue-400' },
+      { label: 'Task in scadenza', subtitle: 'Verifica le scadenze', icon: CheckSquare, message: 'Quali sono i miei task in scadenza?', color: 'text-blue-400', bgColor: 'group-hover:shadow-blue-500/10' },
+      { label: 'Crea task', subtitle: 'Nuovo task rapido', icon: CheckSquare, message: 'Crea un nuovo task', color: 'text-blue-400', bgColor: 'group-hover:shadow-blue-500/10' },
+      { label: 'Stato progetto', subtitle: 'Overview progetto', icon: BarChart3, message: 'Mostra lo stato dei progetti attivi', color: 'text-blue-400', bgColor: 'group-hover:shadow-blue-500/10' },
     ],
   },
   {
     title: 'CRM',
     actions: [
-      { label: 'Pipeline deal', subtitle: 'Trattative attive', icon: Users, message: 'Mostrami la pipeline deal', color: 'text-emerald-400' },
-      { label: 'Lead recenti', subtitle: 'Ultimi contatti', icon: Users, message: 'Lead ricevuti questo mese', color: 'text-emerald-400' },
-      { label: 'Cerca cliente', subtitle: 'Trova nel CRM', icon: Users, message: 'Cerca cliente', color: 'text-emerald-400' },
+      { label: 'Pipeline deal', subtitle: 'Trattative attive', icon: Users, message: 'Mostrami la pipeline deal', color: 'text-emerald-400', bgColor: 'group-hover:shadow-emerald-500/10' },
+      { label: 'Lead recenti', subtitle: 'Ultimi contatti', icon: Users, message: 'Lead ricevuti questo mese', color: 'text-emerald-400', bgColor: 'group-hover:shadow-emerald-500/10' },
+      { label: 'Cerca cliente', subtitle: 'Trova nel CRM', icon: Users, message: 'Cerca cliente', color: 'text-emerald-400', bgColor: 'group-hover:shadow-emerald-500/10' },
     ],
   },
   {
     title: 'Calendario',
     actions: [
-      { label: 'Agenda di oggi', subtitle: 'Eventi del giorno', icon: Calendar, message: 'Cosa ho in calendario oggi?', color: 'text-orange-400' },
-      { label: 'Slot libero', subtitle: 'Trova disponibilità', icon: Calendar, message: 'Trova uno slot libero questa settimana', color: 'text-orange-400' },
-      { label: 'Crea evento', subtitle: 'Nuovo appuntamento', icon: Calendar, message: 'Crea un evento in calendario', color: 'text-orange-400' },
+      { label: 'Agenda di oggi', subtitle: 'Eventi del giorno', icon: Calendar, message: 'Cosa ho in calendario oggi?', color: 'text-orange-400', bgColor: 'group-hover:shadow-orange-500/10' },
+      { label: 'Slot libero', subtitle: 'Trova disponibilita', icon: Calendar, message: 'Trova uno slot libero questa settimana', color: 'text-orange-400', bgColor: 'group-hover:shadow-orange-500/10' },
+      { label: 'Crea evento', subtitle: 'Nuovo appuntamento', icon: Calendar, message: 'Crea un evento in calendario', color: 'text-orange-400', bgColor: 'group-hover:shadow-orange-500/10' },
     ],
   },
   {
     title: 'ERP & Finanza',
     actions: [
-      { label: 'Fatturato mensile', subtitle: 'Entrate del mese', icon: Receipt, message: 'Mostra il fatturato mensile', color: 'text-violet-400' },
-      { label: 'Preventivi in attesa', subtitle: 'Da approvare', icon: Receipt, message: 'Preventivi in attesa di approvazione', color: 'text-violet-400' },
-      { label: 'Spese recenti', subtitle: 'Ultime spese', icon: Receipt, message: 'Spese registrate questo mese', color: 'text-violet-400' },
+      { label: 'Fatturato mensile', subtitle: 'Entrate del mese', icon: Receipt, message: 'Mostra il fatturato mensile', color: 'text-violet-400', bgColor: 'group-hover:shadow-violet-500/10' },
+      { label: 'Preventivi in attesa', subtitle: 'Da approvare', icon: Receipt, message: 'Preventivi in attesa di approvazione', color: 'text-violet-400', bgColor: 'group-hover:shadow-violet-500/10' },
+      { label: 'Spese recenti', subtitle: 'Ultime spese', icon: Receipt, message: 'Spese registrate questo mese', color: 'text-violet-400', bgColor: 'group-hover:shadow-violet-500/10' },
     ],
   },
   {
     title: 'Riepilogo',
     actions: [
-      { label: 'La mia giornata', subtitle: 'Riepilogo completo', icon: Bot, message: 'Riepilogo della mia giornata', color: 'text-pink-400' },
-      { label: 'Report settimanale', subtitle: 'Panoramica settimana', icon: BarChart3, message: 'Report panoramica settimanale', color: 'text-pink-400' },
-      { label: 'Carico team', subtitle: 'Distribuzione lavoro', icon: Users, message: 'Mostra il carico di lavoro del team', color: 'text-pink-400' },
+      { label: 'La mia giornata', subtitle: 'Riepilogo completo', icon: Bot, message: 'Riepilogo della mia giornata', color: 'text-pink-400', bgColor: 'group-hover:shadow-pink-500/10' },
+      { label: 'Report settimanale', subtitle: 'Panoramica settimana', icon: BarChart3, message: 'Report panoramica settimanale', color: 'text-pink-400', bgColor: 'group-hover:shadow-pink-500/10' },
+      { label: 'Carico team', subtitle: 'Distribuzione lavoro', icon: Users, message: 'Mostra il carico di lavoro del team', color: 'text-pink-400', bgColor: 'group-hover:shadow-pink-500/10' },
     ],
   },
 ]
@@ -137,7 +138,7 @@ export function AiFullscreenLayout() {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full ai-mesh-bg">
       {/* Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -146,23 +147,23 @@ export function AiFullscreenLayout() {
             animate={{ width: 280, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex-shrink-0 border-r border-border flex flex-col bg-muted/30 overflow-hidden"
+            className="flex-shrink-0 border-r border-white/[0.06] flex flex-col bg-background/60 backdrop-blur-xl overflow-hidden"
           >
             {/* Sidebar header */}
-            <div className="px-3 py-3 border-b border-border flex items-center gap-2">
+            <div className="px-3 py-3 border-b border-white/[0.06] flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
                 <input
                   type="text"
                   placeholder="Cerca conversazioni..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-background border border-border focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.03] border border-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/30 transition-all placeholder:text-muted-foreground/40"
                 />
               </div>
               <button
                 onClick={handleNewConversation}
-                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
                 title="Nuova conversazione"
               >
                 <Plus className="h-4 w-4 text-muted-foreground" />
@@ -170,19 +171,22 @@ export function AiFullscreenLayout() {
             </div>
 
             {/* Conversation list */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto ai-scrollbar">
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-5 w-5 animate-spin text-violet-400/50" />
                 </div>
               ) : grouped.length === 0 ? (
-                <p className="text-center text-muted-foreground text-xs py-8">
-                  {search ? 'Nessun risultato' : 'Nessuna conversazione'}
-                </p>
+                <div className="flex flex-col items-center justify-center py-12 gap-2">
+                  <MessageSquare className="h-8 w-8 text-muted-foreground/20" />
+                  <p className="text-xs text-muted-foreground/50">
+                    {search ? 'Nessun risultato' : 'Nessuna conversazione'}
+                  </p>
+                </div>
               ) : (
                 grouped.map((group) => (
                   <div key={group.label}>
-                    <div className="px-3 py-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    <div className="px-3 py-2 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-widest">
                       {group.label}
                     </div>
                     {group.items.map((conv) => (
@@ -190,16 +194,29 @@ export function AiFullscreenLayout() {
                         key={conv.id}
                         onClick={() => setSelectedId(conv.id)}
                         className={cn(
-                          'w-full text-left px-3 py-2.5 flex items-center gap-2 hover:bg-muted/60 transition-all group',
+                          'w-full text-left px-3 py-2.5 flex items-center gap-2.5 transition-all group relative',
                           selectedId === conv.id
                             ? 'bg-violet-500/10 border-l-2 border-violet-500'
-                            : 'border-l-2 border-transparent',
+                            : 'border-l-2 border-transparent hover:bg-white/[0.03]',
                         )}
                       >
-                        <MessageSquare className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <div className={cn(
+                          'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0',
+                          selectedId === conv.id ? 'bg-violet-500/20' : 'bg-white/[0.04]',
+                        )}>
+                          <MessageSquare className={cn(
+                            'h-3.5 w-3.5',
+                            selectedId === conv.id ? 'text-violet-400' : 'text-muted-foreground/50',
+                          )} />
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate">{conv.title || 'Senza titolo'}</p>
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className={cn(
+                            'text-xs font-medium truncate',
+                            selectedId === conv.id ? 'text-violet-200' : 'text-foreground/80',
+                          )}>
+                            {conv.title || 'Senza titolo'}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground/40">
                             {conv._count.messages} msg
                           </p>
                         </div>
@@ -232,7 +249,7 @@ export function AiFullscreenLayout() {
         {selectedId ? (
           <AiChatPanel key={selectedId} initialConversationId={selectedId} />
         ) : (
-          <WelcomeScreen onAction={(msg) => {
+          <WelcomeScreen onAction={() => {
             setSelectedId('new')
           }} />
         )}
@@ -243,43 +260,101 @@ export function AiFullscreenLayout() {
 
 function WelcomeScreen({ onAction }: { onAction: (msg: string) => void }) {
   return (
-    <div className="flex-1 flex items-center justify-center p-6">
-      <div className="max-w-3xl w-full space-y-8">
-        {/* Greeting */}
-        <div className="text-center">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-violet-500/20">
-            <Bot className="h-10 w-10 text-violet-400" />
-          </div>
-          <h1 className="text-2xl font-bold mb-2">Buongiorno!</h1>
-          <p className="text-muted-foreground text-sm">Come posso aiutarti oggi? Seleziona un&apos;azione rapida o inizia una conversazione.</p>
-        </div>
+    <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Animated gradient orbs */}
+      <div className="ai-orb ai-orb-1" />
+      <div className="ai-orb ai-orb-2" />
+      <div className="ai-orb ai-orb-3" />
+
+      <div className="max-w-3xl w-full space-y-10 relative z-10">
+        {/* Greeting hero */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center"
+        >
+          {/* Animated bot icon */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="relative inline-flex mb-6"
+          >
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/30 to-purple-600/30 flex items-center justify-center shadow-2xl shadow-violet-500/20 border border-violet-400/20">
+              <Bot className="h-10 w-10 text-violet-300" />
+            </div>
+            {/* Glow ring */}
+            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 blur-lg -z-10" />
+            {/* Online indicator */}
+            <div className="absolute -bottom-1 -right-1 flex items-center justify-center">
+              <span className="relative flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-background" />
+              </span>
+            </div>
+          </motion.div>
+
+          <h1 className="text-3xl font-bold mb-2">
+            <span className="ai-gradient-text">Buongiorno!</span>
+          </h1>
+          <p className="text-muted-foreground/70 text-sm max-w-md mx-auto">
+            Come posso aiutarti oggi? Seleziona un&apos;azione rapida o inizia una conversazione.
+          </p>
+        </motion.div>
 
         {/* Quick action grid */}
-        <div className="space-y-6">
-          {QUICK_ACTION_GROUPS.map((group) => (
-            <div key={group.title}>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{group.title}</h3>
+        <div className="space-y-5">
+          {QUICK_ACTION_GROUPS.map((group, gi) => (
+            <motion.div
+              key={group.title}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 + gi * 0.08 }}
+            >
+              <h3 className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-widest mb-2 pl-1">{group.title}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {group.actions.map((action, i) => (
                   <motion.button
                     key={action.label}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
+                    transition={{ delay: 0.3 + gi * 0.08 + i * 0.03 }}
                     onClick={() => onAction(action.message)}
-                    className="flex items-start gap-3 text-left p-3 rounded-xl border border-white/5 bg-muted/20 backdrop-blur-sm hover:bg-muted/50 hover:border-border transition-all group"
+                    className={cn(
+                      'group flex items-start gap-3 text-left p-3.5 rounded-xl',
+                      'ai-glass shadow-lg shadow-transparent',
+                      'hover:shadow-xl transition-all duration-300',
+                      action.bgColor,
+                    )}
                   >
-                    <action.icon className={cn('h-4 w-4 mt-0.5 flex-shrink-0', action.color)} />
+                    <div className={cn(
+                      'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors',
+                      'bg-white/[0.04] group-hover:bg-white/[0.08]',
+                    )}>
+                      <action.icon className={cn('h-4 w-4', action.color)} />
+                    </div>
                     <div>
-                      <p className="text-sm font-medium group-hover:text-foreground">{action.label}</p>
-                      <p className="text-[10px] text-muted-foreground">{action.subtitle}</p>
+                      <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{action.label}</p>
+                      <p className="text-[10px] text-muted-foreground/50 mt-0.5">{action.subtitle}</p>
                     </div>
                   </motion.button>
                 ))}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
+
+        {/* Powered by badge */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/30"
+        >
+          <Sparkles className="h-3 w-3" />
+          <span>Powered by AI</span>
+        </motion.div>
       </div>
     </div>
   )

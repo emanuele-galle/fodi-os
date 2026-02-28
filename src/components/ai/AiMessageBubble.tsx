@@ -33,17 +33,19 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
     <div className={cn('flex gap-3', isUser && 'flex-row-reverse')}>
       {/* Avatar */}
       <div className={cn(
-        'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-        isUser ? 'bg-primary/20 text-primary' : 'bg-violet-500/20 text-violet-400',
+        'flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center border',
+        isUser
+          ? 'bg-gradient-to-br from-violet-500/20 to-purple-600/20 border-violet-400/10 text-violet-300'
+          : 'bg-white/[0.04] border-white/[0.06] text-muted-foreground/60',
       )}>
         {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
       </div>
 
       {/* Content */}
-      <div className={cn('flex flex-col gap-1 max-w-[85%] sm:max-w-[80%]', isUser && 'items-end')}>
+      <div className={cn('flex flex-col gap-1.5 max-w-[85%] sm:max-w-[80%]', isUser && 'items-end')}>
         {/* Tool indicators (deduplicated) */}
         {message.toolCalls && message.toolCalls.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-1">
+          <div className="flex flex-wrap gap-1 mb-0.5">
             {(() => {
               const grouped = new Map<string, { status: string; count: number }>()
               for (const tc of message.toolCalls) {
@@ -67,10 +69,10 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
         {message.content && (
           <div className="group relative">
             <div className={cn(
-              'rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
+              'rounded-2xl px-4 py-3 text-sm leading-relaxed',
               isUser
-                ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/15 rounded-tr-md'
-                : 'bg-muted/80 backdrop-blur-sm border border-white/5 text-foreground rounded-tl-md',
+                ? 'bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-lg shadow-violet-500/20 rounded-tr-md'
+                : 'bg-white/[0.04] backdrop-blur-sm border border-white/[0.06] text-foreground rounded-tl-md',
             )}>
               {isUser ? (
                 <div className="whitespace-pre-wrap break-words">{message.content}</div>
@@ -101,44 +103,44 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
                           )
                         }
                         return (
-                          <code className="px-1 py-0.5 rounded bg-background/50 text-xs font-mono" {...props}>
+                          <code className="px-1 py-0.5 rounded bg-white/[0.06] text-xs font-mono text-violet-300" {...props}>
                             {children}
                           </code>
                         )
                       },
                       pre: ({ children }) => (
-                        <pre className="rounded-lg bg-background/50 p-3 my-2 overflow-x-auto text-xs">
+                        <pre className="rounded-lg bg-black/20 border border-white/[0.04] p-3 my-2 overflow-x-auto text-xs">
                           {children}
                         </pre>
                       ),
                       // Table
                       table: ({ children }) => (
-                        <div className="overflow-x-auto my-2 max-w-full scrollbar-thin scrollbar-thumb-border">
+                        <div className="overflow-x-auto my-2 max-w-full ai-scrollbar">
                           <table className="w-full text-[11px] border-collapse">{children}</table>
                         </div>
                       ),
                       th: ({ children }) => (
-                        <th className="border border-border/30 px-1.5 py-1 text-left font-semibold bg-background/30 whitespace-nowrap">{children}</th>
+                        <th className="border border-white/[0.06] px-2 py-1.5 text-left font-semibold bg-white/[0.03] whitespace-nowrap text-muted-foreground">{children}</th>
                       ),
                       td: ({ children }) => (
-                        <td className="border border-border/30 px-1.5 py-1">{children}</td>
+                        <td className="border border-white/[0.04] px-2 py-1.5">{children}</td>
                       ),
                       // Links
                       a: ({ href, children }) => (
-                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-violet-400 underline underline-offset-2 hover:text-violet-300">
                           {children}
                         </a>
                       ),
                       // Blockquote
                       blockquote: ({ children }) => (
-                        <blockquote className="border-l-2 border-primary/30 pl-3 my-2 text-muted-foreground italic">
+                        <blockquote className="border-l-2 border-violet-500/30 pl-3 my-2 text-muted-foreground italic">
                           {children}
                         </blockquote>
                       ),
                       // HR
-                      hr: () => <hr className="border-border/30 my-3" />,
+                      hr: () => <hr className="border-white/[0.06] my-3" />,
                       // Strong/em
-                      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                      strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
                     }}
                   >
                     {message.content}
@@ -152,13 +154,13 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
               <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={handleCopy}
-                  className="p-1 rounded-md hover:bg-background/50 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
                   title="Copia"
                 >
                   {copied ? (
-                    <Check className="h-3 w-3 text-emerald-500" />
+                    <Check className="h-3 w-3 text-emerald-400" />
                   ) : (
-                    <Copy className="h-3 w-3 text-muted-foreground" />
+                    <Copy className="h-3 w-3 text-muted-foreground/40" />
                   )}
                 </button>
               </div>
@@ -184,7 +186,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
         {/* Timestamp */}
         {timestamp && (
           <span className={cn(
-            'text-[11px] text-muted-foreground/70',
+            'text-[11px] text-muted-foreground/40',
             isUser ? 'pr-1' : 'pl-1',
           )}>
             {timestamp}

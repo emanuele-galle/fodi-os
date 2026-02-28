@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Plus, Loader2, AlertCircle, History, X, Bot, Maximize2, Minimize2 } from 'lucide-react'
+import { Send, Plus, Loader2, AlertCircle, History, X, Bot, Maximize2, Minimize2, Sparkles } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAiChat } from '@/hooks/useAiChat'
@@ -125,85 +125,91 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-violet-500/10 via-purple-500/8 to-fuchsia-500/5 shadow-[0_1px_0_0_rgba(139,92,246,0.1)]">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-violet-400" />
+      <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/[0.06] overflow-hidden">
+        {/* Header gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-violet-500/[0.07] via-purple-500/[0.05] to-fuchsia-500/[0.03]" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
+
+        <div className="flex items-center gap-3 relative">
+          <div className="relative">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/25 to-purple-600/25 flex items-center justify-center border border-violet-400/10">
+              <Bot className="h-4.5 w-4.5 text-violet-300" />
+            </div>
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-background" />
+            </span>
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold">Assistente AI</h2>
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
             </div>
             {!compact && (
-              <p className="text-xs text-muted-foreground">Gestisci task, CRM, calendario e report</p>
+              <p className="text-[10px] text-muted-foreground/50">Gestisci task, CRM, calendario e report</p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 relative">
           {compact && onExpand && (
             <button
               onClick={onExpand}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
               title="Espandi"
             >
-              <Maximize2 className="h-4 w-4 text-muted-foreground" />
+              <Maximize2 className="h-4 w-4 text-muted-foreground/60" />
             </button>
           )}
           {!compact && onCollapse && (
             <button
               onClick={onCollapse}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
               title="Comprimi"
             >
-              <Minimize2 className="h-4 w-4 text-muted-foreground" />
+              <Minimize2 className="h-4 w-4 text-muted-foreground/60" />
             </button>
           )}
           <button
             onClick={loadHistory}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             title="Cronologia"
           >
-            <History className="h-4 w-4 text-muted-foreground" />
+            <History className="h-4 w-4 text-muted-foreground/60" />
           </button>
           <button
             onClick={clearMessages}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             title="Nuova conversazione"
           >
-            <Plus className="h-4 w-4 text-muted-foreground" />
+            <Plus className="h-4 w-4 text-muted-foreground/60" />
           </button>
         </div>
       </div>
 
       {/* History Panel */}
       {showHistory && (
-        <div className="absolute inset-0 z-10 bg-background flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-xl flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
             <h3 className="text-sm font-semibold">Conversazioni</h3>
-            <button onClick={() => setShowHistory(false)} className="p-1 rounded-lg hover:bg-muted">
+            <button onClick={() => setShowHistory(false)} className="p-1 rounded-lg hover:bg-white/[0.06]">
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto ai-scrollbar">
             {loadingHistory ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-5 w-5 animate-spin text-violet-400/50" />
               </div>
             ) : conversations.length === 0 ? (
-              <p className="text-center text-muted-foreground text-sm py-8">Nessuna conversazione</p>
+              <p className="text-center text-muted-foreground/50 text-sm py-8">Nessuna conversazione</p>
             ) : (
               conversations.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => selectConversation(c.id)}
-                  className="w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border/50"
+                  className="w-full text-left px-4 py-3 hover:bg-white/[0.03] transition-colors border-b border-white/[0.04]"
                 >
                   <p className="text-sm font-medium truncate">{c.title || 'Conversazione senza titolo'}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground/50 mt-0.5">
                     {c._count.messages} messaggi &middot; {new Date(c.updatedAt).toLocaleDateString('it-IT')}
                   </p>
                 </button>
@@ -214,15 +220,18 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 ai-scrollbar">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center gap-4">
-            <div>
-              <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center mb-3 mx-auto">
-                <Bot className="h-6 w-6 text-violet-400" />
+            <div className="relative">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-600/20 flex items-center justify-center border border-violet-400/10">
+                <Bot className="h-7 w-7 text-violet-300" />
               </div>
+              <div className="absolute -inset-2 rounded-2xl bg-violet-500/10 blur-xl -z-10" />
+            </div>
+            <div>
               <p className="text-sm font-medium mb-1">Come posso aiutarti?</p>
-              <p className="text-xs text-muted-foreground max-w-[280px]">
+              <p className="text-xs text-muted-foreground/50 max-w-[280px]">
                 Posso gestire task, cercare clienti, controllare il calendario, generare report e molto altro.
               </p>
             </div>
@@ -237,7 +246,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         {showTyping && <AiTypingIndicator activeToolName={activeToolName} />}
 
         {error && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs border border-destructive/20">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -256,8 +265,8 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
       </div>
 
       {/* Input */}
-      <div className="px-4 py-3 border-t border-white/10">
-        <div className="flex items-end gap-2 bg-background/60 backdrop-blur-xl border border-white/10 rounded-2xl px-3 py-2 shadow-lg shadow-violet-500/5">
+      <div className="px-4 py-3 border-t border-white/[0.06]">
+        <div className="flex items-end gap-2 bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-2xl px-4 py-2.5 ai-input-glow">
           <textarea
             ref={inputRef}
             value={input}
@@ -267,8 +276,8 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
             rows={1}
             disabled={isLoading}
             className={cn(
-              'flex-1 resize-none bg-transparent text-sm',
-              'placeholder:text-muted-foreground focus:outline-none',
+              'flex-1 resize-none bg-transparent text-sm leading-relaxed',
+              'placeholder:text-muted-foreground/40 focus:outline-none',
               'disabled:opacity-50',
             )}
           />
@@ -276,15 +285,21 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
             onClick={() => handleSend()}
             disabled={!input.trim() || isLoading}
             className={cn(
-              'flex-shrink-0 p-2.5 rounded-xl transition-all',
+              'flex-shrink-0 p-2.5 rounded-xl transition-all duration-200',
               input.trim() && !isLoading
-                ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:shadow-lg hover:shadow-violet-500/20 hover:scale-105 active:scale-95'
-                : 'bg-muted text-muted-foreground',
+                ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
+                : 'bg-white/[0.04] text-muted-foreground/30',
             )}
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </button>
         </div>
+        {!compact && (
+          <div className="flex items-center justify-center gap-1 mt-1.5 text-[9px] text-muted-foreground/25">
+            <Sparkles className="h-2.5 w-2.5" />
+            <span>AI puo fare errori. Verifica le informazioni importanti.</span>
+          </div>
+        )}
       </div>
     </div>
   )
