@@ -64,13 +64,13 @@ export async function buildSystemPrompt({ userName, userRole, agentName, customP
   const tomorrowISO = isoFormatter.format(tomorrow)
 
   let prompt = BASE_SYSTEM_PROMPT
-    .replace('{BRAND_NAME}', brand.name)
-    .replace('{AGENT_NAME}', agentName || 'Assistente AI')
-    .replace('{CURRENT_DATE}', `${currentDate} (${todayISO})`)
-    .replace('{TOMORROW_DATE}', `${tomorrowFormatted} (${tomorrowISO})`)
-    .replace('{USER_NAME}', userName)
-    .replace('{USER_ROLE}', userRole)
-    .replace('{USER_PERMISSIONS}', formatPermissions(userRole))
+    .replaceAll('{BRAND_NAME}', brand.name)
+    .replaceAll('{AGENT_NAME}', agentName || 'Assistente AI')
+    .replaceAll('{CURRENT_DATE}', `${currentDate} (${todayISO})`)
+    .replaceAll('{TOMORROW_DATE}', `${tomorrowFormatted} (${tomorrowISO})`)
+    .replaceAll('{USER_NAME}', userName)
+    .replaceAll('{USER_ROLE}', userRole)
+    .replaceAll('{USER_PERMISSIONS}', formatPermissions(userRole))
 
   // Add brand-specific context
   if (brandPrompt) {
