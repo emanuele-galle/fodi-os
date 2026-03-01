@@ -1,29 +1,28 @@
 'use client'
-import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Users, FolderKanban, Receipt, Clock, TrendingUp, AlertCircle,
   Activity, UserPlus, FileText, CheckCircle2, TicketCheck,
-  Plus, TicketPlus, FilePlus2, ClockPlus, X, Pencil,
-  LayoutDashboard, CalendarCheck, BarChart3, Wallet, StickyNote,
-  AlertTriangle, Flame, PlayCircle,
+  LayoutDashboard, BarChart3, Wallet,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
-import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
-import { getDueUrgency, URGENCY_STYLES } from '@/lib/task-utils'
+import { getDueUrgency } from '@/lib/task-utils'
 import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
 import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard'
 import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
 import { MobileChartTabs } from '@/components/dashboard/MobileChartTabs'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
-import { SwipeableRow } from '@/components/ui/SwipeableRow'
+import { StatCarousel } from '@/components/dashboard/StatCarousel'
+import { DashboardQuickActions } from '@/components/dashboard/DashboardQuickActions'
+import { ForYouSection } from '@/components/dashboard/ForYouSection'
+import { TasksDeadlineCard } from '@/components/dashboard/TasksDeadlineCard'
+import { OperativeSummaryCard } from '@/components/dashboard/OperativeSummaryCard'
+import { StickyNotesCard } from '@/components/dashboard/StickyNotesCard'
 
 const RevenueChart = dynamic(() => import('@/components/dashboard/RevenueChart').then(m => ({ default: m.RevenueChart })), {
   ssr: false,
@@ -70,33 +69,12 @@ interface TaskItem {
   project?: { name: string } | null
 }
 
-interface StickyNoteItem {
-  id: string
-  text: string
-  color: string
-}
-
 interface TeamMember {
   id: string
   firstName: string
   lastName: string
   avatarUrl?: string | null
 }
-
-interface ChartSegment {
-  label: string
-  value: number
-  color: string
-}
-
-const NOTE_COLORS = [
-  { value: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800', label: 'Giallo' },
-  { value: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800', label: 'Verde' },
-  { value: 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800', label: 'Blu' },
-  { value: 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800', label: 'Rosa' },
-]
-
-const STORAGE_KEY = brandClient.storageKeys.stickyNotes
 
 function getGreeting(): string {
   const hour = new Date().getHours()
@@ -114,6 +92,43 @@ function formatTodayDate(): string {
   })
 }
 
+const ACTIVITY_ICONS: Record<string, typeof Activity> = {
+  project: FolderKanban,
+  client: UserPlus,
+  quote: FileText,
+  task: CheckCircle2,
+  ticket: TicketCheck,
+}
+
+const ICON_COLORS: Record<string, string> = {
+  project: 'text-accent bg-accent/10',
+  client: 'text-primary bg-primary/10',
+  quote: 'text-[var(--color-warning)] bg-[var(--color-warning)]/10',
+  task: 'text-primary bg-primary/10',
+  ticket: 'text-destructive bg-destructive/10',
+}
+
+function getActivityLabel(activity: ActivityItem): string {
+  const meta = activity.metadata || {}
+  const name = (meta.name || meta.title || meta.number || '') as string
+  const ACTION_LABELS: Record<string, string> = {
+    create: 'ha creato', update: 'ha aggiornato', complete: 'ha completato',
+    approve: 'ha approvato', pay: 'ha registrato il pagamento di', delete: 'ha eliminato',
+    AUTO_TIME_LOG: 'ha registrato ore di lavoro', TIMER_STOP: 'ha fermato il timer',
+  }
+  const ENTITY_LABELS: Record<string, string> = {
+    project: 'il progetto', client: 'il cliente', quote: 'il preventivo',
+    task: 'il task', ticket: 'il ticket',
+    TimeEntry: '', timeEntry: '',
+  }
+  if (ACTION_LABELS[activity.action] && (activity.entityType === 'TimeEntry' || activity.entityType === 'timeEntry')) {
+    return ACTION_LABELS[activity.action] + (name ? ` su "${name}"` : '')
+  }
+  const actionLabel = ACTION_LABELS[activity.action] || activity.action
+  const entityLabel = ENTITY_LABELS[activity.entityType] ?? activity.entityType
+  return `${actionLabel} ${entityLabel}${name ? ` "${name}"` : ''}`
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [stats, setStats] = useState<StatCard[]>([])
@@ -122,8 +137,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState('')
   const [fetchError, setFetchError] = useState<string | null>(null)
-  const [notes, setNotes] = useState<StickyNoteItem[]>([])
-  const [editingNote, setEditingNote] = useState<string | null>(null)
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [weekHours, setWeekHours] = useState(0)
   const [weekBillableHours, setWeekBillableHours] = useState(0)
@@ -134,41 +147,6 @@ export default function DashboardPage() {
   const [inProgressTaskCount, setInProgressTaskCount] = useState(0)
   const [completedMonthCount, setCompletedMonthCount] = useState(0)
 
-  // Sticky notes - localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) setNotes(JSON.parse(stored))
-    } catch {}
-  }, [])
-
-  function saveNotes(updated: StickyNoteItem[]) {
-    setNotes(updated)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
-  }
-
-  function addNote() {
-    if (notes.length >= 5) return
-    const colorIndex = notes.length % NOTE_COLORS.length
-    const newNote: StickyNoteItem = {
-      id: Date.now().toString(),
-      text: '',
-      color: NOTE_COLORS[colorIndex].value,
-    }
-    saveNotes([...notes, newNote])
-    setEditingNote(newNote.id)
-  }
-
-  function updateNote(id: string, text: string) {
-    saveNotes(notes.map((n) => (n.id === id ? { ...n, text: text.slice(0, 200) } : n)))
-  }
-
-  function deleteNote(id: string) {
-    saveNotes(notes.filter((n) => n.id !== id))
-    if (editingNote === id) setEditingNote(null)
-  }
-
-  // Load session
   useEffect(() => {
     fetch('/api/auth/session')
       .then((r) => r.ok ? r.json() : null)
@@ -176,55 +154,53 @@ export default function DashboardPage() {
       .catch(() => {})
   }, [])
 
-  // Load dashboard data (single aggregated API call)
+  function processDashboardData(data: Record<string, unknown>) {
+    const taskItems: TaskItem[] = (data.tasks as { items?: TaskItem[] })?.items || []
+    setTasks(taskItems)
+    if ((data.activity as { items?: ActivityItem[] })?.items) setActivities((data.activity as { items: ActivityItem[] }).items)
+
+    let overdue = 0, dueToday = 0
+    for (const t of taskItems) {
+      const u = getDueUrgency(t.dueDate, t.status)
+      if (u === 'overdue') overdue++
+      if (u === 'today') dueToday++
+    }
+    setOverdueTaskCount(overdue)
+    setTodayTaskCount(dueToday)
+    setInProgressTaskCount((data.inProgress as { total?: number })?.total ?? 0)
+    setCompletedMonthCount((data.doneMonth as { total?: number })?.total ?? 0)
+
+    const timeItems = (data.time as { items?: { hours: number; billable: boolean }[] })?.items || []
+    const hours = timeItems.reduce((s, e) => s + e.hours, 0)
+    const billable = timeItems.filter(e => e.billable).reduce((s, e) => s + e.hours, 0)
+    setWeekHours(hours)
+    setWeekBillableHours(billable)
+
+    const accounting = data.accounting as { data?: { income?: { totalGross?: number }; expense?: { totalGross?: number } } } | undefined
+    setTotalRevenue(accounting?.data?.income?.totalGross ?? 0)
+    setTotalExpenses(accounting?.data?.expense?.totalGross ?? 0)
+
+    const members = (data.team as { items?: TeamMember[] })?.items || []
+    setTeamMembers(Array.isArray(members) ? members : [])
+
+    const monthRevenue = accounting?.data?.income?.totalGross ?? 0
+    setStats([
+      { label: 'Clienti Attivi', value: String((data.clients as { total?: number })?.total ?? 0), icon: Users, color: 'text-primary', href: '/crm?status=ACTIVE' },
+      { label: 'Progetti in Corso', value: String((data.projects as { total?: number })?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
+      { label: 'Preventivi Aperti', value: String((data.quotes as { total?: number })?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
+      { label: 'Ore Questa Settimana', value: hours.toFixed(1) + 'h', icon: Clock, color: 'text-muted', href: '/time' },
+      { label: 'Fatturato Mese', value: monthRevenue > 0 ? formatCurrency(monthRevenue) : 'N/D', icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
+      { label: 'Ticket Aperti', value: String((data.tickets as { total?: number })?.total ?? 0), icon: AlertCircle, color: 'text-destructive', href: '/support' },
+    ])
+  }
+
   useEffect(() => {
     async function loadDashboard() {
       setFetchError(null)
       try {
         const res = await fetch('/api/dashboard/summary')
         if (!res.ok) throw new Error('fetch failed')
-        const data = await res.json()
-
-        // Tasks + Activities
-        const taskItems: TaskItem[] = data.tasks?.items || []
-        setTasks(taskItems)
-        if (data.activity?.items) setActivities(data.activity.items)
-
-        // Operational summary metrics
-        let overdue = 0, dueToday = 0
-        for (const t of taskItems) {
-          const u = getDueUrgency(t.dueDate, t.status)
-          if (u === 'overdue') overdue++
-          if (u === 'today') dueToday++
-        }
-        setOverdueTaskCount(overdue)
-        setTodayTaskCount(dueToday)
-        setInProgressTaskCount(data.inProgress?.total ?? 0)
-        setCompletedMonthCount(data.doneMonth?.total ?? 0)
-
-        const timeItems = data.time?.items || []
-        const hours = timeItems.reduce((s: number, e: { hours: number }) => s + e.hours, 0)
-        const billable = timeItems.filter((e: { billable: boolean }) => e.billable).reduce((s: number, e: { hours: number }) => s + e.hours, 0)
-        setWeekHours(hours)
-        setWeekBillableHours(billable)
-
-        // Use accounting dashboard for accurate financial data
-        const monthRevenue = data.accounting?.data?.income?.totalGross ?? 0
-        const monthExpenses = data.accounting?.data?.expense?.totalGross ?? 0
-        setTotalRevenue(monthRevenue)
-        setTotalExpenses(monthExpenses)
-
-        const members = data.team?.items || []
-        setTeamMembers(Array.isArray(members) ? members : [])
-
-        setStats([
-          { label: 'Clienti Attivi', value: String(data.clients?.total ?? 0), icon: Users, color: 'text-primary', href: '/crm?status=ACTIVE' },
-          { label: 'Progetti in Corso', value: String(data.projects?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
-          { label: 'Preventivi Aperti', value: String(data.quotes?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
-          { label: 'Ore Questa Settimana', value: hours.toFixed(1) + 'h', icon: Clock, color: 'text-muted', href: '/time' },
-          { label: 'Fatturato Mese', value: monthRevenue > 0 ? formatCurrency(monthRevenue) : 'N/D', icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
-          { label: 'Ticket Aperti', value: String(data.tickets?.total ?? 0), icon: AlertCircle, color: 'text-destructive', href: '/support' },
-        ])
+        processDashboardData(await res.json())
       } catch {
         setFetchError('Errore nel caricamento dei dati della dashboard')
       } finally {
@@ -234,78 +210,36 @@ export default function DashboardPage() {
     loadDashboard()
   }, [])
 
-
-  const ACTIVITY_ICONS: Record<string, typeof Activity> = {
-    project: FolderKanban,
-    client: UserPlus,
-    quote: FileText,
-    task: CheckCircle2,
-    ticket: TicketCheck,
-  }
-
-  function getActivityLabel(activity: ActivityItem): string {
-    const meta = activity.metadata || {}
-    const name = (meta.name || meta.title || meta.number || '') as string
-    const ACTION_LABELS: Record<string, string> = {
-      create: 'ha creato', update: 'ha aggiornato', complete: 'ha completato',
-      approve: 'ha approvato', pay: 'ha registrato il pagamento di', delete: 'ha eliminato',
-      AUTO_TIME_LOG: 'ha registrato ore di lavoro', TIMER_STOP: 'ha fermato il timer',
-    }
-    const ENTITY_LABELS: Record<string, string> = {
-      project: 'il progetto', client: 'il cliente', quote: 'il preventivo',
-      task: 'il task', ticket: 'il ticket',
-      TimeEntry: '', timeEntry: '',
-    }
-    // Handle special action types that are self-descriptive
-    if (ACTION_LABELS[activity.action] && (activity.entityType === 'TimeEntry' || activity.entityType === 'timeEntry')) {
-      return ACTION_LABELS[activity.action] + (name ? ` su "${name}"` : '')
-    }
-    const actionLabel = ACTION_LABELS[activity.action] || activity.action
-    const entityLabel = ENTITY_LABELS[activity.entityType] ?? activity.entityType
-    return `${actionLabel} ${entityLabel}${name ? ` "${name}"` : ''}`
-  }
-
-  const ICON_COLORS: Record<string, string> = {
-    project: 'text-accent bg-accent/10',
-    client: 'text-primary bg-primary/10',
-    quote: 'text-[var(--color-warning)] bg-[var(--color-warning)]/10',
-    task: 'text-primary bg-primary/10',
-    ticket: 'text-destructive bg-destructive/10',
-  }
-
-  const quickActions = [
-    { label: 'Nuovo Cliente', description: 'Aggiungi cliente', icon: UserPlus, href: '/crm', color: 'text-primary', bg: 'bg-primary/10', hoverBorder: 'hover:border-primary/30' },
-    { label: 'Nuovo Progetto', description: 'Crea progetto', icon: FolderKanban, href: '/projects', color: 'text-accent', bg: 'bg-accent/10', hoverBorder: 'hover:border-accent/30' },
-    { label: 'Nuovo Preventivo', description: 'Crea preventivo', icon: FilePlus2, href: '/erp/quotes/new', color: 'text-[var(--color-warning)]', bg: 'bg-[var(--color-warning)]/10', hoverBorder: 'hover:border-[var(--color-warning)]/30' },
-    { label: 'Nuovo Ticket', description: 'Apri ticket', icon: TicketPlus, href: '/support', color: 'text-destructive', bg: 'bg-destructive/10', hoverBorder: 'hover:border-destructive/30' },
-    { label: 'Registra Ore', description: 'Traccia tempo', icon: ClockPlus, href: '/time', color: 'text-primary', bg: 'bg-primary/10', hoverBorder: 'hover:border-primary/30' },
-  ]
-
   const handleRefresh = async () => {
     setLoading(true)
     setFetchError(null)
     try {
       const res = await fetch('/api/dashboard/summary')
       if (!res.ok) throw new Error('fetch failed')
-      const data = await res.json()
-      const taskItems: TaskItem[] = data.tasks?.items || []
-      setTasks(taskItems)
-      if (data.activity?.items) setActivities(data.activity.items)
-      let overdue = 0, dueToday = 0
-      for (const t of taskItems) {
-        const u = getDueUrgency(t.dueDate, t.status)
-        if (u === 'overdue') overdue++
-        if (u === 'today') dueToday++
-      }
-      setOverdueTaskCount(overdue)
-      setTodayTaskCount(dueToday)
-      setInProgressTaskCount(data.inProgress?.total ?? 0)
-      setCompletedMonthCount(data.doneMonth?.total ?? 0)
+      processDashboardData(await res.json())
     } catch {
       setFetchError('Errore nel caricamento')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleTaskComplete = (taskId: string) => {
+    fetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'DONE' }),
+    }).then(() => setTasks(prev => prev.filter(t => t.id !== taskId)))
+  }
+
+  const handleTaskPostpone = (taskId: string, newDate: string) => {
+    fetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dueDate: newDate }),
+    }).then(() => setTasks(prev => prev.map(t =>
+      t.id === taskId ? { ...t, dueDate: newDate } : t
+    )))
   }
 
   return (
@@ -336,286 +270,27 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* STAT CARDS - horizontal scroll on mobile, grid on desktop */}
-      {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[88px] md:h-[100px] rounded-xl" />)}
-        </div>
-      ) : (
-        <>
-          {/* Mobile: horizontal scrollable */}
-          <div className="md:hidden flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 mb-6 snap-x snap-mandatory">
-            {stats.map((stat) => (
-              <div
-                key={stat.label}
-                onClick={() => router.push(stat.href)}
-                className="relative overflow-hidden rounded-xl border border-border/40 bg-card p-3 cursor-pointer active:scale-[0.97] transition-all touch-manipulation min-w-[140px] flex-shrink-0 snap-start"
-              >
-                <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl opacity-80" style={{ background: 'currentColor' }} />
-                <div className={`flex flex-col gap-2 ${stat.color}`}>
-                  <div className="p-1.5 rounded-lg w-fit" style={{ background: `color-mix(in srgb, currentColor 8%, transparent)` }}>
-                    <stat.icon className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xl font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
-                    <p className="text-[10px] text-muted font-medium truncate leading-tight mt-1">{stat.label}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          {/* Desktop: grid */}
-          <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6 animate-stagger">
-            {stats.map((stat) => (
-              <div
-                key={stat.label}
-                onClick={() => router.push(stat.href)}
-                className="relative overflow-hidden rounded-xl border border-border/40 bg-card p-4 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-primary/25 transition-all duration-200 group touch-manipulation active:scale-[0.97]"
-              >
-                <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl opacity-80" style={{ background: 'currentColor' }} />
-                <div className={`flex flex-col gap-3 ${stat.color}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="p-2 rounded-lg flex-shrink-0 transition-all duration-300 group-hover:scale-110" style={{ background: `color-mix(in srgb, currentColor 8%, transparent)` }}>
-                      <stat.icon className="h-4 w-4" />
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-2xl font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
-                    <p className="text-[11px] text-muted font-medium truncate leading-tight mt-1.5">{stat.label}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      <StatCarousel stats={stats} loading={loading} />
+      <DashboardQuickActions />
 
-      {/* QUICK ACTIONS */}
-      <div className="mb-6 md:mb-8">
-        {/* Mobile: compact circular layout (first 4 actions) */}
-        <div className="md:hidden flex justify-around px-2 mb-0">
-          {quickActions.slice(0, 4).map((action) => {
-            const Icon = action.icon
-            return (
-              <button
-                key={action.label}
-                onClick={() => router.push(action.href)}
-                className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform touch-manipulation"
-              >
-                <div className={`w-12 h-12 rounded-full ${action.bg} ${action.color} flex items-center justify-center shadow-sm`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <span className="text-[10px] font-medium text-muted leading-tight text-center max-w-[64px]">
-                  {action.description}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-        {/* Desktop: full grid */}
-        <div className="hidden md:grid sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {quickActions.map((action) => {
-            const Icon = action.icon
-            return (
-              <button
-                key={action.label}
-                onClick={() => router.push(action.href)}
-                className={`group relative flex flex-col items-center gap-2 p-5 rounded-xl border border-border/30 ${action.hoverBorder} bg-card hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.97]`}
-              >
-                <div className={`p-3 rounded-xl ${action.bg} ${action.color} transition-transform duration-200 group-hover:scale-110`}>
-                  <Icon className="h-6 w-6" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-semibold leading-tight">{action.label}</p>
-                  <p className="text-xs text-muted mt-0.5">{action.description}</p>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      <ForYouSection
+        tasks={tasks}
+        onTaskComplete={handleTaskComplete}
+        onTaskPostpone={handleTaskPostpone}
+      />
 
-      {/* MOBILE: "Per te" priority section - overdue + today tasks */}
-      {!loading && (overdueTaskCount > 0 || todayTaskCount > 0) && (
-        <div className="md:hidden mb-5">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <span className="text-sm font-semibold">Per te</span>
-          </div>
-          <div className="space-y-2">
-            {tasks
-              .filter(t => {
-                const u = getDueUrgency(t.dueDate, t.status)
-                return u === 'overdue' || u === 'today'
-              })
-              .slice(0, 3)
-              .map(task => {
-                const urgency = getDueUrgency(task.dueDate, task.status)
-                return (
-                  <SwipeableRow
-                    key={task.id}
-                    leftAction={{
-                      label: 'Completato',
-                      icon: <CheckCircle2 className="h-4 w-4" />,
-                      color: '#10B981',
-                      onAction: () => {
-                        fetch(`/api/tasks/${task.id}`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ status: 'DONE' }),
-                        }).then(() => {
-                          setTasks(prev => prev.filter(t => t.id !== task.id))
-                        })
-                      },
-                    }}
-                    rightAction={{
-                      label: 'Posticipa',
-                      icon: <Clock className="h-4 w-4" />,
-                      color: '#F59E0B',
-                      onAction: () => {
-                        const tomorrow = new Date()
-                        tomorrow.setDate(tomorrow.getDate() + 1)
-                        fetch(`/api/tasks/${task.id}`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ dueDate: tomorrow.toISOString() }),
-                        }).then(() => {
-                          setTasks(prev => prev.map(t =>
-                            t.id === task.id ? { ...t, dueDate: tomorrow.toISOString() } : t
-                          ))
-                        })
-                      },
-                    }}
-                  >
-                    <div
-                      onClick={() => router.push(`/tasks?taskId=${task.id}`)}
-                      className="flex items-center justify-between p-3 cursor-pointer"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{task.title}</p>
-                        {task.project && <p className="text-[10px] text-muted">{task.project.name}</p>}
-                      </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${
-                        urgency === 'overdue' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                      }`}>
-                        {urgency === 'overdue' ? 'Scaduta' : 'Oggi'}
-                      </span>
-                    </div>
-                  </SwipeableRow>
-                )
-              })}
-          </div>
-        </div>
-      )}
-
-      {/* ROW 1: TASK IN SCADENZA (2 col) + RIEPILOGO OPERATIVO (1 col) */}
+      {/* ROW 1: TASK IN SCADENZA + RIEPILOGO OPERATIVO */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-5 md:mb-6">
-        <Card className="lg:col-span-2">
-          <CardContent>
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                  <CalendarCheck className="h-4 w-4" />
-                </div>
-                <div>
-                  <CardTitle>Task in Scadenza</CardTitle>
-                  <p className="text-[11px] text-muted mt-0.5">Le tue task ordinate per scadenza</p>
-                </div>
-              </div>
-              <button
-                onClick={() => router.push('/tasks')}
-                className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-md bg-primary/5 hover:bg-primary/10 transition-all"
-              >
-                Vedi tutti
-              </button>
-            </div>
-            {tasks.length === 0 ? (
-              <EmptyState icon={CheckCircle2} title="Nessun task in scadenza" description="Ottimo lavoro! Non ci sono task con scadenza imminente." />
-            ) : (
-              <div className="space-y-1">
-                {(() => {
-                  const overdueTasks = tasks.filter(t => getDueUrgency(t.dueDate, t.status) === 'overdue')
-                  const todayTasks = tasks.filter(t => getDueUrgency(t.dueDate, t.status) === 'today')
-                  const otherTasks = tasks.filter(t => {
-                    const u = getDueUrgency(t.dueDate, t.status)
-                    return u !== 'overdue' && u !== 'today'
-                  })
-
-                  const sections = [
-                    { label: 'Scadute', tasks: overdueTasks, color: 'text-red-600 dark:text-red-400', dotColor: 'bg-red-500' },
-                    { label: 'Oggi', tasks: todayTasks, color: 'text-amber-600 dark:text-amber-400', dotColor: 'bg-amber-500' },
-                    { label: 'Prossime', tasks: otherTasks, color: 'text-muted', dotColor: 'bg-blue-400' },
-                  ].filter(s => s.tasks.length > 0)
-
-                  return sections.map(section => (
-                    <div key={section.label}>
-                      <div className="flex items-center gap-2 py-1.5 px-1">
-                        <span className={`h-2 w-2 rounded-full ${section.dotColor}`} />
-                        <span className={`text-xs font-semibold uppercase tracking-wider ${section.color}`}>{section.label}</span>
-                      </div>
-                      {section.tasks.map(task => {
-                        const urgency = getDueUrgency(task.dueDate, task.status)
-                        const styles = URGENCY_STYLES[urgency]
-                        return (
-                          <div key={task.id} onClick={() => router.push(`/tasks?taskId=${task.id}`)} className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium truncate">{task.title}</p>
-                              {task.project && (
-                                <p className="text-xs text-muted mt-0.5">{task.project.name}</p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                              <StatusBadge
-                                leftLabel={task.priority === 'URGENT' ? 'Urgente' : task.priority === 'HIGH' ? 'Alta' : task.priority === 'MEDIUM' ? 'Media' : 'Bassa'}
-                                rightLabel={task.dueDate ? new Date(task.dueDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }) : '\u2014'}
-                                variant={task.priority === 'URGENT' ? 'error' : task.priority === 'HIGH' ? 'warning' : task.priority === 'MEDIUM' ? 'info' : 'default'}
-                                pulse={task.priority === 'URGENT'}
-                              />
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ))
-                })()}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Riepilogo Operativo */}
-        <Card>
-          <CardContent>
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                <Flame className="h-4 w-4" />
-              </div>
-              <CardTitle>Riepilogo Operativo</CardTitle>
-            </div>
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <div className="text-center p-3 rounded-lg bg-red-500/5 border border-red-200/30 dark:border-red-800/30">
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{overdueTaskCount}</p>
-                <p className="text-xs text-muted mt-1">Scadute</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-amber-500/5 border border-amber-200/30 dark:border-amber-800/30">
-                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{todayTaskCount}</p>
-                <p className="text-xs text-muted mt-1">Oggi</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-blue-500/5 border border-blue-200/30 dark:border-blue-800/30">
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{inProgressTaskCount}</p>
-                <p className="text-xs text-muted mt-1">In Corso</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-emerald-500/5 border border-emerald-200/30 dark:border-emerald-800/30">
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{completedMonthCount}</p>
-                <p className="text-xs text-muted mt-1">Completate (mese)</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <TasksDeadlineCard tasks={tasks} />
+        <OperativeSummaryCard
+          overdue={overdueTaskCount}
+          today={todayTaskCount}
+          inProgress={inProgressTaskCount}
+          completedMonth={completedMonthCount}
+        />
       </div>
 
       {/* ROW 2: CHARTS - Tabbed on mobile, grid on desktop */}
-      {/* Mobile: tabbed charts */}
       <div className="md:hidden mb-5">
         <Card className="overflow-hidden">
           <CardContent>
@@ -628,7 +303,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Desktop: side-by-side charts */}
       <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <Card className="overflow-hidden">
           <CardContent>
@@ -672,7 +346,6 @@ export default function DashboardPage() {
           expenses={totalExpenses}
           onViewDetails={() => router.push('/erp/reports')}
         />
-
         <Card className="hidden md:block overflow-hidden">
           <CardContent>
             <div className="flex items-center justify-between mb-6">
@@ -751,83 +424,7 @@ export default function DashboardPage() {
             }
           })}
         />
-
-        {/* STICKY NOTES */}
-        <Card>
-          <CardContent>
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
-                  <StickyNote className="h-4 w-4" />
-                </div>
-                <CardTitle>Note Rapide</CardTitle>
-              </div>
-              {notes.length < 5 && (
-                <Button variant="ghost" size="sm" onClick={addNote}>
-                  <Plus className="h-4 w-4" />
-                  Aggiungi
-                </Button>
-              )}
-            </div>
-            {notes.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="inline-flex p-3 rounded-full bg-secondary text-muted mb-3">
-                  <StickyNote className="h-6 w-6" />
-                </div>
-                <p className="text-sm text-muted mb-3">Nessuna nota. Aggiungi un promemoria rapido.</p>
-                <Button variant="outline" size="sm" onClick={addNote}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Prima nota
-                </Button>
-              </div>
-            ) : (
-              <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 md:overflow-visible scrollbar-none">
-                {notes.map((note) => (
-                  <div
-                    key={note.id}
-                    className={`relative rounded-lg border p-3 min-h-[100px] min-w-[200px] flex-shrink-0 md:min-w-0 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-shadow duration-200 ${note.color}`}
-                  >
-                    <div className="absolute top-1.5 right-1.5 flex gap-0.5">
-                      <button
-                        onClick={() => setEditingNote(editingNote === note.id ? null : note.id)}
-                        className="p-1 rounded hover:bg-black/5 text-foreground/50 hover:text-foreground/80"
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={() => deleteNote(note.id)}
-                        className="p-1 rounded hover:bg-black/5 text-foreground/50 hover:text-red-500"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                    {editingNote === note.id ? (
-                      <textarea
-                        autoFocus
-                        value={note.text}
-                        onChange={(e) => updateNote(note.id, e.target.value)}
-                        onBlur={() => setEditingNote(null)}
-                        maxLength={200}
-                        className="w-full h-full min-h-[70px] bg-transparent text-xs resize-none focus:outline-none"
-                        placeholder="Scrivi una nota..."
-                      />
-                    ) : (
-                      <p
-                        className="text-xs whitespace-pre-wrap cursor-pointer pr-10"
-                        onClick={() => setEditingNote(note.id)}
-                      >
-                        {note.text || 'Clicca per scrivere...'}
-                      </p>
-                    )}
-                    <div className="absolute bottom-1.5 right-2 text-[9px] text-foreground/30">
-                      {note.text.length}/200
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <StickyNotesCard />
       </div>
 
     </div>

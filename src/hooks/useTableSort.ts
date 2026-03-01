@@ -6,33 +6,52 @@ type SortDir = 'asc' | 'desc'
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}/
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
+function applyDir(cmp: number, dir: SortDir): number {
+  return dir === 'asc' ? cmp : -cmp
+}
+
+function toNumber(val: unknown): number {
+  if (typeof val === 'number') return val
+  if (typeof val === 'string') return parseFloat(val)
+  return NaN
+}
+
+function isDateString(val: unknown): val is string {
+  return typeof val === 'string' && ISO_DATE_RE.test(val)
+}
+
+function compareDates(a: string, b: string): number {
+  if (a < b) return -1
+  if (a > b) return 1
+  return 0
+}
+
+function compareBooleans(a: boolean, b: boolean): number {
+  if (a === b) return 0
+  return a ? 1 : -1
+}
+
+function compareValues(aVal: unknown, bVal: unknown): number | null {
+  if (isDateString(aVal) && isDateString(bVal)) return compareDates(aVal, bVal)
+
+  const aNum = toNumber(aVal)
+  const bNum = toNumber(bVal)
+  if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum
+
+  if (typeof aVal === 'boolean' && typeof bVal === 'boolean') return compareBooleans(aVal, bVal)
+
+  return null
+}
+
 function compare(aVal: unknown, bVal: unknown, dir: SortDir): number {
   if (aVal == null && bVal == null) return 0
   if (aVal == null) return 1
   if (bVal == null) return -1
 
-  // Date strings (ISO format) — compare lexicographically (YYYY-MM-DD sorts correctly)
-  if (typeof aVal === 'string' && typeof bVal === 'string' && ISO_DATE_RE.test(aVal) && ISO_DATE_RE.test(bVal)) {
-    const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0
-    return dir === 'asc' ? cmp : -cmp
-  }
+  const result = compareValues(aVal, bVal)
+  if (result !== null) return applyDir(result, dir)
 
-  // Numbers (including numeric strings like amounts)
-  const aNum = typeof aVal === 'number' ? aVal : typeof aVal === 'string' ? parseFloat(aVal) : NaN
-  const bNum = typeof bVal === 'number' ? bVal : typeof bVal === 'string' ? parseFloat(bVal) : NaN
-
-  if (!isNaN(aNum) && !isNaN(bNum)) {
-    return dir === 'asc' ? aNum - bNum : bNum - aNum
-  }
-
-  if (typeof aVal === 'boolean' && typeof bVal === 'boolean') {
-    if (aVal === bVal) return 0
-    return dir === 'asc' ? (aVal ? 1 : -1) : (aVal ? -1 : 1)
-  }
-
-  const cmp = String(aVal).localeCompare(String(bVal), 'it', { sensitivity: 'base' })
-  return dir === 'asc' ? cmp : -cmp
+  return applyDir(String(aVal).localeCompare(String(bVal), 'it', { sensitivity: 'base' }), dir)
 }
 
 export function useTableSort(defaultKey?: string, defaultDir: SortDir = 'desc') {

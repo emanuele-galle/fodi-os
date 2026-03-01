@@ -68,7 +68,9 @@ export async function GET(request: NextRequest) {
     const completedMap = new Map(completedCounts.map((c) => [c.projectId, c._count]))
     const items = rawItems.map((p) => ({ ...p, completedTasks: completedMap.get(p.id) || 0 }))
 
-    return NextResponse.json({ success: true, data: items, items, total, page, limit })
+    return NextResponse.json({ success: true, data: items, items, total, page, limit }, {
+      headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' },
+    })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

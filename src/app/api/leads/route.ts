@@ -62,7 +62,9 @@ export async function GET(request: NextRequest) {
       statusCounts[row.status] = row._count
     }
 
-    return NextResponse.json({ success: true, data: items, items, total, page, limit, statusCounts })
+    return NextResponse.json({ success: true, data: items, items, total, page, limit, statusCounts }, {
+      headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' },
+    })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'muscari-os-v4'
-const API_CACHE_NAME = 'muscari-os-api-v1'
+const CACHE_NAME = 'muscari-os-v5'
+const API_CACHE_NAME = 'muscari-os-api-v2'
 const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.png',
@@ -9,10 +9,14 @@ const STATIC_ASSETS = [
 // API endpoints to cache with stale-while-revalidate
 const CACHEABLE_APIS = [
   '/api/dashboard/summary',
+  '/api/dashboard/badges',
   '/api/tasks/count',
   '/api/chat/channels',
   '/api/notifications',
 ]
+
+// Maximum age for API cache entries (5 minutes)
+const API_CACHE_TTL = 5 * 60 * 1000
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -23,13 +27,17 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => k !== CACHE_NAME && k !== API_CACHE_NAME)
-          .map((k) => caches.delete(k))
-      )
-    )
+    Promise.all([
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys
+            .filter((k) => k !== CACHE_NAME && k !== API_CACHE_NAME)
+            .map((k) => caches.delete(k))
+        )
+      ),
+      // Enable navigation preload if supported
+      self.registration.navigationPreload?.enable().catch(() => {}),
+    ])
   )
   self.clients.claim()
 })
@@ -92,21 +100,35 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url)
 
-  // Stale-while-revalidate for cacheable API endpoints
+  // Stale-while-revalidate for cacheable API endpoints (with TTL)
   if (url.pathname.startsWith('/api/') && CACHEABLE_APIS.some(api => url.pathname.startsWith(api))) {
     event.respondWith(
       caches.open(API_CACHE_NAME).then((cache) =>
         cache.match(event.request).then((cached) => {
+          // Check if cached response is still within TTL
+          const isStale = cached && cached.headers.get('sw-cached-at')
+            ? (Date.now() - parseInt(cached.headers.get('sw-cached-at'))) > API_CACHE_TTL
+            : true
+
           const fetchPromise = fetch(event.request)
             .then((response) => {
               if (response.ok) {
-                cache.put(event.request, response.clone())
+                // Clone and add timestamp header for TTL tracking
+                const headers = new Headers(response.headers)
+                headers.set('sw-cached-at', String(Date.now()))
+                const timedResponse = new Response(response.clone().body, {
+                  status: response.status,
+                  statusText: response.statusText,
+                  headers,
+                })
+                cache.put(event.request, timedResponse)
               }
               return response
             })
-            .catch(() => cached) // If network fails, use cache
+            .catch(() => cached) // If network fails, use cache (even if stale)
 
-          // Return cached immediately, update in background
+          // Return cached if fresh, otherwise fetch from network
+          if (cached && !isStale) return cached
           return cached || fetchPromise
         })
       )
@@ -117,10 +139,18 @@ self.addEventListener('fetch', (event) => {
   // Never intercept other API calls
   if (url.pathname.startsWith('/api/')) return
 
-  // Navigation requests: network-first with offline fallback
+  // Navigation requests: use preload response if available, fallback to network then offline
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/offline.html'))
+      (async () => {
+        try {
+          const preloadResponse = await event.preloadResponse
+          if (preloadResponse) return preloadResponse
+          return await fetch(event.request)
+        } catch {
+          return caches.match('/offline.html')
+        }
+      })()
     )
     return
   }

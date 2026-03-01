@@ -83,72 +83,54 @@ export default function DashboardLayout({
     let cancelled = false
     let retried = false
 
+    async function tryRefreshAndRetry(): Promise<boolean> {
+      if (retried) return false
+      retried = true
+      try {
+        const { refreshAccessToken } = await import('@/hooks/useAuthRefresh')
+        return await refreshAccessToken()
+      } catch { return false }
+    }
+
     async function loadSession() {
       const res = await fetch('/api/auth/session')
-
       if (cancelled) return
 
       if (res.ok) {
         const data = await res.json()
         if (data?.user) {
           setUser(data.user)
-          fetch('/api/onboarding')
-            .then(r => r.ok ? r.json() : null)
-            .then(data => {
-              if (!cancelled && data && !data.completed) setShowOnboarding(true)
-            })
-            .catch(() => {})
+          if (!cancelled && data.user.onboardingCompleted === false) setShowOnboarding(true)
           return
         }
       }
 
-      // 401: access token expired — attempt refresh then retry
-      if (res.status === 401 && !retried) {
-        retried = true
-        try {
-          const { refreshAccessToken } = await import('@/hooks/useAuthRefresh')
-          const ok = await refreshAccessToken()
-          if (ok && !cancelled) return loadSession()
-        } catch { /* refresh failed */ }
-      }
-
+      if (res.status === 401 && await tryRefreshAndRetry() && !cancelled) return loadSession()
       if (!cancelled) window.location.href = '/login'
     }
     loadSession()
     return () => { cancelled = true }
   }, [])
 
-  // Fetch unread counts - initial load + fallback polling every 120s (SSE handles real-time)
+  // Fetch unread counts - single aggregated endpoint + fallback polling every 120s
   const fetchCounts = useCallback(() => {
     if (document.hidden) return
-    fetch('/api/notifications?limit=1')
+    fetch('/api/dashboard/badges')
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
-        if (data?.unreadCount !== undefined) {
-          setUnreadNotifications(data.unreadCount)
+        if (!data) return
+        if (data.notifications !== undefined) {
+          setUnreadNotifications(data.notifications)
           if ('setAppBadge' in navigator) {
-            if (data.unreadCount > 0) {
-              navigator.setAppBadge(data.unreadCount).catch(() => {})
+            if (data.notifications > 0) {
+              navigator.setAppBadge(data.notifications).catch(() => {})
             } else {
               navigator.clearAppBadge?.().catch(() => {})
             }
           }
         }
-      })
-      .catch(() => {})
-
-    fetch('/api/chat/channels')
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        const channels = data?.items || []
-        setUnreadChat(channels.reduce((sum: number, c: { unreadCount?: number }) => sum + (c.unreadCount || 0), 0))
-      })
-      .catch(() => {})
-
-    fetch('/api/tasks/count')
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        if (data?.count !== undefined) setPendingTaskCount(data.count)
+        if (data.chat !== undefined) setUnreadChat(data.chat)
+        if (data.tasks !== undefined) setPendingTaskCount(data.tasks)
       })
       .catch(() => {})
   }, [])

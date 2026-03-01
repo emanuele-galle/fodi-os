@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
       lastLoginAt: true,
       dailyDigest: true,
       workSchedule: true,
+      onboardingCompleted: true,
     }
 
     const user = await prisma.user.findUnique({

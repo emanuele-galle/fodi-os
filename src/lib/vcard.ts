@@ -23,7 +23,30 @@ function escapeVCard(value: string): string {
   return value.replace(/[\\;,]/g, (match) => `\\${match}`).replace(/\n/g, '\\n')
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
+type VCardField = { key: keyof VCardData; format: (val: string) => string }
+
+const VCARD_FIELDS: VCardField[] = [
+  { key: 'company', format: (v) => `ORG:${escapeVCard(v)}` },
+  { key: 'jobTitle', format: (v) => `TITLE:${escapeVCard(v)}` },
+  { key: 'avatarUrl', format: (v) => `PHOTO;VALUE=URI:${v}` },
+  { key: 'email', format: (v) => `EMAIL;TYPE=INTERNET;TYPE=WORK:${v}` },
+  { key: 'phone', format: (v) => `TEL;TYPE=WORK,VOICE:${v}` },
+  { key: 'whatsappNumber', format: (v) => `TEL;TYPE=CELL:${v}` },
+  { key: 'websiteUrl', format: (v) => `URL:${v}` },
+  { key: 'bio', format: (v) => `NOTE:${escapeVCard(v)}` },
+]
+
+const SOCIAL_FIELDS: { key: keyof VCardData; type: string }[] = [
+  { key: 'linkedinUrl', type: 'linkedin' },
+  { key: 'instagramUrl', type: 'instagram' },
+  { key: 'facebookUrl', type: 'facebook' },
+  { key: 'twitterUrl', type: 'twitter' },
+  { key: 'githubUrl', type: 'github' },
+  { key: 'tiktokUrl', type: 'tiktok' },
+  { key: 'youtubeUrl', type: 'youtube' },
+  { key: 'telegramUrl', type: 'telegram' },
+]
+
 export function generateVCard(data: VCardData): string {
   const lines: string[] = [
     'BEGIN:VCARD',
@@ -32,55 +55,14 @@ export function generateVCard(data: VCardData): string {
     `FN:${escapeVCard(data.firstName)} ${escapeVCard(data.lastName)}`,
   ]
 
-  if (data.company) {
-    lines.push(`ORG:${escapeVCard(data.company)}`)
-  }
-  if (data.jobTitle) {
-    lines.push(`TITLE:${escapeVCard(data.jobTitle)}`)
-  }
-  if (data.avatarUrl) {
-    lines.push(`PHOTO;VALUE=URI:${data.avatarUrl}`)
-  }
-  if (data.email) {
-    lines.push(`EMAIL;TYPE=INTERNET;TYPE=WORK:${data.email}`)
-  }
-  if (data.phone) {
-    lines.push(`TEL;TYPE=WORK,VOICE:${data.phone}`)
-  }
-  if (data.whatsappNumber) {
-    lines.push(`TEL;TYPE=CELL:${data.whatsappNumber}`)
-  }
-  if (data.websiteUrl) {
-    lines.push(`URL:${data.websiteUrl}`)
-  }
-  if (data.bio) {
-    lines.push(`NOTE:${escapeVCard(data.bio)}`)
+  for (const field of VCARD_FIELDS) {
+    const val = data[field.key]
+    if (val) lines.push(field.format(val))
   }
 
-  // Social profiles
-  if (data.linkedinUrl) {
-    lines.push(`X-SOCIALPROFILE;TYPE=linkedin:${data.linkedinUrl}`)
-  }
-  if (data.instagramUrl) {
-    lines.push(`X-SOCIALPROFILE;TYPE=instagram:${data.instagramUrl}`)
-  }
-  if (data.facebookUrl) {
-    lines.push(`X-SOCIALPROFILE;TYPE=facebook:${data.facebookUrl}`)
-  }
-  if (data.twitterUrl) {
-    lines.push(`X-SOCIALPROFILE;TYPE=twitter:${data.twitterUrl}`)
-  }
-  if (data.githubUrl) {
-    lines.push(`X-SOCIALPROFILE;TYPE=github:${data.githubUrl}`)
-  }
-  if (data.tiktokUrl) {
-    lines.push(`X-SOCIALPROFILE;TYPE=tiktok:${data.tiktokUrl}`)
-  }
-  if (data.youtubeUrl) {
-    lines.push(`X-SOCIALPROFILE;TYPE=youtube:${data.youtubeUrl}`)
-  }
-  if (data.telegramUrl) {
-    lines.push(`X-SOCIALPROFILE;TYPE=telegram:${data.telegramUrl}`)
+  for (const social of SOCIAL_FIELDS) {
+    const val = data[social.key]
+    if (val) lines.push(`X-SOCIALPROFILE;TYPE=${social.type}:${val}`)
   }
 
   lines.push('END:VCARD')
