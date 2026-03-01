@@ -21,6 +21,9 @@ import { getDueUrgency, URGENCY_STYLES } from '@/lib/task-utils'
 import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
 import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard'
 import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
+import { MobileChartTabs } from '@/components/dashboard/MobileChartTabs'
+import { PullToRefresh } from '@/components/ui/PullToRefresh'
+import { SwipeableRow } from '@/components/ui/SwipeableRow'
 
 const RevenueChart = dynamic(() => import('@/components/dashboard/RevenueChart').then(m => ({ default: m.RevenueChart })), {
   ssr: false,
@@ -278,7 +281,35 @@ export default function DashboardPage() {
     { label: 'Registra Ore', description: 'Traccia tempo', icon: ClockPlus, href: '/time', color: 'text-primary', bg: 'bg-primary/10', hoverBorder: 'hover:border-primary/30' },
   ]
 
+  const handleRefresh = async () => {
+    setLoading(true)
+    setFetchError(null)
+    try {
+      const res = await fetch('/api/dashboard/summary')
+      if (!res.ok) throw new Error('fetch failed')
+      const data = await res.json()
+      const taskItems: TaskItem[] = data.tasks?.items || []
+      setTasks(taskItems)
+      if (data.activity?.items) setActivities(data.activity.items)
+      let overdue = 0, dueToday = 0
+      for (const t of taskItems) {
+        const u = getDueUrgency(t.dueDate, t.status)
+        if (u === 'overdue') overdue++
+        if (u === 'today') dueToday++
+      }
+      setOverdueTaskCount(overdue)
+      setTodayTaskCount(dueToday)
+      setInProgressTaskCount(data.inProgress?.total ?? 0)
+      setCompletedMonthCount(data.doneMonth?.total ?? 0)
+    } catch {
+      setFetchError('Errore nel caricamento')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div>
       {/* HEADER */}
       <div className="mb-6">
@@ -305,59 +336,177 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* STAT CARDS */}
+      {/* STAT CARDS - horizontal scroll on mobile, grid on desktop */}
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[88px] md:h-[100px] rounded-xl" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6 animate-stagger">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              onClick={() => router.push(stat.href)}
-              className="relative overflow-hidden rounded-xl border border-border/40 bg-card p-3 md:p-4 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-primary/25 transition-all duration-200 group touch-manipulation active:scale-[0.97]"
-            >
-              <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl opacity-80" style={{ background: 'currentColor' }} />
-              <div className={`flex flex-col gap-3 ${stat.color}`}>
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-lg flex-shrink-0 transition-all duration-300 group-hover:scale-110" style={{ background: `color-mix(in srgb, currentColor 8%, transparent)` }}>
-                    <stat.icon className="h-4 w-4" />
+        <>
+          {/* Mobile: horizontal scrollable */}
+          <div className="md:hidden flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 mb-6 snap-x snap-mandatory">
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                onClick={() => router.push(stat.href)}
+                className="relative overflow-hidden rounded-xl border border-border/40 bg-card p-3 cursor-pointer active:scale-[0.97] transition-all touch-manipulation min-w-[140px] flex-shrink-0 snap-start"
+              >
+                <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl opacity-80" style={{ background: 'currentColor' }} />
+                <div className={`flex flex-col gap-2 ${stat.color}`}>
+                  <div className="p-1.5 rounded-lg w-fit" style={{ background: `color-mix(in srgb, currentColor 8%, transparent)` }}>
+                    <stat.icon className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xl font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
+                    <p className="text-[10px] text-muted font-medium truncate leading-tight mt-1">{stat.label}</p>
                   </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-2xl font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
-                  <p className="text-[11px] text-muted font-medium truncate leading-tight mt-1.5">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+          {/* Desktop: grid */}
+          <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6 animate-stagger">
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                onClick={() => router.push(stat.href)}
+                className="relative overflow-hidden rounded-xl border border-border/40 bg-card p-4 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-primary/25 transition-all duration-200 group touch-manipulation active:scale-[0.97]"
+              >
+                <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl opacity-80" style={{ background: 'currentColor' }} />
+                <div className={`flex flex-col gap-3 ${stat.color}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 rounded-lg flex-shrink-0 transition-all duration-300 group-hover:scale-110" style={{ background: `color-mix(in srgb, currentColor 8%, transparent)` }}>
+                      <stat.icon className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-2xl font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
+                    <p className="text-[11px] text-muted font-medium truncate leading-tight mt-1.5">{stat.label}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* QUICK ACTIONS */}
       <div className="mb-6 md:mb-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 md:gap-3">
+        {/* Mobile: compact circular layout (first 4 actions) */}
+        <div className="md:hidden flex justify-around px-2 mb-0">
+          {quickActions.slice(0, 4).map((action) => {
+            const Icon = action.icon
+            return (
+              <button
+                key={action.label}
+                onClick={() => router.push(action.href)}
+                className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform touch-manipulation"
+              >
+                <div className={`w-12 h-12 rounded-full ${action.bg} ${action.color} flex items-center justify-center shadow-sm`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <span className="text-[10px] font-medium text-muted leading-tight text-center max-w-[64px]">
+                  {action.description}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        {/* Desktop: full grid */}
+        <div className="hidden md:grid sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {quickActions.map((action) => {
             const Icon = action.icon
             return (
               <button
                 key={action.label}
                 onClick={() => router.push(action.href)}
-                className={`group relative flex flex-col items-center gap-1.5 md:gap-2 p-3.5 md:p-5 rounded-xl border border-border/30 ${action.hoverBorder} bg-card hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.97]`}
+                className={`group relative flex flex-col items-center gap-2 p-5 rounded-xl border border-border/30 ${action.hoverBorder} bg-card hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.97]`}
               >
-                <div className={`p-2.5 md:p-3 rounded-xl ${action.bg} ${action.color} transition-transform duration-200 group-hover:scale-110`}>
-                  <Icon className="h-5 w-5 md:h-6 md:w-6" />
+                <div className={`p-3 rounded-xl ${action.bg} ${action.color} transition-transform duration-200 group-hover:scale-110`}>
+                  <Icon className="h-6 w-6" />
                 </div>
                 <div className="text-center">
-                  <p className="text-xs md:text-sm font-semibold leading-tight">{action.label}</p>
-                  <p className="text-[10px] md:text-xs text-muted mt-0.5 hidden sm:block">{action.description}</p>
+                  <p className="text-sm font-semibold leading-tight">{action.label}</p>
+                  <p className="text-xs text-muted mt-0.5">{action.description}</p>
                 </div>
               </button>
             )
           })}
         </div>
       </div>
+
+      {/* MOBILE: "Per te" priority section - overdue + today tasks */}
+      {!loading && (overdueTaskCount > 0 || todayTaskCount > 0) && (
+        <div className="md:hidden mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <span className="text-sm font-semibold">Per te</span>
+          </div>
+          <div className="space-y-2">
+            {tasks
+              .filter(t => {
+                const u = getDueUrgency(t.dueDate, t.status)
+                return u === 'overdue' || u === 'today'
+              })
+              .slice(0, 3)
+              .map(task => {
+                const urgency = getDueUrgency(task.dueDate, task.status)
+                return (
+                  <SwipeableRow
+                    key={task.id}
+                    leftAction={{
+                      label: 'Completato',
+                      icon: <CheckCircle2 className="h-4 w-4" />,
+                      color: '#10B981',
+                      onAction: () => {
+                        fetch(`/api/tasks/${task.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ status: 'DONE' }),
+                        }).then(() => {
+                          setTasks(prev => prev.filter(t => t.id !== task.id))
+                        })
+                      },
+                    }}
+                    rightAction={{
+                      label: 'Posticipa',
+                      icon: <Clock className="h-4 w-4" />,
+                      color: '#F59E0B',
+                      onAction: () => {
+                        const tomorrow = new Date()
+                        tomorrow.setDate(tomorrow.getDate() + 1)
+                        fetch(`/api/tasks/${task.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ dueDate: tomorrow.toISOString() }),
+                        }).then(() => {
+                          setTasks(prev => prev.map(t =>
+                            t.id === task.id ? { ...t, dueDate: tomorrow.toISOString() } : t
+                          ))
+                        })
+                      },
+                    }}
+                  >
+                    <div
+                      onClick={() => router.push(`/tasks?taskId=${task.id}`)}
+                      className="flex items-center justify-between p-3 cursor-pointer"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{task.title}</p>
+                        {task.project && <p className="text-[10px] text-muted">{task.project.name}</p>}
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${
+                        urgency === 'overdue' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      }`}>
+                        {urgency === 'overdue' ? 'Scaduta' : 'Oggi'}
+                      </span>
+                    </div>
+                  </SwipeableRow>
+                )
+              })}
+          </div>
+        </div>
+      )}
 
       {/* ROW 1: TASK IN SCADENZA (2 col) + RIEPILOGO OPERATIVO (1 col) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-5 md:mb-6">
@@ -465,8 +614,22 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ROW 2: FATTURATO + CASH FLOW */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6">
+      {/* ROW 2: CHARTS - Tabbed on mobile, grid on desktop */}
+      {/* Mobile: tabbed charts */}
+      <div className="md:hidden mb-5">
+        <Card className="overflow-hidden">
+          <CardContent>
+            <MobileChartTabs tabs={[
+              { label: 'Fatturato', content: <RevenueChart /> },
+              { label: 'Cash Flow', content: <CashFlowChart /> },
+              { label: 'Pipeline', content: <PipelineFunnel /> },
+            ]} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Desktop: side-by-side charts */}
+      <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <Card className="overflow-hidden">
           <CardContent>
             <div className="flex items-center justify-between mb-6">
@@ -510,7 +673,7 @@ export default function DashboardPage() {
           onViewDetails={() => router.push('/erp/reports')}
         />
 
-        <Card className="overflow-hidden">
+        <Card className="hidden md:block overflow-hidden">
           <CardContent>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
@@ -668,5 +831,6 @@ export default function DashboardPage() {
       </div>
 
     </div>
+    </PullToRefresh>
   )
 }

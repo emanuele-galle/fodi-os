@@ -4,6 +4,8 @@
     "src/app/**/page.{ts,tsx}",
     "src/app/**/layout.{ts,tsx}",
     "src/app/**/route.{ts,tsx}",
+    "src/app/**/loading.{ts,tsx}",
+    "src/components/ui/ResponsiveTable.tsx",
     "next.config.{js,mjs,ts}",
     "prisma/seed.{ts,js}"
   ],

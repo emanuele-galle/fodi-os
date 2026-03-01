@@ -1,8 +1,17 @@
-const CACHE_NAME = 'muscari-os-v3'
+const CACHE_NAME = 'muscari-os-v4'
+const API_CACHE_NAME = 'muscari-os-api-v1'
 const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.png',
   '/offline.html',
+]
+
+// API endpoints to cache with stale-while-revalidate
+const CACHEABLE_APIS = [
+  '/api/dashboard/summary',
+  '/api/tasks/count',
+  '/api/chat/channels',
+  '/api/notifications',
 ]
 
 self.addEventListener('install', (event) => {
@@ -15,7 +24,11 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(
+        keys
+          .filter((k) => k !== CACHE_NAME && k !== API_CACHE_NAME)
+          .map((k) => caches.delete(k))
+      )
     )
   )
   self.clients.claim()
@@ -45,7 +58,6 @@ self.addEventListener('push', (event) => {
     ]
   } else if (isChatMessage) {
     options.vibrate = [100, 50, 100]
-    // Deduplicate by channel (extract channel from link)
     const channelMatch = (data.link || '').match(/channel=([^&]+)/)
     options.tag = channelMatch ? `chat-${channelMatch[1]}` : 'chat-message'
     options.renotify = true
@@ -78,8 +90,32 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 
-  // Never intercept API calls
-  if (event.request.url.includes('/api/')) return
+  const url = new URL(event.request.url)
+
+  // Stale-while-revalidate for cacheable API endpoints
+  if (url.pathname.startsWith('/api/') && CACHEABLE_APIS.some(api => url.pathname.startsWith(api))) {
+    event.respondWith(
+      caches.open(API_CACHE_NAME).then((cache) =>
+        cache.match(event.request).then((cached) => {
+          const fetchPromise = fetch(event.request)
+            .then((response) => {
+              if (response.ok) {
+                cache.put(event.request, response.clone())
+              }
+              return response
+            })
+            .catch(() => cached) // If network fails, use cache
+
+          // Return cached immediately, update in background
+          return cached || fetchPromise
+        })
+      )
+    )
+    return
+  }
+
+  // Never intercept other API calls
+  if (url.pathname.startsWith('/api/')) return
 
   // Navigation requests: network-first with offline fallback
   if (event.request.mode === 'navigate') {
@@ -90,7 +126,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Only cache static assets (_next/static, images, fonts)
-  const url = new URL(event.request.url)
   const isStaticAsset = url.pathname.startsWith('/_next/static/') ||
     url.pathname.match(/\.(png|jpg|jpeg|svg|gif|ico|woff2?|ttf|css|js)$/)
 

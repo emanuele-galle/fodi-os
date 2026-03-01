@@ -6,7 +6,7 @@ interface AiFloatingButtonProps {
 
 export function AiFloatingButton({ onClick }: AiFloatingButtonProps) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-3 max-md:bottom-20">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-3 max-md:bottom-36">
       {/* Main AI FAB */}
       <button
         onClick={onClick}

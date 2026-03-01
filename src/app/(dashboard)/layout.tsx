@@ -7,6 +7,7 @@ import { MobileHeader } from '@/components/layout/MobileHeader'
 import { IncomingCallBanner } from '@/components/layout/IncomingCallBanner'
 import { MobileNotificationsPanel } from '@/components/layout/MobileNotificationsPanel'
 import { ImpersonationBanner } from '@/components/layout/ImpersonationBanner'
+import { ContextualFAB } from '@/components/layout/ContextualFAB'
 import { SetupBanner } from '@/components/layout/SetupBanner'
 import { ActiveTimerBanner } from '@/components/tasks/ActiveTimerBanner'
 import { useState, useEffect, useCallback, Suspense } from 'react'
@@ -27,7 +28,9 @@ const AiFloatingButton = dynamic(() => import('@/components/ai/AiFloatingButton'
   ssr: false,
 })
 const OnboardingWizard = dynamic(() => import('@/components/layout/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })), { ssr: false })
+const OfflineIndicator = dynamic(() => import('@/components/ui/OfflineIndicator').then(m => ({ default: m.OfflineIndicator })), { ssr: false })
 import { useAuthRefresh } from '@/hooks/useAuthRefresh'
+import { useViewTransition } from '@/hooks/useViewTransition'
 import type { Role } from '@/generated/prisma/client'
 import type { SectionAccessMap } from '@/lib/section-access'
 
@@ -72,6 +75,9 @@ export default function DashboardLayout({
 
   // Proactive token refresh: prevents auto-logout
   useAuthRefresh()
+
+  // Native View Transitions for smooth page navigation
+  useViewTransition()
 
   useEffect(() => {
     let cancelled = false
@@ -270,6 +276,7 @@ export default function DashboardLayout({
       )}
 
       <IncomingCallBanner />
+      <OfflineIndicator />
       {showOnboarding && user && (
         <OnboardingWizard
           user={{ firstName: user.firstName, role: user.role }}
@@ -277,6 +284,7 @@ export default function DashboardLayout({
         />
       )}
       <PwaInstallPrompt />
+      <ContextualFAB />
       {!aiSidebarOpen && <AiFloatingButton onClick={toggleAiSidebar} />}
       <AiChatSidebar open={aiSidebarOpen} onClose={() => setAiSidebarOpen(false)} />
     </div>

@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils'
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { X } from 'lucide-react'
+import { BottomSheet } from './BottomSheet'
 
 interface ModalProps {
   open: boolean
@@ -12,13 +13,25 @@ interface ModalProps {
   className?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
   preventAccidentalClose?: boolean
+  /** Force desktop dialog even on mobile (default false) */
+  forceDialog?: boolean
 }
 
-export function Modal({ open, onClose, title, children, className, size = 'md', preventAccidentalClose = false }: ModalProps) {
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return isMobile
+}
+
+export function Modal({ open, onClose, title, children, className, size = 'md', preventAccidentalClose = false, forceDialog = false }: ModalProps) {
+  const isMobile = useIsMobile()
   const overlayRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
-  const touchStartY = useRef<number | null>(null)
-  const touchDeltaY = useRef(0)
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
 
   const attemptClose = useCallback(() => {
@@ -30,14 +43,16 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
   }, [preventAccidentalClose, onClose])
 
   useEffect(() => {
+    if (!open) {
+      setShowCloseConfirm(false)
+      return
+    }
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') attemptClose()
     }
-    if (open) {
-      document.addEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'hidden'
-      document.body.classList.add('modal-open')
-    }
+    document.addEventListener('keydown', handleEscape)
+    document.body.style.overflow = 'hidden'
+    document.body.classList.add('modal-open')
     return () => {
       document.removeEventListener('keydown', handleEscape)
       document.body.style.overflow = ''
@@ -45,48 +60,18 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
     }
   }, [open, attemptClose])
 
-  // Reset confirm state when modal opens/closes
-   
-  useEffect(() => {
-    if (!open) setShowCloseConfirm(false)
-  }, [open])
-
-  // Swipe-to-dismiss on mobile
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (preventAccidentalClose) return
-    const el = contentRef.current
-    if (!el) return
-    if (el.scrollTop <= 0) {
-      touchStartY.current = e.touches[0].clientY
-    }
-  }, [preventAccidentalClose])
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartY.current === null) return
-    const delta = e.touches[0].clientY - touchStartY.current
-    touchDeltaY.current = delta
-    const el = contentRef.current
-    if (el && delta > 0) {
-      el.style.transform = `translateY(${Math.min(delta * 0.5, 150)}px)`
-      el.style.opacity = `${Math.max(1 - delta / 400, 0.5)}`
-    }
-  }, [])
-
-  const handleTouchEnd = useCallback(() => {
-    const el = contentRef.current
-    if (el) {
-      el.style.transform = ''
-      el.style.opacity = ''
-    }
-    if (touchDeltaY.current > 200) {
-      onClose()
-    }
-    touchStartY.current = null
-    touchDeltaY.current = 0
-  }, [onClose])
-
   if (!open) return null
 
+  // Mobile: use BottomSheet for better UX
+  if (isMobile && !forceDialog && !preventAccidentalClose) {
+    return (
+      <BottomSheet open={open} onClose={onClose} title={title} className={className}>
+        {children}
+      </BottomSheet>
+    )
+  }
+
+  // Desktop: centered dialog
   return (
     <div
       ref={overlayRef}
@@ -94,13 +79,9 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
       onClick={(e) => e.target === overlayRef.current && attemptClose()}
     >
       <div
-        ref={contentRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         className={cn(
           'bg-card/95 backdrop-blur-xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in flex flex-col',
-          // Mobile: full-screen sheet
+          // Mobile fallback (forceDialog or preventAccidentalClose): full-screen
           'w-full h-[100dvh] rounded-none',
           // Desktop: centered dialog
           'md:h-auto md:max-h-[85vh] md:rounded-xl',
@@ -113,7 +94,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
           className
         )}
       >
-        {/* Swipe indicator on mobile (hidden when swipe disabled) */}
+        {/* Swipe indicator on mobile when in fullscreen mode */}
         {!preventAccidentalClose && (
           <div className="md:hidden flex justify-center pt-2 pb-0">
             <div className="w-10 h-1 rounded-full bg-border/60" />
