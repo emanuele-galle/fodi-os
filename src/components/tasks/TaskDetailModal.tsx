@@ -161,25 +161,38 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
       })
   }, [])
 
+  function buildChangedFields(current: TaskDetail): Record<string, unknown> {
+    const STATUS_TO_COLUMN: Record<string, string> = {
+      TODO: 'todo', IN_PROGRESS: 'in_progress', IN_REVIEW: 'in_review', DONE: 'done', CANCELLED: 'cancelled',
+    }
+    const body: Record<string, unknown> = {}
+    if (title !== current.title) body.title = title
+    if (description !== (current.description || '')) body.description = description || null
+    if (status !== current.status) {
+      body.status = status
+      body.boardColumn = STATUS_TO_COLUMN[status] || status.toLowerCase()
+    }
+    if (priority !== current.priority) body.priority = priority
+    const prevAssigneeIds = current.assignments?.length
+      ? current.assignments.map((a: TaskAssignment) => a.user.id).sort()
+      : current.assigneeId ? [current.assigneeId] : []
+    if (JSON.stringify([...assigneeIds].sort()) !== JSON.stringify(prevAssigneeIds)) {
+      body.assigneeIds = assigneeIds.length > 0 ? assigneeIds : []
+    }
+    const prevDueDate = current.dueDate ? current.dueDate.slice(0, 10) : ''
+    if (dueDate !== prevDueDate) body.dueDate = dueDate ? new Date(dueDate).toISOString() : null
+    return body
+  }
+
   async function handleSave() {
-    if (!taskId || saving) return
+    if (!taskId || saving || !task) return
     setSaving(true)
     try {
-      const STATUS_TO_COLUMN: Record<string, string> = {
-        TODO: 'todo',
-        IN_PROGRESS: 'in_progress',
-        IN_REVIEW: 'in_review',
-        DONE: 'done',
-        CANCELLED: 'cancelled',
-      }
-      const body: Record<string, unknown> = {
-        title,
-        description: description || null,
-        status,
-        priority,
-        boardColumn: STATUS_TO_COLUMN[status] || status.toLowerCase(),
-        assigneeIds: assigneeIds.length > 0 ? assigneeIds : [],
-        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+      const body = buildChangedFields(task)
+      if (Object.keys(body).length === 0) {
+        editForm.reset()
+        onClose()
+        return
       }
       const res = await fetch(`/api/tasks/${taskId}`, {
         method: 'PATCH',
