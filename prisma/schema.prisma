@@ -1685,10 +1685,6 @@ model AiAgentConfig {
   // Phase 1: Thinking
   enableThinking  Boolean  @default(true)
   thinkingEffort  String   @default("medium") // low | medium | high
-  // Phase 2: Voice
-  ttsProvider     String   @default("disabled") // disabled | openai
-  ttsVoice        String?
-  autoPlayVoice   Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

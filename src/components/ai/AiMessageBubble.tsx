@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { User, Copy, Check, FileText, ExternalLink, Volume2 } from 'lucide-react'
+import { User, Copy, Check, FileText, ExternalLink } from 'lucide-react'
 import { AiToolIndicator } from './AiToolIndicator'
 import { AiToolResultCard } from './AiToolResultCard'
 import { AiAnimatedAvatar } from './AiAnimatedAvatar'
@@ -24,8 +24,6 @@ function extractTextFromNode(node: any): string {
 
 interface AiMessageBubbleProps {
   message: AiChatMessage
-  onSpeak?: (text: string, messageId: string) => void
-  isSpeaking?: boolean
 }
 
 function CodeCopyButton({ code }: { code: string }) {
@@ -68,7 +66,7 @@ function formatTimestamp(createdAt: string | Date): string {
   return time
 }
 
-export function AiMessageBubble({ message, onSpeak, isSpeaking }: AiMessageBubbleProps) {
+export function AiMessageBubble({ message }: AiMessageBubbleProps) {
   const isUser = message.role === 'user'
   const [copied, setCopied] = useState(false)
 
@@ -249,18 +247,6 @@ export function AiMessageBubble({ message, onSpeak, isSpeaking }: AiMessageBubbl
             {/* Action buttons for assistant messages */}
             {!isUser && (
               <div className="flex justify-end gap-0.5 mt-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                {onSpeak && (
-                  <button
-                    onClick={() => onSpeak(message.content, message.id)}
-                    className={cn(
-                      'p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors',
-                      isSpeaking && 'text-violet-400',
-                    )}
-                    title={isSpeaking ? 'Ferma audio' : 'Ascolta'}
-                  >
-                    <Volume2 className="h-3 w-3 text-muted-foreground/40" />
-                  </button>
-                )}
                 <button
                   onClick={handleCopy}
                   className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"

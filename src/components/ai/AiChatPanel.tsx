@@ -1,17 +1,13 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Plus, Loader2, AlertCircle, History, X, Maximize2, Minimize2, Paperclip, Mic, FileText, Image as ImageIcon } from 'lucide-react'
+import { Send, Plus, Loader2, AlertCircle, History, X, Maximize2, Minimize2, Paperclip, FileText, Image as ImageIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAiChat } from '@/hooks/useAiChat'
-import { useVoiceRecorder } from '@/hooks/useVoiceRecorder'
-import { useVoiceSynthesis } from '@/hooks/useVoiceSynthesis'
 import { AiMessageBubble } from './AiMessageBubble'
 import { AiTypingIndicator } from './AiTypingIndicator'
 import { AiSuggestions } from './AiSuggestions'
-import { AiVoiceRecorder } from './AiVoiceRecorder'
-import { AiVoiceToggle } from './AiVoiceToggle'
 import { AiAnimatedAvatar } from './AiAnimatedAvatar'
 
 interface Conversation {
@@ -60,16 +56,11 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
   const pathname = usePathname()
   const currentPage = getPageLabel(pathname)
   const { messages, isLoading, error, suggestedFollowups, conversationId, sendMessage, sendMessageWithFiles, loadConversation, clearMessages } = useAiChat()
-  const { isRecording, duration, startRecording, stopRecording, error: voiceError } = useVoiceRecorder()
-  const { isPlaying, config: voiceConfig, speak, stop: stopSpeaking, loadConfig: loadVoiceConfig } = useVoiceSynthesis()
-  const [voiceEnabled, setVoiceEnabled] = useState(false)
-  const lastSpokenMessageRef = useRef<string | null>(null)
   const [input, setInput] = useState('')
   const [showHistory, setShowHistory] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
-  const [transcribing, setTranscribing] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -86,30 +77,6 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
       })
       .catch(() => {})
   }, [])
-
-  // Load voice config
-  useEffect(() => {
-    loadVoiceConfig()
-  }, [loadVoiceConfig])
-
-  // Set auto-play from config
-  useEffect(() => {
-    if (voiceConfig?.autoPlay) {
-      setVoiceEnabled(true)
-    }
-  }, [voiceConfig?.autoPlay])
-
-  // Auto-play voice for new assistant messages when voice is enabled
-  useEffect(() => {
-    if (!voiceEnabled || !voiceConfig || voiceConfig.provider === 'disabled') return
-    if (isLoading) return
-
-    const lastMsg = messages[messages.length - 1]
-    if (lastMsg?.role === 'assistant' && lastMsg.content && lastMsg.id !== lastSpokenMessageRef.current) {
-      lastSpokenMessageRef.current = lastMsg.id
-      speak(lastMsg.content, lastMsg.id)
-    }
-  }, [messages, isLoading, voiceEnabled, voiceConfig, speak])
 
   // Load initial conversation if provided
   useEffect(() => {
@@ -189,33 +156,6 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
     setIsDragOver(false)
     handleFileSelect(e.dataTransfer.files)
   }, [handleFileSelect])
-
-  // Voice recording
-  const handleVoiceStop = useCallback(async () => {
-    const blob = await stopRecording()
-    if (!blob) return
-
-    setTranscribing(true)
-    try {
-      const formData = new FormData()
-      formData.append('audio', blob, 'audio.webm')
-
-      const res = await fetch('/api/ai/transcribe', { method: 'POST', body: formData })
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        throw new Error(errData.error || 'Errore trascrizione')
-      }
-      const { text } = await res.json()
-      if (text) {
-        setInput((prev) => (prev ? `${prev} ${text}` : text))
-        inputRef.current?.focus()
-      }
-    } catch (err) {
-      console.error('Transcription error:', err)
-    } finally {
-      setTranscribing(false)
-    }
-  }, [stopRecording])
 
   const loadHistory = useCallback(async () => {
     setShowHistory(true)
@@ -297,15 +237,6 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
               <Minimize2 className="h-4 w-4 text-muted-foreground/60" />
             </button>
           )}
-          {voiceConfig && voiceConfig.provider !== 'disabled' && (
-            <AiVoiceToggle
-              enabled={voiceEnabled}
-              onToggle={() => {
-                if (voiceEnabled) stopSpeaking()
-                setVoiceEnabled(!voiceEnabled)
-              }}
-            />
-          )}
           <button
             onClick={loadHistory}
             className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
@@ -379,8 +310,6 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
           <AiMessageBubble
             key={msg.id}
             message={msg}
-            onSpeak={voiceConfig && voiceConfig.provider !== 'disabled' ? speak : undefined}
-            isSpeaking={isPlaying}
           />
         ))}
 
@@ -390,13 +319,6 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs border border-destructive/20">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>{error}</span>
-          </div>
-        )}
-
-        {voiceError && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs border border-destructive/20">
-            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-            <span>{voiceError}</span>
           </div>
         )}
 
@@ -414,100 +336,82 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
 
       {/* Input */}
       <div className="px-3 py-3 border-t border-white/[0.06]">
-        {/* Voice recording UI */}
-        {isRecording ? (
-          <AiVoiceRecorder duration={duration} onStop={handleVoiceStop} />
-        ) : transcribing ? (
-          <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
-            <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
-            <span className="text-sm text-muted-foreground">Trascrizione in corso...</span>
-          </div>
-        ) : (
-          <div className="ai-input-container rounded-2xl border border-border/50 bg-card/60 backdrop-blur-xl">
-            {/* File preview cards */}
-            {pendingFiles.length > 0 && (
-              <div className="flex gap-2 px-3 pt-3 pb-1">
-                {pendingFiles.map((file, i) => (
-                  <div key={i} className="relative group">
-                    {file.type.startsWith('image/') ? (
-                      <div className="ai-file-card w-20 h-20 rounded-xl overflow-hidden border border-border/40">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={file.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="ai-file-card w-20 h-20 rounded-xl border border-border/40 bg-secondary/50 flex flex-col items-center justify-center gap-1 p-2">
-                        <FileText className="h-4 w-4 text-muted-foreground/60" />
-                        <span className="text-[8px] text-muted-foreground/70 truncate w-full text-center">{file.name}</span>
-                        <span className="text-[7px] text-muted-foreground/40">{(file.size / 1024).toFixed(0)} KB</span>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => removeFile(i)}
-                      className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-foreground/80 text-background opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Textarea */}
-            <div className="px-3 py-2.5">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Scrivi un messaggio..."
-                rows={1}
-                disabled={isLoading}
-                className={cn(
-                  'w-full resize-none bg-transparent text-sm leading-relaxed',
-                  'placeholder:text-muted-foreground/40 focus:outline-none',
-                  'disabled:opacity-50',
-                )}
-              />
+        <div className="ai-input-container rounded-2xl border border-border/50 bg-card/60 backdrop-blur-xl">
+          {/* File preview cards */}
+          {pendingFiles.length > 0 && (
+            <div className="flex gap-2 px-3 pt-3 pb-1">
+              {pendingFiles.map((file, i) => (
+                <div key={i} className="relative group">
+                  {file.type.startsWith('image/') ? (
+                    <div className="ai-file-card w-20 h-20 rounded-xl overflow-hidden border border-border/40">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="ai-file-card w-20 h-20 rounded-xl border border-border/40 bg-secondary/50 flex flex-col items-center justify-center gap-1 p-2">
+                      <FileText className="h-4 w-4 text-muted-foreground/60" />
+                      <span className="text-[8px] text-muted-foreground/70 truncate w-full text-center">{file.name}</span>
+                      <span className="text-[7px] text-muted-foreground/40">{(file.size / 1024).toFixed(0)} KB</span>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => removeFile(i)}
+                    className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-foreground/80 text-background opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
             </div>
+          )}
 
-            {/* Action bar */}
-            <div className="flex items-center justify-between px-2.5 pb-2.5">
-              <div className="flex items-center gap-0.5">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading || pendingFiles.length >= 3}
-                  className="p-1.5 rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-30"
-                  title="Allega file"
-                >
-                  <Paperclip className="h-4 w-4 text-muted-foreground/50" />
-                </button>
-                <button
-                  onClick={startRecording}
-                  disabled={isLoading}
-                  className="p-1.5 rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-30"
-                  title="Messaggio vocale"
-                >
-                  <Mic className="h-4 w-4 text-muted-foreground/50" />
-                </button>
-              </div>
+          {/* Textarea */}
+          <div className="px-3 py-2.5">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Scrivi un messaggio..."
+              rows={1}
+              disabled={isLoading}
+              className={cn(
+                'w-full resize-none bg-transparent text-sm leading-relaxed',
+                'placeholder:text-muted-foreground/40 focus:outline-none',
+                'disabled:opacity-50',
+              )}
+            />
+          </div>
+
+          {/* Action bar */}
+          <div className="flex items-center justify-between px-2.5 pb-2.5">
+            <div className="flex items-center gap-0.5">
               <button
-                onClick={() => handleSend()}
-                disabled={(!input.trim() && pendingFiles.length === 0) || isLoading}
-                className={cn(
-                  'p-2.5 rounded-xl transition-all duration-200',
-                  (input.trim() || pendingFiles.length > 0) && !isLoading
-                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
-                    : 'bg-secondary/60 text-muted-foreground/30',
-                )}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading || pendingFiles.length >= 3}
+                className="p-1.5 rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-30"
+                title="Allega file"
               >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                <Paperclip className="h-4 w-4 text-muted-foreground/50" />
               </button>
             </div>
+            <button
+              onClick={() => handleSend()}
+              disabled={(!input.trim() && pendingFiles.length === 0) || isLoading}
+              className={cn(
+                'p-2.5 rounded-xl transition-all duration-200',
+                (input.trim() || pendingFiles.length > 0) && !isLoading
+                  ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
+                  : 'bg-secondary/60 text-muted-foreground/30',
+              )}
+            >
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </button>
           </div>
-        )}
+        </div>
 
         {/* Hidden file input */}
         <input
@@ -522,7 +426,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
           }}
         />
 
-        {!compact && !isRecording && !transcribing && (
+        {!compact && (
           <div className="flex items-center justify-center gap-1.5 mt-1.5 text-[9px] text-muted-foreground/25">
             <span>Sviluppato da</span>
             <a href="https://www.fodisrl.it" target="_blank" rel="noopener noreferrer" className="text-violet-400/40 hover:text-violet-400/70 transition-colors font-medium">Fodi S.r.l.</a>

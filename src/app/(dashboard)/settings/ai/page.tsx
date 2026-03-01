@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Bot, Save, Loader2, RefreshCw, Brain, Volume2, Wrench, MessageSquare,
+  Bot, Save, Loader2, RefreshCw, Brain, Wrench, MessageSquare,
   Sparkles, Zap, Settings2, ChevronDown, ChevronRight, Check,
 } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
@@ -22,9 +22,6 @@ interface AiConfig {
   isActive: boolean
   enableThinking: boolean
   thinkingEffort: string
-  ttsProvider: string
-  ttsVoice: string | null
-  autoPlayVoice: boolean
 }
 
 interface ToolInfo {
@@ -43,11 +40,6 @@ const THINKING_LEVELS = [
   { value: 'low', label: 'Basso', desc: 'Risposte rapide', tokens: '2K', color: 'text-emerald-400' },
   { value: 'medium', label: 'Medio', desc: 'Bilanciato', tokens: '5K', color: 'text-amber-400' },
   { value: 'high', label: 'Alto', desc: 'Analisi approfondita', tokens: '10K', color: 'text-red-400' },
-]
-
-const TTS_PROVIDERS = [
-  { value: 'disabled', label: 'Disabilitato', desc: 'Nessuna sintesi vocale' },
-  { value: 'openai', label: 'OpenAI TTS', desc: 'Voce naturale, 9 voci' },
 ]
 
 const MODULE_LABELS: Record<string, { label: string; icon: typeof Sparkles; color: string }> = {
@@ -83,9 +75,6 @@ export default function AiSettingsPage() {
   const [isActive, setIsActive] = useState(true)
   const [enableThinking, setEnableThinking] = useState(true)
   const [thinkingEffort, setThinkingEffort] = useState('medium')
-  const [ttsProvider, setTtsProvider] = useState('disabled')
-  const [ttsVoice, setTtsVoice] = useState('')
-  const [autoPlayVoice, setAutoPlayVoice] = useState(false)
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({})
 
   const loadConfig = useCallback(async () => {
@@ -115,9 +104,6 @@ export default function AiSettingsPage() {
           setIsActive(data.isActive)
           setEnableThinking(data.enableThinking ?? true)
           setThinkingEffort(data.thinkingEffort || 'medium')
-          setTtsProvider(data.ttsProvider || 'disabled')
-          setTtsVoice(data.ttsVoice || '')
-          setAutoPlayVoice(data.autoPlayVoice ?? false)
         }
       }
     } finally {
@@ -142,7 +128,6 @@ export default function AiSettingsPage() {
           welcomeMessage: welcomeMessage || null,
           enabledTools, isActive,
           enableThinking, thinkingEffort,
-          ttsProvider, ttsVoice: ttsVoice || null, autoPlayVoice,
         }),
       })
 
@@ -446,71 +431,6 @@ export default function AiSettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Voce */}
-          <Card className="lg:col-span-2">
-            <CardContent>
-              <div className="flex items-center gap-2 mb-5">
-                <Volume2 className="h-4 w-4 text-pink-400" />
-                <CardTitle>Voce</CardTitle>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                {TTS_PROVIDERS.map(p => (
-                  <button
-                    key={p.value}
-                    onClick={() => setTtsProvider(p.value)}
-                    className={cn(
-                      'flex flex-col items-start p-3 rounded-lg border transition-all text-left',
-                      ttsProvider === p.value
-                        ? 'border-pink-500/40 bg-pink-500/5'
-                        : 'border-border/30 hover:border-border/60 hover:bg-secondary/30',
-                    )}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className={cn(
-                        'w-3 h-3 rounded-full border-2 transition-all',
-                        ttsProvider === p.value ? 'border-pink-500 bg-pink-500' : 'border-border',
-                      )} />
-                      <span className="text-sm font-medium">{p.label}</span>
-                    </div>
-                    <span className="text-xs text-muted ml-5">{p.desc}</span>
-                  </button>
-                ))}
-              </div>
-
-              {ttsProvider !== 'disabled' && (
-                <div className="flex flex-col sm:flex-row gap-4 pt-3 border-t border-border/30">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium mb-1.5 block">Voice ID</label>
-                    <input
-                      type="text"
-                      value={ttsVoice}
-                      onChange={e => setTtsVoice(e.target.value)}
-                      className="w-full rounded-lg border border-border/40 bg-secondary/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
-                      placeholder={ttsProvider === 'openai' ? 'nova (default) — alloy, echo, fable, onyx, sage, shimmer' : 'Matilda (default) — o inserisci un voice ID'}
-                    />
-                  </div>
-                  <div className="flex items-center gap-3 sm:pt-6">
-                    <button
-                      onClick={() => setAutoPlayVoice(!autoPlayVoice)}
-                      className={cn(
-                        'relative w-11 h-6 rounded-full transition-colors flex-shrink-0',
-                        autoPlayVoice ? 'bg-pink-500' : 'bg-secondary',
-                      )}
-                    >
-                      <span className={cn(
-                        'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform',
-                        autoPlayVoice && 'translate-x-5',
-                      )} />
-                    </button>
-                    <div>
-                      <p className="text-sm font-medium">Auto-play</p>
-                      <p className="text-xs text-muted">Legge automaticamente le risposte</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
         </div>
       )}
