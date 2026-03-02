@@ -5,7 +5,7 @@ import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { useFormPersist } from '@/hooks/useFormPersist'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
-  ChevronLeft, Edit, Plus, Clock, CheckCircle2, Target, Timer, Video, Trash2,
+  ChevronLeft, ChevronRight, ChevronDown, Edit, Clock, CheckCircle2, Target, Timer, Video, Trash2, ListChecks,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -20,6 +20,20 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { TASK_STATUS_LABELS, PRIORITY_LABELS, PROJECT_STATUS_LABELS } from '@/lib/constants'
 import { ProjectEditModal } from '@/components/projects/ProjectEditModal'
 import { ProjectMembersPanel } from '@/components/projects/ProjectMembersPanel'
+import {
+  DndContext,
+  DragOverlay,
+  pointerWithin,
+  rectIntersection,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+  type CollisionDetection,
+} from '@dnd-kit/core'
 import dynamic from 'next/dynamic'
 
 const KanbanBoard = dynamic(() => import('@/components/projects/KanbanBoard').then(m => ({ default: m.KanbanBoard })), {
@@ -54,6 +68,7 @@ interface Task {
   folderId: string | null; folderName?: string | null; folderColor?: string | null
   dueDate: string | null; estimatedHours: number | null
   assignee?: TaskUser | null; assignments?: { id: string; role: string; user: TaskUser }[]
+  _count?: { subtasks: number; comments: number }
 }
 
 interface Milestone { id: string; name: string; dueDate: string | null; status: string; tasks: Task[] }
@@ -89,6 +104,142 @@ const STATUS_LABEL = PROJECT_STATUS_LABELS
 const TASK_STATUS_LABEL = TASK_STATUS_LABELS
 const PRIORITY_LABEL = PRIORITY_LABELS
 
+// Inline overlay components for unified DragOverlay (avoids eager-loading dynamic imports)
+function TaskDragPreview({ task }: { task: Task }) {
+  return (
+    <div className="bg-card rounded-md border-2 border-primary p-3 shadow-lg w-72">
+      <p className="font-medium text-sm mb-2">{task.title}</p>
+      <div className="flex items-center justify-between">
+        <Badge status={task.priority} className="text-[10px]">{task.priority}</Badge>
+        <div className="flex items-center gap-2">
+          {(task.assignments?.length ?? 0) > 0 ? (
+            <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
+          ) : task.assignee ? (
+            <span className="text-xs text-muted">{task.assignee.firstName} {task.assignee.lastName}</span>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FolderDragPreview({ folder }: { folder: { name: string; color: string } }) {
+  return (
+    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border border-primary/50 bg-card shadow-lg w-fit max-w-xs">
+      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: folder.color }} />
+      <span className="truncate">{folder.name}</span>
+    </div>
+  )
+}
+
+// Unified collision detection: folder drags use closestCenter, task drags use pointerWithin
+const unifiedCollision: CollisionDetection = (args) => {
+  const activeType = args.active.data.current?.type
+  if (activeType === 'folder') return closestCenter(args)
+
+  const pointerCollisions = pointerWithin(args)
+  if (pointerCollisions.length > 0) return pointerCollisions
+  return rectIntersection(args)
+}
+
+function TaskTreeRows({ tasks, depth, expandedIds, childrenMap, folderMap, onToggleExpand, onTaskClick }: {
+  tasks: Task[]; depth: number; expandedIds: Set<string>; childrenMap: Record<string, Task[]>
+  folderMap: Record<string, { id: string; name: string; color: string }>
+  onToggleExpand: (id: string) => void; onTaskClick: (id: string) => void
+}) {
+  return (
+    <>
+      {tasks.map(task => (
+        <TaskTreeRow
+          key={task.id}
+          task={task}
+          depth={depth}
+          expandedIds={expandedIds}
+          childrenMap={childrenMap}
+          folderMap={folderMap}
+          onToggleExpand={onToggleExpand}
+          onTaskClick={onTaskClick}
+        />
+      ))}
+    </>
+  )
+}
+
+function TaskTreeRow({ task, depth, expandedIds, childrenMap, folderMap, onToggleExpand, onTaskClick }: {
+  task: Task; depth: number; expandedIds: Set<string>; childrenMap: Record<string, Task[]>
+  folderMap: Record<string, { id: string; name: string; color: string }>
+  onToggleExpand: (id: string) => void; onTaskClick: (id: string) => void
+}) {
+  const subtaskCount = task._count?.subtasks ?? 0
+  const isExpanded = expandedIds.has(task.id)
+  const children = childrenMap[task.id]
+  const folder = task.folderId ? folderMap[task.folderId] : null
+  const assigneeName = task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : null
+
+  return (
+    <>
+      <tr className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-colors duration-200 even:bg-secondary/20">
+        <td className="py-3 px-4 font-medium" style={{ paddingLeft: `${16 + depth * 24}px` }}>
+          <div className="flex items-center gap-1.5">
+            {subtaskCount > 0 ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleExpand(task.id) }}
+                className="flex-shrink-0 text-muted hover:text-foreground transition-colors"
+              >
+                {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
+            ) : (
+              <span className="w-4 flex-shrink-0" />
+            )}
+            <span onClick={() => onTaskClick(task.id)} className="truncate hover:text-primary transition-colors">
+              {task.title}
+            </span>
+            {subtaskCount > 0 && (
+              <span className="flex items-center gap-0.5 text-[10px] text-primary flex-shrink-0">
+                <ListChecks className="h-3 w-3" />
+                {subtaskCount}
+              </span>
+            )}
+          </div>
+        </td>
+        <td className="py-3 px-4 text-muted hidden lg:table-cell" onClick={() => onTaskClick(task.id)}>
+          {folder ? (
+            <span className="inline-flex items-center gap-1 text-xs">
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: folder.color }} />
+              {folder.name}
+            </span>
+          ) : '—'}
+        </td>
+        <td className="py-3 px-4 text-muted hidden md:table-cell" onClick={() => onTaskClick(task.id)}>
+          {(task.assignments?.length ?? 0) > 0 ? (
+            <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
+          ) : assigneeName ?? '—'}
+        </td>
+        <td className="py-3 px-4" onClick={() => onTaskClick(task.id)}>
+          <Badge status={task.status}>{TASK_STATUS_LABEL[task.status] || task.status}</Badge>
+        </td>
+        <td className="py-3 px-4 hidden sm:table-cell" onClick={() => onTaskClick(task.id)}>
+          <Badge status={task.priority}>{PRIORITY_LABEL[task.priority] || task.priority}</Badge>
+        </td>
+        <td className="py-3 px-4 text-muted hidden sm:table-cell" onClick={() => onTaskClick(task.id)}>
+          {task.dueDate ? new Date(task.dueDate).toLocaleDateString('it-IT') : '—'}
+        </td>
+      </tr>
+      {isExpanded && children && (
+        <TaskTreeRows
+          tasks={children}
+          depth={depth + 1}
+          expandedIds={expandedIds}
+          childrenMap={childrenMap}
+          folderMap={folderMap}
+          onToggleExpand={onToggleExpand}
+          onTaskClick={onTaskClick}
+        />
+      )}
+    </>
+  )
+}
+
 // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -116,6 +267,15 @@ export default function ProjectDetailPage() {
   const [folders, setFolders] = useState<{ id: string; name: string; description: string | null; color: string; sortOrder: number; parentId?: string | null; _count?: { tasks: number }; children?: { id: string; name: string; description: string | null; color: string; sortOrder: number; _count?: { tasks: number } }[] }[]>([])
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<string>('')
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null)
+  const [draggedFolderInfo, setDraggedFolderInfo] = useState<{ name: string; color: string } | null>(null)
+  const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set())
+  const [taskChildrenMap, setTaskChildrenMap] = useState<Record<string, Task[]>>({})
+
+  const unifiedSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } }),
+  )
 
   const taskForm = useFormPersist(`new-task:${projectId}`, {
     title: '', description: '', priority: 'MEDIUM', dueDate: '', estimatedHours: '',
@@ -229,6 +389,103 @@ export default function ProjectDetailPage() {
     })
   }
 
+  async function handleTaskFolderChange(taskId: string, folderId: string | null) {
+    setProject((prev) => {
+      if (!prev) return prev
+      const tasks = prev.tasks.map((t) => t.id === taskId ? { ...t, folderId } : t)
+      return { ...prev, tasks }
+    })
+    await fetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderId }),
+    })
+    fetchFolders()
+  }
+
+  function handleUnifiedDragStart(event: DragStartEvent) {
+    const data = event.active.data.current
+    if (data?.type === 'task') {
+      setDraggedTask(data.task as Task)
+      setDraggedFolderInfo(null)
+    } else if (data?.type === 'folder') {
+      const item = data.item as { folder: { name: string; color: string } }
+      setDraggedFolderInfo(item.folder)
+      setDraggedTask(null)
+    }
+  }
+
+  function handleUnifiedDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    setDraggedTask(null)
+    setDraggedFolderInfo(null)
+
+    if (!over) return
+
+    const activeType = active.data.current?.type
+    if (activeType !== 'task') return // folder drags handled by ProjectFolders via useDndMonitor
+
+    const taskId = active.id as string
+    const overData = over.data.current
+
+    // Task dropped on a folder
+    if (overData?.type === 'folder') {
+      handleTaskFolderChange(taskId, over.id as string)
+      return
+    }
+
+    // Task dropped on "all-folders" (remove from folder)
+    if (overData?.type === 'all-folders') {
+      handleTaskFolderChange(taskId, null)
+      return
+    }
+
+    // Task dropped on a column or another task card
+    let targetColumn: string | null = null
+    if (overData?.type === 'column') {
+      targetColumn = overData.columnKey as string
+    } else if (overData?.type === 'task') {
+      targetColumn = (overData.task as Task).boardColumn
+    } else {
+      const overId = String(over.id)
+      if (overId.startsWith('column-')) {
+        targetColumn = overId.replace('column-', '')
+      }
+    }
+
+    if (!targetColumn) return
+    const currentTask = active.data.current?.task as Task | undefined
+    if (!currentTask || currentTask.boardColumn === targetColumn) return
+    handleColumnChange(taskId, targetColumn)
+  }
+
+  function handleUnifiedDragCancel() {
+    setDraggedTask(null)
+    setDraggedFolderInfo(null)
+  }
+
+  async function fetchTaskChildren(taskId: string) {
+    if (taskChildrenMap[taskId]) return
+    const res = await fetch(`/api/tasks/${taskId}/subtasks`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data?.items) setTaskChildrenMap(prev => ({ ...prev, [taskId]: data.items }))
+    }
+  }
+
+  function toggleTaskExpand(taskId: string) {
+    setExpandedTaskIds(prev => {
+      const next = new Set(prev)
+      if (next.has(taskId)) {
+        next.delete(taskId)
+      } else {
+        next.add(taskId)
+        fetchTaskChildren(taskId)
+      }
+      return next
+    })
+  }
+
   async function handleAddTask(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitting(true)
@@ -313,7 +570,7 @@ export default function ProjectDetailPage() {
   }
 
   const boardTab = (
-    <KanbanBoard tasksByColumn={tasksByColumn} onColumnChange={handleColumnChange} onAddTask={openAddTask} onTaskClick={openTaskDetail} />
+    <KanbanBoard disableDndContext tasksByColumn={tasksByColumn} onColumnChange={handleColumnChange} onAddTask={openAddTask} onTaskClick={openTaskDetail} />
   )
 
   const listTab = (
@@ -333,35 +590,15 @@ export default function ProjectDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {allTasks.map((task) => (
-              <tr key={task.id} onClick={() => openTaskDetail(task.id)} className="border-b border-border/50 hover:bg-primary/5 cursor-pointer transition-colors duration-200 even:bg-secondary/20">
-                <td className="py-3 px-4 font-medium">{task.title}</td>
-                <td className="py-3 px-4 text-muted hidden lg:table-cell">
-                  {task.folderId && folderMap[task.folderId] ? (
-                    <span className="inline-flex items-center gap-1 text-xs">
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: folderMap[task.folderId].color }} />
-                      {folderMap[task.folderId].name}
-                    </span>
-                  ) : '—'}
-                </td>
-                <td className="py-3 px-4 text-muted hidden md:table-cell">
-                  {(task.assignments?.length ?? 0) > 0 ? (
-                    <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
-                  ) : task.assignee ? (
-                    `${task.assignee.firstName} ${task.assignee.lastName}`
-                  ) : '—'}
-                </td>
-                <td className="py-3 px-4">
-                  <Badge status={task.status}>{TASK_STATUS_LABEL[task.status] || task.status}</Badge>
-                </td>
-                <td className="py-3 px-4 hidden sm:table-cell">
-                  <Badge status={task.priority}>{PRIORITY_LABEL[task.priority] || task.priority}</Badge>
-                </td>
-                <td className="py-3 px-4 text-muted hidden sm:table-cell">
-                  {task.dueDate ? new Date(task.dueDate).toLocaleDateString('it-IT') : '—'}
-                </td>
-              </tr>
-            ))}
+            <TaskTreeRows
+              tasks={allTasks}
+              depth={0}
+              expandedIds={expandedTaskIds}
+              childrenMap={taskChildrenMap}
+              folderMap={folderMap}
+              onToggleExpand={toggleTaskExpand}
+              onTaskClick={openTaskDetail}
+            />
           </tbody>
         </table>
       )}
@@ -527,22 +764,30 @@ export default function ProjectDetailPage() {
         </Card>
       </div>
 
-      <ProjectFolders
-        projectId={projectId}
-        folders={folders}
-        onFoldersChange={fetchFolders}
-        selectedFolderId={selectedFolderId}
-        onSelectFolder={setSelectedFolderId}
-      />
+      <DndContext
+        sensors={unifiedSensors}
+        collisionDetection={unifiedCollision}
+        onDragStart={handleUnifiedDragStart}
+        onDragEnd={handleUnifiedDragEnd}
+        onDragCancel={handleUnifiedDragCancel}
+      >
+        <ProjectFolders
+          disableDndContext
+          projectId={projectId}
+          folders={folders}
+          onFoldersChange={fetchFolders}
+          selectedFolderId={selectedFolderId}
+          onSelectFolder={setSelectedFolderId}
+        />
 
-      <Tabs
-        tabs={[
-          { id: 'board', label: 'Board', content: boardTab },
-          { id: 'list', label: 'Lista', content: listTab },
-          { id: 'milestones', label: 'Timeline', content: milestonesTab },
-          { id: 'time', label: 'Tempi', content: timeTab },
-          { id: 'files', label: 'File', content: <ProjectAttachments projectId={projectId} folderId={selectedFolderId} /> },
-          { id: 'links', label: 'Collegamenti', content: <ProjectLinks projectId={projectId} folderId={selectedFolderId} /> },
+        <Tabs
+          tabs={[
+            { id: 'board', label: 'Board', content: boardTab },
+            { id: 'list', label: 'Lista', content: listTab },
+            { id: 'milestones', label: 'Timeline', content: milestonesTab },
+            { id: 'time', label: 'Tempi', content: timeTab },
+            { id: 'files', label: 'File', content: <ProjectAttachments projectId={projectId} folderId={selectedFolderId} /> },
+            { id: 'links', label: 'Collegamenti', content: <ProjectLinks projectId={projectId} folderId={selectedFolderId} /> },
           { id: 'team', label: 'Team', content: (
             <ProjectMembersPanel
               projectId={projectId}
@@ -552,8 +797,14 @@ export default function ProjectDetailPage() {
             />
           ) },
           { id: 'chat', label: 'Chat', content: <ProjectChat projectId={projectId} folderId={selectedFolderId} /> },
-        ]}
-      />
+          ]}
+        />
+
+        <DragOverlay>
+          {draggedTask && <TaskDragPreview task={draggedTask} />}
+          {draggedFolderInfo && <FolderDragPreview folder={draggedFolderInfo} />}
+        </DragOverlay>
+      </DndContext>
 
       <Modal open={taskModalOpen} onClose={() => setTaskModalOpen(false)} title="Nuovo Task" size="md">
         <form onSubmit={handleAddTask} className="space-y-4">

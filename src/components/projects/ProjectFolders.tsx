@@ -10,6 +10,8 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  useDndMonitor,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
   type DragOverEvent,
@@ -38,6 +40,7 @@ interface ProjectFoldersProps {
   onFoldersChange: () => void
   selectedFolderId?: string | null
   onSelectFolder: (folderId: string | null) => void
+  disableDndContext?: boolean
 }
 
 // Flattened item for the sortable list
@@ -102,6 +105,7 @@ function SortableFolderRow({
   editColor,
   submitting,
   isNestTarget,
+  isTaskOver,
   onToggleExpanded,
   onSelect,
   onStartEdit,
@@ -120,6 +124,7 @@ function SortableFolderRow({
   editColor: string
   submitting: boolean
   isNestTarget: boolean
+  isTaskOver: boolean
   onToggleExpanded: (id: string) => void
   onSelect: (id: string | null) => void
   onStartEdit: (folder: Folder) => void
@@ -190,11 +195,13 @@ function SortableFolderRow({
           <button
             onClick={() => onSelect(selectedFolderId === folder.id ? null : folder.id)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all border w-full text-left ${
-              isNestTarget
-                ? 'bg-primary/20 border-primary ring-2 ring-primary/30 shadow-sm scale-[1.02]'
-                : selectedFolderId === folder.id
-                  ? 'bg-primary/10 border-primary/30 font-medium'
-                  : 'border-border hover:bg-secondary/50'
+              isTaskOver
+                ? 'bg-primary/20 border-primary ring-2 ring-primary/30 shadow-sm'
+                : isNestTarget
+                  ? 'bg-primary/20 border-primary ring-2 ring-primary/30 shadow-sm scale-[1.02]'
+                  : selectedFolderId === folder.id
+                    ? 'bg-primary/10 border-primary/30 font-medium'
+                    : 'border-border hover:bg-secondary/50'
             }`}
           >
             {/* Drag handle */}
@@ -223,10 +230,13 @@ function SortableFolderRow({
             />
             <span className="truncate">{folder.name}</span>
             <span className="text-xs opacity-60 flex-shrink-0">({totalCount})</span>
-            {isNestTarget && (
+            {isTaskOver && (
+              <span className="text-[10px] text-primary font-medium ml-auto flex-shrink-0">↳ Sposta qui</span>
+            )}
+            {isNestTarget && !isTaskOver && (
               <span className="text-[10px] text-primary font-medium ml-auto flex-shrink-0">↳ nidifica qui</span>
             )}
-            {!isNestTarget && (
+            {!isNestTarget && !isTaskOver && (
               <span className="hidden group-hover:flex items-center gap-0.5 ml-auto flex-shrink-0">
                 {!isMaxDepth && (
                   <span
@@ -276,7 +286,40 @@ function DragOverlayFolder({ folder, nestMode }: { folder: Folder; nestMode: boo
   )
 }
 
-export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFolderId, onSelectFolder }: ProjectFoldersProps) {
+// Droppable "Tutte" button — acts as drop target for removing tasks from folders
+function AllFoldersDropTarget({ selected, onClick, count, isDraggingTask }: {
+  selected: boolean
+  onClick: () => void
+  count: number
+  isDraggingTask: boolean
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'all-folders',
+    data: { type: 'all-folders' },
+    disabled: !isDraggingTask,
+  })
+  const highlight = isDraggingTask && isOver
+
+  return (
+    <button
+      ref={setNodeRef}
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors border w-full text-left ${
+        highlight
+          ? 'bg-primary/10 border-primary/30 ring-2 ring-primary/20'
+          : selected
+            ? 'bg-primary/10 border-primary/30 text-primary font-medium'
+            : 'border-border hover:bg-secondary/50 text-muted'
+      }`}
+    >
+      Tutte
+      <span className="text-xs opacity-60">({count})</span>
+      {highlight && <span className="text-[10px] text-primary font-medium ml-auto">↳ Rimuovi da cartella</span>}
+    </button>
+  )
+}
+
+export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFolderId, onSelectFolder, disableDndContext }: ProjectFoldersProps) {
   const [creating, setCreating] = useState(false)
   const [creatingParentId, setCreatingParentId] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
@@ -289,6 +332,8 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
   const [dragActiveId, setDragActiveId] = useState<string | null>(null)
   const [currentOverId, setCurrentOverId] = useState<string | null>(null)
   const [nestTargetId, setNestTargetId] = useState<string | null>(null)
+  const [isDraggingTask, setIsDraggingTask] = useState(false)
+  const [taskOverFolderId, setTaskOverFolderId] = useState<string | null>(null)
   const { confirm, confirmProps } = useConfirm()
   const savingRef = useRef(false)
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -428,7 +473,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     hoverOverIdRef.current = null
   }
 
-  // ---- Drag handlers ----
+  // ---- Drag handlers (used by own DndContext when disableDndContext=false) ----
   function handleDragStart(event: DragStartEvent) {
     setDragActiveId(event.active.id as string)
     setNestTargetId(null)
@@ -577,6 +622,52 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     }
   }, [flatItems, folderMap, folders, nestTargetId, projectId, onFoldersChange])
 
+  // ---- useDndMonitor: listens to parent DndContext when disableDndContext=true ----
+  useDndMonitor({
+    onDragStart(event) {
+      if (!disableDndContext) return
+      const type = event.active.data.current?.type
+      if (type === 'task') {
+        setIsDraggingTask(true)
+      } else if (type === 'folder') {
+        handleDragStart(event as DragStartEvent)
+      }
+    },
+    onDragOver(event) {
+      if (!disableDndContext) return
+      const activeType = event.active.data.current?.type
+      if (activeType === 'task') {
+        const overId = event.over?.id as string | null
+        if (overId && (folderMap.has(overId) || overId === 'all-folders')) {
+          setTaskOverFolderId(overId)
+        } else {
+          setTaskOverFolderId(null)
+        }
+      } else if (activeType === 'folder') {
+        handleDragOver(event as DragOverEvent)
+      }
+    },
+    onDragEnd(event) {
+      if (!disableDndContext) return
+      const activeType = event.active.data.current?.type
+      if (activeType === 'task') {
+        setIsDraggingTask(false)
+        setTaskOverFolderId(null)
+      } else if (activeType === 'folder') {
+        handleDragEnd(event as DragEndEvent)
+      }
+    },
+    onDragCancel() {
+      if (!disableDndContext) return
+      setIsDraggingTask(false)
+      setTaskOverFolderId(null)
+      setDragActiveId(null)
+      setCurrentOverId(null)
+      setNestTargetId(null)
+      clearHoverTimer()
+    },
+  })
+
   const draggedFolder = dragActiveId ? folderMap.get(dragActiveId) : null
 
   function renderCreateForm() {
@@ -612,6 +703,57 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     )
   }
 
+  function renderFolderList() {
+    return (
+      <div className="space-y-1">
+        <AllFoldersDropTarget
+          selected={selectedFolderId === null}
+          onClick={() => onSelectFolder(null)}
+          count={getAllFoldersTotalCount(folders)}
+          isDraggingTask={isDraggingTask}
+        />
+
+        <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+          {flatItems.map((item) => {
+            const isExpanded = expandedIds.has(item.id)
+            const isNestTarget = nestTargetId === item.id && dragActiveId !== item.id
+            const isTaskOverThis = isDraggingTask && taskOverFolderId === item.id
+
+            return (
+              <div key={item.id}>
+                <SortableFolderRow
+                  item={item}
+                  isExpanded={isExpanded}
+                  selectedFolderId={selectedFolderId}
+                  editingId={editingId}
+                  editName={editName}
+                  editColor={editColor}
+                  submitting={submitting}
+                  isNestTarget={isNestTarget}
+                  isTaskOver={isTaskOverThis}
+                  onToggleExpanded={toggleExpanded}
+                  onSelect={onSelectFolder}
+                  onStartEdit={startEdit}
+                  onStartCreateSubfolder={startCreateSubfolder}
+                  onDelete={handleDelete}
+                  onEditNameChange={setEditName}
+                  onEditColorChange={setEditColor}
+                  onRename={handleRename}
+                  onCancelEdit={() => setEditingId(null)}
+                />
+                {creating && creatingParentId === item.id && (
+                  <div className="mt-1" style={{ paddingLeft: `${INDENT_PX}px` }}>
+                    {renderCreateForm()}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </SortableContext>
+      </div>
+    )
+  }
+
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-2">
@@ -626,67 +768,22 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
 
       {creating && !creatingParentId && renderCreateForm()}
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="space-y-1">
-          <button
-            onClick={() => onSelectFolder(null)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors border w-full text-left ${
-              selectedFolderId === null
-                ? 'bg-primary/10 border-primary/30 text-primary font-medium'
-                : 'border-border hover:bg-secondary/50 text-muted'
-            }`}
-          >
-            Tutte
-            <span className="text-xs opacity-60">({getAllFoldersTotalCount(folders)})</span>
-          </button>
-
-          <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-            {flatItems.map((item) => {
-              const isExpanded = expandedIds.has(item.id)
-              const isNestTarget = nestTargetId === item.id && dragActiveId !== item.id
-
-              return (
-                <div key={item.id}>
-                  <SortableFolderRow
-                    item={item}
-                    isExpanded={isExpanded}
-                    selectedFolderId={selectedFolderId}
-                    editingId={editingId}
-                    editName={editName}
-                    editColor={editColor}
-                    submitting={submitting}
-                    isNestTarget={isNestTarget}
-                    onToggleExpanded={toggleExpanded}
-                    onSelect={onSelectFolder}
-                    onStartEdit={startEdit}
-                    onStartCreateSubfolder={startCreateSubfolder}
-                    onDelete={handleDelete}
-                    onEditNameChange={setEditName}
-                    onEditColorChange={setEditColor}
-                    onRename={handleRename}
-                    onCancelEdit={() => setEditingId(null)}
-                  />
-                  {creating && creatingParentId === item.id && (
-                    <div className="mt-1" style={{ paddingLeft: `${INDENT_PX}px` }}>
-                      {renderCreateForm()}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </SortableContext>
-        </div>
-
-        <DragOverlay dropAnimation={null}>
-          {draggedFolder && <DragOverlayFolder folder={draggedFolder} nestMode={!!nestTargetId} />}
-        </DragOverlay>
-      </DndContext>
+      {disableDndContext ? (
+        renderFolderList()
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          {renderFolderList()}
+          <DragOverlay dropAnimation={null}>
+            {draggedFolder && <DragOverlayFolder folder={draggedFolder} nestMode={!!nestTargetId} />}
+          </DragOverlay>
+        </DndContext>
+      )}
 
       <ConfirmDialog {...confirmProps} />
     </div>

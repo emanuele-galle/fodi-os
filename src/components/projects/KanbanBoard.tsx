@@ -20,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { AvatarStack } from '@/components/ui/AvatarStack'
+import { ListChecks } from 'lucide-react'
 
 interface TaskUser {
   id: string
@@ -41,6 +42,7 @@ interface Task {
   estimatedHours: number | null
   assignee?: TaskUser | null
   assignments?: { id: string; role: string; user: TaskUser }[]
+  _count?: { subtasks: number; comments: number }
 }
 
 const BOARD_COLUMNS = [
@@ -106,9 +108,17 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
         </div>
       )}
       <div className="flex items-center justify-between">
-        <Badge status={task.priority} className="text-[10px]">
-          {task.priority}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          <Badge status={task.priority} className="text-[10px]">
+            {task.priority}
+          </Badge>
+          {(task._count?.subtasks ?? 0) > 0 && (
+            <span className="flex items-center gap-0.5 text-[10px] text-primary">
+              <ListChecks className="h-3 w-3" />
+              {task._count!.subtasks}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           {task.dueDate && (
             <span className="text-[10px] text-muted">
@@ -136,9 +146,17 @@ function TaskCardOverlay({ task }: { task: Task }) {
     <div className="bg-card rounded-md border-2 border-primary p-3 shadow-lg w-72">
       <p className="font-medium text-sm mb-2">{task.title}</p>
       <div className="flex items-center justify-between">
-        <Badge status={task.priority} className="text-[10px]">
-          {task.priority}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          <Badge status={task.priority} className="text-[10px]">
+            {task.priority}
+          </Badge>
+          {(task._count?.subtasks ?? 0) > 0 && (
+            <span className="flex items-center gap-0.5 text-[10px] text-primary">
+              <ListChecks className="h-3 w-3" />
+              {task._count!.subtasks}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           {(task.assignments?.length ?? 0) > 0 ? (
             <AvatarStack users={task.assignments!.map(a => a.user)} size="xs" max={3} />
@@ -179,9 +197,10 @@ interface KanbanBoardProps {
   onColumnChange: (taskId: string, newColumn: string) => void
   onAddTask?: (column: string) => void
   onTaskClick?: (taskId: string) => void
+  disableDndContext?: boolean
 }
 
-export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskClick }: KanbanBoardProps) {
+export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskClick, disableDndContext }: KanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
   const sensors = useSensors(
@@ -229,6 +248,48 @@ export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskCl
     onColumnChange(taskId, targetColumn)
   }
 
+  const boardContent = (
+    <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none -mx-4 px-4 md:mx-0 md:px-0">
+      {BOARD_COLUMNS.map((col) => {
+        const tasks = tasksByColumn[col.key] || []
+        return (
+          <DroppableColumn key={col.key} columnKey={col.key}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-medium text-sm">{col.label}</span>
+              <span className="text-xs text-muted bg-secondary rounded-full px-2 py-0.5">
+                {tasks.length}
+              </span>
+            </div>
+
+            <SortableContext
+              items={tasks.map((t) => t.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2 min-h-[60px] mb-2">
+                {tasks.map((task) => (
+                  <SortableTaskCard key={task.id} task={task} onClick={onTaskClick ? () => onTaskClick(task.id) : undefined} />
+                ))}
+              </div>
+            </SortableContext>
+
+            {onAddTask && (
+              <button
+                onClick={() => onAddTask(col.key)}
+                className="w-full text-sm text-muted hover:text-foreground hover:bg-secondary rounded-md py-2 transition-colors"
+              >
+                + Aggiungi task
+              </button>
+            )}
+          </DroppableColumn>
+        )
+      })}
+    </div>
+  )
+
+  if (disableDndContext) {
+    return boardContent
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -236,42 +297,7 @@ export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskCl
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none -mx-4 px-4 md:mx-0 md:px-0">
-        {BOARD_COLUMNS.map((col) => {
-          const tasks = tasksByColumn[col.key] || []
-          return (
-            <DroppableColumn key={col.key} columnKey={col.key}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-medium text-sm">{col.label}</span>
-                <span className="text-xs text-muted bg-secondary rounded-full px-2 py-0.5">
-                  {tasks.length}
-                </span>
-              </div>
-
-              <SortableContext
-                items={tasks.map((t) => t.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-2 min-h-[60px] mb-2">
-                  {tasks.map((task) => (
-                    <SortableTaskCard key={task.id} task={task} onClick={onTaskClick ? () => onTaskClick(task.id) : undefined} />
-                  ))}
-                </div>
-              </SortableContext>
-
-              {onAddTask && (
-                <button
-                  onClick={() => onAddTask(col.key)}
-                  className="w-full text-sm text-muted hover:text-foreground hover:bg-secondary rounded-md py-2 transition-colors"
-                >
-                  + Aggiungi task
-                </button>
-              )}
-            </DroppableColumn>
-          )
-        })}
-      </div>
-
+      {boardContent}
       <DragOverlay>
         {activeTask && <TaskCardOverlay task={activeTask} />}
       </DragOverlay>

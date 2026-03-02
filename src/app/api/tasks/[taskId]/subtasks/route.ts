@@ -22,6 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           },
           orderBy: { assignedAt: 'asc' },
         },
+        _count: { select: { subtasks: true } },
       },
     })
 

@@ -22,6 +22,7 @@ interface GanttTask {
   dueDate: string | null
   estimatedHours: number | null
   assignee?: { firstName: string; lastName: string } | null
+  _count?: { subtasks: number; comments: number }
 }
 
 interface GanttMilestone {
@@ -185,6 +186,9 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
                 style={{ backgroundColor: STATUS_COLORS[bar.status] || '#94A3B8' }}
               />
               <span className="truncate text-xs">{bar.title}</span>
+              {(bar._count?.subtasks ?? 0) > 0 && (
+                <span className="ml-1 text-[10px] text-primary shrink-0">{bar._count!.subtasks}</span>
+              )}
             </div>
           ))}
           {milestones

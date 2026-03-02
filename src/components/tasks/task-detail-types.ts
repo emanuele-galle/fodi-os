@@ -40,6 +40,7 @@ export interface Subtask {
   priority: string
   assignee: TaskUser | null
   assignments?: { id: string; role: string; user: TaskUser }[]
+  _count?: { subtasks: number }
 }
 
 export interface TaskDetail {
