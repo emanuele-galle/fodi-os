@@ -58,10 +58,10 @@ export async function GET(request: NextRequest) {
       // Avg completion days via raw SQL
       prisma.$queryRaw<[{ avg_days: number | null }]>`
         SELECT AVG(EXTRACT(EPOCH FROM ("completedAt" - "createdAt")) / 86400)::float as avg_days
-        FROM "Task"
+        FROM "tasks"
         WHERE "status" = 'DONE' AND "completedAt" IS NOT NULL
         ${projectId ? Prisma.sql`AND "projectId" = ${projectId}` : Prisma.sql``}
-        ${userId ? Prisma.sql`AND ("assigneeId" = ${userId} OR "id" IN (SELECT "taskId" FROM "TaskAssignment" WHERE "userId" = ${userId}))` : Prisma.sql``}
+        ${userId ? Prisma.sql`AND ("assigneeId" = ${userId} OR "id" IN (SELECT "taskId" FROM "task_assignments" WHERE "userId" = ${userId}))` : Prisma.sql``}
         ${dateFrom ? Prisma.sql`AND "createdAt" >= ${new Date(dateFrom)}` : Prisma.sql``}
         ${dateTo ? Prisma.sql`AND "createdAt" <= ${new Date(dateTo + 'T23:59:59.999Z')}` : Prisma.sql``}
       `,
