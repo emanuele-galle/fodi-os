@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { updateTicketSchema } from '@/lib/validation'
-import { notifyUsers } from '@/lib/notifications'
+import { notifyUsers, dispatchNotification } from '@/lib/notifications'
 import { sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 import { TICKET_STATUS_LABELS } from '@/lib/constants'
@@ -123,6 +123,28 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             metadata: { clientName: previousTicket.client?.companyName, ticketNumber: previousTicket.number },
           }
         )
+      }
+
+      // Notify portal user about status change
+      if (status !== undefined && status !== previousTicket.status && ticket.client?.id) {
+        const client = await prisma.client.findUnique({
+          where: { id: ticket.client.id },
+          select: { portalUserId: true, companyName: true },
+        })
+        if (client?.portalUserId && client.portalUserId !== currentUserId) {
+          await dispatchNotification({
+            type: 'ticket_status_changed',
+            title: 'Stato ticket aggiornato',
+            message: `Il ticket "${previousTicket.subject}" è stato aggiornato a "${TICKET_STATUS_LABELS[status] || status}"`,
+            link: `/portal/tickets/${ticketId}`,
+            metadata: { ticketNumber: previousTicket.number, ticketStatus: status },
+            recipientIds: [client.portalUserId],
+            excludeUserId: currentUserId,
+            groupKey: `ticket_status:${ticketId}`,
+            actorName: 'Team FODI',
+          })
+          sendDataChanged([client.portalUserId], 'ticket', ticketId)
+        }
       }
 
       // Notify connected users about ticket change

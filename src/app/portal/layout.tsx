@@ -1,5 +1,6 @@
 import { brand } from '@/lib/branding'
 import type { Metadata } from 'next'
+import { SSEProvider } from '@/providers/SSEProvider'
 import PortalShell from '@/components/portal/PortalShell'
 
 export const metadata: Metadata = {
@@ -12,5 +13,9 @@ export default function PortalLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <PortalShell>{children}</PortalShell>
+  return (
+    <SSEProvider>
+      <PortalShell>{children}</PortalShell>
+    </SSEProvider>
+  )
 }

@@ -81,17 +81,20 @@ export async function middleware(request: NextRequest) {
     return setSecurityHeaders(NextResponse.next(), true)
   }
 
-  // Portal paths - check portal cookie
+  // Portal paths - check access cookie with CLIENT role
   if (isPortal(pathname)) {
-    const portalToken = request.cookies.get(brand.cookies.portal)?.value
-    if (!portalToken) {
+    const accessToken = request.cookies.get(brand.cookies.access)?.value
+    if (!accessToken) {
       return setSecurityHeaders(NextResponse.redirect(buildUrl(request, '/login')), true)
     }
-    const payload = await verifyToken(portalToken)
-    if (!payload) {
+    const payload = await verifyToken(accessToken)
+    if (!payload || payload.role !== 'CLIENT') {
       return setSecurityHeaders(NextResponse.redirect(buildUrl(request, '/login')), true)
     }
-    return setSecurityHeaders(NextResponse.next(), true)
+    const response = NextResponse.next()
+    response.headers.set('x-user-id', payload.sub)
+    response.headers.set('x-user-role', payload.role)
+    return setSecurityHeaders(response, true)
   }
 
   // API paths - verify Bearer token or cookie, with auto-refresh

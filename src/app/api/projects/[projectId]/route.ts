@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { updateProjectSchema } from '@/lib/validation'
+import { dispatchNotification } from '@/lib/notifications'
+import { sendDataChanged } from '@/lib/sse'
 import type { Role, Prisma } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
@@ -84,6 +86,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ success: false, error: 'Progetto non trovato' }, { status: 404 })
     }
 
+    // Get previous state for portal notification
+    const previousProject = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { status: true, name: true, clientId: true },
+    })
+
     const body = await request.json()
     const parsed = updateProjectSchema.safeParse(body)
     if (!parsed.success) {
@@ -115,6 +123,29 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'UPDATE', entityType: 'PROJECT', entityId: projectId, metadata: { name: project.name } })
+
+    // Notify portal user about project status change
+    if (previousProject && status !== undefined && status !== previousProject.status && previousProject.clientId) {
+      const { PROJECT_STATUS_LABELS } = await import('@/lib/constants')
+      const client = await prisma.client.findUnique({
+        where: { id: previousProject.clientId },
+        select: { portalUserId: true, companyName: true },
+      })
+      if (client?.portalUserId) {
+        await dispatchNotification({
+          type: 'project_status_changed',
+          title: 'Aggiornamento progetto',
+          message: `Il progetto "${previousProject.name}" è ora in stato "${PROJECT_STATUS_LABELS[status] || status}"`,
+          link: `/portal/projects/${projectId}`,
+          metadata: { projectName: previousProject.name, projectStatus: status },
+          recipientIds: [client.portalUserId],
+          excludeUserId: userId,
+          groupKey: `project_status:${projectId}`,
+          actorName: 'Team FODI',
+        })
+        sendDataChanged([client.portalUserId], 'project', projectId)
+      }
+    }
 
     return NextResponse.json({ success: true, data: project })
   } catch (e) {

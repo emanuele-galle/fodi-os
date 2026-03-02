@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
-import { createTicketCommentSchema } from '@/lib/validation'
 import { notifyUsers } from '@/lib/notifications'
+import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
+
+const createTicketCommentSchema = z.object({
+  content: z.string().min(1, 'Contenuto obbligatorio'),
+  isInternal: z.boolean().default(false),
+  attachments: z.array(z.object({
+    fileName: z.string(),
+    fileUrl: z.string(),
+    fileSize: z.number(),
+    mimeType: z.string(),
+  })).optional(),
+})
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ ticketId: string }> }) {
   try {
@@ -45,7 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         { status: 400 }
       )
     }
-    const { content } = parsed.data
+    const { content, isInternal, attachments } = parsed.data
 
     const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } })
     if (!ticket) {
@@ -57,6 +68,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         ticketId,
         authorId: userId,
         content,
+        isInternal,
+        attachments: attachments || undefined,
       },
       include: {
         author: { select: { id: true, firstName: true, lastName: true } },
@@ -87,6 +100,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         metadata: { ticketNumber: ticket.number },
       }
     )
+
+    // Notify portal user if comment is not internal
+    if (!isInternal && ticket.clientId) {
+      const client = await prisma.client.findUnique({
+        where: { id: ticket.clientId },
+        select: { portalUserId: true, companyName: true },
+      })
+      if (client?.portalUserId && client.portalUserId !== userId) {
+        await notifyUsers(
+          [client.portalUserId],
+          userId,
+          {
+            type: 'ticket_comment',
+            title: 'Risposta al tuo ticket',
+            message: `${authorName} ha risposto al ticket "${ticket.subject}"`,
+            link: `/portal/tickets/${ticketId}`,
+            metadata: { ticketNumber: ticket.number },
+          }
+        )
+      }
+    }
 
     return NextResponse.json(comment, { status: 201 })
   } catch (e) {

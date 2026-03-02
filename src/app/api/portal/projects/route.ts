@@ -26,15 +26,27 @@ export async function GET(request: NextRequest) {
         name: true,
         slug: true,
         status: true,
+        description: true,
         startDate: true,
         endDate: true,
         deadline: true,
         createdAt: true,
         _count: { select: { tasks: true } },
+        tasks: {
+          where: { parentId: null },
+          select: { status: true },
+        },
       },
     })
 
-    return NextResponse.json({ items: projects, total: projects.length })
+    const items = projects.map(({ tasks, ...rest }) => {
+      const totalTasks = tasks.length
+      const completedTasks = tasks.filter((t) => t.status === 'DONE').length
+      const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+      return { ...rest, progress }
+    })
+
+    return NextResponse.json({ items, total: items.length })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })

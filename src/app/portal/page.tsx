@@ -65,22 +65,6 @@ export default function PortalHomePage() {
         <p className="text-sm text-muted mt-1">Panoramica dei tuoi progetti</p>
       </div>
 
-      {/* Navigation */}
-      <div className="flex gap-3 mb-6">
-        <button
-          onClick={() => router.push('/portal/documents')}
-          className="px-4 py-2 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors"
-        >
-          Documenti
-        </button>
-        <button
-          onClick={() => router.push('/portal/booking')}
-          className="px-4 py-2 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors"
-        >
-          Prenotazioni
-        </button>
-      </div>
-
       {/* Preventivi */}
       {!loading && quotes.length > 0 && (
         <div className="mb-8">
@@ -127,7 +111,11 @@ export default function PortalHomePage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {projects.map((project) => (
-            <Card key={project.id}>
+            <Card
+              key={project.id}
+              className="cursor-pointer hover:bg-secondary/50 transition-colors"
+              onClick={() => router.push(`/portal/projects/${project.id}`)}
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{project.name}</CardTitle>

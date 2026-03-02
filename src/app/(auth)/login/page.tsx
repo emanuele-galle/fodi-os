@@ -41,7 +41,12 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/dashboard')
+      // Redirect CLIENT to portal, all others to dashboard
+      if (data.data?.role === 'CLIENT') {
+        router.push('/portal')
+      } else {
+        router.push('/dashboard')
+      }
     } catch {
       setError('Errore di connessione')
     } finally {
