@@ -4,7 +4,7 @@ import type { AiToolDefinition, AiToolInput, AiToolContext } from '../types'
 export const folderTools: AiToolDefinition[] = [
   {
     name: 'list_project_folders',
-    description: 'Lista le cartelle di un progetto in struttura ad albero, con conteggio task e allegati per cartella.',
+    description: 'Lista le cartelle di un progetto in struttura ad albero ricorsiva (profondità illimitata), con conteggio task e allegati per cartella.',
     input_schema: {
       type: 'object',
       properties: {
@@ -15,27 +15,28 @@ export const folderTools: AiToolDefinition[] = [
     module: 'pm',
     requiredPermission: 'read',
     execute: async (input: AiToolInput) => {
-      const folders = await prisma.folder.findMany({
-        where: { projectId: input.projectId as string, parentId: null },
-        include: {
-          _count: { select: { tasks: true, attachments: true, links: true } },
-          children: {
-            include: {
-              _count: { select: { tasks: true, attachments: true, links: true } },
-            },
-            orderBy: { sortOrder: 'asc' },
-          },
-        },
+      // Fetch all folders flat, then build tree (supports unlimited depth)
+      const allFolders = await prisma.folder.findMany({
+        where: { projectId: input.projectId as string },
+        include: { _count: { select: { tasks: true, attachments: true, links: true } } },
         orderBy: { sortOrder: 'asc' },
       })
 
-      return { success: true, data: { folders, total: folders.length } }
+      type FolderWithChildren = (typeof allFolders)[number] & { children: FolderWithChildren[] }
+      function buildTree(parentId: string | null): FolderWithChildren[] {
+        return allFolders
+          .filter(f => f.parentId === parentId)
+          .map(f => ({ ...f, children: buildTree(f.id) }))
+      }
+
+      const tree = buildTree(null)
+      return { success: true, data: { folders: tree, total: allFolders.length } }
     },
   },
 
   {
     name: 'create_project_folder',
-    description: 'Crea una nuova cartella in un progetto. Supporta max 2 livelli di profondità (cartella → sottocartella).',
+    description: 'Crea una nuova cartella in un progetto. Supporta nidificazione illimitata (cartella → sottocartella → sotto-sottocartella → ...).',
     input_schema: {
       type: 'object',
       properties: {
@@ -43,7 +44,7 @@ export const folderTools: AiToolDefinition[] = [
         name: { type: 'string', description: 'Nome della cartella (obbligatorio)' },
         description: { type: 'string', description: 'Descrizione della cartella' },
         color: { type: 'string', description: 'Colore esadecimale (#RRGGBB, default: #6366F1)' },
-        parentId: { type: 'string', description: 'ID della cartella parent (per sottocartella)' },
+        parentId: { type: 'string', description: 'ID della cartella parent (per creare sottocartella a qualsiasi livello)' },
       },
       required: ['projectId', 'name'],
     },
@@ -53,17 +54,14 @@ export const folderTools: AiToolDefinition[] = [
       const projectId = input.projectId as string
       const parentId = (input.parentId as string) || null
 
-      // Validate parent depth (max 2 levels)
+      // Validate parent belongs to same project
       if (parentId) {
         const parent = await prisma.folder.findUnique({
           where: { id: parentId },
-          select: { projectId: true, parentId: true },
+          select: { projectId: true },
         })
         if (!parent || parent.projectId !== projectId) {
           return { success: false, error: 'Cartella parent non trovata o non appartiene al progetto' }
-        }
-        if (parent.parentId) {
-          return { success: false, error: 'Massimo 2 livelli di profondità consentiti' }
         }
       }
 
@@ -144,12 +142,17 @@ export const folderTools: AiToolDefinition[] = [
         return { success: false, error: 'Cartella non trovata' }
       }
 
-      // Get all child folder IDs
-      const children = await prisma.folder.findMany({
-        where: { parentId: folderId },
-        select: { id: true },
-      })
-      const allFolderIds = [folderId, ...children.map((c) => c.id)]
+      // Get all descendant folder IDs (recursive)
+      async function getDescendantIds(parentId: string): Promise<string[]> {
+        const children = await prisma.folder.findMany({ where: { parentId }, select: { id: true } })
+        const ids: string[] = []
+        for (const child of children) {
+          ids.push(child.id)
+          ids.push(...await getDescendantIds(child.id))
+        }
+        return ids
+      }
+      const allFolderIds = [folderId, ...await getDescendantIds(folderId)]
 
       // Unlink tasks and attachments, archive chat channels
       await prisma.task.updateMany({

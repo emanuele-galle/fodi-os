@@ -13,6 +13,8 @@ export const taskTools: AiToolDefinition[] = [
         status: { type: 'string', description: 'Filtra per stato: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELLED' },
         priority: { type: 'string', description: 'Filtra per priorità: LOW, MEDIUM, HIGH, URGENT' },
         assigneeId: { type: 'string', description: 'Filtra per ID assegnatario' },
+        projectId: { type: 'string', description: 'Filtra per ID progetto' },
+        folderId: { type: 'string', description: 'Filtra per ID cartella' },
         mine: { type: 'boolean', description: 'Se true, mostra solo i task dell\'utente corrente' },
         limit: { type: 'number', description: 'Numero massimo di risultati (default: 20, max: 50)' },
       },
@@ -25,6 +27,8 @@ export const taskTools: AiToolDefinition[] = [
 
       if (input.status) where.status = input.status
       if (input.priority) where.priority = input.priority
+      if (input.projectId) where.projectId = input.projectId
+      if (input.folderId) where.folderId = input.folderId
       if (input.assigneeId) {
         where.OR = [
           { assigneeId: input.assigneeId as string },
@@ -49,8 +53,10 @@ export const taskTools: AiToolDefinition[] = [
           status: true,
           priority: true,
           dueDate: true,
+          folderId: true,
           assignee: { select: { id: true, firstName: true, lastName: true } },
           project: { select: { id: true, name: true } },
+          folder: { select: { id: true, name: true } },
           _count: { select: { comments: true, subtasks: true } },
         },
       })
@@ -61,7 +67,7 @@ export const taskTools: AiToolDefinition[] = [
 
   {
     name: 'create_task',
-    description: 'Crea un nuovo task con titolo, descrizione, priorità, assegnatario e scadenza.',
+    description: 'Crea un nuovo task con titolo, descrizione, priorità, assegnatario, scadenza e cartella.',
     input_schema: {
       type: 'object',
       properties: {
@@ -70,6 +76,7 @@ export const taskTools: AiToolDefinition[] = [
         priority: { type: 'string', description: 'Priorità: LOW, MEDIUM, HIGH, URGENT (default: MEDIUM)' },
         assigneeId: { type: 'string', description: 'ID utente assegnatario' },
         projectId: { type: 'string', description: 'ID progetto' },
+        folderId: { type: 'string', description: 'ID cartella del progetto in cui inserire il task' },
         dueDate: { type: 'string', description: 'Data scadenza (ISO 8601)' },
       },
       required: ['title'],
@@ -85,6 +92,7 @@ export const taskTools: AiToolDefinition[] = [
           assigneeId: (input.assigneeId as string) || context.userId,
           creatorId: context.userId,
           projectId: (input.projectId as string) || null,
+          folderId: (input.folderId as string) || null,
           dueDate: input.dueDate ? new Date(input.dueDate as string) : null,
           isPersonal: !input.projectId,
         },
@@ -125,7 +133,7 @@ export const taskTools: AiToolDefinition[] = [
 
   {
     name: 'update_task',
-    description: 'Aggiorna un task esistente (stato, priorità, assegnatario, scadenza).',
+    description: 'Aggiorna un task esistente (stato, priorità, assegnatario, scadenza, cartella). Usa folderId per spostare un task in una cartella diversa.',
     input_schema: {
       type: 'object',
       properties: {
@@ -135,6 +143,8 @@ export const taskTools: AiToolDefinition[] = [
         assigneeId: { type: 'string', description: 'Nuovo assegnatario (ID utente)' },
         dueDate: { type: 'string', description: 'Nuova scadenza (ISO 8601)' },
         title: { type: 'string', description: 'Nuovo titolo' },
+        description: { type: 'string', description: 'Nuova descrizione' },
+        folderId: { type: 'string', description: 'ID cartella di destinazione (per spostare il task in una cartella). Usa null per rimuovere dalla cartella.' },
       },
       required: ['taskId'],
     },
@@ -148,6 +158,8 @@ export const taskTools: AiToolDefinition[] = [
       if (input.assigneeId) data.assigneeId = input.assigneeId
       if (input.dueDate) data.dueDate = new Date(input.dueDate as string)
       if (input.title) data.title = input.title
+      if (input.description !== undefined) data.description = input.description
+      if (input.folderId !== undefined) data.folderId = input.folderId || null
       if (input.status === 'DONE') data.completedAt = new Date()
 
       const task = await prisma.task.update({
@@ -168,6 +180,7 @@ export const taskTools: AiToolDefinition[] = [
       if (input.status) changes.push(`stato → ${input.status}`)
       if (input.priority) changes.push(`priorità → ${input.priority}`)
       if (input.assigneeId) changes.push('riassegnato')
+      if (input.folderId !== undefined) changes.push('spostato in cartella')
 
       if (changes.length > 0) {
         await dispatchNotification({
@@ -417,15 +430,16 @@ export const taskTools: AiToolDefinition[] = [
   // --- create_subtask ---
   {
     name: 'create_subtask',
-    description: 'Crea un sotto-task (subtask) collegato a un task padre',
+    description: 'Crea un sotto-task (subtask) collegato a un task padre. Supporta nidificazione infinita (subtask di subtask).',
     input_schema: {
       type: 'object',
       properties: {
-        parentId: { type: 'string', description: 'ID del task padre' },
+        parentId: { type: 'string', description: 'ID del task padre (può essere un task o un altro subtask per nidificazione infinita)' },
         title: { type: 'string', description: 'Titolo del subtask' },
         description: { type: 'string', description: 'Descrizione (opzionale)' },
         assigneeId: { type: 'string', description: 'ID utente assegnato (opzionale)' },
         priority: { type: 'string', description: 'Priorità: LOW, MEDIUM, HIGH, URGENT' },
+        dueDate: { type: 'string', description: 'Data scadenza (ISO 8601)' },
       },
       required: ['parentId', 'title'],
     },
@@ -447,6 +461,7 @@ export const taskTools: AiToolDefinition[] = [
           creatorId: context.userId,
           assigneeId: (input.assigneeId as string) || undefined,
           priority: ((input.priority as string) || 'MEDIUM') as Priority,
+          dueDate: input.dueDate ? new Date(input.dueDate as string) : null,
           status: 'TODO',
         },
         select: { id: true, title: true, status: true, priority: true, assigneeId: true, parentId: true },
@@ -479,6 +494,166 @@ export const taskTools: AiToolDefinition[] = [
         },
       })
       return { success: true, data: { subtasks, total: subtasks.length } }
+    },
+  },
+
+  // --- move_task_to_folder ---
+  {
+    name: 'move_task_to_folder',
+    description: 'Sposta uno o più task in una cartella di progetto specifica. Usa folderId null per rimuovere dalla cartella.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array di ID dei task da spostare (obbligatorio)',
+        },
+        folderId: { type: 'string', description: 'ID della cartella di destinazione (null per rimuovere dalla cartella)' },
+      },
+      required: ['taskIds'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      const taskIds = input.taskIds as string[]
+      const folderId = (input.folderId as string) || null
+
+      if (!taskIds.length) return { success: false, error: 'Nessun task specificato' }
+
+      // Validate folder exists if provided
+      if (folderId) {
+        const folder = await prisma.folder.findUnique({
+          where: { id: folderId },
+          select: { id: true, name: true, projectId: true },
+        })
+        if (!folder) return { success: false, error: 'Cartella non trovata' }
+      }
+
+      await prisma.task.updateMany({
+        where: { id: { in: taskIds } },
+        data: { folderId },
+      })
+
+      const tasks = await prisma.task.findMany({
+        where: { id: { in: taskIds } },
+        select: { id: true, title: true, folderId: true },
+      })
+
+      return { success: true, data: { moved: tasks.length, tasks, folderId } }
+    },
+  },
+
+  // --- log_task_time ---
+  {
+    name: 'log_task_time',
+    description: 'Registra tempo lavorato su un task (time tracking).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'ID del task (obbligatorio)' },
+        hours: { type: 'number', description: 'Ore lavorate (0-24, obbligatorio)' },
+        description: { type: 'string', description: 'Descrizione attività svolta' },
+        billable: { type: 'boolean', description: 'Se fatturabile (default: true)' },
+        date: { type: 'string', description: 'Data della registrazione (ISO 8601, default: oggi)' },
+      },
+      required: ['taskId', 'hours'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input, context) => {
+      const hours = Number(input.hours)
+      if (hours <= 0 || hours > 24) return { success: false, error: 'Ore devono essere tra 0 e 24' }
+
+      const task = await prisma.task.findUnique({
+        where: { id: input.taskId as string },
+        select: { id: true, projectId: true },
+      })
+      if (!task) return { success: false, error: 'Task non trovato' }
+
+      const entry = await prisma.timeEntry.create({
+        data: {
+          taskId: task.id,
+          projectId: task.projectId,
+          userId: context.userId,
+          hours,
+          description: (input.description as string) || null,
+          billable: input.billable !== false,
+          date: input.date ? new Date(input.date as string) : new Date(),
+        },
+        select: { id: true, hours: true, billable: true, date: true },
+      })
+
+      return { success: true, data: entry }
+    },
+  },
+
+  // --- duplicate_task ---
+  {
+    name: 'duplicate_task',
+    description: 'Duplica un task esistente con tutti i suoi subtask. Utile per creare task simili per clienti diversi.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'ID del task da duplicare (obbligatorio)' },
+        projectId: { type: 'string', description: 'ID del progetto di destinazione (default: stesso progetto)' },
+        folderId: { type: 'string', description: 'ID cartella di destinazione' },
+        titlePrefix: { type: 'string', description: 'Prefisso da aggiungere al titolo (es. "[COPIA]")' },
+        includeSubtasks: { type: 'boolean', description: 'Se true, duplica anche tutti i subtask (default: true)' },
+      },
+      required: ['taskId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input, context) => {
+      const original = await prisma.task.findUnique({
+        where: { id: input.taskId as string },
+        include: {
+          subtasks: { select: { title: true, description: true, priority: true, status: true, dueDate: true, assigneeId: true } },
+        },
+      })
+      if (!original) return { success: false, error: 'Task non trovato' }
+
+      const prefix = (input.titlePrefix as string) || ''
+      const targetProjectId = (input.projectId as string) || original.projectId
+
+      const newTask = await prisma.task.create({
+        data: {
+          title: prefix ? `${prefix} ${original.title}` : original.title,
+          description: original.description,
+          priority: original.priority,
+          status: 'TODO',
+          projectId: targetProjectId,
+          folderId: (input.folderId as string) || original.folderId,
+          creatorId: context.userId,
+          assigneeId: original.assigneeId,
+          dueDate: original.dueDate,
+          estimatedHours: original.estimatedHours,
+        },
+        select: { id: true, title: true },
+      })
+
+      let subtaskCount = 0
+      if (input.includeSubtasks !== false && original.subtasks.length > 0) {
+        for (const sub of original.subtasks) {
+          await prisma.task.create({
+            data: {
+              title: sub.title,
+              description: sub.description,
+              priority: sub.priority,
+              status: 'TODO',
+              projectId: targetProjectId,
+              parentId: newTask.id,
+              creatorId: context.userId,
+              assigneeId: sub.assigneeId,
+              dueDate: sub.dueDate,
+            },
+          })
+          subtaskCount++
+        }
+      }
+
+      return { success: true, data: { id: newTask.id, title: newTask.title, subtasksDuplicated: subtaskCount } }
     },
   },
 ]

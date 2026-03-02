@@ -136,7 +136,7 @@ export const projectTools: AiToolDefinition[] = [
 
   {
     name: 'update_project',
-    description: 'Aggiorna un progetto esistente (stato, priorità, date, budget, descrizione).',
+    description: 'Aggiorna un progetto esistente (stato, priorità, date, budget, descrizione, cliente).',
     input_schema: {
       type: 'object',
       properties: {
@@ -145,6 +145,7 @@ export const projectTools: AiToolDefinition[] = [
         description: { type: 'string', description: 'Nuova descrizione' },
         status: { type: 'string', description: 'Nuovo stato: PLANNING, IN_PROGRESS, ON_HOLD, REVIEW, COMPLETED, CANCELLED' },
         priority: { type: 'string', description: 'Nuova priorità: LOW, MEDIUM, HIGH, URGENT' },
+        clientId: { type: 'string', description: 'ID del cliente da associare al progetto (null per rimuovere)' },
         startDate: { type: 'string', description: 'Nuova data inizio (ISO 8601)' },
         endDate: { type: 'string', description: 'Nuova data fine (ISO 8601)' },
         deadline: { type: 'string', description: 'Nuova deadline (ISO 8601)' },
@@ -162,6 +163,7 @@ export const projectTools: AiToolDefinition[] = [
       if (input.description !== undefined) data.description = input.description
       if (input.status) data.status = input.status
       if (input.priority) data.priority = input.priority
+      if (input.clientId !== undefined) data.clientId = input.clientId || null
       if (input.startDate) data.startDate = new Date(input.startDate as string)
       if (input.endDate) data.endDate = new Date(input.endDate as string)
       if (input.deadline) data.deadline = new Date(input.deadline as string)
