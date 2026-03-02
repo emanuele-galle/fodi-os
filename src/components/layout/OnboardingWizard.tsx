@@ -11,6 +11,17 @@ import {
 import Link from 'next/link'
 import type { Role } from '@/generated/prisma/client'
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i)
+  }
+  return outputArray
+}
+
 interface OnboardingWizardProps {
   user: { firstName: string; role: Role }
   onComplete: () => void
@@ -125,18 +136,22 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
         try {
           const reg = await navigator.serviceWorker?.ready
           if (reg) {
-            const sub = await reg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-            })
-            await fetch('/api/notifications/subscribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(sub.toJSON()),
-            })
+            const vapidKey = document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+            if (vapidKey) {
+              const sub = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
+              })
+              const subJson = sub.toJSON()
+              await fetch('/api/notifications/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
+              })
+            }
           }
-        } catch {
-          // Push subscription failed but permission was granted
+        } catch (err) {
+          console.error('Push subscription error:', err)
         }
       } else if (permission === 'denied') {
         setNotifDenied(true)

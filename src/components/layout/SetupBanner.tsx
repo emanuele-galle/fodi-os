@@ -13,6 +13,17 @@ interface SetupStatus {
   pushSubscribed: boolean
 }
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i)
+  }
+  return outputArray
+}
+
 export function SetupBanner() {
   const [status, setStatus] = useState<SetupStatus>({
     notifications: 'unknown',
@@ -80,19 +91,24 @@ export function SetupBanner() {
       if (permission === 'granted') {
         const reg = await navigator.serviceWorker?.ready
         if (reg) {
+          const vapidKey = document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+          if (!vapidKey) return
           const sub = await reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
           })
+          const subJson = sub.toJSON()
           await fetch('/api/notifications/subscribe', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(sub.toJSON()),
+            body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
           })
           setStatus((s) => ({ ...s, pushSubscribed: true }))
         }
       }
-    } catch {}
+    } catch (err) {
+      console.error('Push subscription error:', err)
+    }
     setSubscribing(false)
   }
 
