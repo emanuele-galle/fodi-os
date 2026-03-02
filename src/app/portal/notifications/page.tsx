@@ -15,6 +15,19 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 
+function relativeTime(dateStr: string) {
+  const now = Date.now()
+  const diff = now - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'Adesso'
+  if (mins < 60) return `${mins} min fa`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} or${hours === 1 ? 'a' : 'e'} fa`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days} giorn${days === 1 ? 'o' : 'i'} fa`
+  return new Date(dateStr).toLocaleDateString('it-IT')
+}
+
 interface Notification {
   id: string
   type: string
@@ -91,18 +104,6 @@ export default function PortalNotificationsPage() {
       router.push(link)
     }
     fetchNotifications()
-  }
-
-  function relativeTime(dateStr: string) {
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'Adesso'
-    if (mins < 60) return `${mins} min fa`
-    const hours = Math.floor(mins / 60)
-    if (hours < 24) return `${hours} or${hours === 1 ? 'a' : 'e'} fa`
-    const days = Math.floor(hours / 24)
-    if (days < 7) return `${days} giorn${days === 1 ? 'o' : 'i'} fa`
-    return new Date(dateStr).toLocaleDateString('it-IT')
   }
 
   return (

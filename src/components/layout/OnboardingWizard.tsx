@@ -22,6 +22,43 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray
 }
 
+async function subscribeToPush(): Promise<'subscribed' | 'granted' | 'denied' | 'unavailable'> {
+  if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+    return 'unavailable'
+  }
+
+  const permission = await Notification.requestPermission()
+  if (permission === 'denied') return 'denied'
+  if (permission !== 'granted') return 'denied'
+
+  const swReady = await Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
+  ])
+  if (!swReady) {
+    console.error('Service worker not ready after 10s')
+    return 'granted'
+  }
+
+  const vapidKey = document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content
+  if (!vapidKey) {
+    console.error('VAPID key not found')
+    return 'granted'
+  }
+
+  const sub = await swReady.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
+  })
+  const subJson = sub.toJSON()
+  await fetch('/api/notifications/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
+  })
+  return 'subscribed'
+}
+
 interface OnboardingWizardProps {
   user: { firstName: string; role: Role }
   onComplete: () => void
@@ -89,6 +126,87 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
+function NotifAction({ notifRequested, notifDenied, isIOS, isPWA, onEnable }: {
+  notifRequested: boolean; notifDenied: boolean; isIOS: boolean; isPWA: boolean; onEnable: () => void
+}) {
+  if (notifRequested) return <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium"><CheckCircle className="h-4 w-4" />Attive</div>
+  if (notifDenied) return <span className="text-xs text-muted">Bloccate</span>
+  if (isIOS && !isPWA) return <span className="text-xs text-amber-500 font-medium">Installa prima</span>
+  return <button onClick={onEnable} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-medium hover:bg-amber-500/90 transition-colors flex-shrink-0">Attiva</button>
+}
+
+function GoogleAction({ loading, connected, onConnect }: { loading: boolean; connected: boolean; onConnect: () => void }) {
+  if (loading) return <div className="h-4 w-16 rounded bg-muted/20 animate-pulse" />
+  if (connected) return <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium"><CheckCircle className="h-4 w-4" />Connesso</div>
+  return <button onClick={onConnect} className="px-3 py-1.5 bg-[#4285F4] text-white rounded-lg text-xs font-medium hover:bg-[#4285F4]/90 transition-colors flex-shrink-0">Collega</button>
+}
+
+function PwaAction({ isPWA, showIOSGuide, isIOS, onInstall }: { isPWA: boolean; showIOSGuide: boolean; isIOS: boolean; onInstall: () => void }) {
+  if (isPWA) return <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium"><CheckCircle className="h-4 w-4" />Installata</div>
+  if (showIOSGuide) return <div className="text-xs text-muted text-right max-w-[140px]"><Share className="h-3 w-3 inline text-primary" /> poi &quot;Aggiungi a Home&quot;</div>
+  return <button onClick={onInstall} className="px-3 py-1.5 bg-teal-500 text-white rounded-lg text-xs font-medium hover:bg-teal-500/90 transition-colors flex-shrink-0">{isIOS ? 'Come fare' : 'Installa'}</button>
+}
+
+function SetupStep({
+  notifRequested, notifDenied, isIOS, isPWA, showIOSGuide,
+  googleLoading, googleConnected,
+  onNotifEnable, onGoogleConnect, onPwaInstall,
+}: {
+  notifRequested: boolean; notifDenied: boolean; isIOS: boolean; isPWA: boolean; showIOSGuide: boolean
+  googleLoading: boolean; googleConnected: boolean
+  onNotifEnable: () => void; onGoogleConnect: () => void; onPwaInstall: () => void
+}) {
+  const notifDesc = isIOS && !isPWA ? 'Prima installa l\'app, poi attiva le notifiche' : 'Task, scadenze e menzioni in tempo reale'
+
+  return (
+    <motion.div key="step-4" {...stepTransition} className="flex-1">
+      <h2 className="text-lg font-bold mb-1">Configurazione</h2>
+      <p className="text-xs text-muted mb-4">Completa il setup per un&apos;esperienza ottimale</p>
+      <div className="space-y-3">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-border/30 p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0"><Bell className="h-5 w-5 text-amber-500" /></div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Notifiche Push</p>
+              <p className="text-xs text-muted">{notifDesc}</p>
+            </div>
+            <NotifAction notifRequested={notifRequested} notifDenied={notifDenied} isIOS={isIOS} isPWA={isPWA} onEnable={onNotifEnable} />
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-border/30 p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+              <svg viewBox="0 0 48 48" className="h-5 w-5">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 010-9.18l-7.98-6.19a24.01 24.01 0 000 21.56l7.98-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Google Workspace</p>
+              <p className="text-xs text-muted">Calendar, Drive e Meet</p>
+            </div>
+            <GoogleAction loading={googleLoading} connected={googleConnected} onConnect={onGoogleConnect} />
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl border border-border/30 p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center flex-shrink-0"><Download className="h-5 w-5 text-teal-500" /></div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Scarica l&apos;App</p>
+              <p className="text-xs text-muted">Installa {brandClient.name} sul tuo dispositivo</p>
+            </div>
+            <PwaAction isPWA={isPWA} showIOSGuide={showIOSGuide} isIOS={isIOS} onInstall={onPwaInstall} />
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  )
+}
+
 export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
   const [step, setStep] = useState(0)
   const [notifRequested, setNotifRequested] = useState(false)
@@ -130,51 +248,14 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
 
   const handleNotifEnable = async () => {
     try {
-      // Check if Notification API is available
-      if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+      const result = await subscribeToPush()
+      if (result === 'denied' || result === 'unavailable') {
         setNotifDenied(true)
-        return
+      } else {
+        setNotifRequested(true)
       }
-
-      const permission = await Notification.requestPermission()
-      if (permission === 'denied') {
-        setNotifDenied(true)
-        return
-      }
-      if (permission !== 'granted') return
-
-      // Wait for SW to be ready (with timeout for mobile)
-      const swReady = await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
-      ])
-      if (!swReady) {
-        console.error('Service worker not ready after 10s')
-        setNotifRequested(true) // permission granted, SW just slow
-        return
-      }
-
-      const vapidKey = document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content
-      if (!vapidKey) {
-        console.error('VAPID key not found')
-        setNotifRequested(true) // permission granted at least
-        return
-      }
-
-      const sub = await swReady.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
-      })
-      const subJson = sub.toJSON()
-      await fetch('/api/notifications/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
-      })
-      setNotifRequested(true)
     } catch (err) {
       console.error('Push notification error:', err)
-      // If permission was granted but subscription failed, still show as enabled
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         setNotifRequested(true)
       }
@@ -427,123 +508,12 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
 
             {/* Step 4: Setup (Notifications + Google + Install App) */}
             {step === 4 && (
-              <motion.div key="step-4" {...stepTransition} className="flex-1">
-                <h2 className="text-lg font-bold mb-1">Configurazione</h2>
-                <p className="text-xs text-muted mb-4">Completa il setup per un&apos;esperienza ottimale</p>
-                <div className="space-y-3">
-                  {/* Notifications */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="rounded-xl border border-border/30 p-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                        <Bell className="h-5 w-5 text-amber-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">Notifiche Push</p>
-                        <p className="text-xs text-muted">
-                          {isIOS && !isPWA
-                            ? 'Prima installa l\'app, poi attiva le notifiche'
-                            : 'Task, scadenze e menzioni in tempo reale'}
-                        </p>
-                      </div>
-                      {notifRequested ? (
-                        <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium">
-                          <CheckCircle className="h-4 w-4" />
-                          Attive
-                        </div>
-                      ) : notifDenied ? (
-                        <span className="text-xs text-muted">Bloccate</span>
-                      ) : isIOS && !isPWA ? (
-                        <span className="text-xs text-amber-500 font-medium">Installa prima</span>
-                      ) : (
-                        <button
-                          onClick={handleNotifEnable}
-                          className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-medium hover:bg-amber-500/90 transition-colors flex-shrink-0"
-                        >
-                          Attiva
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-
-                  {/* Google Connect */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="rounded-xl border border-border/30 p-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                        <svg viewBox="0 0 48 48" className="h-5 w-5">
-                          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                          <path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 010-9.18l-7.98-6.19a24.01 24.01 0 000 21.56l7.98-6.19z"/>
-                          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                        </svg>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">Google Workspace</p>
-                        <p className="text-xs text-muted">Calendar, Drive e Meet</p>
-                      </div>
-                      {googleLoading ? (
-                        <div className="h-4 w-16 rounded bg-muted/20 animate-pulse" />
-                      ) : googleConnected ? (
-                        <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium">
-                          <CheckCircle className="h-4 w-4" />
-                          Connesso
-                        </div>
-                      ) : (
-                        <button
-                          onClick={handleGoogleConnect}
-                          className="px-3 py-1.5 bg-[#4285F4] text-white rounded-lg text-xs font-medium hover:bg-[#4285F4]/90 transition-colors flex-shrink-0"
-                        >
-                          Collega
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-
-                  {/* Install App */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="rounded-xl border border-border/30 p-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center flex-shrink-0">
-                        <Download className="h-5 w-5 text-teal-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">Scarica l&apos;App</p>
-                        <p className="text-xs text-muted">Installa {brandClient.name} sul tuo dispositivo</p>
-                      </div>
-                      {isPWA ? (
-                        <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium">
-                          <CheckCircle className="h-4 w-4" />
-                          Installata
-                        </div>
-                      ) : showIOSGuide ? (
-                        <div className="text-xs text-muted text-right max-w-[140px]">
-                          <Share className="h-3 w-3 inline text-primary" /> poi &quot;Aggiungi a Home&quot;
-                        </div>
-                      ) : (
-                        <button
-                          onClick={handlePwaInstall}
-                          className="px-3 py-1.5 bg-teal-500 text-white rounded-lg text-xs font-medium hover:bg-teal-500/90 transition-colors flex-shrink-0"
-                        >
-                          {isIOS ? 'Come fare' : 'Installa'}
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                </div>
-              </motion.div>
+              <SetupStep
+                notifRequested={notifRequested} notifDenied={notifDenied}
+                isIOS={isIOS} isPWA={isPWA} showIOSGuide={showIOSGuide}
+                googleLoading={googleLoading} googleConnected={googleConnected}
+                onNotifEnable={handleNotifEnable} onGoogleConnect={handleGoogleConnect} onPwaInstall={handlePwaInstall}
+              />
             )}
 
             {/* Step 5: All done */}
