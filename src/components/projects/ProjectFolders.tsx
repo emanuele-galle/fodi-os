@@ -59,6 +59,15 @@ const FOLDER_COLORS = [
 const INDENT_PX = 24
 const NEST_HOVER_MS = 350 // Hold over a folder for 350ms to nest
 
+// Check if targetId is a descendant of the given folder
+function isDescendant(folder: Folder, targetId: string): boolean {
+  for (const child of folder.children ?? []) {
+    if (child.id === targetId) return true
+    if (isDescendant(child, targetId)) return true
+  }
+  return false
+}
+
 function getTotalTaskCount(folder: Folder): number {
   const own = folder._count?.tasks ?? 0
   const childCount = (folder.children ?? []).reduce((s, c) => s + getTotalTaskCount(c), 0)
@@ -69,28 +78,26 @@ function getAllFoldersTotalCount(folders: Folder[]): number {
   return folders.reduce((s, f) => s + getTotalTaskCount(f), 0)
 }
 
-// Flatten the tree into a sortable list
-function flattenTree(folders: Folder[], expandedIds: Set<string>): FlatItem[] {
+// Flatten the tree into a sortable list (recursive, unlimited depth)
+function flattenTree(folders: Folder[], expandedIds: Set<string>, depth = 0): FlatItem[] {
   const items: FlatItem[] = []
   for (const f of folders) {
-    items.push({ id: f.id, folder: f, parentId: f.parentId || null, depth: 0 })
-    if (expandedIds.has(f.id)) {
-      for (const c of f.children ?? []) {
-        items.push({ id: c.id, folder: c, parentId: f.id, depth: 1 })
-      }
+    items.push({ id: f.id, folder: f, parentId: f.parentId || null, depth })
+    if (expandedIds.has(f.id) && f.children?.length) {
+      items.push(...flattenTree(f.children, expandedIds, depth + 1))
     }
   }
   return items
 }
 
-// Build batch items for the API
-function buildBatchItems(folders: Folder[]): { id: string; parentId: string | null; sortOrder: number }[] {
+// Build batch items for the API (recursive, unlimited depth)
+function buildBatchItems(folders: Folder[], parentId: string | null = null): { id: string; parentId: string | null; sortOrder: number }[] {
   const items: { id: string; parentId: string | null; sortOrder: number }[] = []
   folders.forEach((f, i) => {
-    items.push({ id: f.id, parentId: f.parentId || null, sortOrder: i })
-    ;(f.children ?? []).forEach((c, ci) => {
-      items.push({ id: c.id, parentId: f.id, sortOrder: ci })
-    })
+    items.push({ id: f.id, parentId: parentId ?? f.parentId ?? null, sortOrder: i })
+    if (f.children?.length) {
+      items.push(...buildBatchItems(f.children, f.id))
+    }
   })
   return items
 }
@@ -138,7 +145,6 @@ function SortableFolderRow({
   const { folder, depth } = item
   const hasChildren = (folder.children ?? []).length > 0
   const totalCount = getTotalTaskCount(folder)
-  const isMaxDepth = depth >= 1
 
   const {
     attributes,
@@ -238,16 +244,14 @@ function SortableFolderRow({
             )}
             {!isNestTarget && !isTaskOver && (
               <span className="hidden group-hover:flex items-center gap-0.5 ml-auto flex-shrink-0">
-                {!isMaxDepth && (
-                  <span
-                    role="button"
-                    onClick={(e) => { e.stopPropagation(); onStartCreateSubfolder(folder.id) }}
-                    className="p-0.5 rounded hover:bg-primary/10"
-                    title="Aggiungi sottocartella"
-                  >
-                    <Plus className="h-3 w-3 text-muted" />
-                  </span>
-                )}
+                <span
+                  role="button"
+                  onClick={(e) => { e.stopPropagation(); onStartCreateSubfolder(folder.id) }}
+                  className="p-0.5 rounded hover:bg-primary/10"
+                  title="Aggiungi sottocartella"
+                >
+                  <Plus className="h-3 w-3 text-muted" />
+                </span>
                 <span
                   role="button"
                   onClick={(e) => { e.stopPropagation(); onStartEdit(folder) }}
@@ -500,10 +504,9 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
       return
     }
 
-    // Can only nest into root-level folders, and can't nest a folder that has children
-    const canNest = overItem.depth === 0
-      && (dragItem.folder.children ?? []).length === 0
-      && overItem.id !== dragActiveId
+    // Can nest into any folder, but not into itself or its descendants
+    const canNest = overItem.id !== dragActiveId
+      && !isDescendant(dragItem.folder, overItem.id)
 
     if (!canNest) {
       clearHoverTimer()
@@ -544,25 +547,42 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
       const targetFolder = folderMap.get(activeNestTarget)
       if (!targetFolder) return
 
-      // Can't nest into a sub-folder (max 2 levels)
-      if (targetFolder.parentId) return
-      // Can't nest a folder that has children
-      if ((draggedFolder.children ?? []).length > 0) return
+      // Can't nest into a descendant of itself (cycle prevention)
+      if (isDescendant(draggedFolder, activeNestTarget)) return
 
       // Build updated tree: remove from current position, add as child of target
-      const newFolders = folders
-        .filter((f) => f.id !== draggedId)
-        .map((f) => {
-          // Remove from any parent's children
-          const cleanChildren = (f.children ?? []).filter((c) => c.id !== draggedId)
+      function removeFolderFromTree(list: Folder[]): Folder[] {
+        return list
+          .filter(f => f.id !== draggedId)
+          .map(f => {
+            const updated = { ...f }
+            updated.children = removeFolderFromTree(f.children ?? [])
+            return updated
+          })
+      }
+      function insertIntoTree(list: Folder[]): Folder[] {
+        return list.map(f => {
+          const updated = { ...f }
           if (f.id === activeNestTarget) {
-            return {
-              ...f,
-              children: [...cleanChildren, { ...draggedFolder, parentId: activeNestTarget, children: [] }],
+            const cleanChildren = removeFolderFromTree(f.children ?? [])
+            const nested: Folder = {
+              id: draggedFolder!.id,
+              name: draggedFolder!.name,
+              description: draggedFolder!.description,
+              color: draggedFolder!.color,
+              sortOrder: draggedFolder!.sortOrder,
+              parentId: activeNestTarget!,
+              _count: draggedFolder!._count,
+              children: draggedFolder!.children ?? [],
             }
+            updated.children = [...cleanChildren, nested]
+          } else {
+            updated.children = insertIntoTree(f.children ?? [])
           }
-          return { ...f, children: cleanChildren }
+          return updated
         })
+      }
+      const newFolders = insertIntoTree(removeFolderFromTree(folders))
 
       saveBatchOrder(newFolders)
       setExpandedIds((prev) => new Set(prev).add(activeNestTarget))
@@ -592,9 +612,9 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
       return
     }
 
-    // Both children of same parent — reorder within parent
+    // Both children of same parent — reorder within parent (any depth)
     if (dragItem.parentId && dragItem.parentId === targetItem.parentId) {
-      const parent = folders.find((f) => f.id === dragItem.parentId)
+      const parent = folderMap.get(dragItem.parentId)
       if (!parent?.children) return
       const kids = [...parent.children]
       const oldIdx = kids.findIndex((c) => c.id === draggedId)
@@ -602,8 +622,14 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
       if (oldIdx === -1 || newIdx === -1) return
       const [moved] = kids.splice(oldIdx, 1)
       kids.splice(newIdx, 0, moved)
-      const newFolders = folders.map((f) => f.id === parent.id ? { ...f, children: kids } : f)
-      saveBatchOrder(newFolders)
+      function updateChildren(list: Folder[]): Folder[] {
+        return list.map(f => {
+          const updated = { ...f }
+          updated.children = f.id === parent!.id ? kids : updateChildren(f.children ?? [])
+          return updated
+        })
+      }
+      saveBatchOrder(updateChildren(folders))
       return
     }
 
@@ -611,13 +637,28 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     if (dragItem.depth > 0 && targetItem.depth === 0) {
       const newIdx = folders.findIndex((f) => f.id === targetId)
       if (newIdx === -1) return
-      const newFolders = folders.map((f) => ({
-        ...f,
-        children: (f.children ?? []).filter((c) => c.id !== draggedId),
-      }))
-      const unparented = { ...draggedFolder, parentId: null, children: [] as Folder[] }
-      newFolders.splice(newIdx + 1, 0, unparented)
-      saveBatchOrder(newFolders)
+      function removeFromTree(list: Folder[]): Folder[] {
+        return list.map(f => {
+          const updated = { ...f }
+          updated.children = (f.children ?? [])
+            .filter(c => c.id !== draggedId)
+            .map(c => { const u = { ...c }; u.children = removeFromTree(c.children ?? []); return u })
+          return updated
+        })
+      }
+      const cleaned = removeFromTree(folders)
+      const unparented: Folder = {
+        id: draggedFolder!.id,
+        name: draggedFolder!.name,
+        description: draggedFolder!.description,
+        color: draggedFolder!.color,
+        sortOrder: draggedFolder!.sortOrder,
+        parentId: null,
+        _count: draggedFolder!._count,
+        children: draggedFolder!.children ?? [],
+      }
+      cleaned.splice(newIdx + 1, 0, unparented)
+      saveBatchOrder(cleaned)
       return
     }
   }, [flatItems, folderMap, folders, nestTargetId, projectId, onFoldersChange])

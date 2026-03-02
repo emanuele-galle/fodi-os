@@ -28,6 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           orderBy: { joinedAt: 'asc' },
         },
         tasks: {
+          where: { parentId: null },
           include: {
             assignee: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
             assignments: {
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               orderBy: { assignedAt: 'asc' },
             },
             dependsOn: true,
+            _count: { select: { subtasks: true, comments: true } },
           },
           orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
         },

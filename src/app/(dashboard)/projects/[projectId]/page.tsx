@@ -82,6 +82,11 @@ interface ProjectDetail {
   tasks: Task[]; milestones: Milestone[]; members: ProjectMember[]; _count?: { tasks: number }
 }
 
+interface FolderNode {
+  id: string; name: string; description: string | null; color: string; sortOrder: number
+  parentId?: string | null; _count?: { tasks: number }; children?: FolderNode[]
+}
+
 const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
   LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
 }
@@ -264,7 +269,7 @@ export default function ProjectDetailPage() {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false)
   const [taskDetailId, setTaskDetailId] = useState<string | null>(null)
   const [taskDetailOpen, setTaskDetailOpen] = useState(false)
-  const [folders, setFolders] = useState<{ id: string; name: string; description: string | null; color: string; sortOrder: number; parentId?: string | null; _count?: { tasks: number }; children?: { id: string; name: string; description: string | null; color: string; sortOrder: number; _count?: { tasks: number } }[] }[]>([])
+  const [folders, setFolders] = useState<FolderNode[]>([])
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<string>('')
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
@@ -542,17 +547,36 @@ export default function ProjectDetailPage() {
   }
 
   const folderMap: Record<string, { id: string; name: string; color: string }> = {}
-  for (const f of folders) {
-    folderMap[f.id] = f
-    for (const c of (f.children ?? [])) { folderMap[c.id] = c }
+  function walkFolders(list: typeof folders) {
+    for (const f of list) {
+      folderMap[f.id] = f
+      if (f.children?.length) walkFolders(f.children)
+    }
   }
+  walkFolders(folders)
 
   const allProjectTasks = (project.tasks || []).map((t) => {
     const f = t.folderId ? folderMap[t.folderId] : null
     return f ? { ...t, folderName: f.name, folderColor: f.color } : t
   })
+  function findFolderInTree(list: FolderNode[], id: string): FolderNode | null {
+    for (const f of list) {
+      if (f.id === id) return f
+      const found = findFolderInTree(f.children ?? [], id)
+      if (found) return found
+    }
+    return null
+  }
+  function collectDescendantIds(folder: FolderNode): string[] {
+    const ids: string[] = []
+    for (const c of folder.children ?? []) {
+      ids.push(c.id)
+      ids.push(...collectDescendantIds(c))
+    }
+    return ids
+  }
   const selectedFolderIds = selectedFolderId
-    ? [selectedFolderId, ...(folders.find((f) => f.id === selectedFolderId)?.children ?? []).map((c) => c.id)]
+    ? (() => { const f = findFolderInTree(folders, selectedFolderId); return f ? [selectedFolderId, ...collectDescendantIds(f)] : [selectedFolderId] })()
     : null
   const allTasks = selectedFolderIds
     ? allProjectTasks.filter((t) => t.folderId && selectedFolderIds.includes(t.folderId))

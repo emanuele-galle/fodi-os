@@ -27,27 +27,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { projectId } = await params
 
-    const folders = await prisma.folder.findMany({
-      where: { projectId, parentId: null },
-      include: {
-        _count: { select: { tasks: true } },
-        children: {
-          include: {
-            _count: { select: { tasks: true } },
-            children: {
-              include: {
-                _count: { select: { tasks: true } },
-              },
-              orderBy: { sortOrder: 'asc' },
-            },
-          },
-          orderBy: { sortOrder: 'asc' },
-        },
-      },
+    // Fetch all folders flat, then build tree (supports unlimited depth)
+    const allFolders = await prisma.folder.findMany({
+      where: { projectId },
+      include: { _count: { select: { tasks: true } } },
       orderBy: { sortOrder: 'asc' },
     })
 
-    return NextResponse.json(folders)
+    type FolderWithChildren = (typeof allFolders)[number] & { children: FolderWithChildren[] }
+    function buildTree(parentId: string | null): FolderWithChildren[] {
+      return allFolders
+        .filter(f => f.parentId === parentId)
+        .map(f => ({ ...f, children: buildTree(f.id) }))
+    }
+
+    return NextResponse.json(buildTree(null))
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })
@@ -73,17 +67,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Validate parentId belongs to same project and enforce max 2 levels
+    // Validate parentId belongs to same project
     if (parsed.data.parentId) {
       const parent = await prisma.folder.findUnique({
         where: { id: parsed.data.parentId },
-        select: { projectId: true, parentId: true },
+        select: { projectId: true },
       })
       if (!parent || parent.projectId !== projectId) {
         return NextResponse.json({ error: 'Cartella parent non trovata o non appartiene al progetto' }, { status: 400 })
-      }
-      if (parent.parentId) {
-        return NextResponse.json({ error: 'Massimo 2 livelli di profondità consentiti' }, { status: 400 })
       }
     }
 
@@ -148,13 +139,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (parentId !== null) {
         const parent = await prisma.folder.findUnique({
           where: { id: parentId },
-          select: { projectId: true, parentId: true },
+          select: { projectId: true },
         })
         if (!parent || parent.projectId !== projectId) {
           return NextResponse.json({ error: 'Cartella parent non trovata o non appartiene al progetto' }, { status: 400 })
-        }
-        if (parent.parentId) {
-          return NextResponse.json({ error: 'Massimo 2 livelli di profondità consentiti' }, { status: 400 })
         }
       }
       (data as Record<string, unknown>).parentId = parentId
@@ -219,16 +207,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Alcune cartelle non appartengono a questo progetto' }, { status: 400 })
     }
 
-    // Validate no folder is parent of itself and max 2 levels
+    // Validate no folder is parent of itself
     for (const item of parsed.data.items) {
       if (item.parentId === item.id) {
         return NextResponse.json({ error: 'Una cartella non può essere sottocartella di se stessa' }, { status: 400 })
-      }
-      if (item.parentId) {
-        const parentItem = parsed.data.items.find((i) => i.id === item.parentId)
-        if (parentItem && parentItem.parentId !== null) {
-          return NextResponse.json({ error: 'Massimo 2 livelli di profondità consentiti' }, { status: 400 })
-        }
       }
     }
 
@@ -264,12 +246,17 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'ID cartella obbligatorio' }, { status: 400 })
     }
 
-    // Get all child folder IDs
-    const children = await prisma.folder.findMany({
-      where: { parentId: id },
-      select: { id: true },
-    })
-    const allFolderIds = [id, ...children.map((c) => c.id)]
+    // Get all descendant folder IDs (recursive)
+    async function getDescendantIds(parentId: string): Promise<string[]> {
+      const children = await prisma.folder.findMany({ where: { parentId }, select: { id: true } })
+      const ids: string[] = []
+      for (const child of children) {
+        ids.push(child.id)
+        ids.push(...await getDescendantIds(child.id))
+      }
+      return ids
+    }
+    const allFolderIds = [id, ...await getDescendantIds(id)]
 
     // Unlink tasks and attachments from folder and children before deleting
     await prisma.task.updateMany({
