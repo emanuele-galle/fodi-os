@@ -176,13 +176,13 @@ function formatActivityDetail(activity: ReportActivity): string {
 const PRIORITY_COLORS: Record<string, { bg: string; text: string }> = {
   URGENT: { bg: '#DC2626', text: '#FFFFFF' },
   HIGH: { bg: '#F97316', text: '#FFFFFF' },
-  MEDIUM: { bg: '#3B82F6', text: '#FFFFFF' },
+  MEDIUM: { bg: '#007AFF', text: '#FFFFFF' },
   LOW: { bg: '#9CA3AF', text: '#FFFFFF' },
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   TODO: { bg: '#9CA3AF', text: '#FFFFFF', label: 'DA FARE' },
-  IN_PROGRESS: { bg: '#3B82F6', text: '#FFFFFF', label: 'IN CORSO' },
+  IN_PROGRESS: { bg: '#007AFF', text: '#FFFFFF', label: 'IN CORSO' },
   IN_REVIEW: { bg: '#F59E0B', text: '#FFFFFF', label: 'IN REVISIONE' },
 }
 
@@ -198,7 +198,7 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const bold = await doc.embedFont(StandardFonts.HelveticaBold)
 
-  const primaryHex = company?.primaryColor || '#3B82F6'
+  const primaryHex = company?.primaryColor || '#007AFF'
   const secondaryHex = company?.secondaryColor || '#1E293B'
   const primary = hexToRgb(primaryHex)
   const secondary = hexToRgb(secondaryHex)
@@ -408,7 +408,7 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
   let yR = y  // right column tracker
 
   // ─── LEFT COLUMN: Distribuzione Tempo ──────────────────────
-  const PROJECT_DOT_COLORS = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#EF4444']
+  const PROJECT_DOT_COLORS = ['#007AFF', '#0A84FF', '#FF9500', '#34C759', '#FF3B30']
 
   if (data.projectBreakdown.length > 0) {
     yL = drawColSectionTitle(
@@ -617,8 +617,8 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
     // Action → circle color
     const ACTION_CIRCLE_COLORS: Record<string, string> = {
       CREATE: '#22C55E', COMPLETE: '#15803D', APPROVE: '#15803D',
-      UPDATE: '#3B82F6', ASSIGN: '#3B82F6', COMMENT: '#8B5CF6',
-      DELETE: '#EF4444', REJECT: '#EF4444',
+      UPDATE: '#007AFF', ASSIGN: '#007AFF', COMMENT: '#0A84FF',
+      DELETE: '#FF3B30', REJECT: '#FF3B30',
     }
 
     for (let i = 0; i < visibleActivities.length; i++) {

@@ -85,7 +85,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
     <div className={cn('flex gap-3 ai-bubble-in', isUser && 'flex-row-reverse')}>
       {/* Avatar */}
       {isUser ? (
-        <div className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center border bg-gradient-to-br from-violet-500/20 to-purple-600/20 border-violet-400/10 text-violet-300">
+        <div className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center border bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-400/10 text-blue-300">
           <User className="h-4 w-4" />
         </div>
       ) : (
@@ -131,7 +131,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
                   href={att.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block rounded-lg overflow-hidden border border-white/10 hover:border-violet-400/30 transition-colors"
+                  className="block rounded-lg overflow-hidden border border-white/10 hover:border-blue-400/30 transition-colors"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -146,9 +146,9 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
                   href={att.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] hover:border-violet-400/20 transition-colors text-xs"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] hover:border-blue-400/20 transition-colors text-xs"
                 >
-                  <FileText className="h-4 w-4 text-violet-400" />
+                  <FileText className="h-4 w-4 text-blue-400" />
                   <span className="truncate max-w-[140px]">{att.fileName}</span>
                   <ExternalLink className="h-3 w-3 text-muted-foreground/40" />
                 </a>
@@ -163,7 +163,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
             <div className={cn(
               'rounded-2xl px-4 py-3 text-sm leading-relaxed',
               isUser
-                ? 'bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-lg shadow-violet-500/15 rounded-tr-md border border-violet-400/10'
+                ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/15 rounded-tr-md border border-blue-400/10'
                 : 'bg-white/[0.04] backdrop-blur-sm border border-white/[0.06] text-foreground rounded-tl-md',
             )}>
               {isUser ? (
@@ -195,7 +195,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
                           )
                         }
                         return (
-                          <code className="px-1 py-0.5 rounded bg-white/[0.06] text-xs font-mono text-violet-300" {...props}>
+                          <code className="px-1 py-0.5 rounded bg-white/[0.06] text-xs font-mono text-blue-300" {...props}>
                             {children}
                           </code>
                         )
@@ -222,13 +222,13 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
                       ),
                       // Links
                       a: ({ href, children }) => (
-                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-violet-400 underline underline-offset-2 hover:text-violet-300">
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline underline-offset-2 hover:text-blue-300">
                           {children}
                         </a>
                       ),
                       // Blockquote
                       blockquote: ({ children }) => (
-                        <blockquote className="border-l-2 border-violet-500/30 pl-3 my-2 text-muted-foreground italic">
+                        <blockquote className="border-l-2 border-blue-500/30 pl-3 my-2 text-muted-foreground italic">
                           {children}
                         </blockquote>
                       ),

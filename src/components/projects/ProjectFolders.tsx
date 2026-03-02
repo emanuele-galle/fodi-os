@@ -52,8 +52,8 @@ interface FlatItem {
 }
 
 const FOLDER_COLORS = [
-  '#6366F1', '#8B5CF6', '#EC4899', '#EF4444', '#F97316',
-  '#EAB308', '#22C55E', '#14B8A6', '#06B6D4', '#3B82F6',
+  '#007AFF', '#0A84FF', '#EC4899', '#FF3B30', '#FF9500',
+  '#FFCC00', '#34C759', '#30D158', '#5AC8FA', '#32ADFF',
 ]
 
 const INDENT_PX = 24
@@ -327,7 +327,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
   const [creating, setCreating] = useState(false)
   const [creatingParentId, setCreatingParentId] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
-  const [newColor, setNewColor] = useState('#6366F1')
+  const [newColor, setNewColor] = useState('#007AFF')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('')
@@ -410,7 +410,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
       })
       if (res.ok) {
         setNewName('')
-        setNewColor('#6366F1')
+        setNewColor('#007AFF')
         setCreating(false)
         setCreatingParentId(null)
         if (creatingParentId) {
@@ -465,7 +465,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     setCreatingParentId(parentId)
     setCreating(true)
     setNewName('')
-    setNewColor('#6366F1')
+    setNewColor('#007AFF')
     setExpandedIds((prev) => new Set(prev).add(parentId))
   }
 

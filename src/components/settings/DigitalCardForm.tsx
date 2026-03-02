@@ -197,7 +197,7 @@ export function DigitalCardForm({ card, onSave }: DigitalCardFormProps) {
                 <span className="text-sm">Abilita prenotazione appuntamenti</span>
               </label>
               {formData.showBooking && (
-                <div className="space-y-3 pl-6 border-l-2 border-purple-500/20">
+                <div className="space-y-3 pl-6 border-l-2 border-blue-500/20">
                   <div className="grid grid-cols-2 gap-3">
                     <Input
                       label="Durata (min)"

@@ -33,7 +33,7 @@ interface ToolInfo {
 const MODELS = [
   { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6', badge: 'Veloce', color: 'text-blue-400' },
   { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5', badge: 'Economico', color: 'text-emerald-400' },
-  { value: 'claude-opus-4-6', label: 'Claude Opus 4.6', badge: 'Potente', color: 'text-violet-400' },
+  { value: 'claude-opus-4-6', label: 'Claude Opus 4.6', badge: 'Potente', color: 'text-blue-400' },
 ]
 
 const THINKING_LEVELS = [
@@ -46,7 +46,7 @@ const MODULE_LABELS: Record<string, { label: string; icon: typeof Sparkles; colo
   pm: { label: 'Progetti & Task', icon: Wrench, color: 'text-blue-400' },
   crm: { label: 'CRM', icon: Sparkles, color: 'text-emerald-400' },
   calendar: { label: 'Calendario', icon: Sparkles, color: 'text-orange-400' },
-  erp: { label: 'ERP & Finanza', icon: Sparkles, color: 'text-violet-400' },
+  erp: { label: 'ERP & Finanza', icon: Sparkles, color: 'text-blue-400' },
   support: { label: 'Support', icon: Sparkles, color: 'text-amber-400' },
   reports: { label: 'Report', icon: Sparkles, color: 'text-cyan-400' },
   chat: { label: 'Chat & Notifiche', icon: MessageSquare, color: 'text-pink-400' },
@@ -190,8 +190,8 @@ export default function AiSettingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0">
-            <Bot className="h-6 w-6 text-violet-400" />
+          <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+            <Bot className="h-6 w-6 text-blue-400" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Assistente AI</h1>
@@ -255,7 +255,7 @@ export default function AiSettingsPage() {
           <Card>
             <CardContent>
               <div className="flex items-center gap-2 mb-5">
-                <Bot className="h-4 w-4 text-violet-400" />
+                <Bot className="h-4 w-4 text-blue-400" />
                 <CardTitle>Identità</CardTitle>
               </div>
               <div className="space-y-4">
@@ -375,7 +375,7 @@ export default function AiSettingsPage() {
           <Card>
             <CardContent>
               <div className="flex items-center gap-2 mb-5">
-                <Brain className="h-4 w-4 text-violet-400" />
+                <Brain className="h-4 w-4 text-blue-400" />
                 <CardTitle>Ragionamento</CardTitle>
               </div>
               <div className="space-y-4">
@@ -388,7 +388,7 @@ export default function AiSettingsPage() {
                     onClick={() => setEnableThinking(!enableThinking)}
                     className={cn(
                       'relative w-11 h-6 rounded-full transition-colors',
-                      enableThinking ? 'bg-violet-500' : 'bg-secondary',
+                      enableThinking ? 'bg-blue-500' : 'bg-secondary',
                     )}
                   >
                     <span className={cn(
@@ -408,14 +408,14 @@ export default function AiSettingsPage() {
                         className={cn(
                           'w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left',
                           thinkingEffort === level.value
-                            ? 'border-violet-500/40 bg-violet-500/5'
+                            ? 'border-blue-500/40 bg-blue-500/5'
                             : 'border-border/30 hover:border-border/60 hover:bg-secondary/30',
                         )}
                       >
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             'w-3 h-3 rounded-full border-2 transition-all',
-                            thinkingEffort === level.value ? 'border-violet-500 bg-violet-500' : 'border-border',
+                            thinkingEffort === level.value ? 'border-blue-500 bg-blue-500' : 'border-border',
                           )} />
                           <div>
                             <span className="text-sm font-medium">{level.label}</span>
@@ -528,7 +528,7 @@ export default function AiSettingsPage() {
           <Card>
             <CardContent>
               <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-4 w-4 text-violet-400" />
+                <Sparkles className="h-4 w-4 text-blue-400" />
                 <CardTitle>System Prompt personalizzato</CardTitle>
               </div>
               <p className="text-xs text-muted mb-3">

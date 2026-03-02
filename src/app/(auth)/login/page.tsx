@@ -103,7 +103,7 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="flex h-10 w-full rounded-md border border-border bg-transparent pl-10 pr-3 py-2 text-sm transition-colors placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                  className="flex h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-3 py-2 text-sm transition-all placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/30"
                 />
               </div>
             </div>
@@ -122,13 +122,13 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="flex h-10 w-full rounded-md border border-border bg-transparent pl-10 pr-3 py-2 text-sm transition-colors placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                  className="flex h-11 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-3 py-2 text-sm transition-all placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/30"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20">
+              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-xl border border-destructive/20">
                 {error}
               </div>
             )}

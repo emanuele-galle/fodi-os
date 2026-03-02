@@ -19,9 +19,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          'btn-ripple inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]',
+          'inline-flex items-center justify-center font-medium transition-all duration-150 rounded-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
           {
-            'bg-primary text-primary-foreground font-semibold shadow-[0_1px_3px_rgba(124,58,237,0.3)] hover:bg-primary-hover hover:shadow-[0_4px_12px_rgba(124,58,237,0.25)]': resolvedVariant === 'primary',
+            'bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary-hover hover:shadow-md': resolvedVariant === 'primary',
             'bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80': resolvedVariant === 'secondary',
             'border border-border/60 bg-transparent font-medium rounded-lg hover:bg-secondary/50': resolvedVariant === 'outline',
             'bg-transparent font-medium hover:bg-secondary/60': resolvedVariant === 'ghost',

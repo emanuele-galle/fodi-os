@@ -100,7 +100,7 @@ export default function KnowledgeBasePage() {
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <BookOpen className="h-6 w-6 text-violet-400" />
+          <BookOpen className="h-6 w-6 text-blue-400" />
           <div>
             <h1 className="text-xl font-bold">Knowledge Base AI</h1>
             <p className="text-sm text-muted-foreground">Informazioni aziendali accessibili all&apos;assistente AI</p>
@@ -109,7 +109,7 @@ export default function KnowledgeBasePage() {
         <button
           onClick={startCreate}
           disabled={creating}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors text-sm disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm disabled:opacity-50"
         >
           <Plus className="h-4 w-4" /> Nuova pagina
         </button>
@@ -117,7 +117,7 @@ export default function KnowledgeBasePage() {
 
       {/* Create/Edit form */}
       {(creating || editing) && (
-        <div className="mb-6 p-4 rounded-xl border border-violet-500/20 bg-violet-500/[0.03]">
+        <div className="mb-6 p-4 rounded-xl border border-blue-500/20 bg-blue-500/[0.03]">
           <h3 className="text-sm font-semibold mb-3">{editing ? 'Modifica pagina' : 'Nuova pagina'}</h3>
           <div className="space-y-3">
             <div className="flex gap-3">
@@ -161,7 +161,7 @@ export default function KnowledgeBasePage() {
                 <button
                   onClick={handleSave}
                   disabled={saving || !form.title.trim() || !form.content.trim()}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600 text-white text-sm hover:bg-violet-700 disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   Salva
@@ -175,7 +175,7 @@ export default function KnowledgeBasePage() {
       {/* Pages list */}
       {loading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-violet-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
         </div>
       ) : pages.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
@@ -197,7 +197,7 @@ export default function KnowledgeBasePage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-medium text-sm">{page.title}</h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-violet-500/10 text-violet-400">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/10 text-blue-400">
                       {CATEGORIES.find(c => c.value === page.category)?.label || page.category}
                     </span>
                     {!page.isActive && (

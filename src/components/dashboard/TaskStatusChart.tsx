@@ -12,7 +12,7 @@ interface StatusData {
 
 const STATUS_COLORS: Record<string, string> = {
   TODO: '#8C8680',
-  IN_PROGRESS: '#4F46E5',
+  IN_PROGRESS: '#007AFF',
   IN_REVIEW: '#D97706',
   DONE: '#059669',
   CANCELLED: '#DC2626',

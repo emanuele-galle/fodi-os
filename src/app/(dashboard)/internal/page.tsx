@@ -78,7 +78,7 @@ const QUICK_LINKS = [
   { label: 'Impostazioni', href: '/settings', icon: Settings, color: 'text-muted' },
   { label: 'Progetti Clienti', href: '/projects', icon: FolderKanban, color: 'text-[var(--color-warning)]' },
   { label: 'Task', href: '/tasks', icon: CheckSquare, color: 'text-emerald-600' },
-  { label: 'Calendario', href: '/calendar', icon: Clock, color: 'text-purple-600' },
+  { label: 'Calendario', href: '/calendar', icon: Clock, color: 'text-blue-600' },
 ]
 
 export default function InternalPage() {
@@ -93,7 +93,7 @@ export default function InternalPage() {
   const [formError, setFormError] = useState('')
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([])
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(null)
-  const [formColor, setFormColor] = useState('#6366F1')
+  const [formColor, setFormColor] = useState('#007AFF')
 
   const fetchData = async () => {
     setFetchError(null)
@@ -153,7 +153,7 @@ export default function InternalPage() {
       })
       if (res.ok) {
         setFormError('')
-        setFormColor('#6366F1')
+        setFormColor('#007AFF')
         setModalOpen(false)
         setLoading(true)
         fetchData()
@@ -245,7 +245,7 @@ export default function InternalPage() {
     { label: 'Progetti Attivi', value: String(activeProjects.length), icon: FolderKanban, color: 'text-primary' },
     { label: 'Task Aperti', value: String(openTasks.length), icon: CheckSquare, color: 'text-accent' },
     { label: 'Completamento', value: totalTasks > 0 ? `${Math.round((completedTasks / totalTasks) * 100)}%` : '0%', icon: ListChecks, color: 'text-emerald-600' },
-    { label: 'Membri Team', value: String(users.length), icon: Users, color: 'text-purple-600' },
+    { label: 'Membri Team', value: String(users.length), icon: Users, color: 'text-blue-600' },
   ]
 
   return (

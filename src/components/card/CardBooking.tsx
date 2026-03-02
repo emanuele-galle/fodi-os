@@ -110,7 +110,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
     }
   }
 
-  const inputClass = 'w-full h-12 px-4 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/30 transition-all'
+  const inputClass = 'w-full h-12 px-4 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all'
 
   return (
     <div className="space-y-5">
@@ -118,8 +118,8 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
       <div className="flex items-center justify-center gap-3">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/[0.06]" />
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-            <Calendar className="w-4 h-4 text-purple-400" />
+          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+            <Calendar className="w-4 h-4 text-blue-400" />
           </div>
           <h2 className="text-[16px] font-semibold text-white/90 tracking-tight">Prenota un appuntamento</h2>
         </div>
@@ -136,7 +136,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
         {/* LOADING */}
         {step === 'loading' && (
           <div className="flex items-center justify-center py-8">
-            <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
@@ -166,14 +166,14 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
                       onClick={() => handleDateSelect(dateStr)}
                       className={`flex-shrink-0 flex flex-col items-center gap-0.5 px-4 py-3 rounded-xl border transition-all duration-200 ${
                         isSelected
-                          ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20'
-                          : 'bg-white/[0.03] border-white/[0.08] hover:border-purple-500/30 hover:bg-white/[0.06] text-white/70'
+                          ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20'
+                          : 'bg-white/[0.03] border-white/[0.08] hover:border-blue-500/30 hover:bg-white/[0.06] text-white/70'
                       }`}
                     >
-                      <span className={`text-[12px] font-medium ${isSelected ? 'text-purple-200' : 'text-white/40'}`}>{day}</span>
+                      <span className={`text-[12px] font-medium ${isSelected ? 'text-blue-200' : 'text-white/40'}`}>{day}</span>
                       <span className="text-lg font-bold leading-none">{num}</span>
-                      <span className={`text-[12px] font-medium ${isSelected ? 'text-purple-200' : 'text-white/40'}`}>{month}</span>
-                      <span className={`text-[11px] mt-0.5 ${isSelected ? 'text-purple-200' : 'text-purple-400/60'}`}>
+                      <span className={`text-[12px] font-medium ${isSelected ? 'text-blue-200' : 'text-white/40'}`}>{month}</span>
+                      <span className={`text-[11px] mt-0.5 ${isSelected ? 'text-blue-200' : 'text-blue-400/60'}`}>
                         {slotCount} slot
                       </span>
                     </button>
@@ -211,8 +211,8 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
                     onClick={() => handleTimeSelect(time)}
                     className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all duration-200 ${
                       isSelected
-                        ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20'
-                        : 'bg-white/[0.03] border-white/[0.08] hover:border-purple-500/30 hover:bg-white/[0.06] text-white/60'
+                        ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20'
+                        : 'bg-white/[0.03] border-white/[0.08] hover:border-blue-500/30 hover:bg-white/[0.06] text-white/60'
                     }`}
                   >
                     {time}
@@ -264,14 +264,14 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
                 rows={2}
                 value={form.notes}
                 onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/30 transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all resize-none"
               />
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 mt-4 py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-bold text-[14px] shadow-lg shadow-purple-500/15 transition-all duration-200 hover:shadow-xl hover:shadow-purple-500/25 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 mt-4 py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white font-bold text-[14px] shadow-lg shadow-blue-500/15 transition-all duration-200 hover:shadow-xl hover:shadow-blue-500/25 hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
               <Calendar className="w-[18px] h-[18px] relative" />
@@ -298,7 +298,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
                 setForm({ name: '', email: '', phone: '', notes: '' })
                 setError(null)
               }}
-              className="mt-4 text-sm text-purple-400 font-medium hover:text-purple-300 transition-colors"
+              className="mt-4 text-sm text-blue-400 font-medium hover:text-blue-300 transition-colors"
             >
               Torna al profilo
             </button>

@@ -73,7 +73,7 @@ function taskRow(t: Task, showLate = false): string {
         <td>
           <span style="font-size:14px;font-weight:600;color:#111827;line-height:1.4;display:block;">${esc(cut(t.title, 60))}</span>
           <span style="font-size:12px;color:#6B7280;line-height:1;margin-top:6px;display:block;">
-            ${proj ? `<span style="color:#6366F1;font-weight:600;">${esc(cut(proj, 20))}</span><span style="color:#D1D5DB;padding:0 6px;">&#183;</span>` : ''}${STATUS_LABEL[t.status] || t.status}${due ? `<span style="color:#D1D5DB;padding:0 6px;">&#183;</span>${due}` : ''}${late ? `<span style="color:#D1D5DB;padding:0 6px;">&#183;</span><span style="color:#EF4444;font-weight:600;">${late}</span>` : ''}
+            ${proj ? `<span style="color:#007AFF;font-weight:600;">${esc(cut(proj, 20))}</span><span style="color:#D1D5DB;padding:0 6px;">&#183;</span>` : ''}${STATUS_LABEL[t.status] || t.status}${due ? `<span style="color:#D1D5DB;padding:0 6px;">&#183;</span>${due}` : ''}${late ? `<span style="color:#D1D5DB;padding:0 6px;">&#183;</span><span style="color:#EF4444;font-weight:600;">${late}</span>` : ''}
           </span>
         </td>
         <td width="24" style="text-align:right;vertical-align:middle;">
@@ -114,12 +114,12 @@ function commentRow(c: Comment): string {
     <div style="padding:14px 20px;background:#fff;border:1px solid #EAECF0;border-radius:12px;margin-bottom:6px;">
       <table width="100%" cellpadding="0" cellspacing="0"><tr>
         <td width="40" valign="top" style="padding-right:12px;">
-          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#A78BFA);text-align:center;line-height:34px;font-size:12px;font-weight:700;color:#fff;">${ini}</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#007AFF,#0A84FF);text-align:center;line-height:34px;font-size:12px;font-weight:700;color:#fff;">${ini}</div>
         </td>
         <td>
           <span style="font-size:13px;color:#111827;font-weight:600;">${esc(name)}</span>
           <span style="font-size:12px;color:#9CA3AF;"> su </span>
-          <a href="${url}" style="font-size:12px;color:#6366F1;text-decoration:none;font-weight:600;">${taskTitle}</a>
+          <a href="${url}" style="font-size:12px;color:#007AFF;text-decoration:none;font-weight:600;">${taskTitle}</a>
           <span style="font-size:11px;color:#D1D5DB;float:right;">${time}</span>
           <p style="margin:8px 0 0;font-size:13px;color:#4B5563;line-height:1.55;padding:10px 14px;background:#F9FAFB;border-radius:8px;border:1px solid #F3F4F6;">
             &ldquo;${text}&rdquo;
@@ -155,7 +155,7 @@ function buildEmail(firstName: string, data: Data): string {
   if (completedYesterday.length > 0)
     sections.push(section('Completate ieri', completedYesterday.length, '#10B981', completedYesterday.map(t => taskRow(t)).join('')))
   if (recentComments.length > 0)
-    sections.push(section('Commenti recenti', recentComments.length, '#8B5CF6', recentComments.map(commentRow).join('')))
+    sections.push(section('Commenti recenti', recentComments.length, '#0A84FF', recentComments.map(commentRow).join('')))
 
   return `<!DOCTYPE html>
 <html lang="it">

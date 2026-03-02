@@ -10,7 +10,7 @@ interface DonutChartProps {
   height?: number
 }
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16']
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#007AFF', '#EC4899', '#06B6D4', '#84CC16']
 
 export function DonutChart({ data, total, label, height = 200 }: DonutChartProps) {
   return (

@@ -25,14 +25,14 @@ export default function CardHero({
       {/* Avatar with animated ring */}
       <div className="relative mb-8">
         {/* Outer glow */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500/25 to-blue-500/15 blur-3xl scale-[1.6] animate-pulse-slow" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/25 to-blue-500/15 blur-3xl scale-[1.6] animate-pulse-slow" />
 
         {/* Spinning gradient border */}
         <div className="relative w-40 h-40">
           <div
             className="absolute inset-0 rounded-full animate-spin-slow p-[3px]"
             style={{
-              background: 'conic-gradient(from 0deg, transparent 10%, rgba(139,92,246,0.6), transparent 40%, rgba(99,102,241,0.5), transparent 70%, rgba(168,85,247,0.4), transparent 90%)',
+              background: 'conic-gradient(from 0deg, transparent 10%, rgba(0,122,255,0.6), transparent 40%, rgba(10,132,255,0.5), transparent 70%, rgba(64,156,255,0.4), transparent 90%)',
             }}
           >
             <div className="w-full h-full rounded-full bg-[#0a0a0f]" />
@@ -53,7 +53,7 @@ export default function CardHero({
                 priority
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-purple-600/30 to-indigo-600/30 flex items-center justify-center text-white/70 text-4xl font-light tracking-wide">
+              <div className="w-full h-full bg-gradient-to-br from-blue-600/30 to-indigo-600/30 flex items-center justify-center text-white/70 text-4xl font-light tracking-wide">
                 {initials}
               </div>
             )}
@@ -68,7 +68,7 @@ export default function CardHero({
 
       {/* Job title */}
       {jobTitle && (
-        <p className="mt-2.5 text-[16px] font-medium bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+        <p className="mt-2.5 text-[16px] font-medium bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
           {jobTitle}
         </p>
       )}

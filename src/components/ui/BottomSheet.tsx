@@ -93,7 +93,7 @@ export function BottomSheet({
       {/* Backdrop */}
       <div
         className={cn(
-          'absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-250',
+          'absolute inset-0 bg-black/30 backdrop-blur-xl transition-opacity duration-250',
           closing ? 'opacity-0' : 'opacity-100'
         )}
         onClick={closeSheet}
@@ -107,7 +107,7 @@ export function BottomSheet({
         onTouchEnd={handleTouchEnd}
         style={{ maxHeight: `${maxHeight}vh` }}
         className={cn(
-          'absolute bottom-0 left-0 right-0 bg-card border-t border-border/30 rounded-t-2xl overflow-hidden flex flex-col shadow-[var(--shadow-xl)]',
+          'absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/30 rounded-t-2xl overflow-hidden flex flex-col shadow-[var(--shadow-xl)]',
           closing ? 'animate-menu-slide-down' : 'animate-menu-slide-up',
           className
         )}
@@ -115,7 +115,7 @@ export function BottomSheet({
         {/* Drag handle */}
         {showHandle && (
           <div className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing flex-shrink-0">
-            <div className="w-10 h-1.5 rounded-full bg-muted/30" />
+            <div className="w-10 h-1.5 rounded-full bg-muted/40" />
           </div>
         )}
 

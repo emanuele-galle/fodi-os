@@ -14,7 +14,7 @@ interface ClientDealsTabProps {
 
 export function ClientDealsTab({ clientId }: ClientDealsTabProps) {
   const STAGE_LABELS: Record<string, string> = { QUALIFICATION: 'Qualificazione', PROPOSAL: 'Proposta', NEGOTIATION: 'Negoziazione', CLOSED_WON: 'Vinta', CLOSED_LOST: 'Persa' }
-  const STAGE_COLORS: Record<string, string> = { QUALIFICATION: 'bg-blue-500/10 text-blue-600', PROPOSAL: 'bg-violet-500/10 text-violet-600', NEGOTIATION: 'bg-amber-500/10 text-amber-600', CLOSED_WON: 'bg-emerald-500/10 text-emerald-600', CLOSED_LOST: 'bg-red-500/10 text-red-600' }
+  const STAGE_COLORS: Record<string, string> = { QUALIFICATION: 'bg-blue-500/10 text-blue-600', PROPOSAL: 'bg-blue-500/10 text-blue-600', NEGOTIATION: 'bg-amber-500/10 text-amber-600', CLOSED_WON: 'bg-emerald-500/10 text-emerald-600', CLOSED_LOST: 'bg-red-500/10 text-red-600' }
   const [deals, setDeals] = useState<Array<{ id: string; title: string; value: string; stage: string; probability: number; expectedCloseDate: string | null; owner?: { firstName: string; lastName: string } | null }>>([])
   const [loading, setLoading] = useState(true)
 

@@ -46,7 +46,7 @@ interface GanttChartProps {
 
 const STATUS_COLORS: Record<string, string> = {
   TODO: '#94A3B8',
-  IN_PROGRESS: '#6366F1',
+  IN_PROGRESS: '#007AFF',
   IN_REVIEW: '#F59E0B',
   DONE: '#22C55E',
   CANCELLED: '#EF4444',

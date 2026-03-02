@@ -1,7 +1,7 @@
 import type { Role } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { brand } from '@/lib/branding'
-import { ROLE_PERMISSIONS, type Permission } from '@/lib/permissions'
+import { ROLE_PERMISSIONS, hasPermission, type Permission, type Module } from '@/lib/permissions'
 import { BASE_SYSTEM_PROMPT } from './base'
 import { FODI_BRAND_PROMPT } from './brands/fodi'
 import { MUSCARI_BRAND_PROMPT } from './brands/muscari'
@@ -10,6 +10,80 @@ import { getAllSkillPrompts } from './skills'
 const BRAND_PROMPTS: Record<string, string> = {
   fodi: FODI_BRAND_PROMPT,
   muscari: MUSCARI_BRAND_PROMPT,
+}
+
+const MODULE_CAPABILITIES: Record<string, { condition: Module; description: string }[]> = {
+  pm: [
+    { condition: 'pm', description: '**Progetti**: creare, aggiornare, listare, archiviare progetti' },
+    { condition: 'pm', description: '**Task**: creare, aggiornare, commentare, eliminare, cercare task, subtask, dipendenze' },
+    { condition: 'pm', description: '**Dipendenze Task**: visualizzare e gestire dipendenze tra task, allegati task' },
+    { condition: 'pm', description: '**Cartelle & Link Progetto**: creare/listare/modificare cartelle, aggiungere link URL a progetti e cartelle' },
+    { condition: 'pm', description: '**Milestone Progetto**: creare e gestire traguardi di progetto' },
+    { condition: 'pm', description: '**Membri Progetto**: aggiungere, rimuovere e listare membri di un progetto' },
+    { condition: 'pm', description: '**Coordinamento Team**: creare progetti da brief, assegnare task, monitorare avanzamento, notificare il team' },
+    { condition: 'pm', description: '**Report**: analytics, carico team, ricerca trasversale' },
+  ],
+  crm: [
+    { condition: 'crm', description: '**CRM**: gestire lead, clienti, deal, contatti, registrare interazioni, convertire lead in clienti' },
+    { condition: 'crm', description: '**Dettagli CRM**: informazioni complete su clienti e deal' },
+    { condition: 'crm', description: '**Report CRM**: statistiche CRM, pipeline' },
+  ],
+  erp: [
+    { condition: 'erp', description: '**ERP & Finanza**: preventivi (da template), spese, entrate, report mensile, fatture ricorrenti, dashboard contabile, obiettivi profitto' },
+    { condition: 'erp', description: '**Conti Bancari & Trasferimenti**: lista conti, giroconto, categorie contabili, aliquote IVA' },
+    { condition: 'erp', description: '**Fatture Ricorrenti**: creare e gestire spese/entrate ricorrenti' },
+    { condition: 'erp', description: '**Template Preventivi**: consultare template per creazione rapida preventivi' },
+    { condition: 'erp', description: '**Firma Digitale**: creare e monitorare richieste di firma digitale documenti' },
+  ],
+  support: [
+    { condition: 'support', description: '**Support**: ticket (creare, aggiornare, listare, dettagli, commentare)' },
+  ],
+  kb: [
+    { condition: 'kb', description: '**Knowledge Base**: consultare la base di conoscenza aziendale per risposte accurate e contestuali' },
+    { condition: 'kb', description: '**Wiki Aziendale**: cercare, leggere, creare, modificare ed eliminare pagine wiki con gerarchia e tag' },
+  ],
+  content: [
+    { condition: 'content', description: '**Documenti**: listare e consultare documenti di progetti e clienti' },
+  ],
+  chat: [
+    { condition: 'chat', description: '**Chat & Messaggistica**: inviare messaggi nei canali, DM a colleghi, cercare messaggi, messaggi non letti, gestire membri canali' },
+  ],
+  admin: [
+    { condition: 'admin', description: '**Profilo Aziendale**: dati aziendali, partita IVA, contatti' },
+    { condition: 'admin', description: '**Storico Attività**: log completo delle azioni eseguite nel sistema' },
+    { condition: 'admin', description: '**Preferenze Notifiche**: configurare quali notifiche ricevere e su quale canale' },
+  ],
+}
+
+const ALWAYS_AVAILABLE_CAPABILITIES = [
+  '**Calendario**: vedere/creare/modificare/eliminare eventi, trovare slot liberi',
+  '**Time Tracking**: registrare ore, riepilogo per utente/progetto/task',
+  '**Riepilogo giornata**: panoramica completa della giornata dell\'utente',
+  '**Notifiche**: inviare e leggere notifiche in-app, segnarle come lette',
+  '**Memoria & Preferenze**: memorizzare regole e preferenze utente che persistono tra conversazioni',
+  '**Work Sessions**: clock in/out, monitoraggio sessioni di lavoro',
+  '**Report Giornalieri**: consultare report giornalieri generati automaticamente',
+]
+
+function buildCapabilitiesSection(
+  role: Role,
+  customModulePermissions?: Record<string, string[]> | null,
+): string {
+  const lines: string[] = ['## Capacità', 'Hai accesso a tool che ti permettono di:']
+
+  for (const [, entries] of Object.entries(MODULE_CAPABILITIES)) {
+    for (const entry of entries) {
+      if (hasPermission(role, entry.condition, 'read', customModulePermissions)) {
+        lines.push(`- ${entry.description}`)
+      }
+    }
+  }
+
+  for (const cap of ALWAYS_AVAILABLE_CAPABILITIES) {
+    lines.push(`- ${cap}`)
+  }
+
+  return lines.join('\n')
 }
 
 function formatPermissions(role: Role): string {
@@ -46,9 +120,10 @@ interface BuildPromptParams {
   agentName?: string
   customPrompt?: string | null
   currentPage?: string
+  customModulePermissions?: Record<string, string[]> | null
 }
 
-export async function buildSystemPrompt({ userName, userRole, userId, agentName, customPrompt, currentPage }: BuildPromptParams): Promise<string> {
+export async function buildSystemPrompt({ userName, userRole, userId, agentName, customPrompt, currentPage, customModulePermissions }: BuildPromptParams): Promise<string> {
   const brandSlug = brand.slug
   const brandPrompt = BRAND_PROMPTS[brandSlug] || ''
 
@@ -90,6 +165,7 @@ export async function buildSystemPrompt({ userName, userRole, userId, agentName,
     .replaceAll('{USER_NAME}', userName)
     .replaceAll('{USER_ROLE}', userRole)
     .replaceAll('{USER_PERMISSIONS}', formatPermissions(userRole))
+    .replaceAll('{CAPABILITIES}', buildCapabilitiesSection(userRole, customModulePermissions))
 
   // Add brand-specific context
   if (brandPrompt) {

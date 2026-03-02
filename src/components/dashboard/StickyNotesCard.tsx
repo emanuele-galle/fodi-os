@@ -15,7 +15,7 @@ interface StickyNoteItem {
 const NOTE_COLORS = [
   { value: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800', label: 'Giallo' },
   { value: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800', label: 'Verde' },
-  { value: 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800', label: 'Blu' },
+  { value: 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800', label: 'Blu' },
   { value: 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800', label: 'Rosa' },
 ]
 

@@ -158,7 +158,7 @@ export function WizardForm({ template, cardSlug, companyName, phone }: WizardFor
           </div>
           <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500 ease-out rounded-full"
+              className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500 ease-out rounded-full"
               style={{ width: `${((currentStepIndex + 1) / template.steps.length) * 100}%` }}
             />
           </div>
@@ -214,7 +214,7 @@ export function WizardForm({ template, cardSlug, companyName, phone }: WizardFor
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-medium text-[14px] transition-all duration-300 hover:brightness-110 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white font-medium text-[14px] transition-all duration-300 hover:brightness-110 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
               {isSubmitting ? (
@@ -238,7 +238,7 @@ export function WizardForm({ template, cardSlug, companyName, phone }: WizardFor
             <button
               type="button"
               onClick={handleNext}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-medium text-[14px] transition-all duration-300 hover:brightness-110 active:scale-[0.99]"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white font-medium text-[14px] transition-all duration-300 hover:brightness-110 active:scale-[0.99]"
             >
               Avanti
             </button>

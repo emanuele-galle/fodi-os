@@ -31,12 +31,12 @@ function getSuggestionIcon(text: string): { icon: typeof Sparkles; color: string
   if (lower.includes('task') || lower.includes('scadenz') || lower.includes('progett')) return { icon: CheckSquare, color: 'text-blue-400' }
   if (lower.includes('crm') || lower.includes('lead') || lower.includes('client') || lower.includes('pipeline') || lower.includes('deal') || lower.includes('trattativ')) return { icon: Users, color: 'text-emerald-400' }
   if (lower.includes('calendario') || lower.includes('agenda') || lower.includes('oggi') || lower.includes('evento') || lower.includes('slot')) return { icon: Calendar, color: 'text-orange-400' }
-  if (lower.includes('report') || lower.includes('fattur') || lower.includes('spese') || lower.includes('preventiv') || lower.includes('entrat')) return { icon: Receipt, color: 'text-violet-400' }
+  if (lower.includes('report') || lower.includes('fattur') || lower.includes('spese') || lower.includes('preventiv') || lower.includes('entrat')) return { icon: Receipt, color: 'text-blue-400' }
   if (lower.includes('ticket') || lower.includes('support')) return { icon: Headphones, color: 'text-amber-400' }
   if (lower.includes('ore') || lower.includes('tempo') || lower.includes('time')) return { icon: Clock, color: 'text-cyan-400' }
   if (lower.includes('messaggio') || lower.includes('chat') || lower.includes('invia') || lower.includes('scrivi')) return { icon: MessageCircle, color: 'text-pink-400' }
   if (lower.includes('crea un progetto') || lower.includes('nuovo progetto')) return { icon: FolderPlus, color: 'text-teal-400' }
-  return { icon: Sparkles, color: 'text-violet-400' }
+  return { icon: Sparkles, color: 'text-blue-400' }
 }
 
 interface AiSuggestionsProps {
@@ -76,7 +76,7 @@ export function AiSuggestions({ suggestions, onSelect, variant = 'empty', curren
   return (
     <div className="space-y-2.5">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground/40">
-        <Sparkles className="h-3 w-3 text-violet-400/50" />
+        <Sparkles className="h-3 w-3 text-blue-400/50" />
         <span>Suggerimenti</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

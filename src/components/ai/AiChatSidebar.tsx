@@ -69,7 +69,7 @@ export function AiChatSidebar({ open, onClose }: AiChatSidebarProps) {
             {/* Resize handle */}
             <div
               onMouseDown={handleMouseDown}
-              className="absolute left-0 top-0 bottom-0 w-3 cursor-col-resize z-10 group hidden sm:flex items-center justify-center hover:bg-violet-500/10 transition-colors"
+              className="absolute left-0 top-0 bottom-0 w-3 cursor-col-resize z-10 group hidden sm:flex items-center justify-center hover:bg-blue-500/10 transition-colors"
             >
               <GripVertical className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground/70 transition-colors" />
             </div>

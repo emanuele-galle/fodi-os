@@ -369,7 +369,7 @@ export function TeamMembersContent() {
                       {ROLE_LABELS[member.role] || member.role}
                     </Badge>
                     {member.digitalCardSlug && (
-                      <Badge variant="outline" className="mt-1 text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/20">NFC</Badge>
+                      <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">NFC</Badge>
                     )}
                     <span className="mt-1.5 text-xs text-muted flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: activity.color }} />
@@ -442,7 +442,7 @@ export function TeamMembersContent() {
                         href={`/c/${member.digitalCardSlug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 transition-colors touch-manipulation min-h-[44px] md:min-h-0"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors touch-manipulation min-h-[44px] md:min-h-0"
                         title={`Card NFC di ${member.firstName}`}
                       >
                         <CreditCard className="h-3.5 w-3.5" />

@@ -205,7 +205,7 @@ export default function CrmTasksPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-violet-500/10 text-violet-600">
+          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
             <CheckSquare className="h-5 w-5" />
           </div>
           <div>

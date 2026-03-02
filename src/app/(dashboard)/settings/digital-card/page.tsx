@@ -93,8 +93,8 @@ export default function DigitalCardPage() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-            <CreditCard className="h-6 w-6 text-purple-600" />
+          <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+            <CreditCard className="h-6 w-6 text-blue-600" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Card Digitale NFC</h1>
@@ -120,13 +120,13 @@ export default function DigitalCardPage() {
       ) : card ? (
         <>
           {cardUrl && (
-            <div className="mb-6 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
-              <p className="text-sm font-medium text-purple-900 mb-1">URL Card Pubblica</p>
+            <div className="mb-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <p className="text-sm font-medium text-blue-900 mb-1">URL Card Pubblica</p>
               <a
                 href={cardUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-purple-600 hover:underline break-all"
+                className="text-sm text-blue-600 hover:underline break-all"
               >
                 {cardUrl}
               </a>
@@ -163,7 +163,7 @@ export default function DigitalCardPage() {
               {/* Wallet Pass */}
               <div className="p-4 rounded-lg bg-card border border-border/30">
                 <div className="flex items-center gap-2 mb-3">
-                  <svg className="w-5 h-5 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <svg className="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   <h3 className="text-sm font-semibold">Aggiungi al Wallet</h3>

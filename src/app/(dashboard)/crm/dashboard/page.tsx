@@ -249,8 +249,8 @@ export default function CrmDashboardPage() {
 
         <Card>
           <CardContent className="flex items-center gap-4">
-            <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-purple-500/10">
-              <UserPlus className="h-5 w-5 text-purple-500" />
+            <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-blue-500/10">
+              <UserPlus className="h-5 w-5 text-blue-500" />
             </div>
             <div>
               <p className="text-xs text-muted">Nuovi Questo Mese</p>
@@ -396,7 +396,7 @@ export default function CrmDashboardPage() {
                     NEW: 'bg-blue-500/15 text-blue-500',
                     CONTACTED: 'bg-amber-500/15 text-amber-500',
                     QUALIFIED: 'bg-emerald-500/15 text-emerald-500',
-                    PROPOSAL_SENT: 'bg-purple-500/15 text-purple-500',
+                    PROPOSAL_SENT: 'bg-blue-500/15 text-blue-500',
                     CONVERTED: 'bg-green-500/15 text-green-500',
                     LOST: 'bg-red-500/15 text-red-500',
                   }
@@ -517,7 +517,7 @@ export default function CrmDashboardPage() {
           <CardContent>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold flex items-center gap-2">
-                <Target className="h-4 w-4 text-purple-500" />
+                <Target className="h-4 w-4 text-blue-500" />
                 Pipeline Opportunità
               </h2>
               <Link href="/crm/pipeline" className="text-xs text-blue-500 hover:underline">Vedi tutte</Link>

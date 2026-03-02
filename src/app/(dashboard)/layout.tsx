@@ -13,6 +13,7 @@ import { ActiveTimerBanner } from '@/components/tasks/ActiveTimerBanner'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { SSEProvider } from '@/providers/SSEProvider'
+import { UserProvider } from '@/providers/UserProvider'
 import { useSSE } from '@/hooks/useSSE'
 
 const CommandPalette = dynamic(() => import('@/components/layout/CommandPalette').then(m => ({ default: m.CommandPalette })), {
@@ -216,6 +217,7 @@ export default function DashboardLayout({
         <ActiveTimerBanner />
 
         <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6 [&>*]:max-w-[1400px] [&>*]:mx-auto">
+          <UserProvider user={user}>
           <Suspense fallback={
             <div className="animate-fade-in space-y-4">
               <div className="flex items-center gap-3">
@@ -237,6 +239,7 @@ export default function DashboardLayout({
           }>
             {children}
           </Suspense>
+          </UserProvider>
         </main>
       </div>
 

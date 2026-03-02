@@ -345,7 +345,7 @@ const STATUS_BAR_COLORS: Record<string, string> = {
   PLANNING: 'bg-indigo-500',
   IN_PROGRESS: 'bg-emerald-500',
   ON_HOLD: 'bg-amber-500',
-  REVIEW: 'bg-purple-500',
+  REVIEW: 'bg-blue-500',
   COMPLETED: 'bg-slate-400',
   CANCELLED: 'bg-red-500',
 }

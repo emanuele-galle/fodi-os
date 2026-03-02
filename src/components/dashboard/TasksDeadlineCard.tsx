@@ -18,13 +18,14 @@ interface TaskItem {
 
 interface TasksDeadlineCardProps {
   tasks: TaskItem[]
+  fullWidth?: boolean
 }
 
-export function TasksDeadlineCard({ tasks }: TasksDeadlineCardProps) {
+export function TasksDeadlineCard({ tasks, fullWidth }: TasksDeadlineCardProps) {
   const router = useRouter()
 
   return (
-    <Card className="lg:col-span-2">
+    <Card className={fullWidth ? '' : 'lg:col-span-2'}>
       <CardContent>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2.5">

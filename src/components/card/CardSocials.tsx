@@ -29,7 +29,7 @@ const socialConfig = {
   twitter: { icon: Twitter, label: 'X', color: '#1DA1F2' },
   github: { icon: Github, label: 'GitHub', color: '#8b949e' },
   telegram: { icon: Send, label: 'Telegram', color: '#26A5E4' },
-  website: { icon: Globe, label: 'Website', color: '#a78bfa' },
+  website: { icon: Globe, label: 'Website', color: '#0A84FF' },
 } as const
 
 export default function CardSocials({

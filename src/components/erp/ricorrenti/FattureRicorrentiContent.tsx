@@ -43,7 +43,7 @@ const FREQUENCY_LABELS: Record<string, string> = {
 }
 
 const FREQUENCY_COLORS: Record<string, string> = {
-  weekly: 'bg-purple-500/10 text-purple-600',
+  weekly: 'bg-blue-500/10 text-blue-600',
   monthly: 'bg-blue-500/10 text-blue-600',
   quarterly: 'bg-amber-500/10 text-amber-600',
   yearly: 'bg-emerald-500/10 text-emerald-600',

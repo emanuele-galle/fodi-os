@@ -51,9 +51,9 @@ const TYPE_ICON: Record<string, React.ElementType> = {
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
-  DIR_COMMERCIALE: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
-  DIR_TECNICO: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
-  DIR_SUPPORT: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
+  DIR_COMMERCIALE: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  DIR_TECNICO: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  DIR_SUPPORT: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
   COMMERCIALE: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
   PM: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400',
   DEVELOPER: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400',
@@ -330,7 +330,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                             {channel.name}
                           </span>
                           {channel.type === 'PROJECT' && (
-                            <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-500 dark:text-violet-400 flex-shrink-0">
+                            <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500 dark:text-blue-400 flex-shrink-0">
                               Progetto
                             </span>
                           )}

@@ -30,7 +30,7 @@ function StatusBadge({ status }: { status: string }) {
     APPROVED: 'bg-emerald-500/10 text-emerald-400',
     REJECTED: 'bg-red-500/10 text-red-400',
     EXPIRED: 'bg-amber-500/10 text-amber-400',
-    INVOICED: 'bg-violet-500/10 text-violet-400',
+    INVOICED: 'bg-blue-500/10 text-blue-400',
     // Ticket statuses
     OPEN: 'bg-blue-500/10 text-blue-400',
     WAITING_CLIENT: 'bg-amber-500/10 text-amber-400',
@@ -39,7 +39,7 @@ function StatusBadge({ status }: { status: string }) {
     // Lead/Deal statuses
     NEW: 'bg-blue-500/10 text-blue-400',
     CONTACTED: 'bg-cyan-500/10 text-cyan-400',
-    QUALIFIED: 'bg-violet-500/10 text-violet-400',
+    QUALIFIED: 'bg-blue-500/10 text-blue-400',
     PROPOSAL: 'bg-amber-500/10 text-amber-400',
     WON: 'bg-emerald-500/10 text-emerald-400',
     LOST: 'bg-red-500/10 text-red-400',
@@ -163,9 +163,9 @@ function renderProjectDetails(data: Record<string, unknown>) {
       ) : null}
       <div className="grid grid-cols-2 gap-2 text-xs">
         {data.budget !== undefined ? (
-          <div className="p-1.5 rounded-lg bg-violet-500/10">
+          <div className="p-1.5 rounded-lg bg-blue-500/10">
             <span className="text-[10px] text-muted-foreground">Budget</span>
-            <p className="font-medium text-violet-400">{formatCurrency(data.budget as number)}</p>
+            <p className="font-medium text-blue-400">{formatCurrency(data.budget as number)}</p>
           </div>
         ) : null}
         {data.progress !== undefined ? (
@@ -312,7 +312,7 @@ function renderTimeEntries(data: { entries?: Array<Record<string, unknown>>; tot
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
         <p className="text-[10px] text-muted-foreground font-medium">{data.total || data.entries.length} registrazioni</p>
-        <p className="text-xs font-semibold text-violet-400">{totalHours.toFixed(1)}h totali</p>
+        <p className="text-xs font-semibold text-blue-400">{totalHours.toFixed(1)}h totali</p>
       </div>
       {data.entries.slice(0, 6).map((entry: Record<string, unknown>, i: number) => (
         <div key={(entry.id as string) || i} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg bg-background/50">
@@ -364,7 +364,7 @@ function getModuleColor(toolName: string): string {
   if (toolName.includes('project')) return 'border-l-blue-400'
   if (toolName.includes('task')) return 'border-l-blue-400'
   if (toolName.includes('lead') || toolName.includes('deal') || toolName.includes('client') || toolName.includes('contact') || toolName.includes('crm')) return 'border-l-emerald-400'
-  if (toolName.includes('quote') || toolName.includes('expense') || toolName.includes('income') || toolName.includes('financial') || toolName.includes('monthly') || toolName.includes('recurring') || toolName.includes('invoice')) return 'border-l-violet-400'
+  if (toolName.includes('quote') || toolName.includes('expense') || toolName.includes('income') || toolName.includes('financial') || toolName.includes('monthly') || toolName.includes('recurring') || toolName.includes('invoice')) return 'border-l-blue-400'
   if (toolName.includes('ticket')) return 'border-l-amber-400'
   if (toolName.includes('time')) return 'border-l-cyan-400'
   if (toolName.includes('calendar') || toolName.includes('event') || toolName.includes('slot')) return 'border-l-orange-400'

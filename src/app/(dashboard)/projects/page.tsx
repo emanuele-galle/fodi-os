@@ -57,7 +57,7 @@ export default function ProjectsPage() {
 
   const projectForm = useFormPersist('new-project', {
     name: '', clientId: '', description: '', priority: 'MEDIUM',
-    startDate: '', endDate: '', budgetAmount: '', budgetHours: '', color: '#6366F1',
+    startDate: '', endDate: '', budgetAmount: '', budgetHours: '', color: '#007AFF',
   })
 
   useEffect(() => {

@@ -216,6 +216,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
     agentName: config?.name || undefined,
     customPrompt: config?.systemPrompt,
     currentPage,
+    customModulePermissions,
   })
 
   // Get tools for user role

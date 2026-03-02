@@ -20,11 +20,11 @@ export function AiThinkingBlock({ thinking, isThinking }: AiThinkingBlockProps) 
         onClick={() => setExpanded(!expanded)}
         className={cn(
           'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors',
-          'hover:bg-violet-500/10 text-muted-foreground/60 hover:text-muted-foreground/80',
-          isThinking && 'text-violet-400/70',
+          'hover:bg-blue-500/10 text-muted-foreground/60 hover:text-muted-foreground/80',
+          isThinking && 'text-blue-400/70',
         )}
       >
-        <Brain className={cn('h-3.5 w-3.5', isThinking && 'animate-pulse text-violet-400')} />
+        <Brain className={cn('h-3.5 w-3.5', isThinking && 'animate-pulse text-blue-400')} />
         <span>{isThinking ? 'Sto ragionando...' : 'Ragionamento'}</span>
         {!isThinking && (
           expanded
@@ -36,7 +36,7 @@ export function AiThinkingBlock({ thinking, isThinking }: AiThinkingBlockProps) 
       {(expanded || isThinking) && (
         <div className={cn(
           'mt-1 px-3 py-2 rounded-lg text-xs leading-relaxed',
-          'bg-violet-500/[0.05] border border-violet-500/10 text-muted-foreground/50',
+          'bg-blue-500/[0.05] border border-blue-500/10 text-muted-foreground/50',
           'max-h-48 overflow-y-auto ai-scrollbar whitespace-pre-wrap',
         )}>
           {thinking}

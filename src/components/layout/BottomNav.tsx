@@ -62,7 +62,7 @@ const CATEGORY_STYLES: Record<CategoryColor, string> = {
   indigo: 'bg-indigo-500/12 text-indigo-500',
   emerald: 'bg-emerald-500/12 text-emerald-500',
   amber: 'bg-amber-500/12 text-amber-600',
-  violet: 'bg-violet-500/12 text-violet-500',
+  violet: 'bg-blue-500/12 text-blue-500',
   rose: 'bg-rose-500/12 text-rose-500',
   slate: 'bg-slate-500/12 text-slate-500',
 }
@@ -166,7 +166,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
         <div className="fixed inset-0 z-40 md:hidden">
           <div
             className={cn(
-              'absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-250',
+              'absolute inset-0 bg-black/30 backdrop-blur-xl transition-opacity duration-250',
               closing ? 'opacity-0' : 'opacity-100'
             )}
             onClick={closeMenu}
@@ -208,7 +208,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
                     className={cn(
                       'flex flex-col items-center gap-2 p-3 rounded-lg transition-all touch-manipulation active:scale-95',
                       isActive
-                        ? 'bg-primary/8 ring-1 ring-primary/20'
+                        ? 'bg-primary/10'
                         : 'hover:bg-secondary/40 active:bg-secondary/60'
                     )}
                   >
@@ -254,7 +254,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
                 )}
 
                 <div className="relative p-1">
-                  <Icon className={cn('h-5 w-5 transition-all', active && 'stroke-[2.5]')} />
+                  <Icon className="h-5 w-5 transition-all" />
                   {tab.href === '/chat' && unreadChat > 0 && (
                     <span className="absolute -top-1.5 -right-2 h-[18px] min-w-[18px] px-1 flex items-center justify-center text-[10px] font-bold bg-destructive text-white rounded-full animate-pulse">
                       {unreadChat > 9 ? '9+' : unreadChat}

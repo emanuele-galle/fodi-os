@@ -24,7 +24,7 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
       {/* Section header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2">
-          <Sparkles className="w-4 h-4 text-purple-400/70" strokeWidth={1.8} />
+          <Sparkles className="w-4 h-4 text-blue-400/70" strokeWidth={1.8} />
           <h2 className="text-[16px] font-medium text-white/70 tracking-wide">I nostri servizi</h2>
         </div>
         <p className="text-[13px] text-white/40">
@@ -43,7 +43,7 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
           >
             <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm p-5 transition-all duration-300 hover:bg-white/[0.05] hover:border-white/[0.1]">
               {/* Top accent */}
-              <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
+              <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 
               {/* Content */}
               <div className="relative flex items-center justify-between gap-4">
@@ -57,13 +57,13 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
                     </p>
                   )}
                 </div>
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-purple-500/8 border border-purple-500/10 flex items-center justify-center transition-all duration-300 group-hover:bg-purple-500/15 group-hover:border-purple-500/20">
-                  <Send className="w-4 h-4 text-purple-400/60 group-hover:text-purple-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" strokeWidth={1.6} />
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-500/8 border border-blue-500/10 flex items-center justify-center transition-all duration-300 group-hover:bg-blue-500/15 group-hover:border-blue-500/20">
+                  <Send className="w-4 h-4 text-blue-400/60 group-hover:text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" strokeWidth={1.6} />
                 </div>
               </div>
 
               {/* Hover glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/[0.02] to-indigo-500/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/[0.02] to-indigo-500/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl" />
             </div>
           </Link>
         ))}

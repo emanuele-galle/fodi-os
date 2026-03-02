@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       let defaultWs = await prisma.workspace.findFirst({ where: { slug: 'clienti' } })
       if (!defaultWs) {
         defaultWs = await prisma.workspace.create({
-          data: { name: 'Clienti', slug: 'clienti', description: 'Workspace predefinito per progetti clienti', color: '#6366F1' }
+          data: { name: 'Clienti', slug: 'clienti', description: 'Workspace predefinito per progetti clienti', color: '#007AFF' }
         })
       }
       finalWorkspaceId = defaultWs.id

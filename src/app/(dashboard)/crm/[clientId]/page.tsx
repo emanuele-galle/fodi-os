@@ -158,7 +158,7 @@ export default function ClientDetailPage() {
                 />
               </div>
               <div>
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><CheckSquare className="h-4 w-4 text-violet-500" />Task CRM</h3>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><CheckSquare className="h-4 w-4 text-blue-500" />Task CRM</h3>
                 <ClientTasksTab clientId={clientId} />
               </div>
             </div>
@@ -166,7 +166,7 @@ export default function ClientDetailPage() {
           { id: 'commercial', label: 'Commerciale', content: (
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp className="h-4 w-4 text-purple-500" />Opportunità</h3>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp className="h-4 w-4 text-blue-500" />Opportunità</h3>
                 <ClientDealsTab clientId={clientId} />
               </div>
               <div>

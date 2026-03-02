@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Users, FolderKanban, Receipt, Clock, TrendingUp, AlertCircle,
+  Users, FolderKanban, TrendingUp, AlertCircle,
   Activity, UserPlus, FileText, CheckCircle2, TicketCheck,
   LayoutDashboard, BarChart3, Wallet,
 } from 'lucide-react'
@@ -23,6 +23,12 @@ import { ForYouSection } from '@/components/dashboard/ForYouSection'
 import { TasksDeadlineCard } from '@/components/dashboard/TasksDeadlineCard'
 import { OperativeSummaryCard } from '@/components/dashboard/OperativeSummaryCard'
 import { StickyNotesCard } from '@/components/dashboard/StickyNotesCard'
+import { useCurrentUser } from '@/providers/UserProvider'
+import {
+  getProfileConfig, getProfileGreeting,
+  STAT_DEFINITIONS, QUICK_ACTION_DEFINITIONS,
+  type StatKey,
+} from '@/lib/dashboard-profiles'
 
 const RevenueChart = dynamic(() => import('@/components/dashboard/RevenueChart').then(m => ({ default: m.RevenueChart })), {
   ssr: false,
@@ -129,13 +135,147 @@ function getActivityLabel(activity: ActivityItem): string {
   return `${actionLabel} ${entityLabel}${name ? ` "${name}"` : ''}`
 }
 
+interface ProcessedDashboardData {
+  tasks: TaskItem[]
+  activities: ActivityItem[]
+  overdue: number
+  dueToday: number
+  inProgress: number
+  completedMonth: number
+  weekHours: number
+  weekBillableHours: number
+  totalRevenue: number
+  totalExpenses: number
+  teamMembers: TeamMember[]
+}
+
+function processDashboardResponse(data: Record<string, unknown>): ProcessedDashboardData {
+  const tasks: TaskItem[] = (data.tasks as { items?: TaskItem[] })?.items || []
+  const activities: ActivityItem[] = (data.activity as { items?: ActivityItem[] })?.items || []
+
+  let overdue = 0, dueToday = 0
+  for (const t of tasks) {
+    const u = getDueUrgency(t.dueDate, t.status)
+    if (u === 'overdue') overdue++
+    if (u === 'today') dueToday++
+  }
+
+  const timeItems = (data.time as { items?: { hours: number; billable: boolean }[] })?.items || []
+  const weekHours = timeItems.reduce((s, e) => s + e.hours, 0)
+  const weekBillableHours = timeItems.filter(e => e.billable).reduce((s, e) => s + e.hours, 0)
+
+  const accounting = data.accounting as { data?: { income?: { totalGross?: number }; expense?: { totalGross?: number } } } | undefined
+  const members = (data.team as { items?: TeamMember[] })?.items || []
+
+  return {
+    tasks,
+    activities,
+    overdue,
+    dueToday,
+    inProgress: (data.inProgress as { total?: number })?.total ?? 0,
+    completedMonth: (data.doneMonth as { total?: number })?.total ?? 0,
+    weekHours,
+    weekBillableHours,
+    totalRevenue: accounting?.data?.income?.totalGross ?? 0,
+    totalExpenses: accounting?.data?.expense?.totalGross ?? 0,
+    teamMembers: Array.isArray(members) ? members : [],
+  }
+}
+
+function mapActivitiesToTimeline(activities: ActivityItem[]) {
+  return activities.map((activity) => {
+    const ActionIcon = ACTIVITY_ICONS[activity.entityType] || Activity
+    return {
+      id: activity.id,
+      icon: ActionIcon,
+      message: (
+        <>
+          <span className="font-semibold text-foreground">{activity.user.firstName} {activity.user.lastName}</span>
+          {' '}{getActivityLabel(activity)}
+        </>
+      ),
+      timestamp: formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: it }),
+      iconColorClass: ICON_COLORS[activity.entityType] || 'text-muted bg-secondary',
+    }
+  })
+}
+
+function DashboardHeader({ userName, subtitle }: { userName: string; subtitle: string }) {
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2.5">
+        <div className="p-2 rounded-lg bg-primary/10 text-primary">
+          <LayoutDashboard className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight truncate">
+            {getGreeting()}{userName && <>, <span className="text-primary font-bold">{userName}</span></>}
+          </h1>
+          <p className="text-xs text-muted capitalize">{subtitle}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ErrorBanner({ message }: { message: string | null }) {
+  if (!message) return null
+  return (
+    <div className="mb-6 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+      <div className="flex items-center gap-2">
+        <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+        <p className="text-sm text-destructive">{message}</p>
+      </div>
+      <button onClick={() => window.location.reload()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+    </div>
+  )
+}
+
+function updateTaskDate(tasks: TaskItem[], taskId: string, newDate: string): TaskItem[] {
+  return tasks.map(t => t.id === taskId ? { ...t, dueDate: newDate } : t)
+}
+
+function buildStatValue(key: StatKey, data: Record<string, unknown>, hours: number, monthRevenue: number, taskItems: TaskItem[]): string {
+  switch (key) {
+    case 'clients': return String((data.clients as { total?: number })?.total ?? 0)
+    case 'projects': return String((data.projects as { total?: number })?.total ?? 0)
+    case 'quotes': return String((data.quotes as { total?: number })?.total ?? 0)
+    case 'hours':
+    case 'weekHours':
+    case 'teamHours':
+      return hours.toFixed(1) + 'h'
+    case 'revenue': return monthRevenue > 0 ? formatCurrency(monthRevenue) : 'N/D'
+    case 'tickets': return String((data.tickets as { total?: number })?.total ?? 0)
+    case 'myTasks': return String(taskItems.length)
+    case 'deadlines': {
+      let deadlineCount = 0
+      for (const t of taskItems) {
+        const u = getDueUrgency(t.dueDate, t.status)
+        if (u === 'overdue' || u === 'today' || u === 'tomorrow') deadlineCount++
+      }
+      return String(deadlineCount)
+    }
+    case 'completedMonth':
+    case 'tasksDone':
+      return String((data.doneMonth as { total?: number })?.total ?? 0)
+    case 'avgResponseTime': return (data.avgResponseTime as string) ?? 'N/D'
+    case 'resolvedTickets': return String((data.resolvedTickets as { total?: number })?.total ?? 0)
+    case 'documents': return String((data.documents as { total?: number })?.total ?? 0)
+    default: return '0'
+  }
+}
+
 export default function DashboardPage() {
   const router = useRouter()
+  const currentUser = useCurrentUser()
+  const role = currentUser?.role ?? 'DEVELOPER'
+  const profileConfig = useMemo(() => getProfileConfig(role), [role])
+  const profileGreeting = useMemo(() => getProfileGreeting(role), [role])
+
   const [stats, setStats] = useState<StatCard[]>([])
   const [tasks, setTasks] = useState<TaskItem[]>([])
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [userName, setUserName] = useState('')
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [weekHours, setWeekHours] = useState(0)
@@ -147,82 +287,55 @@ export default function DashboardPage() {
   const [inProgressTaskCount, setInProgressTaskCount] = useState(0)
   const [completedMonthCount, setCompletedMonthCount] = useState(0)
 
-  useEffect(() => {
-    fetch('/api/auth/session')
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d?.user?.firstName) setUserName(d.user.firstName) })
-      .catch(() => {})
-  }, [])
+  const quickActions = useMemo(() =>
+    profileConfig.quickActions.map(key => QUICK_ACTION_DEFINITIONS[key]),
+    [profileConfig.quickActions]
+  )
 
-  function processDashboardData(data: Record<string, unknown>) {
-    const taskItems: TaskItem[] = (data.tasks as { items?: TaskItem[] })?.items || []
-    setTasks(taskItems)
-    if ((data.activity as { items?: ActivityItem[] })?.items) setActivities((data.activity as { items: ActivityItem[] }).items)
+  function applyDashboardData(data: Record<string, unknown>) {
+    const d = processDashboardResponse(data)
+    setTasks(d.tasks)
+    setActivities(d.activities)
+    setOverdueTaskCount(d.overdue)
+    setTodayTaskCount(d.dueToday)
+    setInProgressTaskCount(d.inProgress)
+    setCompletedMonthCount(d.completedMonth)
+    setWeekHours(d.weekHours)
+    setWeekBillableHours(d.weekBillableHours)
+    setTotalRevenue(d.totalRevenue)
+    setTotalExpenses(d.totalExpenses)
+    setTeamMembers(d.teamMembers)
 
-    let overdue = 0, dueToday = 0
-    for (const t of taskItems) {
-      const u = getDueUrgency(t.dueDate, t.status)
-      if (u === 'overdue') overdue++
-      if (u === 'today') dueToday++
-    }
-    setOverdueTaskCount(overdue)
-    setTodayTaskCount(dueToday)
-    setInProgressTaskCount((data.inProgress as { total?: number })?.total ?? 0)
-    setCompletedMonthCount((data.doneMonth as { total?: number })?.total ?? 0)
-
-    const timeItems = (data.time as { items?: { hours: number; billable: boolean }[] })?.items || []
-    const hours = timeItems.reduce((s, e) => s + e.hours, 0)
-    const billable = timeItems.filter(e => e.billable).reduce((s, e) => s + e.hours, 0)
-    setWeekHours(hours)
-    setWeekBillableHours(billable)
-
-    const accounting = data.accounting as { data?: { income?: { totalGross?: number }; expense?: { totalGross?: number } } } | undefined
-    setTotalRevenue(accounting?.data?.income?.totalGross ?? 0)
-    setTotalExpenses(accounting?.data?.expense?.totalGross ?? 0)
-
-    const members = (data.team as { items?: TeamMember[] })?.items || []
-    setTeamMembers(Array.isArray(members) ? members : [])
-
-    const monthRevenue = accounting?.data?.income?.totalGross ?? 0
-    setStats([
-      { label: 'Clienti Attivi', value: String((data.clients as { total?: number })?.total ?? 0), icon: Users, color: 'text-primary', href: '/crm?status=ACTIVE' },
-      { label: 'Progetti in Corso', value: String((data.projects as { total?: number })?.total ?? 0), icon: FolderKanban, color: 'text-accent', href: '/projects?status=IN_PROGRESS' },
-      { label: 'Preventivi Aperti', value: String((data.quotes as { total?: number })?.total ?? 0), icon: Receipt, color: 'text-[var(--color-warning)]', href: '/erp/quotes?status=SENT' },
-      { label: 'Ore Questa Settimana', value: hours.toFixed(1) + 'h', icon: Clock, color: 'text-muted', href: '/time' },
-      { label: 'Fatturato Mese', value: monthRevenue > 0 ? formatCurrency(monthRevenue) : 'N/D', icon: TrendingUp, color: 'text-accent', href: '/erp/reports' },
-      { label: 'Ticket Aperti', value: String((data.tickets as { total?: number })?.total ?? 0), icon: AlertCircle, color: 'text-destructive', href: '/support' },
-    ])
+    setStats(
+      profileConfig.stats.map(key => {
+        const def = STAT_DEFINITIONS[key]
+        return {
+          label: def.label,
+          value: buildStatValue(key, data, d.weekHours, d.totalRevenue, d.tasks),
+          icon: def.icon,
+          color: def.color,
+          href: def.href,
+        }
+      })
+    )
   }
 
-  useEffect(() => {
-    async function loadDashboard() {
-      setFetchError(null)
-      try {
-        const res = await fetch('/api/dashboard/summary')
-        if (!res.ok) throw new Error('fetch failed')
-        processDashboardData(await res.json())
-      } catch {
-        setFetchError('Errore nel caricamento dei dati della dashboard')
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadDashboard()
-  }, [])
-
-  const handleRefresh = async () => {
+  const fetchDashboard = async () => {
     setLoading(true)
     setFetchError(null)
     try {
-      const res = await fetch('/api/dashboard/summary')
+      const res = await fetch(`/api/dashboard/summary?role=${role}`)
       if (!res.ok) throw new Error('fetch failed')
-      processDashboardData(await res.json())
+      applyDashboardData(await res.json())
     } catch {
-      setFetchError('Errore nel caricamento')
+      setFetchError('Errore nel caricamento dei dati della dashboard')
     } finally {
       setLoading(false)
     }
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchDashboard() }, [role])
 
   const handleTaskComplete = (taskId: string) => {
     fetch(`/api/tasks/${taskId}`, {
@@ -237,195 +350,226 @@ export default function DashboardPage() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ dueDate: newDate }),
-    }).then(() => setTasks(prev => prev.map(t =>
-      t.id === taskId ? { ...t, dueDate: newDate } : t
-    )))
+    }).then(() => setTasks(prev => updateTaskDate(prev, taskId, newDate)))
   }
 
+  // Pre-compute all visibility flags to reduce JSX complexity
+  const w = useMemo(() => {
+    const widgets = profileConfig.widgets
+    const charts = profileConfig.charts
+    return {
+      forYou: widgets.includes('forYou'),
+      deadline: widgets.includes('tasksDeadline'),
+      operative: widgets.includes('operative'),
+      financial: widgets.includes('financial'),
+      pipeline: widgets.includes('pipeline'),
+      teamActivity: widgets.includes('teamActivity'),
+      timeline: widgets.includes('activityTimeline'),
+      notes: widgets.includes('stickyNotes'),
+      revenue: charts.includes('revenue'),
+      cashFlow: charts.includes('cashFlow'),
+      pipelineFunnel: charts.includes('pipelineFunnel'),
+      activityTrend: charts.includes('activityTrend'),
+    }
+  }, [profileConfig])
+
+  const showDesktopCharts = w.revenue || w.cashFlow
+
+  // Pre-compute adaptive grid classes
+  const row1Grid = w.deadline && w.operative ? 'grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
+  const chartsGrid = w.revenue && w.cashFlow ? 'hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6' : 'hidden md:grid grid-cols-1 gap-4 mb-6'
+  const row3Grid = w.financial && w.pipeline && w.pipelineFunnel ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
+  const row4Grid = w.activityTrend && w.teamActivity ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
+  const row5Grid = w.timeline && w.notes ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
+
+  const mobileChartTabs = useMemo(() => {
+    const tabs: { label: string; content: React.ReactNode }[] = []
+    if (w.revenue) tabs.push({ label: 'Fatturato', content: <RevenueChart /> })
+    if (w.cashFlow) tabs.push({ label: 'Cash Flow', content: <CashFlowChart /> })
+    if (w.pipelineFunnel) tabs.push({ label: 'Pipeline', content: <PipelineFunnel /> })
+    return tabs
+  }, [w.revenue, w.cashFlow, w.pipelineFunnel])
+
+  const mappedActivities = useMemo(() => mapActivitiesToTimeline(activities), [activities])
+
+  const userName = currentUser?.firstName ?? ''
+
+  const teamBreakdown = useMemo(() => {
+    if (weekHours <= 0) return [
+      { label: 'Fatturabili', value: 0, color: 'bg-primary' },
+      { label: 'Non fatt.', value: 0, color: 'bg-amber-400' },
+    ]
+    return [
+      { label: 'Fatturabili', value: Math.round((weekBillableHours / weekHours) * 100), color: 'bg-primary' },
+      { label: 'Non fatt.', value: Math.round(((weekHours - weekBillableHours) / weekHours) * 100), color: 'bg-amber-400' },
+    ]
+  }, [weekHours, weekBillableHours])
+
+  const teamMembersList = useMemo(() =>
+    teamMembers.length > 0
+      ? teamMembers.map((m) => ({ id: m.id, name: `${m.firstName} ${m.lastName}`, avatarUrl: m.avatarUrl || undefined }))
+      : [{ id: '1', name: userName || 'Team', avatarUrl: undefined }],
+    [teamMembers, userName]
+  )
+
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
+    <PullToRefresh onRefresh={fetchDashboard}>
     <div>
       {/* HEADER */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            <LayoutDashboard className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight truncate">
-              {getGreeting()}{userName ? <>, <span className="text-primary font-bold">{userName}</span></> : ''}
-            </h1>
-            <p className="text-xs text-muted capitalize">{formatTodayDate()}</p>
-          </div>
-        </div>
-      </div>
+      <DashboardHeader userName={userName} subtitle={`${profileGreeting} \u00B7 ${formatTodayDate()}`} />
 
-      {fetchError && (
-        <div className="mb-6 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
-            <p className="text-sm text-destructive">{fetchError}</p>
-          </div>
-          <button onClick={() => window.location.reload()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+      <ErrorBanner message={fetchError} />
+
+      <StatCarousel stats={stats} loading={loading} />
+      <DashboardQuickActions actions={quickActions} />
+
+      {w.forYou && (
+        <ForYouSection
+          tasks={tasks}
+          onTaskComplete={handleTaskComplete}
+          onTaskPostpone={handleTaskPostpone}
+        />
+      )}
+
+      {/* ROW 1: TASK IN SCADENZA + RIEPILOGO OPERATIVO */}
+      {(w.deadline || w.operative) && (
+        <div className={row1Grid}>
+          {w.deadline && <TasksDeadlineCard tasks={tasks} fullWidth={!w.operative} />}
+          {w.operative && (
+            <OperativeSummaryCard
+              overdue={overdueTaskCount}
+              today={todayTaskCount}
+              inProgress={inProgressTaskCount}
+              completedMonth={completedMonthCount}
+            />
+          )}
         </div>
       )}
 
-      <StatCarousel stats={stats} loading={loading} />
-      <DashboardQuickActions />
-
-      <ForYouSection
-        tasks={tasks}
-        onTaskComplete={handleTaskComplete}
-        onTaskPostpone={handleTaskPostpone}
-      />
-
-      {/* ROW 1: TASK IN SCADENZA + RIEPILOGO OPERATIVO */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-5 md:mb-6">
-        <TasksDeadlineCard tasks={tasks} />
-        <OperativeSummaryCard
-          overdue={overdueTaskCount}
-          today={todayTaskCount}
-          inProgress={inProgressTaskCount}
-          completedMonth={completedMonthCount}
-        />
-      </div>
-
       {/* ROW 2: CHARTS - Tabbed on mobile, grid on desktop */}
-      <div className="md:hidden mb-5">
-        <Card className="overflow-hidden">
-          <CardContent>
-            <MobileChartTabs tabs={[
-              { label: 'Fatturato', content: <RevenueChart /> },
-              { label: 'Cash Flow', content: <CashFlowChart /> },
-              { label: 'Pipeline', content: <PipelineFunnel /> },
-            ]} />
-          </CardContent>
-        </Card>
-      </div>
+      {mobileChartTabs.length > 0 && (
+        <div className="md:hidden mb-5">
+          <Card className="overflow-hidden">
+            <CardContent>
+              <MobileChartTabs tabs={mobileChartTabs} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card className="overflow-hidden">
-          <CardContent>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-accent/10 text-accent">
-                  <BarChart3 className="h-4.5 w-4.5" />
+      {showDesktopCharts && (
+        <div className={chartsGrid}>
+          {w.revenue && (
+            <Card className="overflow-hidden">
+              <CardContent>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                      <BarChart3 className="h-4.5 w-4.5" />
+                    </div>
+                    <div>
+                      <CardTitle>Fatturato Mensile</CardTitle>
+                      <p className="text-[11px] text-muted mt-0.5">Ultimi 12 mesi</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle>Fatturato Mensile</CardTitle>
-                  <p className="text-[11px] text-muted mt-0.5">Ultimi 12 mesi</p>
-                </div>
-              </div>
-            </div>
-            <RevenueChart />
-          </CardContent>
-        </Card>
+                <RevenueChart />
+              </CardContent>
+            </Card>
+          )}
 
-        <Card className="overflow-hidden">
-          <CardContent>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
-                  <Wallet className="h-4.5 w-4.5" />
+          {w.cashFlow && (
+            <Card className="overflow-hidden">
+              <CardContent>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
+                      <Wallet className="h-4.5 w-4.5" />
+                    </div>
+                    <div>
+                      <CardTitle>Cash Flow</CardTitle>
+                      <p className="text-[11px] text-muted mt-0.5">Entrate vs Uscite</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle>Cash Flow</CardTitle>
-                  <p className="text-[11px] text-muted mt-0.5">Entrate vs Uscite</p>
-                </div>
-              </div>
-            </div>
-            <CashFlowChart />
-          </CardContent>
-        </Card>
-      </div>
+                <CashFlowChart />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* ROW 3: FINANCIAL SUMMARY + PIPELINE */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6">
-        <FinancialSummaryCard
-          income={totalRevenue}
-          expenses={totalExpenses}
-          onViewDetails={() => router.push('/erp/reports')}
-        />
-        <Card className="hidden md:block overflow-hidden">
-          <CardContent>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-accent/10 text-accent">
-                  <TrendingUp className="h-4.5 w-4.5" />
+      {(w.financial || w.pipeline) && (
+        <div className={row3Grid}>
+          {w.financial && (
+            <FinancialSummaryCard
+              income={totalRevenue}
+              expenses={totalExpenses}
+              onViewDetails={() => router.push('/erp/reports')}
+            />
+          )}
+          {w.pipeline && w.pipelineFunnel && (
+            <Card className="overflow-hidden">
+              <CardContent>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                      <TrendingUp className="h-4.5 w-4.5" />
+                    </div>
+                    <div>
+                      <CardTitle>Pipeline Commerciale</CardTitle>
+                      <p className="text-[11px] text-muted mt-0.5">Distribuzione clienti</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle>Pipeline Commerciale</CardTitle>
-                  <p className="text-[11px] text-muted mt-0.5">Distribuzione clienti</p>
-                </div>
-              </div>
-            </div>
-            <PipelineFunnel />
-          </CardContent>
-        </Card>
-      </div>
+                <PipelineFunnel />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* ROW 4: TREND + TEAM ACTIVITY */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6">
-        <Card className="overflow-hidden">
-          <CardContent>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                  <Activity className="h-4.5 w-4.5" />
+      {(w.activityTrend || w.teamActivity) && (
+        <div className={row4Grid}>
+          {w.activityTrend && (
+            <Card className="overflow-hidden">
+              <CardContent>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                      <Activity className="h-4.5 w-4.5" />
+                    </div>
+                    <div>
+                      <CardTitle>Trend Attività</CardTitle>
+                      <p className="text-[11px] text-muted mt-0.5">Ultime 4 settimane</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle>Trend Attività</CardTitle>
-                  <p className="text-[11px] text-muted mt-0.5">Ultime 4 settimane</p>
-                </div>
-              </div>
-            </div>
-            <ActivityTrendChart height={260} />
-          </CardContent>
-        </Card>
+                <ActivityTrendChart height={260} />
+              </CardContent>
+            </Card>
+          )}
 
-        <TeamActivityCard
-          totalHours={weekHours}
-          breakdown={weekHours > 0 ? [
-            { label: 'Fatturabili', value: Math.round((weekBillableHours / weekHours) * 100), color: 'bg-primary' },
-            { label: 'Non fatt.', value: Math.round(((weekHours - weekBillableHours) / weekHours) * 100), color: 'bg-amber-400' },
-          ] : [
-            { label: 'Fatturabili', value: 0, color: 'bg-primary' },
-            { label: 'Non fatt.', value: 0, color: 'bg-amber-400' },
-          ]}
-          members={teamMembers.length > 0
-            ? teamMembers.map((m) => ({
-                id: m.id,
-                name: `${m.firstName} ${m.lastName}`,
-                avatarUrl: m.avatarUrl || undefined,
-              }))
-            : [{ id: '1', name: userName || 'Team', avatarUrl: undefined }]
-          }
-          onManageTeam={() => router.push('/team')}
-        />
-      </div>
+          {w.teamActivity && (
+            <TeamActivityCard
+              totalHours={weekHours}
+              breakdown={teamBreakdown}
+              members={teamMembersList}
+              onManageTeam={() => router.push('/team')}
+            />
+          )}
+        </div>
+      )}
 
       {/* ROW 5: ACTIVITY TIMELINE + STICKY NOTES */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6">
-        <ActivityTimeline
-          activities={activities.map((activity) => {
-            const ActionIcon = ACTIVITY_ICONS[activity.entityType] || Activity
-            const label = getActivityLabel(activity)
-            return {
-              id: activity.id,
-              icon: ActionIcon,
-              message: (
-                <>
-                  <span className="font-semibold text-foreground">{activity.user.firstName} {activity.user.lastName}</span>
-                  {' '}{label}
-                </>
-              ),
-              timestamp: formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: it }),
-              iconColorClass: ICON_COLORS[activity.entityType] || 'text-muted bg-secondary',
-            }
-          })}
-        />
-        <StickyNotesCard />
-      </div>
+      {(w.timeline || w.notes) && (
+        <div className={row5Grid}>
+          {w.timeline && <ActivityTimeline activities={mappedActivities} />}
+          {w.notes && <StickyNotesCard />}
+        </div>
+      )}
 
     </div>
     </PullToRefresh>

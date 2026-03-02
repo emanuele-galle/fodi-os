@@ -21,7 +21,7 @@ export function Tabs({ tabs, defaultTab, className }: TabsProps) {
   return (
     <div className={className}>
       {/* Segmented control */}
-      <div className="flex bg-secondary/60 rounded-lg p-1 overflow-x-auto scrollbar-none -mx-1">
+      <div className="flex bg-secondary/50 rounded-lg p-1 overflow-x-auto scrollbar-none -mx-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}

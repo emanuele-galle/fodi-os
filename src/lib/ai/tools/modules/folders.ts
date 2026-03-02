@@ -43,7 +43,7 @@ export const folderTools: AiToolDefinition[] = [
         projectId: { type: 'string', description: 'ID del progetto (obbligatorio)' },
         name: { type: 'string', description: 'Nome della cartella (obbligatorio)' },
         description: { type: 'string', description: 'Descrizione della cartella' },
-        color: { type: 'string', description: 'Colore esadecimale (#RRGGBB, default: #6366F1)' },
+        color: { type: 'string', description: 'Colore esadecimale (#RRGGBB, default: #007AFF)' },
         parentId: { type: 'string', description: 'ID della cartella parent (per creare sottocartella a qualsiasi livello)' },
       },
       required: ['projectId', 'name'],
@@ -76,7 +76,7 @@ export const folderTools: AiToolDefinition[] = [
           parentId,
           name: input.name as string,
           description: (input.description as string) || null,
-          color: (input.color as string) || '#6366F1',
+          color: (input.color as string) || '#007AFF',
           sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
         },
         include: {

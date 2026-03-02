@@ -56,7 +56,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
     { icon: Twitter, url: card.twitterUrl, color: '#1DA1F2' },
     { icon: Github, url: card.githubUrl, color: '#ffffff' },
     { icon: Send, url: card.telegramUrl, color: '#26A5E4' },
-    { icon: Globe, url: card.websiteUrl, color: '#a78bfa' },
+    { icon: Globe, url: card.websiteUrl, color: '#0A84FF' },
   ].filter((s) => s.url)
 
   const hasPhone = !!user.phone
@@ -77,7 +77,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
 
             {/* Ambient background */}
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-[-20%] left-[-10%] w-[200px] h-[200px] rounded-full bg-purple-600/10 blur-[80px]" />
+              <div className="absolute top-[-20%] left-[-10%] w-[200px] h-[200px] rounded-full bg-blue-600/10 blur-[80px]" />
               <div className="absolute bottom-[-10%] right-[-10%] w-[160px] h-[160px] rounded-full bg-blue-600/8 blur-[60px]" />
             </div>
 
@@ -91,7 +91,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
                 <div
                   className="absolute inset-0 rounded-full p-[2px]"
                   style={{
-                    background: 'conic-gradient(from 0deg, transparent 10%, rgba(139,92,246,0.5), transparent 40%, rgba(99,102,241,0.4), transparent 70%)',
+                    background: 'conic-gradient(from 0deg, transparent 10%, rgba(0,122,255,0.5), transparent 40%, rgba(10,132,255,0.4), transparent 70%)',
                   }}
                 >
                   <div className="w-full h-full rounded-full bg-[#0a0a0f]" />
@@ -100,7 +100,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
                   {user.avatarUrl ? (
                     <Image src={user.avatarUrl} alt={fullName} fill className="object-cover" unoptimized />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-600/30 to-indigo-600/30 flex items-center justify-center text-white/70 text-lg font-light">
+                    <div className="w-full h-full bg-gradient-to-br from-blue-600/30 to-indigo-600/30 flex items-center justify-center text-white/70 text-lg font-light">
                       {initials}
                     </div>
                   )}
@@ -112,7 +112,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
 
               {/* Job title */}
               {card.jobTitle && (
-                <p className="mt-1 text-[10px] font-medium bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                <p className="mt-1 text-[10px] font-medium bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                   {card.jobTitle}
                 </p>
               )}

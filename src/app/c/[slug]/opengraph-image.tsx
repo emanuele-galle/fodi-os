@@ -27,7 +27,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           justifyContent: 'center',
           width: '100%',
           height: '100%',
-          background: 'linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%)',
+          background: 'linear-gradient(135deg, #007AFF 0%, #0066D6 100%)',
           color: 'white',
           fontFamily: 'sans-serif',
           position: 'relative'

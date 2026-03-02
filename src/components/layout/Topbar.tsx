@@ -139,11 +139,11 @@ export function Topbar({ user, onOpenCommandPalette, onToggleAiSidebar }: Topbar
   }
 
   return (
-    <header className="h-14 glass-header flex items-center justify-between px-6 relative z-40 border-b border-border/50">
+    <header className="h-14 glass-header flex items-center justify-between px-6 relative z-40">
       {/* Search trigger */}
       <button
         onClick={onOpenCommandPalette}
-        className="group flex items-center gap-2 h-9 px-4 rounded-lg border border-border/30 bg-secondary/30 text-muted text-sm hover:border-primary/30 hover:bg-secondary/50 focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all duration-200 flex-1 max-w-96"
+        className="group flex items-center gap-2 h-9 px-4 rounded-full border border-border/20 bg-secondary/40 text-muted text-sm hover:border-primary/30 hover:bg-secondary/50 focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all duration-200 flex-1 max-w-96"
       >
         <Search className="h-4 w-4 text-muted group-hover:text-primary transition-colors" />
         <span>Cerca o premi Cmd+K...</span>
@@ -162,7 +162,7 @@ export function Topbar({ user, onOpenCommandPalette, onToggleAiSidebar }: Topbar
             title="Assistente AI"
             aria-label="Assistente AI"
           >
-            <Bot className="h-[18px] w-[18px] text-violet-400" />
+            <Bot className="h-[18px] w-[18px] text-primary" />
           </button>
         )}
 
@@ -192,7 +192,7 @@ export function Topbar({ user, onOpenCommandPalette, onToggleAiSidebar }: Topbar
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-card border border-border/40 rounded-xl shadow-[var(--shadow-xl)] z-50 animate-scale-in">
+            <div className="absolute right-0 mt-2 w-80 bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-[var(--shadow-xl)] z-50 animate-scale-in">
               <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
                 <p className="text-sm font-medium">Notifiche</p>
                 {unreadCount > 0 && (
@@ -295,7 +295,7 @@ export function Topbar({ user, onOpenCommandPalette, onToggleAiSidebar }: Topbar
             title="Menu utente"
             aria-label="Profilo utente"
           >
-            <span className="ring-2 ring-primary/15 rounded-full">
+            <span className="ring-2 ring-border/30 rounded-full">
               <Avatar
                 name={`${user.firstName} ${user.lastName}`}
                 src={user.avatarUrl}
@@ -306,7 +306,7 @@ export function Topbar({ user, onOpenCommandPalette, onToggleAiSidebar }: Topbar
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-card border border-border/40 rounded-xl shadow-[var(--shadow-xl)] py-1 z-50 animate-scale-in">
+            <div className="absolute right-0 mt-2 w-56 bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-[var(--shadow-xl)] py-1 z-50 animate-scale-in">
               <div className="px-4 py-2.5 border-b border-border/30">
                 <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
                 <p className="text-xs text-muted">{user.email}</p>

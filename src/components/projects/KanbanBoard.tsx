@@ -103,7 +103,7 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
       <p className="font-medium text-sm mb-1.5">{task.title}</p>
       {task.folderName && (
         <div className="flex items-center gap-1 mb-1.5">
-          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: task.folderColor || '#6366F1' }} />
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: task.folderColor || '#007AFF' }} />
           <span className="text-[10px] text-muted truncate">{task.folderName}</span>
         </div>
       )}

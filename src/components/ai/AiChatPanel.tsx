@@ -192,10 +192,10 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
     >
       {/* Drag overlay */}
       {isDragOver && (
-        <div className="absolute inset-0 z-20 bg-violet-500/10 border-2 border-dashed border-violet-400/40 rounded-xl flex items-center justify-center backdrop-blur-sm">
+        <div className="absolute inset-0 z-20 bg-blue-500/10 border-2 border-dashed border-blue-400/40 rounded-xl flex items-center justify-center backdrop-blur-sm">
           <div className="text-center">
-            <Paperclip className="h-8 w-8 text-violet-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-violet-300">Rilascia per allegare</p>
+            <Paperclip className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+            <p className="text-sm font-medium text-blue-300">Rilascia per allegare</p>
           </div>
         </div>
       )}
@@ -203,9 +203,9 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
       {/* Header */}
       <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/[0.06] overflow-hidden">
         {/* Header gradient background with shimmer */}
-        <div className="absolute inset-0 bg-gradient-to-r from-violet-500/[0.07] via-purple-500/[0.05] to-fuchsia-500/[0.03]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.07] via-blue-500/[0.05] to-blue-400/[0.03]" />
         <div className="absolute inset-0 ai-header-shimmer" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 
         <div className="flex items-center gap-3 relative">
           <AiAnimatedAvatar size="md" />
@@ -266,7 +266,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
           <div className="flex-1 overflow-y-auto ai-scrollbar">
             {loadingHistory ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-violet-400/50" />
+                <Loader2 className="h-5 w-5 animate-spin text-blue-400/50" />
               </div>
             ) : conversations.length === 0 ? (
               <p className="text-center text-muted-foreground/50 text-sm py-8">Nessuna conversazione</p>
@@ -294,7 +294,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
           <div className="flex flex-col items-center justify-center h-full text-center gap-4">
             <div className="relative">
               <AiAnimatedAvatar size="lg" />
-              <div className="absolute -inset-3 rounded-2xl bg-violet-500/10 blur-xl -z-10" />
+              <div className="absolute -inset-3 rounded-2xl bg-blue-500/10 blur-xl -z-10" />
             </div>
             <div>
               <p className="text-sm font-medium mb-1">Come posso aiutarti?</p>
@@ -404,7 +404,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
               className={cn(
                 'p-2.5 rounded-xl transition-all duration-200',
                 (input.trim() || pendingFiles.length > 0) && !isLoading
-                  ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 active:scale-95'
                   : 'bg-secondary/60 text-muted-foreground/30',
               )}
             >
@@ -429,7 +429,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         {!compact && (
           <div className="flex items-center justify-center gap-1.5 mt-1.5 text-[9px] text-muted-foreground/25">
             <span>Sviluppato da</span>
-            <a href="https://www.fodisrl.it" target="_blank" rel="noopener noreferrer" className="text-violet-400/40 hover:text-violet-400/70 transition-colors font-medium">Fodi S.r.l.</a>
+            <a href="https://www.fodisrl.it" target="_blank" rel="noopener noreferrer" className="text-blue-400/40 hover:text-blue-400/70 transition-colors font-medium">Fodi S.r.l.</a>
           </div>
         )}
       </div>

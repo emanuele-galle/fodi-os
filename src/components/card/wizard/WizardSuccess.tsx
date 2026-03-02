@@ -50,7 +50,7 @@ export function WizardSuccess({ message, companyName, cardSlug, phone }: WizardS
         {/* Primary CTA */}
         <Link
           href={`/c/${cardSlug}`}
-          className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white font-medium text-[14px] transition-all duration-300 hover:brightness-110 active:scale-[0.99]"
+          className="group relative w-full overflow-hidden flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white font-medium text-[14px] transition-all duration-300 hover:brightness-110 active:scale-[0.99]"
         >
           <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           <svg className="w-4 h-4 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -7,7 +7,7 @@ import { z } from 'zod'
 const createFolderSchema = z.object({
   name: z.string().min(1, 'Nome cartella obbligatorio').max(200),
   description: z.string().optional(),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Colore non valido').default('#6366F1'),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Colore non valido').default('#007AFF'),
   parentId: z.string().uuid('Parent ID non valido').optional(),
 })
 

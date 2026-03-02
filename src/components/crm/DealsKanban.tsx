@@ -44,7 +44,7 @@ interface Deal {
 const COLUMNS = [
   { stage: 'QUALIFICATION', label: 'Qualificazione', borderColor: 'border-t-blue-500', bgColor: 'bg-blue-500/10', textColor: 'text-blue-600' },
   { stage: 'PROPOSAL', label: 'Proposta', borderColor: 'border-t-amber-500', bgColor: 'bg-amber-500/10', textColor: 'text-amber-600' },
-  { stage: 'NEGOTIATION', label: 'Negoziazione', borderColor: 'border-t-purple-500', bgColor: 'bg-purple-500/10', textColor: 'text-purple-600' },
+  { stage: 'NEGOTIATION', label: 'Negoziazione', borderColor: 'border-t-blue-500', bgColor: 'bg-blue-500/10', textColor: 'text-blue-600' },
   { stage: 'CLOSED_WON', label: 'Chiusa - Vinta', borderColor: 'border-t-green-500', bgColor: 'bg-green-500/10', textColor: 'text-green-600' },
   { stage: 'CLOSED_LOST', label: 'Chiusa - Persa', borderColor: 'border-t-red-500', bgColor: 'bg-red-500/10', textColor: 'text-red-600' },
 ]

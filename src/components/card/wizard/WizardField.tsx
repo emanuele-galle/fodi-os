@@ -18,7 +18,7 @@ interface WizardFieldProps {
   error?: string
 }
 
-const inputBase = 'w-full h-12 px-4 text-[14px] text-white/90 bg-white/[0.03] border border-white/[0.08] rounded-xl transition-all outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/30 placeholder:text-white/20'
+const inputBase = 'w-full h-12 px-4 text-[14px] text-white/90 bg-white/[0.03] border border-white/[0.08] rounded-xl transition-all outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 placeholder:text-white/20'
 const labelBase = 'block text-[13px] font-medium text-white/60 mb-2'
 const errorBase = 'text-[12px] text-red-400 mt-1.5'
 
@@ -120,7 +120,7 @@ export function WizardField({ field, value, onChange, error }: WizardFieldProps)
               value={value}
               onChange={(e) => onChange(e.target.value)}
               rows={4}
-              className={`w-full min-h-[120px] px-4 py-3 text-[14px] text-white/90 bg-white/[0.03] border border-white/[0.08] rounded-xl transition-all outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500/30 placeholder:text-white/20 resize-y ${errorBorder}`}
+              className={`w-full min-h-[120px] px-4 py-3 text-[14px] text-white/90 bg-white/[0.03] border border-white/[0.08] rounded-xl transition-all outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 placeholder:text-white/20 resize-y ${errorBorder}`}
             />
             {error && <p className={errorBase}>{error}</p>}
           </div>
@@ -157,7 +157,7 @@ export function WizardField({ field, value, onChange, error }: WizardFieldProps)
                   key={option.value}
                   className={`flex items-center gap-3 cursor-pointer py-3 px-4 rounded-xl border transition-all ${
                     value === option.value
-                      ? 'border-purple-500/30 bg-purple-500/8'
+                      ? 'border-blue-500/30 bg-blue-500/8'
                       : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.1]'
                   }`}
                 >
@@ -167,7 +167,7 @@ export function WizardField({ field, value, onChange, error }: WizardFieldProps)
                     value={option.value}
                     checked={value === option.value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-4 h-4 text-purple-500 bg-transparent border-white/20 focus:ring-2 focus:ring-purple-500/20"
+                    className="w-4 h-4 text-blue-500 bg-transparent border-white/20 focus:ring-2 focus:ring-blue-500/20"
                   />
                   <span className="text-[13px] text-white/70">{option.label}</span>
                 </label>
@@ -184,7 +184,7 @@ export function WizardField({ field, value, onChange, error }: WizardFieldProps)
             <label
               className={`flex items-center gap-3 cursor-pointer py-3 px-4 rounded-xl border transition-all ${
                 value === 'true'
-                  ? 'border-purple-500/30 bg-purple-500/8'
+                  ? 'border-blue-500/30 bg-blue-500/8'
                   : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.1]'
               }`}
             >
@@ -192,7 +192,7 @@ export function WizardField({ field, value, onChange, error }: WizardFieldProps)
                 type="checkbox"
                 checked={value === 'true'}
                 onChange={(e) => onChange(e.target.checked ? 'true' : 'false')}
-                className="w-4 h-4 text-purple-500 bg-transparent border-white/20 focus:ring-2 focus:ring-purple-500/20 rounded"
+                className="w-4 h-4 text-blue-500 bg-transparent border-white/20 focus:ring-2 focus:ring-blue-500/20 rounded"
               />
               <span className="text-[13px] font-medium text-white/70">{label}</span>
             </label>
@@ -229,8 +229,8 @@ export function WizardField({ field, value, onChange, error }: WizardFieldProps)
                   onClick={() => onChange(rating.toString())}
                   className={`w-12 h-12 rounded-xl border-2 font-semibold transition-all text-[14px] ${
                     value === rating.toString()
-                      ? 'border-purple-500/50 bg-gradient-to-br from-purple-600 to-indigo-600 text-white'
-                      : 'border-white/[0.08] bg-white/[0.03] text-white/40 hover:border-purple-500/30 hover:text-white/60'
+                      ? 'border-blue-500/50 bg-gradient-to-br from-blue-600 to-indigo-600 text-white'
+                      : 'border-white/[0.08] bg-white/[0.03] text-white/40 hover:border-blue-500/30 hover:text-white/60'
                   }`}
                 >
                   {rating}
@@ -254,8 +254,8 @@ export function WizardField({ field, value, onChange, error }: WizardFieldProps)
                   onClick={() => onChange(rating.toString())}
                   className={`w-10 h-10 rounded-lg border-2 font-semibold transition-all text-[13px] ${
                     value === rating.toString()
-                      ? 'border-purple-500/50 bg-gradient-to-br from-purple-600 to-indigo-600 text-white'
-                      : 'border-white/[0.08] bg-white/[0.03] text-white/40 hover:border-purple-500/30 hover:text-white/60'
+                      ? 'border-blue-500/50 bg-gradient-to-br from-blue-600 to-indigo-600 text-white'
+                      : 'border-white/[0.08] bg-white/[0.03] text-white/40 hover:border-blue-500/30 hover:text-white/60'
                   }`}
                 >
                   {rating}

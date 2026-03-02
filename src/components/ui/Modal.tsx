@@ -75,16 +75,16 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[60] flex items-stretch md:items-center justify-center bg-foreground/40 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[60] flex items-stretch md:items-center justify-center bg-black/30 backdrop-blur-xl animate-fade-in"
       onClick={(e) => e.target === overlayRef.current && attemptClose()}
     >
       <div
         className={cn(
-          'bg-card/95 backdrop-blur-xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in flex flex-col',
+          'bg-card/80 backdrop-blur-2xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in flex flex-col',
           // Mobile fallback (forceDialog or preventAccidentalClose): full-screen
           'w-full h-[100dvh] rounded-none',
           // Desktop: centered dialog
-          'md:h-auto md:max-h-[85vh] md:rounded-xl',
+          'md:h-auto md:max-h-[85vh] md:rounded-2xl',
           {
             'md:max-w-sm': size === 'sm',
             'md:max-w-md': size === 'md',

@@ -194,16 +194,16 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
 
   return (
     <motion.aside
-      animate={{ width: expanded ? 256 : 64 }}
+      animate={{ width: expanded ? 260 : 64 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-white/10 overflow-hidden"
+      className="flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-border/20 overflow-hidden"
     >
       {/* Logo + Toggle */}
       <div className="flex items-center h-14 px-3 gap-2">
         {!expanded ? (
           <button
             onClick={toggleSidebar}
-            className="flex items-center justify-center w-10 h-10 flex-shrink-0 rounded-lg hover:bg-white/10 transition-colors"
+            className="flex items-center justify-center w-10 h-10 flex-shrink-0 rounded-lg hover:bg-black/5 transition-colors"
             title="Apri sidebar"
           >
             <PanelLeft className="h-5 w-5 text-sidebar-foreground/60" />
@@ -216,21 +216,21 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
             className="flex items-center justify-between flex-1 min-w-0"
           >
             <Link href="/dashboard" className="flex items-center">
-              <Logo variant="light" />
+              <Logo variant="auto" />
             </Link>
             <button
               onClick={toggleSidebar}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-black/5 transition-colors"
               title="Chiudi sidebar"
             >
-              <PanelLeftClose className="h-4 w-4 text-sidebar-foreground/50" />
+              <PanelLeftClose className="h-4 w-4 text-muted" />
             </button>
           </motion.div>
         )}
       </div>
 
       {/* Divider */}
-      <div className="border-b border-white/15 mx-3" />
+      <div className="border-b border-border/20 mx-3" />
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-none">
@@ -251,11 +251,11 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
               <div key={group}>
                 {/* Separator between groups */}
                 {groupIndex > 0 && (
-                  <div className="h-px bg-white/[0.08] mx-3 my-2.5" />
+                  <div className="h-px bg-border/20 mx-3 my-2.5" />
                 )}
                 {/* Group title (hidden when collapsed, null for system group) */}
                 {expanded && groupLabel && (
-                  <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground/30 px-3 pt-3 pb-1 select-none">
+                  <div className="text-[10px] uppercase tracking-wider text-muted px-3 pt-3 pb-1 select-none">
                     {groupLabel}
                   </div>
                 )}
@@ -281,8 +281,8 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
                       className={cn(
                         'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors duration-150 relative group',
                         isActive
-                          ? 'bg-white/[0.10] text-white font-semibold'
-                          : 'text-sidebar-foreground/60 hover:text-sidebar-foreground/80 hover:bg-white/[0.07]'
+                          ? 'bg-primary/10 text-primary font-semibold'
+                          : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-black/[0.04]'
                       )}
                     >
                       {isActive && (
@@ -347,7 +347,7 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
                             transition={{ duration: 0.2 }}
                             className="overflow-hidden"
                           >
-                            <div className="ml-9 mt-1 space-y-0.5 pb-1 border-l border-white/10 pl-0">
+                            <div className="ml-9 mt-1 space-y-0.5 pb-1 border-l border-border/20 pl-0">
                               {item.children.map((child) => (
                                 <Link
                                   key={child.href}
@@ -356,12 +356,12 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
                                     'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors duration-150',
                                     pathname === child.href
                                       ? 'text-sidebar-active bg-sidebar-active/10'
-                                      : 'text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/[0.04]'
+                                      : 'text-muted hover:text-sidebar-foreground hover:bg-black/[0.04]'
                                   )}
                                 >
                                   <span className={cn(
                                     'w-1 h-1 rounded-full flex-shrink-0',
-                                    pathname === child.href ? 'bg-sidebar-active' : 'bg-sidebar-foreground/20'
+                                    pathname === child.href ? 'bg-sidebar-active' : 'bg-muted'
                                   )} />
                                   {child.label}
                                 </Link>

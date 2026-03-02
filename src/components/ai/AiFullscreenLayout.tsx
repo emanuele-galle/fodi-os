@@ -23,7 +23,7 @@ const QUICK_PILLS: { label: string; icon: typeof CheckSquare; message: string; c
   { label: 'Task', icon: CheckSquare, message: 'Quali sono i miei task in scadenza?', color: 'text-blue-400' },
   { label: 'CRM', icon: Users, message: 'Mostrami la pipeline deal e i lead recenti', color: 'text-emerald-400' },
   { label: 'Calendario', icon: Calendar, message: 'Cosa ho in calendario oggi?', color: 'text-orange-400' },
-  { label: 'Finanza', icon: Receipt, message: 'Mostra il fatturato mensile e i preventivi in attesa', color: 'text-violet-400' },
+  { label: 'Finanza', icon: Receipt, message: 'Mostra il fatturato mensile e i preventivi in attesa', color: 'text-blue-400' },
 ]
 
 function groupByDate(conversations: Conversation[]): { label: string; items: Conversation[] }[] {
@@ -120,7 +120,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
                   placeholder="Cerca conversazioni..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.03] border border-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/30 transition-all placeholder:text-muted-foreground/40"
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.03] border border-white/[0.06] focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all placeholder:text-muted-foreground/40"
                 />
               </div>
               <button
@@ -136,7 +136,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
             <div className="flex-1 overflow-y-auto ai-scrollbar">
               {loading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-violet-400/50" />
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-400/50" />
                 </div>
               ) : grouped.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-2">
@@ -158,23 +158,23 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
                         className={cn(
                           'w-full text-left px-3 py-2.5 flex items-center gap-2.5 transition-all group relative',
                           selectedId === conv.id
-                            ? 'bg-violet-500/10 border-l-2 border-violet-500'
+                            ? 'bg-blue-500/10 border-l-2 border-blue-500'
                             : 'border-l-2 border-transparent hover:bg-white/[0.03]',
                         )}
                       >
                         <div className={cn(
                           'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0',
-                          selectedId === conv.id ? 'bg-violet-500/20' : 'bg-white/[0.04]',
+                          selectedId === conv.id ? 'bg-blue-500/20' : 'bg-white/[0.04]',
                         )}>
                           <MessageSquare className={cn(
                             'h-3.5 w-3.5',
-                            selectedId === conv.id ? 'text-violet-400' : 'text-muted-foreground/50',
+                            selectedId === conv.id ? 'text-blue-400' : 'text-muted-foreground/50',
                           )} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={cn(
                             'text-xs font-medium truncate',
-                            selectedId === conv.id ? 'text-violet-200' : 'text-foreground/80',
+                            selectedId === conv.id ? 'text-blue-200' : 'text-foreground/80',
                           )}>
                             {conv.title || 'Senza titolo'}
                           </p>
@@ -272,10 +272,10 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
     >
       {/* Drag overlay */}
       {isDragOver && (
-        <div className="absolute inset-0 z-20 bg-violet-500/10 border-2 border-dashed border-violet-400/40 rounded-xl flex items-center justify-center backdrop-blur-sm">
+        <div className="absolute inset-0 z-20 bg-blue-500/10 border-2 border-dashed border-blue-400/40 rounded-xl flex items-center justify-center backdrop-blur-sm">
           <div className="text-center">
-            <Paperclip className="h-8 w-8 text-violet-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-violet-300">Rilascia per allegare</p>
+            <Paperclip className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+            <p className="text-sm font-medium text-blue-300">Rilascia per allegare</p>
           </div>
         </div>
       )}
@@ -297,10 +297,10 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
             '--particle-duration': `${3 + i * 0.5}s`,
             '--particle-delay': `${i * 0.7}s`,
             background: i % 3 === 0
-              ? 'rgba(139, 92, 246, 0.4)'
+              ? 'rgba(0, 122, 255, 0.4)'
               : i % 3 === 1
-                ? 'rgba(168, 85, 247, 0.3)'
-                : 'rgba(99, 102, 241, 0.4)',
+                ? 'rgba(10, 132, 255, 0.3)'
+                : 'rgba(50, 173, 255, 0.4)',
           } as React.CSSProperties}
         />
       ))}
@@ -327,7 +327,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
                 >
                   <path
                     d="M0 5 Q25 0 50 4 Q75 8 100 3"
-                    stroke="rgba(139, 92, 246, 0.5)"
+                    stroke="rgba(0, 122, 255, 0.5)"
                     strokeWidth="2"
                     strokeLinecap="round"
                     fill="none"
@@ -417,7 +417,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
                 className={cn(
                   'p-2.5 rounded-xl transition-all duration-200',
                   input.trim()
-                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 hover:scale-105 active:scale-95'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 active:scale-95'
                     : 'bg-secondary/60 text-muted-foreground/30',
                 )}
               >
@@ -451,7 +451,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
             <button
               key={pill.label}
               onClick={() => onAction(pill.message)}
-              className="group flex items-center gap-2 px-4 py-2 rounded-full border border-border/40 bg-card/50 hover:bg-card hover:border-violet-500/30 hover:shadow-md transition-all duration-200"
+              className="group flex items-center gap-2 px-4 py-2 rounded-full border border-border/40 bg-card/50 hover:bg-card hover:border-blue-500/30 hover:shadow-md transition-all duration-200"
             >
               <pill.icon className={cn('h-3.5 w-3.5', pill.color)} />
               <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{pill.label}</span>
@@ -467,7 +467,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
           className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/30"
         >
           <span>Sviluppato da</span>
-          <a href="https://www.fodisrl.it" target="_blank" rel="noopener noreferrer" className="text-violet-400/40 hover:text-violet-400/70 transition-colors font-medium">Fodi S.r.l.</a>
+          <a href="https://www.fodisrl.it" target="_blank" rel="noopener noreferrer" className="text-blue-400/40 hover:text-blue-400/70 transition-colors font-medium">Fodi S.r.l.</a>
         </motion.div>
       </div>
     </div>

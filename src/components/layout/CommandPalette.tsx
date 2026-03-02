@@ -238,7 +238,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           initial={{ opacity: 0, scale: 0.95, y: -10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          className="w-full max-w-lg mx-4 bg-card/95 backdrop-blur-xl rounded-xl border border-border/30 shadow-[var(--shadow-xl)] overflow-hidden"
+          className="w-full max-w-lg mx-4 bg-card/80 backdrop-blur-2xl rounded-2xl border border-border/30 shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Search input */}
@@ -308,7 +308,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       }}
                       onMouseEnter={() => setSelectedIndex(globalIndex)}
                       className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors',
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                         globalIndex === selectedIndex
                           ? 'bg-primary/10 text-primary'
                           : 'text-foreground/80 hover:bg-secondary/50'
@@ -351,7 +351,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       }}
                       onMouseEnter={() => setSelectedIndex(globalIndex)}
                       className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors',
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                         globalIndex === selectedIndex
                           ? 'bg-primary/10 text-primary'
                           : 'text-foreground/80 hover:bg-secondary/50'
@@ -394,7 +394,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       }}
                       onMouseEnter={() => setSelectedIndex(globalIndex)}
                       className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors',
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                         globalIndex === selectedIndex
                           ? 'bg-primary/10 text-primary'
                           : 'text-foreground/80 hover:bg-secondary/50'

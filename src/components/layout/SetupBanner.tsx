@@ -194,7 +194,7 @@ export function SetupBanner() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
         transition={{ duration: 0.25 }}
-        className="mx-4 md:mx-6 mt-4 rounded-xl border border-primary/20 bg-primary/[0.04] p-3.5 md:p-4"
+        className="mx-4 md:mx-6 mt-4 rounded-2xl border border-primary/15 bg-primary/[0.03] p-3.5 md:p-4"
       >
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">

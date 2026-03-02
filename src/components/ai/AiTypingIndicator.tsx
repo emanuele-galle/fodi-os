@@ -72,13 +72,13 @@ export function AiTypingIndicator({ activeToolName }: AiTypingIndicatorProps) {
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="w-2 h-2 rounded-full bg-gradient-to-r from-violet-400 to-purple-500 ai-wave-dot"
+              className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 ai-wave-dot"
               style={{ animationDelay: `${i * 0.15}s` }}
             />
           ))}
         </div>
         <span className="text-[10px] text-muted-foreground/60 pl-1 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-violet-400/50 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-400/50 animate-pulse" />
           {contextMessage}
         </span>
       </div>

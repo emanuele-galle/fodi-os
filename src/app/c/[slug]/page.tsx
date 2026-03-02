@@ -109,7 +109,7 @@ export default async function CardPage({ params }: Props) {
     <div className="min-h-screen bg-[#0a0a0f] relative overflow-hidden">
       {/* Ambient background effects */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-purple-600/8 blur-[120px]" />
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-600/8 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full bg-blue-600/6 blur-[100px]" />
         <div className="absolute top-[40%] right-[-5%] w-[300px] h-[300px] rounded-full bg-indigo-500/5 blur-[80px]" />
       </div>

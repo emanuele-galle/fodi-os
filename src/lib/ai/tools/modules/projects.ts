@@ -114,7 +114,7 @@ export const projectTools: AiToolDefinition[] = [
           deadline: input.deadline ? new Date(input.deadline as string) : null,
           budgetAmount: input.budgetAmount ? input.budgetAmount as number : null,
           budgetHours: input.budgetHours ? Number(input.budgetHours) : null,
-          color: (input.color as string) || '#6366F1',
+          color: (input.color as string) || '#007AFF',
           isInternal: (input.isInternal as boolean) || false,
           members: {
             create: [{ userId: context.userId, role: 'OWNER' }],

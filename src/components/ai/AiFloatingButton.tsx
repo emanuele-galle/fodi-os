@@ -10,7 +10,7 @@ export function AiFloatingButton({ onClick }: AiFloatingButtonProps) {
       {/* Main AI FAB */}
       <button
         onClick={onClick}
-        className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-xl shadow-violet-500/30 flex items-center justify-center hover:shadow-2xl hover:shadow-violet-500/40 hover:scale-110 active:scale-95 transition-all duration-300 ai-fab-glow"
+        className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-xl shadow-blue-500/30 flex items-center justify-center hover:shadow-2xl hover:shadow-blue-500/40 hover:scale-110 active:scale-95 transition-all duration-300 ai-fab-glow"
         title="Assistente AI"
         aria-label="Apri assistente AI"
       >

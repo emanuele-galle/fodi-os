@@ -64,7 +64,7 @@ export function ThemeSwitcher() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-40 bg-card rounded-lg border border-border shadow-[var(--shadow-lg)] z-50 py-1 animate-scale-in">
+        <div className="absolute right-0 mt-2 w-40 bg-card rounded-xl border border-border shadow-[var(--shadow-lg)] z-50 py-1 animate-scale-in">
           {THEMES.map((t) => {
             const Icon = t.icon
             return (
