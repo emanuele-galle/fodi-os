@@ -130,34 +130,54 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
 
   const handleNotifEnable = async () => {
     try {
-      const permission = await Notification.requestPermission()
-      if (permission === 'granted') {
-        setNotifRequested(true)
-        try {
-          const reg = await navigator.serviceWorker?.ready
-          if (reg) {
-            const vapidKey = document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-            if (vapidKey) {
-              const sub = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
-              })
-              const subJson = sub.toJSON()
-              await fetch('/api/notifications/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
-              })
-            }
-          }
-        } catch (err) {
-          console.error('Push subscription error:', err)
-        }
-      } else if (permission === 'denied') {
+      // Check if Notification API is available
+      if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
         setNotifDenied(true)
+        return
       }
-    } catch {
-      // Notification API not available
+
+      const permission = await Notification.requestPermission()
+      if (permission === 'denied') {
+        setNotifDenied(true)
+        return
+      }
+      if (permission !== 'granted') return
+
+      // Wait for SW to be ready (with timeout for mobile)
+      const swReady = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
+      ])
+      if (!swReady) {
+        console.error('Service worker not ready after 10s')
+        setNotifRequested(true) // permission granted, SW just slow
+        return
+      }
+
+      const vapidKey = document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content
+      if (!vapidKey) {
+        console.error('VAPID key not found')
+        setNotifRequested(true) // permission granted at least
+        return
+      }
+
+      const sub = await swReady.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
+      })
+      const subJson = sub.toJSON()
+      await fetch('/api/notifications/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
+      })
+      setNotifRequested(true)
+    } catch (err) {
+      console.error('Push notification error:', err)
+      // If permission was granted but subscription failed, still show as enabled
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        setNotifRequested(true)
+      }
     }
   }
 
@@ -424,7 +444,11 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">Notifiche Push</p>
-                        <p className="text-xs text-muted">Task, scadenze e menzioni in tempo reale</p>
+                        <p className="text-xs text-muted">
+                          {isIOS && !isPWA
+                            ? 'Prima installa l\'app, poi attiva le notifiche'
+                            : 'Task, scadenze e menzioni in tempo reale'}
+                        </p>
                       </div>
                       {notifRequested ? (
                         <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium">
@@ -433,6 +457,8 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
                         </div>
                       ) : notifDenied ? (
                         <span className="text-xs text-muted">Bloccate</span>
+                      ) : isIOS && !isPWA ? (
+                        <span className="text-xs text-amber-500 font-medium">Installa prima</span>
                       ) : (
                         <button
                           onClick={handleNotifEnable}

@@ -24,6 +24,17 @@ const nextConfig: NextConfig = {
         .map(hostname => ({ protocol: 'https' as const, hostname: hostname.trim() })),
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Service-Worker-Allowed', value: '/' },
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        ],
+      },
+    ]
+  },
   async redirects() {
     return [
       { source: '/erp/dashboard/monthly', destination: '/erp/panoramica', permanent: true },

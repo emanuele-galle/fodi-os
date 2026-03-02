@@ -114,7 +114,14 @@ export function NotificationsSection({ setMessage }: NotificationsSectionProps) 
           setMessage('Permesso notifiche negato. Vai nelle impostazioni del browser/app per abilitarle.')
           return
         }
-        const reg = await navigator.serviceWorker.ready
+        const reg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
+        ])
+        if (!reg) {
+          setMessage('Service worker non disponibile. Ricarica l\'app e riprova.')
+          return
+        }
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,

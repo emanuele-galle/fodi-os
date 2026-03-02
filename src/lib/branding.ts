@@ -67,6 +67,15 @@ export const brand = {
     light: process.env.BRAND_LOGO_LIGHT || `/brands/${slug}/logo-light.svg`,
   },
 
+  // Favicon / icon paths (convention: /brands/{slug}/{file})
+  icons: {
+    favicon: `/brands/${slug}/favicon.png`,
+    faviconSvg: `/brands/${slug}/favicon.svg`,
+    apple: `/brands/${slug}/apple-touch-icon.png`,
+    icon192: `/brands/${slug}/icon-192.png`,
+    icon512: `/brands/${slug}/icon-512.png`,
+  },
+
   // Copyright
   copyrightYear: new Date().getFullYear(),
 } as const

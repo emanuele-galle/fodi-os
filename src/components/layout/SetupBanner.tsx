@@ -89,22 +89,31 @@ export function SetupBanner() {
       const permission = await Notification.requestPermission()
       setStatus((s) => ({ ...s, notifications: permission as SetupStatus['notifications'] }))
       if (permission === 'granted') {
-        const reg = await navigator.serviceWorker?.ready
-        if (reg) {
-          const vapidKey = document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-          if (!vapidKey) return
-          const sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
-          })
-          const subJson = sub.toJSON()
-          await fetch('/api/notifications/subscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
-          })
-          setStatus((s) => ({ ...s, pushSubscribed: true }))
+        // Wait for SW with timeout for mobile
+        const swReady = await Promise.race([
+          navigator.serviceWorker?.ready,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
+        ])
+        if (!swReady) {
+          console.error('Service worker not ready after 10s')
+          return
         }
+        const vapidKey = document.querySelector<HTMLMetaElement>('meta[name="vapid-public-key"]')?.content
+        if (!vapidKey) {
+          console.error('VAPID key not found')
+          return
+        }
+        const sub = await swReady.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
+        })
+        const subJson = sub.toJSON()
+        await fetch('/api/notifications/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
+        })
+        setStatus((s) => ({ ...s, pushSubscribed: true }))
       }
     } catch (err) {
       console.error('Push subscription error:', err)

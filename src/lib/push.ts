@@ -27,7 +27,7 @@ export async function sendPush(
           endpoint: sub.endpoint,
           keys: { p256dh: sub.p256dh, auth: sub.auth },
         },
-        JSON.stringify(payload)
+        JSON.stringify({ ...payload, icon: brand.icons.favicon, badge: brand.icons.favicon })
       )
     } catch (err: unknown) {
       const statusCode = (err as { statusCode?: number }).statusCode

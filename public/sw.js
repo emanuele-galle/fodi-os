@@ -1,8 +1,7 @@
-const CACHE_NAME = 'muscari-os-v5'
-const API_CACHE_NAME = 'muscari-os-api-v2'
+const CACHE_NAME = 'os-v6'
+const API_CACHE_NAME = 'os-api-v3'
 const STATIC_ASSETS = [
   '/manifest.json',
-  '/favicon.png',
   '/offline.html',
 ]
 
@@ -50,8 +49,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.message || '',
-    icon: '/favicon.png',
-    badge: '/favicon.png',
+    icon: data.icon || '/favicon.png',
+    badge: data.badge || '/favicon.png',
     data: { url: data.link || '/dashboard' },
   }
 
@@ -72,7 +71,7 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Muscari OS', options)
+    self.registration.showNotification(data.title || 'OS', options)
   )
 })
 

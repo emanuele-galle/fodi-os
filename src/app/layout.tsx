@@ -30,11 +30,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.png', type: 'image/png' },
+      { url: brand.icons.favicon, type: 'image/png' },
     ],
     apple: [
-      { url: '/icons/apple-touch-icon.png', sizes: '180x180' },
-      { url: '/icons/icon-192.png', sizes: '192x192' },
+      { url: brand.icons.apple, sizes: '180x180' },
+      { url: brand.icons.icon192, sizes: '192x192' },
     ],
   },
   manifest: '/manifest.json',
@@ -54,6 +54,8 @@ export default function RootLayout({
     <html lang="it">
       <head>
         <meta name="theme-color" content="#27272A" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         {process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && (
           <meta name="vapid-public-key" content={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY} />
@@ -63,7 +65,7 @@ export default function RootLayout({
         {children}
         <script
           dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
+            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(){})}`,
           }}
         />
       </body>
