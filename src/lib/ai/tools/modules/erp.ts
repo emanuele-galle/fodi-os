@@ -582,4 +582,211 @@ export const erpTools: AiToolDefinition[] = [
       }
     },
   },
+
+  {
+    name: 'create_recurring_invoice',
+    description: 'Crea una fattura/spesa ricorrente (es. abbonamento, affitto, utenza).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        description: { type: 'string', description: 'Descrizione della ricorrenza (obbligatorio)' },
+        category: { type: 'string', description: 'Categoria (obbligatorio)' },
+        supplierName: { type: 'string', description: 'Nome fornitore' },
+        amount: { type: 'number', description: 'Importo in euro (obbligatorio)' },
+        frequency: { type: 'string', description: 'Frequenza: monthly, quarterly, yearly (obbligatorio)' },
+        firstDate: { type: 'string', description: 'Data primo pagamento ISO 8601 (obbligatorio)' },
+        bankAccountId: { type: 'string', description: 'ID conto bancario associato' },
+        notes: { type: 'string', description: 'Note aggiuntive' },
+      },
+      required: ['description', 'category', 'amount', 'frequency', 'firstDate'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const invoice = await prisma.recurringInvoice.create({
+        data: {
+          description: input.description as string,
+          category: input.category as string,
+          supplierName: (input.supplierName as string) || null,
+          amount: input.amount as number,
+          frequency: input.frequency as string,
+          firstDate: new Date(input.firstDate as string),
+          nextDueDate: new Date(input.firstDate as string),
+          bankAccountId: (input.bankAccountId as string) || null,
+          notes: (input.notes as string) || null,
+        },
+        select: { id: true, description: true, amount: true, frequency: true, nextDueDate: true },
+      })
+
+      return { success: true, data: { ...invoice, amount: invoice.amount.toString() } }
+    },
+  },
+
+  {
+    name: 'update_recurring_invoice',
+    description: 'Aggiorna una fattura ricorrente (importo, frequenza, stato attivo, note).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        invoiceId: { type: 'string', description: 'ID della fattura ricorrente (obbligatorio)' },
+        amount: { type: 'number', description: 'Nuovo importo' },
+        frequency: { type: 'string', description: 'Nuova frequenza: monthly, quarterly, yearly' },
+        isActive: { type: 'boolean', description: 'Attiva/disattiva la ricorrenza' },
+        notes: { type: 'string', description: 'Nuove note' },
+        supplierName: { type: 'string', description: 'Nuovo nome fornitore' },
+      },
+      required: ['invoiceId'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const data: Record<string, unknown> = {}
+      if (input.amount !== undefined) data.amount = input.amount
+      if (input.frequency) data.frequency = input.frequency
+      if (input.isActive !== undefined) data.isActive = input.isActive
+      if (input.notes !== undefined) data.notes = input.notes
+      if (input.supplierName !== undefined) data.supplierName = input.supplierName
+
+      const invoice = await prisma.recurringInvoice.update({
+        where: { id: input.invoiceId as string },
+        data,
+        select: { id: true, description: true, amount: true, frequency: true, isActive: true },
+      })
+
+      return { success: true, data: { ...invoice, amount: invoice.amount.toString() } }
+    },
+  },
+
+  {
+    name: 'list_bank_accounts',
+    description: 'Lista i conti bancari con saldo e stato.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        activeOnly: { type: 'boolean', description: 'Se true, mostra solo conti attivi (default: true)' },
+      },
+    },
+    module: 'erp',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const accounts = await prisma.bankAccount.findMany({
+        where: input.activeOnly !== false ? { isActive: true } : {},
+        orderBy: { sortOrder: 'asc' },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          balance: true,
+          isActive: true,
+          _count: { select: { incomes: true, expenses: true } },
+        },
+      })
+
+      return {
+        success: true,
+        data: {
+          accounts: accounts.map((a) => ({ ...a, balance: a.balance.toString() })),
+          total: accounts.length,
+        },
+      }
+    },
+  },
+
+  {
+    name: 'create_bank_transfer',
+    description: 'Registra un trasferimento tra conti bancari (giroconto).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        fromAccountId: { type: 'string', description: 'ID conto di origine (obbligatorio)' },
+        toAccountId: { type: 'string', description: 'ID conto di destinazione (obbligatorio)' },
+        amount: { type: 'number', description: 'Importo in euro (obbligatorio)' },
+        operation: { type: 'string', description: 'Descrizione operazione (obbligatorio)' },
+        date: { type: 'string', description: 'Data operazione ISO 8601 (default: oggi)' },
+        notes: { type: 'string', description: 'Note aggiuntive' },
+      },
+      required: ['fromAccountId', 'toAccountId', 'amount', 'operation'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      if (input.fromAccountId === input.toAccountId) {
+        return { success: false, error: 'Il conto di origine e destinazione devono essere diversi' }
+      }
+
+      const transfer = await prisma.bankTransfer.create({
+        data: {
+          fromAccountId: input.fromAccountId as string,
+          toAccountId: input.toAccountId as string,
+          amount: input.amount as number,
+          operation: input.operation as string,
+          date: input.date ? new Date(input.date as string) : new Date(),
+          notes: (input.notes as string) || null,
+        },
+        include: {
+          fromAccount: { select: { name: true } },
+          toAccount: { select: { name: true } },
+        },
+      })
+
+      return {
+        success: true,
+        data: {
+          id: transfer.id,
+          from: transfer.fromAccount.name,
+          to: transfer.toAccount.name,
+          amount: transfer.amount.toString(),
+          date: transfer.date,
+        },
+      }
+    },
+  },
+
+  {
+    name: 'list_accounting_categories',
+    description: 'Lista le categorie contabili (entrate e uscite).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', description: 'Filtra per tipo: income o expense' },
+      },
+    },
+    module: 'erp',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const where: Record<string, unknown> = { isActive: true }
+      if (input.type) where.type = input.type
+
+      const categories = await prisma.accountingCategory.findMany({
+        where,
+        orderBy: [{ type: 'asc' }, { sortOrder: 'asc' }],
+        select: { id: true, name: true, type: true, icon: true },
+      })
+
+      return { success: true, data: { categories, total: categories.length } }
+    },
+  },
+
+  {
+    name: 'list_vat_rates',
+    description: 'Lista le aliquote IVA disponibili.',
+    input_schema: {
+      type: 'object',
+      properties: {},
+    },
+    module: 'erp',
+    requiredPermission: 'read',
+    execute: async () => {
+      const rates = await prisma.vatRate.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+        select: { id: true, rate: true, label: true, code: true, description: true, isDefault: true },
+      })
+
+      return {
+        success: true,
+        data: { rates: rates.map((r) => ({ ...r, rate: r.rate.toString() })), total: rates.length },
+      }
+    },
+  },
 ]

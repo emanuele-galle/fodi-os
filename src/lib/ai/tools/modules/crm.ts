@@ -420,4 +420,75 @@ export const crmTools: AiToolDefinition[] = [
       return { success: true, data: client }
     },
   },
+
+  {
+    name: 'get_client_details',
+    description: 'Ottieni tutti i dettagli di un cliente: contatti, deal, progetti, fatturato, ticket.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente (obbligatorio)' },
+      },
+      required: ['clientId'],
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const client = await prisma.client.findUnique({
+        where: { id: input.clientId as string },
+        include: {
+          contacts: {
+            select: { id: true, firstName: true, lastName: true, email: true, phone: true, role: true, isPrimary: true },
+            orderBy: { isPrimary: 'desc' },
+          },
+          deals: {
+            select: { id: true, title: true, value: true, stage: true, probability: true, expectedCloseDate: true },
+            orderBy: { updatedAt: 'desc' },
+            take: 10,
+          },
+          _count: { select: { projects: true, quotes: true, tickets: true, interactions: true, documents: true } },
+        },
+      })
+
+      if (!client) return { success: false, error: 'Cliente non trovato' }
+
+      return {
+        success: true,
+        data: {
+          ...client,
+          totalRevenue: client.totalRevenue.toString(),
+          deals: client.deals.map((d) => ({ ...d, value: d.value.toString() })),
+        },
+      }
+    },
+  },
+
+  {
+    name: 'get_deal_details',
+    description: 'Ottieni i dettagli completi di un deal: valore, fase, probabilità, cliente, contatto, owner.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        dealId: { type: 'string', description: 'ID del deal (obbligatorio)' },
+      },
+      required: ['dealId'],
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const deal = await prisma.deal.findUnique({
+        where: { id: input.dealId as string },
+        include: {
+          client: { select: { id: true, companyName: true, status: true } },
+          lead: { select: { id: true, name: true, email: true } },
+          contact: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+          owner: { select: { id: true, firstName: true, lastName: true } },
+        },
+      })
+
+      if (!deal) return { success: false, error: 'Deal non trovato' }
+
+      return { success: true, data: { ...deal, value: deal.value.toString() } }
+    },
+  },
 ]

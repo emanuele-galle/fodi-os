@@ -74,10 +74,10 @@ export function AiChatSidebar({ open, onClose }: AiChatSidebarProps) {
               <GripVertical className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground/70 transition-colors" />
             </div>
 
-            {/* Close button (mobile overlay) */}
+            {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 z-10 p-1.5 rounded-lg hover:bg-muted transition-colors md:hidden"
+              className="absolute top-3 right-3 z-10 p-1.5 rounded-lg hover:bg-muted transition-colors"
             >
               <X className="h-4 w-4" />
             </button>

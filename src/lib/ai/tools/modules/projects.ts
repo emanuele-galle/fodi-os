@@ -254,4 +254,174 @@ export const projectTools: AiToolDefinition[] = [
       return { success: true, data: project }
     },
   },
+
+  {
+    name: 'list_milestones',
+    description: 'Lista le milestone di un progetto con stato e scadenza.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'ID del progetto (obbligatorio)' },
+      },
+      required: ['projectId'],
+    },
+    module: 'pm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const milestones = await prisma.milestone.findMany({
+        where: { projectId: input.projectId as string },
+        orderBy: { sortOrder: 'asc' },
+        include: {
+          _count: { select: { tasks: true } },
+        },
+      })
+
+      return { success: true, data: { milestones, total: milestones.length } }
+    },
+  },
+
+  {
+    name: 'create_milestone',
+    description: 'Crea una milestone (traguardo) per un progetto.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'ID del progetto (obbligatorio)' },
+        name: { type: 'string', description: 'Nome della milestone (obbligatorio)' },
+        dueDate: { type: 'string', description: 'Data scadenza (ISO 8601)' },
+      },
+      required: ['projectId', 'name'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const maxOrder = await prisma.milestone.aggregate({
+        where: { projectId: input.projectId as string },
+        _max: { sortOrder: true },
+      })
+
+      const milestone = await prisma.milestone.create({
+        data: {
+          projectId: input.projectId as string,
+          name: input.name as string,
+          dueDate: input.dueDate ? new Date(input.dueDate as string) : null,
+          sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
+        },
+      })
+
+      return { success: true, data: milestone }
+    },
+  },
+
+  {
+    name: 'update_milestone',
+    description: 'Aggiorna una milestone (nome, stato, scadenza).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        milestoneId: { type: 'string', description: 'ID della milestone (obbligatorio)' },
+        name: { type: 'string', description: 'Nuovo nome' },
+        status: { type: 'string', description: 'Nuovo stato: pending, in_progress, completed' },
+        dueDate: { type: 'string', description: 'Nuova data scadenza (ISO 8601)' },
+      },
+      required: ['milestoneId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const data: Record<string, unknown> = {}
+      if (input.name) data.name = input.name
+      if (input.status) data.status = input.status
+      if (input.dueDate) data.dueDate = new Date(input.dueDate as string)
+
+      const milestone = await prisma.milestone.update({
+        where: { id: input.milestoneId as string },
+        data,
+      })
+
+      return { success: true, data: milestone }
+    },
+  },
+
+  {
+    name: 'list_project_members',
+    description: 'Lista i membri di un progetto con ruolo e data di ingresso.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'ID del progetto (obbligatorio)' },
+      },
+      required: ['projectId'],
+    },
+    module: 'pm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const members = await prisma.projectMember.findMany({
+        where: { projectId: input.projectId as string },
+        include: {
+          user: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true, jobTitle: true } },
+        },
+        orderBy: { joinedAt: 'asc' },
+      })
+
+      return { success: true, data: { members, total: members.length } }
+    },
+  },
+
+  {
+    name: 'add_project_member',
+    description: 'Aggiunge un membro a un progetto con un ruolo specifico.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'ID del progetto (obbligatorio)' },
+        userId: { type: 'string', description: 'ID dell\'utente da aggiungere (obbligatorio)' },
+        role: { type: 'string', description: 'Ruolo nel progetto: OWNER, MANAGER, MEMBER, VIEWER (default: MEMBER)' },
+      },
+      required: ['projectId', 'userId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const member = await prisma.projectMember.create({
+        data: {
+          projectId: input.projectId as string,
+          userId: input.userId as string,
+          role: (input.role as string) || 'MEMBER',
+        },
+        include: {
+          user: { select: { firstName: true, lastName: true } },
+        },
+      })
+
+      return { success: true, data: { id: member.id, user: `${member.user.firstName} ${member.user.lastName}`, role: member.role } }
+    },
+  },
+
+  {
+    name: 'remove_project_member',
+    description: 'Rimuove un membro da un progetto.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'ID del progetto (obbligatorio)' },
+        userId: { type: 'string', description: 'ID dell\'utente da rimuovere (obbligatorio)' },
+      },
+      required: ['projectId', 'userId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      await prisma.projectMember.delete({
+        where: {
+          projectId_userId: {
+            projectId: input.projectId as string,
+            userId: input.userId as string,
+          },
+        },
+      })
+
+      return { success: true, data: { removed: true } }
+    },
+  },
 ]

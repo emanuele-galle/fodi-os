@@ -13,6 +13,12 @@ import { timeTools } from './modules/time'
 import { projectTools } from './modules/projects'
 import { coordinationTools } from './modules/coordination'
 import { chatTools } from './modules/chat'
+import { folderTools } from './modules/folders'
+import { memoryTools } from './modules/memory'
+import { wikiTools } from './modules/wiki'
+import { documentTools } from './modules/documents'
+import { notificationTools } from './modules/notifications'
+import { miscTools } from './modules/misc'
 
 const ALL_TOOLS: AiToolDefinition[] = [
   ...taskTools,
@@ -26,6 +32,12 @@ const ALL_TOOLS: AiToolDefinition[] = [
   ...projectTools,
   ...coordinationTools,
   ...chatTools,
+  ...folderTools,
+  ...memoryTools,
+  ...wikiTools,
+  ...documentTools,
+  ...notificationTools,
+  ...miscTools,
 ]
 
 /**

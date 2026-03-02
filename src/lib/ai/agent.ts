@@ -72,6 +72,57 @@ const TOOL_FOLLOWUPS: Record<string, string[]> = {
   search_chat_messages: ['Vedi messaggio completo', 'Rispondi nel canale', 'Cerca di nuovo'],
   list_team_members: ['Invia DM', 'Assegna task', 'Notifica membro'],
   send_notification: ['Invia altra notifica', 'Lista team', 'Stato task'],
+  // Folders & Links
+  list_project_folders: ['Crea una cartella', 'Aggiungi un link', 'Contenuto cartella'],
+  create_project_folder: ['Aggiungi link alla cartella', 'Crea sottocartella', 'Lista cartelle'],
+  update_project_folder: ['Contenuto cartella', 'Aggiungi link', 'Lista cartelle'],
+  delete_project_folder: ['Lista cartelle', 'Crea cartella', 'Lista progetti'],
+  list_folder_contents: ['Aggiungi link', 'Rinomina cartella', 'Crea sottocartella'],
+  add_project_link: ['Aggiungi altro link', 'Lista contenuto', 'Crea cartella'],
+  delete_project_link: ['Lista link', 'Aggiungi nuovo link', 'Lista cartelle'],
+  // Memory
+  save_user_preference: ['Vedi preferenze salvate', 'Modifica preferenza', 'Elimina preferenza'],
+  get_user_preferences: ['Salva nuova preferenza', 'Elimina preferenza', 'Modifica preferenza'],
+  delete_user_preference: ['Vedi preferenze', 'Salva nuova preferenza', 'Lista preferenze'],
+  // Wiki
+  search_wiki: ['Leggi pagina', 'Crea pagina wiki', 'Cerca altro'],
+  get_wiki_page: ['Modifica contenuto', 'Cerca wiki', 'Pagine correlate'],
+  create_wiki_page: ['Cerca wiki', 'Crea altra pagina', 'Lista pagine'],
+  // Documents
+  list_documents: ['Dettagli documento', 'Documenti per categoria', 'Carica documento'],
+  get_document_details: ['Lista documenti', 'Documenti del progetto', 'Documenti del cliente'],
+  // Notifications
+  list_notifications: ['Segna come lette', 'Solo non lette', 'Dettagli notifica'],
+  mark_notifications_read: ['Lista notifiche', 'Notifiche non lette', 'Stato notifiche'],
+  // Task extras
+  list_task_attachments: ['Dettagli task', 'Commenta task', 'Aggiungi dipendenza'],
+  get_task_dependencies: ['Aggiungi dipendenza', 'Dettagli task', 'Task correlati'],
+  add_task_dependency: ['Vedi dipendenze', 'Dettagli task', 'Altre dipendenze'],
+  // ERP extras
+  create_recurring_invoice: ['Lista ricorrenti', 'Modifica ricorrente', 'Report mensile'],
+  update_recurring_invoice: ['Lista ricorrenti', 'Disattiva ricorrente', 'Report mensile'],
+  list_bank_accounts: ['Trasferimento', 'Saldo totale', 'Movimenti'],
+  create_bank_transfer: ['Lista conti', 'Altro trasferimento', 'Saldo conti'],
+  list_accounting_categories: ['Registra spesa', 'Registra entrata', 'Report'],
+  list_vat_rates: ['Crea preventivo', 'Registra entrata', 'Registra spesa'],
+  // Milestones & Members
+  list_milestones: ['Crea milestone', 'Aggiorna milestone', 'Stato progetto'],
+  create_milestone: ['Lista milestone', 'Aggiungi task', 'Altra milestone'],
+  update_milestone: ['Lista milestone', 'Completa milestone', 'Dettagli progetto'],
+  list_project_members: ['Aggiungi membro', 'Rimuovi membro', 'Carico team'],
+  add_project_member: ['Lista membri', 'Aggiungi altro membro', 'Assegna task'],
+  remove_project_member: ['Lista membri', 'Aggiungi membro', 'Dettagli progetto'],
+  // CRM details
+  get_client_details: ['Crea deal', 'Contatta cliente', 'Progetti del cliente'],
+  get_deal_details: ['Aggiorna deal', 'Contatta cliente', 'Pipeline completa'],
+  // Misc
+  get_company_profile: ['Profilo azienda', 'Crea preventivo', 'Info fiscali'],
+  list_activity_log: ['Attività utente', 'Attività progetto', 'Filtro azioni'],
+  clock_in: ['Stato sessione', 'Clock out', 'Registra ore'],
+  clock_out: ['Riepilogo ore', 'Clock in', 'Ore oggi'],
+  get_work_session_status: ['Clock in', 'Clock out', 'Ore settimanali'],
+  list_quote_templates: ['Crea preventivo', 'Dettagli template', 'Lista preventivi'],
+  list_wizard_submissions: ['Dettagli risposta', 'Filtra completate', 'Crea lead da risposta'],
 }
 
 interface AiAttachment {
@@ -122,6 +173,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
   const systemPrompt = await buildSystemPrompt({
     userName: user ? `${user.firstName} ${user.lastName}` : 'Utente',
     userRole: role,
+    userId,
     agentName: config?.name || undefined,
     customPrompt: config?.systemPrompt,
     currentPage,

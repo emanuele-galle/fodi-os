@@ -302,4 +302,114 @@ export const taskTools: AiToolDefinition[] = [
       return { success: true, data: { id: task.id, title: task.title, deleted: true } }
     },
   },
+
+  {
+    name: 'list_task_attachments',
+    description: 'Lista gli allegati di un task specifico.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'ID del task (obbligatorio)' },
+      },
+      required: ['taskId'],
+    },
+    module: 'pm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const attachments = await prisma.taskAttachment.findMany({
+        where: { taskId: input.taskId as string },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          fileName: true,
+          fileUrl: true,
+          fileSize: true,
+          mimeType: true,
+          type: true,
+          createdAt: true,
+          uploadedBy: { select: { firstName: true, lastName: true } },
+        },
+      })
+
+      return { success: true, data: { attachments, total: attachments.length } }
+    },
+  },
+
+  {
+    name: 'get_task_dependencies',
+    description: 'Mostra le dipendenze di un task: da quali task dipende e quali task dipendono da lui.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'ID del task (obbligatorio)' },
+      },
+      required: ['taskId'],
+    },
+    module: 'pm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const taskId = input.taskId as string
+
+      const [dependsOn, blockedBy] = await Promise.all([
+        prisma.taskDependency.findMany({
+          where: { taskId },
+          include: {
+            dependsOn: { select: { id: true, title: true, status: true, priority: true } },
+          },
+        }),
+        prisma.taskDependency.findMany({
+          where: { dependsOnId: taskId },
+          include: {
+            task: { select: { id: true, title: true, status: true, priority: true } },
+          },
+        }),
+      ])
+
+      return {
+        success: true,
+        data: {
+          dependsOn: dependsOn.map((d) => ({ ...d.dependsOn, type: d.type })),
+          blocks: blockedBy.map((d) => ({ ...d.task, type: d.type })),
+        },
+      }
+    },
+  },
+
+  {
+    name: 'add_task_dependency',
+    description: 'Aggiunge una dipendenza tra task (es. il task A deve essere completato prima del task B).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'ID del task che dipende (obbligatorio)' },
+        dependsOnId: { type: 'string', description: 'ID del task da cui dipende (obbligatorio)' },
+        type: { type: 'string', description: 'Tipo dipendenza: finish_to_start (default), start_to_start, finish_to_finish' },
+      },
+      required: ['taskId', 'dependsOnId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const taskId = input.taskId as string
+      const dependsOnId = input.dependsOnId as string
+
+      if (taskId === dependsOnId) {
+        return { success: false, error: 'Un task non può dipendere da se stesso' }
+      }
+
+      const dep = await prisma.taskDependency.create({
+        data: {
+          taskId,
+          dependsOnId,
+          type: (input.type as string) || 'finish_to_start',
+        },
+        include: {
+          task: { select: { title: true } },
+          dependsOn: { select: { title: true } },
+        },
+      })
+
+      return { success: true, data: { id: dep.id, task: dep.task.title, dependsOn: dep.dependsOn.title, type: dep.type } }
+    },
+  },
 ]

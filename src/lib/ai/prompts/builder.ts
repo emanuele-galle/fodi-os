@@ -21,15 +21,34 @@ function formatPermissions(role: Role): string {
     .join(' | ')
 }
 
+async function loadUserPreferences(userId: string): Promise<string> {
+  try {
+    const prefs = await prisma.aiUserPreference.findMany({
+      where: { userId },
+      orderBy: { updatedAt: 'desc' },
+      select: { key: true, value: true },
+    })
+    if (prefs.length === 0) return ''
+    let section = '\n\n## Preferenze utente memorizzate\n'
+    for (const p of prefs) {
+      section += `- **${p.key}**: ${p.value}\n`
+    }
+    return section
+  } catch {
+    return ''
+  }
+}
+
 interface BuildPromptParams {
   userName: string
   userRole: Role
+  userId?: string
   agentName?: string
   customPrompt?: string | null
   currentPage?: string
 }
 
-export async function buildSystemPrompt({ userName, userRole, agentName, customPrompt, currentPage }: BuildPromptParams): Promise<string> {
+export async function buildSystemPrompt({ userName, userRole, userId, agentName, customPrompt, currentPage }: BuildPromptParams): Promise<string> {
   const brandSlug = brand.slug
   const brandPrompt = BRAND_PROMPTS[brandSlug] || ''
 
@@ -109,6 +128,11 @@ export async function buildSystemPrompt({ userName, userRole, agentName, customP
     }
   } catch {
     // Knowledge base loading is best-effort
+  }
+
+  // Load user preferences (persistent memory)
+  if (userId) {
+    prompt += await loadUserPreferences(userId)
   }
 
   return prompt

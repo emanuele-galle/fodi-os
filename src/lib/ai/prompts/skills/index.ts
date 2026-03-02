@@ -14,6 +14,11 @@ const SKILL_FILES = [
   'support.md',
   'tasks.md',
   'time.md',
+  'folders.md',
+  'memory.md',
+  'wiki.md',
+  'documents.md',
+  'misc.md',
 ]
 
 function loadSkill(filename: string): string {

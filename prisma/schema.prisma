@@ -73,6 +73,7 @@ model User {
   dailyReports         DailyReport[]
   projectLinks         ProjectLink[]    @relation("ProjectLinkCreator")
   aiConversations      AiConversation[]
+  aiPreferences        AiUserPreference[]
 
   workSchedule     Json?    @default("{\"1\":{\"start\":9,\"end\":18},\"2\":{\"start\":9,\"end\":18},\"3\":{\"start\":9,\"end\":18},\"4\":{\"start\":9,\"end\":18},\"5\":{\"start\":9,\"end\":18}}")
 
@@ -1777,4 +1778,19 @@ model AiToolExecution {
   @@index([status])
   @@index([createdAt])
   @@map("ai_tool_executions")
+}
+
+model AiUserPreference {
+  id        String   @id @default(uuid())
+  userId    String
+  key       String
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([userId])
+  @@map("ai_user_preferences")
 }
