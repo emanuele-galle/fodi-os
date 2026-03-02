@@ -74,4 +74,42 @@ export const notificationTools: AiToolDefinition[] = [
       return { success: true, data: { markedRead: result.count } }
     },
   },
+
+  // --- update_notification_preferences ---
+  {
+    name: 'update_notification_preferences',
+    description: 'Aggiorna le preferenze di notifica dell\'utente (abilita/disabilita per tipo e canale)',
+    input_schema: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', description: 'Tipo notifica (es. task_assigned, deal_update, calendar_reminder)' },
+        channel: { type: 'string', description: 'Canale: in_app, email, push (default: in_app)' },
+        enabled: { type: 'boolean', description: 'Abilitata o disabilitata' },
+      },
+      required: ['type', 'enabled'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input, context) => {
+      const channel = (input.channel as string) || 'in_app'
+      const pref = await prisma.notificationPreference.upsert({
+        where: {
+          userId_type_channel: {
+            userId: context.userId,
+            type: input.type as string,
+            channel,
+          },
+        },
+        update: { enabled: input.enabled as boolean },
+        create: {
+          userId: context.userId,
+          type: input.type as string,
+          channel,
+          enabled: input.enabled as boolean,
+        },
+        select: { id: true, type: true, channel: true, enabled: true },
+      })
+      return { success: true, data: pref }
+    },
+  },
 ]

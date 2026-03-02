@@ -171,4 +171,31 @@ export const supportTools: AiToolDefinition[] = [
       return { success: true, data: ticket }
     },
   },
+
+  // --- add_ticket_comment ---
+  {
+    name: 'add_ticket_comment',
+    description: 'Aggiunge un commento a un ticket di supporto',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ticketId: { type: 'string', description: 'ID del ticket' },
+        content: { type: 'string', description: 'Contenuto del commento' },
+      },
+      required: ['ticketId', 'content'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input, context) => {
+      const comment = await prisma.comment.create({
+        data: {
+          ticketId: input.ticketId as string,
+          authorId: context.userId,
+          content: input.content as string,
+        },
+        select: { id: true, content: true, createdAt: true, author: { select: { firstName: true, lastName: true } } },
+      })
+      return { success: true, data: comment }
+    },
+  },
 ]

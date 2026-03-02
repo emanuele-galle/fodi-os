@@ -142,4 +142,41 @@ export const dailyTools: AiToolDefinition[] = [
       }
     },
   },
+
+  // --- list_daily_reports ---
+  {
+    name: 'list_daily_reports',
+    description: 'Lista i report giornalieri generati per l\'utente o il team',
+    input_schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', description: 'ID utente (opzionale, default utente corrente)' },
+        from: { type: 'string', description: 'Data inizio ISO (opzionale)' },
+        to: { type: 'string', description: 'Data fine ISO (opzionale)' },
+        limit: { type: 'number', description: 'Max risultati (default 10)' },
+      },
+    },
+    module: 'pm',
+    requiredPermission: 'read',
+    execute: async (input, context) => {
+      const where: Record<string, unknown> = { userId: (input.userId as string) || context.userId }
+      if (input.from || input.to) {
+        const dateFilter: Record<string, unknown> = {}
+        if (input.from) dateFilter.gte = new Date(input.from as string)
+        if (input.to) dateFilter.lte = new Date(input.to as string)
+        where.date = dateFilter
+      }
+
+      const reports = await prisma.dailyReport.findMany({
+        where,
+        orderBy: { date: 'desc' },
+        take: (input.limit as number) || 10,
+        select: {
+          id: true, date: true, pdfUrl: true, summary: true, createdAt: true,
+          user: { select: { id: true, firstName: true, lastName: true } },
+        },
+      })
+      return { success: true, data: { reports, total: reports.length } }
+    },
+  },
 ]

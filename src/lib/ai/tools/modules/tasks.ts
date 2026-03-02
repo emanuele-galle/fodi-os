@@ -1,3 +1,4 @@
+import type { Priority } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getTaskParticipants, dispatchNotification } from '@/lib/notifications'
 import type { AiToolDefinition, AiToolInput, AiToolContext } from '../types'
@@ -410,6 +411,74 @@ export const taskTools: AiToolDefinition[] = [
       })
 
       return { success: true, data: { id: dep.id, task: dep.task.title, dependsOn: dep.dependsOn.title, type: dep.type } }
+    },
+  },
+
+  // --- create_subtask ---
+  {
+    name: 'create_subtask',
+    description: 'Crea un sotto-task (subtask) collegato a un task padre',
+    input_schema: {
+      type: 'object',
+      properties: {
+        parentId: { type: 'string', description: 'ID del task padre' },
+        title: { type: 'string', description: 'Titolo del subtask' },
+        description: { type: 'string', description: 'Descrizione (opzionale)' },
+        assigneeId: { type: 'string', description: 'ID utente assegnato (opzionale)' },
+        priority: { type: 'string', description: 'Priorità: LOW, MEDIUM, HIGH, URGENT' },
+      },
+      required: ['parentId', 'title'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input, context) => {
+      const parent = await prisma.task.findUnique({
+        where: { id: input.parentId as string },
+        select: { id: true, projectId: true },
+      })
+      if (!parent) return { success: false, error: 'Task padre non trovato' }
+
+      const subtask = await prisma.task.create({
+        data: {
+          title: input.title as string,
+          description: (input.description as string) || undefined,
+          parentId: parent.id,
+          projectId: parent.projectId,
+          creatorId: context.userId,
+          assigneeId: (input.assigneeId as string) || undefined,
+          priority: ((input.priority as string) || 'MEDIUM') as Priority,
+          status: 'TODO',
+        },
+        select: { id: true, title: true, status: true, priority: true, assigneeId: true, parentId: true },
+      })
+      return { success: true, data: subtask }
+    },
+  },
+
+  // --- list_subtasks ---
+  {
+    name: 'list_subtasks',
+    description: 'Lista i sotto-task di un task padre',
+    input_schema: {
+      type: 'object',
+      properties: {
+        parentId: { type: 'string', description: 'ID del task padre' },
+      },
+      required: ['parentId'],
+    },
+    module: 'pm',
+    requiredPermission: 'read',
+    execute: async (input) => {
+      const subtasks = await prisma.task.findMany({
+        where: { parentId: input.parentId as string },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true, title: true, status: true, priority: true,
+          assignee: { select: { id: true, firstName: true, lastName: true } },
+          dueDate: true,
+        },
+      })
+      return { success: true, data: { subtasks, total: subtasks.length } }
     },
   },
 ]

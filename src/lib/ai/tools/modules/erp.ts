@@ -789,4 +789,348 @@ export const erpTools: AiToolDefinition[] = [
       }
     },
   },
+
+  // --- update_expense ---
+  {
+    name: 'update_expense',
+    description: 'Aggiorna una spesa esistente',
+    input_schema: {
+      type: 'object',
+      properties: {
+        expenseId: { type: 'string', description: 'ID della spesa' },
+        category: { type: 'string' },
+        description: { type: 'string' },
+        amount: { type: 'number' },
+        date: { type: 'string', description: 'Data ISO' },
+        isPaid: { type: 'boolean' },
+        supplierName: { type: 'string' },
+        notes: { type: 'string' },
+        invoiceNumber: { type: 'string' },
+      },
+      required: ['expenseId'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      const data: Record<string, unknown> = {}
+      if (input.category) data.category = input.category
+      if (input.description) data.description = input.description
+      if (input.amount !== undefined) data.amount = input.amount
+      if (input.date) data.date = new Date(input.date as string)
+      if (input.isPaid !== undefined) data.isPaid = input.isPaid
+      if (input.supplierName !== undefined) data.supplierName = input.supplierName || null
+      if (input.notes !== undefined) data.notes = input.notes || null
+      if (input.invoiceNumber !== undefined) data.invoiceNumber = input.invoiceNumber || null
+
+      const expense = await prisma.expense.update({
+        where: { id: input.expenseId as string },
+        data,
+        select: { id: true, category: true, description: true, amount: true, date: true, isPaid: true },
+      })
+      return { success: true, data: { ...expense, amount: expense.amount.toString() } }
+    },
+  },
+
+  // --- update_income ---
+  {
+    name: 'update_income',
+    description: 'Aggiorna un\'entrata esistente',
+    input_schema: {
+      type: 'object',
+      properties: {
+        incomeId: { type: 'string', description: 'ID dell\'entrata' },
+        clientName: { type: 'string' },
+        category: { type: 'string' },
+        amount: { type: 'number' },
+        date: { type: 'string', description: 'Data ISO' },
+        isPaid: { type: 'boolean' },
+        invoiceNumber: { type: 'string' },
+        notes: { type: 'string' },
+      },
+      required: ['incomeId'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      const data: Record<string, unknown> = {}
+      if (input.clientName) data.clientName = input.clientName
+      if (input.category) data.category = input.category
+      if (input.amount !== undefined) data.amount = input.amount
+      if (input.date) data.date = new Date(input.date as string)
+      if (input.isPaid !== undefined) data.isPaid = input.isPaid
+      if (input.invoiceNumber !== undefined) data.invoiceNumber = input.invoiceNumber || null
+      if (input.notes !== undefined) data.notes = input.notes || null
+
+      const income = await prisma.income.update({
+        where: { id: input.incomeId as string },
+        data,
+        select: { id: true, clientName: true, category: true, amount: true, date: true, isPaid: true },
+      })
+      return { success: true, data: { ...income, amount: income.amount.toString() } }
+    },
+  },
+
+  // --- delete_expense ---
+  {
+    name: 'delete_expense',
+    description: 'Elimina una spesa',
+    input_schema: {
+      type: 'object',
+      properties: {
+        expenseId: { type: 'string', description: 'ID della spesa da eliminare' },
+      },
+      required: ['expenseId'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      await prisma.expense.delete({ where: { id: input.expenseId as string } })
+      return { success: true, data: { deleted: true } }
+    },
+  },
+
+  // --- delete_income ---
+  {
+    name: 'delete_income',
+    description: 'Elimina un\'entrata',
+    input_schema: {
+      type: 'object',
+      properties: {
+        incomeId: { type: 'string', description: 'ID dell\'entrata da eliminare' },
+      },
+      required: ['incomeId'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      await prisma.income.delete({ where: { id: input.incomeId as string } })
+      return { success: true, data: { deleted: true } }
+    },
+  },
+
+  // --- create_quote_from_template ---
+  {
+    name: 'create_quote_from_template',
+    description: 'Crea un preventivo a partire da un template predefinito',
+    input_schema: {
+      type: 'object',
+      properties: {
+        templateId: { type: 'string', description: 'ID del template' },
+        clientId: { type: 'string', description: 'ID del cliente' },
+        title: { type: 'string', description: 'Titolo preventivo (opzionale, usa template)' },
+        notes: { type: 'string', description: 'Note aggiuntive (opzionale)' },
+      },
+      required: ['templateId', 'clientId'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input, context) => {
+      const template = await prisma.quoteTemplate.findUnique({
+        where: { id: input.templateId as string },
+        include: { lineItems: true },
+      })
+      if (!template) return { success: false, error: 'Template non trovato' }
+
+      const count = await prisma.quote.count()
+      const number = `${template.numberPrefix}-${new Date().getFullYear()}-${String(count + 1).padStart(3, '0')}`
+
+      const lineItems = template.lineItems.map((li) => ({
+        description: li.description,
+        quantity: li.quantity,
+        unitPrice: Number(li.unitPrice),
+        total: li.quantity * Number(li.unitPrice),
+      }))
+      const subtotal = lineItems.reduce((s, li) => s + li.total, 0)
+      const discount = Number(template.defaultDiscount)
+      const taxRate = Number(template.defaultTaxRate)
+      const taxAmount = (subtotal - discount) * (taxRate / 100)
+      const total = subtotal - discount + taxAmount
+
+      const quote = await prisma.quote.create({
+        data: {
+          clientId: input.clientId as string,
+          creatorId: context.userId,
+          templateId: template.id,
+          number,
+          title: (input.title as string) || `Preventivo ${template.name}`,
+          content: lineItems,
+          subtotal,
+          taxRate,
+          taxAmount,
+          total,
+          discount,
+          notes: (input.notes as string) || template.defaultNotes || undefined,
+          validUntil: new Date(Date.now() + template.defaultValidDays * 24 * 60 * 60 * 1000),
+        },
+        select: { id: true, number: true, title: true, total: true, status: true },
+      })
+      return { success: true, data: { ...quote, total: quote.total.toString() } }
+    },
+  },
+
+  // --- list_profit_goals ---
+  {
+    name: 'list_profit_goals',
+    description: 'Lista gli obiettivi di profitto mensili',
+    input_schema: {
+      type: 'object',
+      properties: {
+        year: { type: 'number', description: 'Anno (opzionale, default anno corrente)' },
+      },
+    },
+    module: 'erp',
+    requiredPermission: 'read',
+    execute: async (input) => {
+      const year = (input.year as number) || new Date().getFullYear()
+      const goals = await prisma.profitGoal.findMany({
+        where: { year },
+        orderBy: { month: 'asc' },
+      })
+      return { success: true, data: { goals: goals.map((g) => ({ ...g, amount: g.amount.toString() })), year } }
+    },
+  },
+
+  // --- set_profit_goal ---
+  {
+    name: 'set_profit_goal',
+    description: 'Imposta o aggiorna l\'obiettivo di profitto per un mese',
+    input_schema: {
+      type: 'object',
+      properties: {
+        year: { type: 'number', description: 'Anno' },
+        month: { type: 'number', description: 'Mese (1-12)' },
+        amount: { type: 'number', description: 'Importo obiettivo' },
+      },
+      required: ['year', 'month', 'amount'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      const goal = await prisma.profitGoal.upsert({
+        where: { year_month: { year: input.year as number, month: input.month as number } },
+        update: { amount: input.amount as number },
+        create: { year: input.year as number, month: input.month as number, amount: input.amount as number },
+      })
+      return { success: true, data: { ...goal, amount: goal.amount.toString() } }
+    },
+  },
+
+  // --- list_business_entities ---
+  {
+    name: 'list_business_entities',
+    description: 'Lista le entità aziendali (ragioni sociali/unità di business)',
+    input_schema: {
+      type: 'object',
+      properties: {},
+    },
+    module: 'erp',
+    requiredPermission: 'read',
+    execute: async () => {
+      const entities = await prisma.businessEntity.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+      })
+      return { success: true, data: { entities, total: entities.length } }
+    },
+  },
+
+  // --- delete_recurring_invoice ---
+  {
+    name: 'delete_recurring_invoice',
+    description: 'Elimina una fattura/spesa ricorrente',
+    input_schema: {
+      type: 'object',
+      properties: {
+        recurringInvoiceId: { type: 'string', description: 'ID della ricorrente da eliminare' },
+      },
+      required: ['recurringInvoiceId'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      await prisma.recurringInvoice.delete({ where: { id: input.recurringInvoiceId as string } })
+      return { success: true, data: { deleted: true } }
+    },
+  },
+
+  // --- get_accounting_dashboard ---
+  {
+    name: 'get_accounting_dashboard',
+    description: 'Dashboard contabile: totali entrate/spese, saldo, fatture non pagate, obiettivo profitto',
+    input_schema: {
+      type: 'object',
+      properties: {
+        year: { type: 'number', description: 'Anno (default corrente)' },
+        month: { type: 'number', description: 'Mese (default corrente)' },
+      },
+    },
+    module: 'erp',
+    requiredPermission: 'read',
+    execute: async (input) => {
+      const now = new Date()
+      const year = (input.year as number) || now.getFullYear()
+      const month = (input.month as number) || now.getMonth() + 1
+      const startDate = new Date(year, month - 1, 1)
+      const endDate = new Date(year, month, 0, 23, 59, 59)
+
+      const [incomes, expenses, unpaidInvoices, profitGoal] = await Promise.all([
+        prisma.income.aggregate({ where: { date: { gte: startDate, lte: endDate } }, _sum: { amount: true }, _count: true }),
+        prisma.expense.aggregate({ where: { date: { gte: startDate, lte: endDate } }, _sum: { amount: true }, _count: true }),
+        prisma.income.count({ where: { isPaid: false, date: { gte: startDate, lte: endDate } } }),
+        prisma.profitGoal.findUnique({ where: { year_month: { year, month } } }),
+      ])
+
+      const totalIncome = Number(incomes._sum.amount || 0)
+      const totalExpense = Number(expenses._sum.amount || 0)
+
+      return {
+        success: true,
+        data: {
+          period: { year, month },
+          totalIncome: totalIncome.toFixed(2),
+          totalExpense: totalExpense.toFixed(2),
+          profit: (totalIncome - totalExpense).toFixed(2),
+          incomeCount: incomes._count,
+          expenseCount: expenses._count,
+          unpaidInvoices,
+          profitGoal: profitGoal ? profitGoal.amount.toString() : null,
+        },
+      }
+    },
+  },
+
+  // --- update_quote ---
+  {
+    name: 'update_quote',
+    description: 'Aggiorna i dati di un preventivo (titolo, note, sconto, scadenza)',
+    input_schema: {
+      type: 'object',
+      properties: {
+        quoteId: { type: 'string', description: 'ID del preventivo' },
+        title: { type: 'string' },
+        notes: { type: 'string' },
+        discount: { type: 'number' },
+        validUntil: { type: 'string', description: 'Data scadenza ISO' },
+        status: { type: 'string', description: 'Stato: DRAFT, SENT, APPROVED, REJECTED, EXPIRED' },
+      },
+      required: ['quoteId'],
+    },
+    module: 'erp',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      const data: Record<string, unknown> = {}
+      if (input.title) data.title = input.title
+      if (input.notes !== undefined) data.notes = input.notes || null
+      if (input.discount !== undefined) data.discount = input.discount
+      if (input.validUntil) data.validUntil = new Date(input.validUntil as string)
+      if (input.status) data.status = input.status
+
+      const quote = await prisma.quote.update({
+        where: { id: input.quoteId as string },
+        data,
+        select: { id: true, number: true, title: true, status: true, total: true, validUntil: true },
+      })
+      return { success: true, data: { ...quote, total: quote.total.toString() } }
+    },
+  },
 ]

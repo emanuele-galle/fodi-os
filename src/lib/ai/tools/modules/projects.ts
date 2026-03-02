@@ -424,4 +424,54 @@ export const projectTools: AiToolDefinition[] = [
       return { success: true, data: { removed: true } }
     },
   },
+
+  // --- list_project_attachments ---
+  {
+    name: 'list_project_attachments',
+    description: 'Lista gli allegati (file) di un progetto',
+    input_schema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'ID del progetto' },
+        folderId: { type: 'string', description: 'Filtra per cartella (opzionale)' },
+      },
+      required: ['projectId'],
+    },
+    module: 'pm',
+    requiredPermission: 'read',
+    execute: async (input) => {
+      const where: Record<string, unknown> = { projectId: input.projectId as string }
+      if (input.folderId) where.folderId = input.folderId
+
+      const attachments = await prisma.projectAttachment.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true, fileName: true, fileUrl: true, fileSize: true, mimeType: true, type: true, createdAt: true,
+          uploadedBy: { select: { id: true, firstName: true, lastName: true } },
+          folder: { select: { id: true, name: true } },
+        },
+      })
+      return { success: true, data: { attachments, total: attachments.length } }
+    },
+  },
+
+  // --- delete_milestone ---
+  {
+    name: 'delete_milestone',
+    description: 'Elimina una milestone di progetto',
+    input_schema: {
+      type: 'object',
+      properties: {
+        milestoneId: { type: 'string', description: 'ID della milestone da eliminare' },
+      },
+      required: ['milestoneId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      await prisma.milestone.delete({ where: { id: input.milestoneId as string } })
+      return { success: true, data: { deleted: true } }
+    },
+  },
 ]

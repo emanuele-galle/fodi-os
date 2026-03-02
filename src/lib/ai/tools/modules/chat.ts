@@ -419,4 +419,83 @@ export const chatTools: AiToolDefinition[] = [
       return { success: true, data: { notified: userIds.length } }
     },
   },
+
+  // --- list_chat_unread ---
+  {
+    name: 'list_chat_unread',
+    description: 'Lista i messaggi non letti nei canali dell\'utente',
+    input_schema: {
+      type: 'object',
+      properties: {
+        channelId: { type: 'string', description: 'ID canale specifico (opzionale)' },
+      },
+    },
+    module: 'pm',
+    requiredPermission: 'read',
+    execute: async (input, context) => {
+      const memberships = await prisma.chatMember.findMany({
+        where: {
+          userId: context.userId,
+          ...(input.channelId ? { channelId: input.channelId as string } : {}),
+        },
+        select: { channelId: true, lastReadAt: true, channel: { select: { name: true, slug: true } } },
+      })
+
+      const results = await Promise.all(
+        memberships.map(async (m) => {
+          const unreadCount = await prisma.chatMessage.count({
+            where: {
+              channelId: m.channelId,
+              ...(m.lastReadAt ? { createdAt: { gt: m.lastReadAt } } : {}),
+              authorId: { not: context.userId },
+            },
+          })
+          return { channelId: m.channelId, channelName: m.channel.name, slug: m.channel.slug, unreadCount }
+        }),
+      )
+
+      const withUnread = results.filter((r) => r.unreadCount > 0)
+      return { success: true, data: { channels: withUnread, totalUnread: withUnread.reduce((s, c) => s + c.unreadCount, 0) } }
+    },
+  },
+
+  // --- manage_chat_members ---
+  {
+    name: 'manage_chat_members',
+    description: 'Aggiunge o rimuove membri da un canale chat',
+    input_schema: {
+      type: 'object',
+      properties: {
+        channelId: { type: 'string', description: 'ID del canale' },
+        action: { type: 'string', description: 'Azione: add o remove' },
+        userId: { type: 'string', description: 'ID utente da aggiungere/rimuovere' },
+      },
+      required: ['channelId', 'action', 'userId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      const channelId = input.channelId as string
+      const userId = input.userId as string
+
+      if (input.action === 'add') {
+        const member = await prisma.chatMember.upsert({
+          where: { channelId_userId: { channelId, userId } },
+          update: {},
+          create: { channelId, userId, role: 'MEMBER' },
+          select: { id: true, channelId: true, userId: true, role: true },
+        })
+        return { success: true, data: { action: 'added', member } }
+      }
+
+      if (input.action === 'remove') {
+        await prisma.chatMember.delete({
+          where: { channelId_userId: { channelId, userId } },
+        })
+        return { success: true, data: { action: 'removed', channelId, userId } }
+      }
+
+      return { success: false, error: 'Azione non valida. Usa "add" o "remove".' }
+    },
+  },
 ]

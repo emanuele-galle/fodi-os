@@ -115,6 +115,45 @@ const TOOL_FOLLOWUPS: Record<string, string[]> = {
   // CRM details
   get_client_details: ['Crea deal', 'Contatta cliente', 'Progetti del cliente'],
   get_deal_details: ['Aggiorna deal', 'Contatta cliente', 'Pipeline completa'],
+  // CRM contacts & interactions
+  create_contact: ['Lista contatti', 'Aggiungi altro contatto', 'Dettagli cliente'],
+  update_contact: ['Dettagli contatto', 'Lista contatti', 'Crea interazione'],
+  list_interactions: ['Registra interazione', 'Dettagli cliente', 'Interazioni recenti'],
+  get_lead_details: ['Converti lead', 'Contatta lead', 'Lista lead'],
+  convert_lead: ['Dettagli nuovo cliente', 'Crea deal', 'Lista clienti'],
+  // Task subtasks
+  create_subtask: ['Lista subtask', 'Crea altro subtask', 'Dettagli task padre'],
+  list_subtasks: ['Crea subtask', 'Dettagli task padre', 'Aggiorna subtask'],
+  // ERP extended
+  update_expense: ['Lista spese', 'Dettaglio spesa', 'Report mensile'],
+  update_income: ['Lista entrate', 'Dettaglio entrata', 'Report mensile'],
+  delete_expense: ['Lista spese', 'Registra spesa', 'Report mensile'],
+  delete_income: ['Lista entrate', 'Registra entrata', 'Report mensile'],
+  create_quote_from_template: ['Dettagli preventivo', 'Invia preventivo', 'Lista preventivi'],
+  list_profit_goals: ['Imposta obiettivo', 'Report mensile', 'Dashboard contabile'],
+  set_profit_goal: ['Lista obiettivi', 'Report mensile', 'Dashboard contabile'],
+  list_business_entities: ['Registra spesa', 'Registra entrata', 'Report mensile'],
+  delete_recurring_invoice: ['Lista ricorrenti', 'Crea ricorrente', 'Report mensile'],
+  get_accounting_dashboard: ['Dettaglio entrate', 'Dettaglio spese', 'Obiettivi profitto'],
+  update_quote: ['Dettagli preventivo', 'Invia preventivo', 'Lista preventivi'],
+  // Wiki extended
+  update_wiki_page: ['Leggi pagina', 'Cerca wiki', 'Elimina pagina'],
+  delete_wiki_page: ['Cerca wiki', 'Crea pagina', 'Lista pagine'],
+  // Support extended
+  add_ticket_comment: ['Dettagli ticket', 'Aggiorna ticket', 'Lista ticket'],
+  // Notifications extended
+  update_notification_preferences: ['Vedi preferenze', 'Altre preferenze', 'Lista notifiche'],
+  // Project extras
+  list_project_attachments: ['Dettagli progetto', 'Aggiungi link', 'Lista cartelle'],
+  delete_milestone: ['Lista milestone', 'Crea milestone', 'Stato progetto'],
+  // Signature
+  list_signature_requests: ['Crea richiesta firma', 'Dettagli firma', 'Filtra per stato'],
+  create_signature_request: ['Lista firme', 'Stato richiesta', 'Invia sollecito'],
+  // Daily reports
+  list_daily_reports: ['Dettaglio report', 'Report oggi', 'Report settimana'],
+  // Chat extended
+  list_chat_unread: ['Leggi messaggi', 'Segna come letto', 'Lista canali'],
+  manage_chat_members: ['Lista membri canale', 'Invia messaggio', 'Aggiungi altro membro'],
   // Misc
   get_company_profile: ['Profilo azienda', 'Crea preventivo', 'Info fiscali'],
   list_activity_log: ['Attività utente', 'Attività progetto', 'Filtro azioni'],

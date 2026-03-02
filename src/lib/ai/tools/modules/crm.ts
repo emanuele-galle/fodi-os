@@ -491,4 +491,189 @@ export const crmTools: AiToolDefinition[] = [
       return { success: true, data: { ...deal, value: deal.value.toString() } }
     },
   },
+
+  // --- create_contact ---
+  {
+    name: 'create_contact',
+    description: 'Crea un nuovo contatto per un cliente CRM',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente' },
+        firstName: { type: 'string', description: 'Nome' },
+        lastName: { type: 'string', description: 'Cognome' },
+        email: { type: 'string', description: 'Email (opzionale)' },
+        phone: { type: 'string', description: 'Telefono (opzionale)' },
+        role: { type: 'string', description: 'Ruolo/posizione (opzionale)' },
+        isPrimary: { type: 'boolean', description: 'Contatto primario?' },
+      },
+      required: ['clientId', 'firstName', 'lastName'],
+    },
+    module: 'crm',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      const contact = await prisma.contact.create({
+        data: {
+          clientId: input.clientId as string,
+          firstName: input.firstName as string,
+          lastName: input.lastName as string,
+          email: (input.email as string) || undefined,
+          phone: (input.phone as string) || undefined,
+          role: (input.role as string) || undefined,
+          isPrimary: (input.isPrimary as boolean) || false,
+        },
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true, role: true, isPrimary: true },
+      })
+      return { success: true, data: contact }
+    },
+  },
+
+  // --- update_contact ---
+  {
+    name: 'update_contact',
+    description: 'Aggiorna un contatto CRM esistente',
+    input_schema: {
+      type: 'object',
+      properties: {
+        contactId: { type: 'string', description: 'ID del contatto' },
+        firstName: { type: 'string' },
+        lastName: { type: 'string' },
+        email: { type: 'string' },
+        phone: { type: 'string' },
+        role: { type: 'string' },
+        isPrimary: { type: 'boolean' },
+      },
+      required: ['contactId'],
+    },
+    module: 'crm',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      const data: Record<string, unknown> = {}
+      if (input.firstName) data.firstName = input.firstName
+      if (input.lastName) data.lastName = input.lastName
+      if (input.email !== undefined) data.email = input.email || null
+      if (input.phone !== undefined) data.phone = input.phone || null
+      if (input.role !== undefined) data.role = input.role || null
+      if (input.isPrimary !== undefined) data.isPrimary = input.isPrimary
+
+      const contact = await prisma.contact.update({
+        where: { id: input.contactId as string },
+        data,
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true, role: true, isPrimary: true },
+      })
+      return { success: true, data: contact }
+    },
+  },
+
+  // --- list_interactions ---
+  {
+    name: 'list_interactions',
+    description: 'Lista le interazioni (chiamate, email, meeting, note) di un cliente o contatto',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID cliente (opzionale)' },
+        contactId: { type: 'string', description: 'ID contatto (opzionale)' },
+        type: { type: 'string', description: 'Tipo: CALL, EMAIL, MEETING, NOTE, WHATSAPP, SOCIAL' },
+        limit: { type: 'number', description: 'Max risultati (default 20)' },
+      },
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input) => {
+      const where: Record<string, unknown> = {}
+      if (input.clientId) where.clientId = input.clientId
+      if (input.contactId) where.contactId = input.contactId
+      if (input.type) where.type = input.type
+
+      const interactions = await prisma.interaction.findMany({
+        where,
+        orderBy: { date: 'desc' },
+        take: (input.limit as number) || 20,
+        select: {
+          id: true, type: true, subject: true, content: true, date: true,
+          client: { select: { id: true, companyName: true } },
+          contact: { select: { id: true, firstName: true, lastName: true } },
+        },
+      })
+      return { success: true, data: { interactions, total: interactions.length } }
+    },
+  },
+
+  // --- get_lead_details ---
+  {
+    name: 'get_lead_details',
+    description: 'Ottieni dettagli completi di un lead',
+    input_schema: {
+      type: 'object',
+      properties: {
+        leadId: { type: 'string', description: 'ID del lead' },
+      },
+      required: ['leadId'],
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input) => {
+      const lead = await prisma.lead.findUnique({
+        where: { id: input.leadId as string },
+        include: {
+          assignee: { select: { id: true, firstName: true, lastName: true } },
+          convertedClient: { select: { id: true, companyName: true } },
+          deals: { select: { id: true, title: true, stage: true, value: true } },
+        },
+      })
+      if (!lead) return { success: false, error: 'Lead non trovato' }
+      const deals = lead.deals.map((d) => ({ ...d, value: d.value.toString() }))
+      return { success: true, data: { ...lead, deals } }
+    },
+  },
+
+  // --- convert_lead ---
+  {
+    name: 'convert_lead',
+    description: 'Converte un lead in cliente CRM. Crea un nuovo Client e aggiorna il lead.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        leadId: { type: 'string', description: 'ID del lead da convertire' },
+        companyName: { type: 'string', description: 'Nome azienda per il nuovo cliente (opzionale, usa lead.company)' },
+      },
+      required: ['leadId'],
+    },
+    module: 'crm',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      const lead = await prisma.lead.findUnique({ where: { id: input.leadId as string } })
+      if (!lead) return { success: false, error: 'Lead non trovato' }
+      if (lead.convertedClientId) return { success: false, error: 'Lead già convertito' }
+
+      const companyName = (input.companyName as string) || lead.company || lead.name
+      const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      const client = await prisma.client.create({
+        data: {
+          companyName,
+          slug: `${slug}-${Date.now()}`,
+          source: lead.source,
+          status: 'ACTIVE',
+          contacts: {
+            create: {
+              firstName: lead.name.split(' ')[0] || lead.name,
+              lastName: lead.name.split(' ').slice(1).join(' ') || '',
+              email: lead.email,
+              phone: lead.phone || undefined,
+              isPrimary: true,
+            },
+          },
+        },
+        select: { id: true, companyName: true },
+      })
+
+      await prisma.lead.update({
+        where: { id: lead.id },
+        data: { convertedClientId: client.id, status: 'CONVERTED' },
+      })
+
+      return { success: true, data: { client, leadId: lead.id, status: 'CONVERTED' } }
+    },
+  },
 ]

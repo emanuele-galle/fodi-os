@@ -248,4 +248,83 @@ export const miscTools: AiToolDefinition[] = [
       return { success: true, data: { submissions, total: submissions.length } }
     },
   },
+
+  // --- list_signature_requests ---
+  {
+    name: 'list_signature_requests',
+    description: 'Lista le richieste di firma digitale',
+    input_schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', description: 'Filtra per stato: PENDING, OTP_SENT, SIGNED, DECLINED, EXPIRED, CANCELLED' },
+        limit: { type: 'number', description: 'Max risultati (default 20)' },
+      },
+    },
+    module: 'pm',
+    requiredPermission: 'read',
+    execute: async (input) => {
+      const where: Record<string, unknown> = {}
+      if (input.status) where.status = input.status
+
+      const requests = await prisma.signatureRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: (input.limit as number) || 20,
+        select: {
+          id: true, documentType: true, documentTitle: true, signerName: true, signerEmail: true,
+          status: true, expiresAt: true, signedAt: true, createdAt: true,
+          requester: { select: { id: true, firstName: true, lastName: true } },
+        },
+      })
+      return { success: true, data: { requests, total: requests.length } }
+    },
+  },
+
+  // --- create_signature_request ---
+  {
+    name: 'create_signature_request',
+    description: 'Crea una nuova richiesta di firma digitale per un documento',
+    input_schema: {
+      type: 'object',
+      properties: {
+        documentType: { type: 'string', description: 'Tipo: QUOTE, CONTRACT, CUSTOM' },
+        documentTitle: { type: 'string', description: 'Titolo del documento' },
+        documentUrl: { type: 'string', description: 'URL del PDF su MinIO' },
+        documentId: { type: 'string', description: 'ID del documento collegato (opzionale)' },
+        signerName: { type: 'string', description: 'Nome del firmatario' },
+        signerEmail: { type: 'string', description: 'Email del firmatario' },
+        signerPhone: { type: 'string', description: 'Telefono firmatario (opzionale)' },
+        signerClientId: { type: 'string', description: 'ID cliente firmatario (opzionale)' },
+        message: { type: 'string', description: 'Messaggio per il firmatario (opzionale)' },
+        expiresInDays: { type: 'number', description: 'Giorni di scadenza (default 30)' },
+      },
+      required: ['documentType', 'documentTitle', 'documentUrl', 'signerName', 'signerEmail'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input, context) => {
+      const crypto = await import('crypto')
+      const expiresInDays = (input.expiresInDays as number) || 30
+      const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
+
+      const request = await prisma.signatureRequest.create({
+        data: {
+          documentType: input.documentType as string,
+          documentTitle: input.documentTitle as string,
+          documentUrl: input.documentUrl as string,
+          documentId: (input.documentId as string) || undefined,
+          requesterId: context.userId,
+          signerName: input.signerName as string,
+          signerEmail: input.signerEmail as string,
+          signerPhone: (input.signerPhone as string) || undefined,
+          signerClientId: (input.signerClientId as string) || undefined,
+          message: (input.message as string) || undefined,
+          expiresAt,
+          accessToken: crypto.randomUUID(),
+        },
+        select: { id: true, documentTitle: true, signerName: true, signerEmail: true, status: true, expiresAt: true },
+      })
+      return { success: true, data: request }
+    },
+  },
 ]

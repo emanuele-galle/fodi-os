@@ -133,4 +133,60 @@ export const wikiTools: AiToolDefinition[] = [
       return { success: true, data: page }
     },
   },
+
+  // --- update_wiki_page ---
+  {
+    name: 'update_wiki_page',
+    description: 'Aggiorna una pagina wiki esistente',
+    input_schema: {
+      type: 'object',
+      properties: {
+        pageId: { type: 'string', description: 'ID della pagina wiki' },
+        title: { type: 'string', description: 'Nuovo titolo (opzionale)' },
+        content: { type: 'string', description: 'Nuovo contenuto markdown (opzionale)' },
+        excerpt: { type: 'string', description: 'Estratto (opzionale)' },
+        category: { type: 'string', description: 'Categoria (opzionale)' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Tag (opzionale)' },
+        isPublished: { type: 'boolean', description: 'Pubblicata?' },
+      },
+      required: ['pageId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      const data: Record<string, unknown> = {}
+      if (input.title) data.title = input.title
+      if (input.content) data.content = input.content
+      if (input.excerpt !== undefined) data.excerpt = input.excerpt || null
+      if (input.category) data.category = input.category
+      if (input.tags) data.tags = input.tags
+      if (input.isPublished !== undefined) data.isPublished = input.isPublished
+
+      const page = await prisma.wikiPage.update({
+        where: { id: input.pageId as string },
+        data,
+        select: { id: true, title: true, slug: true, category: true, isPublished: true },
+      })
+      return { success: true, data: page }
+    },
+  },
+
+  // --- delete_wiki_page ---
+  {
+    name: 'delete_wiki_page',
+    description: 'Elimina una pagina wiki',
+    input_schema: {
+      type: 'object',
+      properties: {
+        pageId: { type: 'string', description: 'ID della pagina wiki da eliminare' },
+      },
+      required: ['pageId'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input) => {
+      await prisma.wikiPage.delete({ where: { id: input.pageId as string } })
+      return { success: true, data: { deleted: true } }
+    },
+  },
 ]
