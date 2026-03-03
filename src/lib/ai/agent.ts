@@ -347,8 +347,9 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
   const modelId = config?.model || process.env.AI_DEFAULT_MODEL || 'claude-haiku-4-5-20251001'
   const usedToolNames: string[] = []
 
-  // Thinking configuration
-  const enableThinking = config?.enableThinking ?? true
+  // Thinking configuration — only supported on Sonnet/Opus, not Haiku
+  const supportsThinking = !modelId.includes('haiku')
+  const enableThinking = supportsThinking && (config?.enableThinking ?? true)
   const thinkingEffort = (config?.thinkingEffort as 'low' | 'medium' | 'high') || 'medium'
   const thinkingBudget = THINKING_BUDGETS[thinkingEffort] || THINKING_BUDGETS.medium
   const maxTokens = config?.maxTokens || Number(process.env.AI_MAX_TOKENS) || 4096
