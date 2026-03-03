@@ -441,7 +441,7 @@ export default function CrmPage() {
       )}
 
       {fetchError && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
@@ -522,7 +522,7 @@ export default function CrmPage() {
 
           {/* Bulk Actions Bar */}
           {selectedIds.size > 0 && (
-            <div className="hidden md:flex items-center gap-3 mb-4 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5">
+            <div className="hidden md:flex items-center gap-3 mb-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5">
               <CheckSquare className="h-4 w-4 text-primary flex-shrink-0" />
               <span className="text-sm font-medium">{selectedIds.size} selezionat{selectedIds.size === 1 ? 'o' : 'i'}</span>
               <div className="flex items-center gap-2 ml-auto">
@@ -540,7 +540,7 @@ export default function CrmPage() {
                        
                       onChange={e => setBulkTagInput(e.target.value)}
                       placeholder="Tag da aggiungere..."
-                      className="h-8 text-base md:text-xs border border-border rounded-md px-2 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/50 w-36"
+                      className="h-8 text-base md:text-xs border border-border/40 rounded-lg px-2 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/50 w-36"
                        
                       onKeyDown={e => {
                         if (e.key === 'Enter' && bulkTagInput.trim()) {
@@ -661,7 +661,7 @@ export default function CrmPage() {
                           </button>
                           {statusDropdownId === client.id && (
                             <div
-                              className="absolute z-50 top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[140px]"
+                              className="absolute z-50 top-full left-0 mt-1 bg-card border border-border/30 rounded-xl shadow-[var(--shadow-lg)] py-1 min-w-[140px]"
                                
                               onClick={(e) => e.stopPropagation()}
                             >

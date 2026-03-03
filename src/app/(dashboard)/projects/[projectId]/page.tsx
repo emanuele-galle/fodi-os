@@ -842,7 +842,7 @@ export default function ProjectDetailPage() {
               rows={3}
               value={taskForm.values.description}
               onChange={(e) => taskForm.setValue('description', e.target.value)}
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             />
           </div>
           <Select label="Priorità" options={PRIORITY_OPTIONS} value={taskForm.values.priority} onChange={(e) => taskForm.setValue('priority', e.target.value)} />

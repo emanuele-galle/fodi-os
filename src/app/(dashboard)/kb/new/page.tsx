@@ -66,7 +66,7 @@ export default function NewKbPage() {
 
       <form onSubmit={handleCreate} className="space-y-4">
         {error && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {error}
           </div>
         )}

@@ -37,7 +37,7 @@ export default function ChatPage() {
       {/* Left panel - Channel list */}
       <div className={`w-full md:w-[320px] lg:w-[340px] border-r border-border/50 flex-shrink-0 bg-card/95 backdrop-blur-sm ${chat.selectedId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
         {chat.channelError && (
-          <div className="mx-3 mt-3 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
+          <div className="mx-3 mt-3 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">
             <p className="text-xs text-destructive">{chat.channelError}</p>
             <button onClick={handleRetryChannels} className="text-xs font-medium text-destructive hover:underline flex-shrink-0 ml-2">Riprova</button>
           </div>

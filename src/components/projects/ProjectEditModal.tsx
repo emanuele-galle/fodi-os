@@ -166,7 +166,7 @@ export function ProjectEditModal({ open, onClose, projectId, initialData, client
             rows={3}
             value={editForm.description}
             onChange={handleDesc}
-            className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

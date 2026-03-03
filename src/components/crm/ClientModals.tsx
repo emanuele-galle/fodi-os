@@ -32,7 +32,7 @@ export function AddContactModal({ open, onClose, onSubmit, submitting }: AddCont
             name="notes"
             rows={2}
             placeholder="Note sul contatto..."
-            className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           />
         </div>
         <label className="flex items-center gap-2 text-sm">
@@ -79,7 +79,7 @@ export function AddInteractionModal({ open, onClose, onSubmit, submitting, conta
           <textarea
             name="content"
             rows={4}
-            className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           />
         </div>
         <div className="flex justify-end gap-3 pt-2">
@@ -125,7 +125,7 @@ export function EditClientModal({ open, onClose, onSubmit, submitting, editForm,
         <Select label="Stato" options={STATUS_OPTIONS.filter(o => o.value !== '')} value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))} />
         <div className="space-y-1">
           <label className="block text-sm font-medium text-foreground">Note</label>
-          <textarea rows={3} value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" />
+          <textarea rows={3} value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" />
         </div>
         {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
         <div className="flex justify-end gap-3 pt-2">
@@ -191,7 +191,7 @@ export function EditContactModal({ open, onClose, onSubmit, submitting, editCont
             value={editContactForm.notes}
             onChange={e => setEditContactForm(f => ({ ...f, notes: e.target.value }))}
             placeholder="Note sul contatto..."
-            className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           />
         </div>
         <label className="flex items-center gap-2 text-sm">
@@ -276,7 +276,7 @@ export function EditInteractionModal({ open, onClose, onSubmit, submitting, edit
             rows={4}
             value={editInteractionForm.content}
             onChange={e => setEditInteractionForm(f => ({ ...f, content: e.target.value }))}
-            className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           />
         </div>
         <Input

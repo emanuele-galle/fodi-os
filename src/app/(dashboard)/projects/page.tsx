@@ -274,7 +274,7 @@ export default function ProjectsPage() {
       <ProjectStatsHeader {...stats} />
 
       {/* Internal projects link */}
-      <button onClick={() => router.push('/internal')} className="flex items-center gap-2 w-full mb-4 px-4 py-2.5 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors text-sm text-primary touch-manipulation">
+      <button onClick={() => router.push('/internal')} className="flex items-center gap-2 w-full mb-4 px-4 py-2.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors text-sm text-primary touch-manipulation">
         <Building2 className="h-4 w-4" /><span>Vedi progetti interni {brandClient.slug.toUpperCase()}</span><ChevronRight className="h-4 w-4 ml-auto" />
       </button>
 
@@ -293,13 +293,13 @@ export default function ProjectsPage() {
           <div className="flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4 text-muted flex-shrink-0" />
             <Select options={SORT_OPTIONS} value={sortField} onChange={(e) => setSortField(e.target.value as SortField)} className="w-40 sm:w-44" />
-            <button onClick={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))} className="p-2.5 sm:p-1.5 rounded-md hover:bg-secondary transition-colors touch-manipulation" title={sortDirection === 'asc' ? 'Ordine crescente' : 'Ordine decrescente'} aria-label={sortDirection === 'asc' ? 'Ordine crescente' : 'Ordine decrescente'}>
+            <button onClick={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))} className="p-2.5 sm:p-1.5 rounded-lg hover:bg-secondary transition-colors touch-manipulation" title={sortDirection === 'asc' ? 'Ordine crescente' : 'Ordine decrescente'} aria-label={sortDirection === 'asc' ? 'Ordine crescente' : 'Ordine decrescente'}>
               {sortDirection === 'asc' ? <ChevronUp className="h-4 w-4 text-muted" /> : <ChevronDown className="h-4 w-4 text-muted" />}
             </button>
           </div>
-          <div className="flex items-center border border-border rounded-md overflow-hidden flex-shrink-0">
+          <div className="flex items-center gap-0.5 p-[3px] rounded-[10px] bg-secondary/60 flex-shrink-0">
             {([['grid', LayoutGrid, 'Vista griglia'], ['table', List, 'Vista tabella'], ['kanban', Columns3, 'Vista kanban']] as const).map(([mode, Icon, label]) => (
-              <button key={mode} onClick={() => setViewMode(mode)} className={`p-2.5 sm:p-2 transition-colors touch-manipulation ${viewMode === mode ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'}`} title={label} aria-label={label}>
+              <button key={mode} onClick={() => setViewMode(mode)} className={`p-2 sm:p-1.5 rounded-[8px] transition-all duration-200 touch-manipulation ${viewMode === mode ? 'bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.08)]' : 'text-muted hover:text-foreground'}`} title={label} aria-label={label}>
                 <Icon className="h-4 w-4" />
               </button>
             ))}
@@ -309,7 +309,7 @@ export default function ProjectsPage() {
 
       {/* Error state */}
       {fetchError && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
           <div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" /><p className="text-sm text-destructive">{fetchError}</p></div>
           <button onClick={() => fetchProjects()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>

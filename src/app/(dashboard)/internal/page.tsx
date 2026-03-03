@@ -269,7 +269,7 @@ export default function InternalPage() {
       </div>
 
       {fetchError && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
@@ -499,7 +499,7 @@ export default function InternalPage() {
             <textarea
               name="description"
               rows={3}
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             />
           </div>
           <Select

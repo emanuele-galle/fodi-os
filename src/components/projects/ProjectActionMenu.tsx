@@ -53,7 +53,7 @@ export function ProjectActionMenu({ project, onDuplicate, onArchive, onDelete }:
         <MoreVertical className="h-4 w-4" />
       </Button>
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border/30 rounded-xl shadow-[var(--shadow-lg)] py-1 min-w-[160px]">
           <button
             onClick={handleEdit}
             className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 flex items-center gap-2"

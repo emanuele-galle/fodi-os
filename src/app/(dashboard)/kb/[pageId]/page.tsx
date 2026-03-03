@@ -138,7 +138,7 @@ export default function KbDetailPage() {
   if (error && !data) {
     return (
       <div className="animate-fade-in max-w-3xl mx-auto">
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
         <Button variant="outline" className="mt-4" onClick={() => router.push('/kb')}>
@@ -194,7 +194,7 @@ export default function KbDetailPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive mb-4">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive mb-4">
           {error}
         </div>
       )}

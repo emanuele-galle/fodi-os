@@ -443,7 +443,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
               onChange={handleUrlChange}
               rows={2}
               placeholder="Inserisci qui l'URL o il link breve"
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               required
             />
           </div>
@@ -455,7 +455,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
               onChange={handleDescriptionChange}
               rows={4}
               placeholder="Aggiungi una descrizione..."
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             />
           </div>
 

@@ -130,7 +130,7 @@ export function TemplateList() {
       </div>
 
       {fetchError && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
@@ -256,7 +256,7 @@ export function TemplateList() {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                         {actionMenuId === t.id && (
-                          <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
+                          <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border/30 rounded-xl shadow-[var(--shadow-lg)] py-1 min-w-[160px]">
                             <button
                               onClick={(e) => { e.stopPropagation(); handleDuplicate(t.id) }}
                               className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 flex items-center gap-2"

@@ -121,7 +121,7 @@ export default function PortalNewTicketPage() {
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Breve descrizione del problema"
                 required
-                className="flex h-10 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                className="flex h-10 w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               />
             </div>
 
@@ -136,7 +136,7 @@ export default function PortalNewTicketPage() {
                 placeholder="Descrivi in dettaglio il problema o la richiesta..."
                 required
                 rows={5}
-                className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 resize-y"
+                className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 resize-y"
               />
             </div>
 
@@ -149,7 +149,7 @@ export default function PortalNewTicketPage() {
                   id="priority"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                  className="flex h-10 w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 >
                   {PRIORITIES.map((p) => (
                     <option key={p.value} value={p.value}>{p.label}</option>
@@ -165,7 +165,7 @@ export default function PortalNewTicketPage() {
                   id="category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                  className="flex h-10 w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -182,7 +182,7 @@ export default function PortalNewTicketPage() {
                     id="projectId"
                     value={projectId}
                     onChange={(e) => setProjectId(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    className="flex h-10 w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                   >
                     <option value="">Nessun progetto</option>
                     {projects.map((p) => (

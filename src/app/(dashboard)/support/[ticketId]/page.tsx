@@ -324,7 +324,7 @@ export default function TicketDetailPage() {
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Scrivi un commento..."
                 rows={2}
-                className="flex-1 rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                className="flex-1 rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               />
               <Button
                 type="submit"

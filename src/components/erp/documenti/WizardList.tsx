@@ -273,7 +273,7 @@ export function WizardList() {
 
       {/* Error */}
       {fetchError && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
@@ -416,7 +416,7 @@ export function WizardList() {
 
                   {/* Quick Preview Tooltip */}
                   {hoveredCard === w.id && (
-                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-10 bg-popover border border-border rounded-lg shadow-lg px-3 py-2 text-xs whitespace-nowrap pointer-events-none">
+                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-10 bg-popover border border-border/30 rounded-xl shadow-[var(--shadow-lg)] px-3 py-2 text-xs whitespace-nowrap pointer-events-none">
                       <div className="flex items-center gap-3">
                         <span className="font-medium">{w._count.steps} step</span>
                         <span className="text-muted">|</span>

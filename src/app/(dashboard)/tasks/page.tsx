@@ -261,7 +261,7 @@ export default function TasksPage() {
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => { setSelectedTaskId(null); setModalOpen(true) }}
-            className="h-9 md:h-8 px-3 text-sm md:text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary-hover transition-colors touch-manipulation flex items-center gap-1.5"
+            className="h-9 md:h-8 px-3 text-sm md:text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover transition-colors touch-manipulation flex items-center gap-1.5"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nuova Task</span>
@@ -270,16 +270,16 @@ export default function TasksPage() {
             <button
               onClick={exportCSV}
               disabled={tasks.length === 0}
-              className="p-2.5 md:p-2 rounded-md border border-border text-muted hover:text-foreground hover:bg-secondary/60 transition-colors touch-manipulation disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2.5 md:p-2 rounded-lg border border-border/40 text-muted hover:text-foreground hover:bg-secondary/60 transition-colors touch-manipulation disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Download className="h-4 w-4" />
             </button>
           </Tooltip>
-          <div className="flex rounded-md border border-border overflow-hidden">
+          <div className="flex gap-0.5 p-[3px] rounded-[10px] bg-secondary/60">
             <Tooltip content="Vista lista">
               <button
                 onClick={() => { setView('list'); updatePreference('defaultView', 'list') }}
-                className={`p-2.5 md:p-2 transition-colors touch-manipulation ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground'}`}
+                className={`p-2 md:p-1.5 rounded-[8px] transition-all duration-200 touch-manipulation ${view === 'list' ? 'bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.08)]' : 'text-muted hover:text-foreground'}`}
               >
                 <ListTodo className="h-4 w-4" />
               </button>
@@ -287,7 +287,7 @@ export default function TasksPage() {
             <Tooltip content="Vista kanban">
               <button
                 onClick={() => { setView('kanban'); updatePreference('defaultView', 'kanban') }}
-                className={`p-2.5 md:p-2 transition-colors touch-manipulation ${view === 'kanban' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground'}`}
+                className={`p-2 md:p-1.5 rounded-[8px] transition-all duration-200 touch-manipulation ${view === 'kanban' ? 'bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.08)]' : 'text-muted hover:text-foreground'}`}
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
@@ -316,7 +316,7 @@ export default function TasksPage() {
       />
 
       {fetchError && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>

@@ -162,7 +162,7 @@ function ReadReceiptIndicator({ receipts }: { receipts?: ReadReceipt[] }) {
         )}
       </button>
       {showTooltip && isRead && receipts && receipts.length > 0 && (
-        <div className="absolute bottom-full mb-1.5 right-0 bg-card border border-border rounded-lg shadow-lg p-2 z-50 min-w-[180px] text-[11px]">
+        <div className="absolute bottom-full mb-1.5 right-0 bg-card border border-border/30 rounded-xl shadow-[var(--shadow-lg)] p-2 z-50 min-w-[180px] text-[11px]">
           <p className="font-semibold text-foreground/70 mb-1.5">Letto da</p>
           {receipts.map((r) => (
             <div key={r.userId} className="flex items-center justify-between gap-3 py-0.5">
@@ -655,7 +655,7 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
                     <MoreHorizontal className="h-4 w-4 md:h-3.5 md:w-3.5" />
                   </button>
                   {menuOpen && (
-                    <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[140px]">
+                    <div className="absolute top-full mt-1 right-0 z-50 bg-card border border-border/30 rounded-xl shadow-[var(--shadow-lg)] py-1 min-w-[140px]">
                       {isOwn && onEdit && (
                         <button
                           // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-action handler

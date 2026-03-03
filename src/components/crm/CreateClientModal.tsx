@@ -141,7 +141,7 @@ export function CreateClientModal({ open, onClose, onCreated }: CreateClientModa
             rows={3}
             value={clientForm.values.notes}
             onChange={(e) => clientForm.setValue('notes', e.target.value)}
-            className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="flex w-full rounded-[10px] border border-border/40 bg-card shadow-[var(--shadow-sm)] px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           />
         </div>
         {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}

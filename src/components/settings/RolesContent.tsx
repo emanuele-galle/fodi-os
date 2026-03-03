@@ -298,7 +298,7 @@ export function RolesContent() {
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{error}</p>

@@ -205,7 +205,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
     <Modal open={open} onClose={() => onOpenChange(false)} title="Modifica Opportunità" size="xl" preventAccidentalClose={isDirty}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
+          <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{error}</p>
           </div>

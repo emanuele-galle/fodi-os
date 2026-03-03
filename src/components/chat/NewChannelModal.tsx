@@ -164,7 +164,7 @@ export function NewChannelModal({ open, onClose, onCreated, teamMembers = [], cu
         )}
 
         {error && (
-          <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
+          <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-xl border border-destructive/20">
             {error}
           </div>
         )}

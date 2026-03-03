@@ -264,7 +264,7 @@ export default function SupportPage() {
       </div>
 
       {fetchError && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
@@ -301,7 +301,7 @@ export default function SupportPage() {
               <div
                 key={ticket.id}
                 onClick={() => router.push(`/support/${ticket.id}`)}
-                className="p-4 space-y-3 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)] rounded-lg border border-border/80 bg-card"
+                className="p-4 space-y-3 cursor-pointer active:opacity-80 transition-all touch-manipulation shadow-[var(--shadow-sm)] rounded-2xl border border-border/25 bg-card"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -419,7 +419,7 @@ export default function SupportPage() {
               required
               value={ticketForm.values.description}
               onChange={(e) => ticketForm.setValue('description', e.target.value)}
-              className="flex w-full rounded-md border border-border bg-transparent px-3 py-2.5 text-base md:text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="flex w-full rounded-[10px] border border-border/40 bg-card px-3 py-2.5 text-base md:text-sm shadow-[var(--shadow-sm)] placeholder:text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/40 transition-all"
               placeholder="Descrivi il problema..."
             />
           </div>
