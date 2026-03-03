@@ -30,16 +30,7 @@ export function useFormPersist<T extends Record<string, unknown>>(
     return initialValues
   })
 
-  // Lazy init workaround: hasPersistedData can't be set during useState init
-  const checkedRef = useRef(false)
-  useEffect(() => {
-    if (checkedRef.current) return
-    checkedRef.current = true
-    try {
-      const saved = sessionStorage.getItem(storageKey)
-      if (saved) setHasPersistedData(true)
-    } catch {}
-  }, [storageKey])
+  // hasPersistedData is already set in the useState lazy initializer above (line 26)
 
   // Debounced save to sessionStorage
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)

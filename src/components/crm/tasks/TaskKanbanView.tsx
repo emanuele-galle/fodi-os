@@ -31,6 +31,7 @@ export function TaskKanbanView({ tasks, isOverdue, onStatusChange }: TaskKanbanV
                     <p className="text-sm font-medium">{task.title}</p>
                     {NEXT_STATUS[status] && (
                       <button
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                         onClick={() => onStatusChange(task.id, NEXT_STATUS[status])}
                         className="flex-shrink-0 p-1 rounded hover:bg-secondary/50 text-muted hover:text-foreground transition-colors"
                         title={`Sposta a ${STATUS_LABELS[NEXT_STATUS[status]]}`}

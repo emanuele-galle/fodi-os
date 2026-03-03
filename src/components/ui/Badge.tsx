@@ -1,70 +1,78 @@
 import { cn } from '@/lib/utils'
+/* eslint-disable react-perf/jsx-no-new-object-as-prop -- dynamic styles */
+
+// Base color tokens for status badges
+const BLUE = 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20'
+const AMBER = 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20'
+const EMERALD = 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+const ZINC = 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/20'
+const RED = 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20'
 
 // Centralized status color map - use these for ALL status badges across the app
 export const STATUS_COLORS: Record<string, string> = {
   // CRM Client Status
-  LEAD: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20',
-  PROSPECT: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20',
-  ACTIVE: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  INACTIVE: 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/20',
-  CHURNED: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20',
-  LOST: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20',
+  LEAD: BLUE,
+  PROSPECT: AMBER,
+  ACTIVE: EMERALD,
+  INACTIVE: ZINC,
+  CHURNED: RED,
+  LOST: RED,
 
   // Task Status
-  TODO: 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/20',
-  IN_PROGRESS: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20',
-  IN_REVIEW: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20',
-  DONE: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  CANCELLED: 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/20',
+  TODO: ZINC,
+  IN_PROGRESS: BLUE,
+  IN_REVIEW: AMBER,
+  DONE: EMERALD,
+  CANCELLED: ZINC,
 
   // Project Status
   PLANNING: 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-500/20',
-  ON_HOLD: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20',
+  ON_HOLD: AMBER,
   REVIEW: 'bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/20',
-  COMPLETED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+  COMPLETED: EMERALD,
 
   // Quote/Invoice Status
-  DRAFT: 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/20',
-  SENT: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20',
-  ACCEPTED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  PAID: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  OVERDUE: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20',
-  REJECTED: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20',
-  EXPIRED: 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/20',
+  DRAFT: ZINC,
+  SENT: BLUE,
+  ACCEPTED: EMERALD,
+  PAID: EMERALD,
+  OVERDUE: RED,
+  REJECTED: RED,
+  EXPIRED: ZINC,
 
   // Signature Status
-  PENDING: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20',
-  OTP_SENT: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20',
-  SIGNED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  DECLINED: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20',
+  PENDING: AMBER,
+  OTP_SENT: BLUE,
+  SIGNED: EMERALD,
+  DECLINED: RED,
 
   // Priority
-  LOW: 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/20',
-  MEDIUM: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20',
+  LOW: ZINC,
+  MEDIUM: BLUE,
   HIGH: 'bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/20',
-  URGENT: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20',
+  URGENT: RED,
 
   // Lead Status
   NEW: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 border-cyan-500/20',
-  CONTACTED: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20',
+  CONTACTED: BLUE,
   QUALIFIED: 'bg-violet-500/15 text-violet-700 dark:text-violet-400 border-violet-500/20',
-  PROPOSAL_SENT: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20',
-  CONVERTED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+  PROPOSAL_SENT: AMBER,
+  CONVERTED: EMERALD,
 
   // Support Ticket Status
-  OPEN: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20',
-  WAITING: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20',
-  RESOLVED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  CLOSED: 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/20',
+  OPEN: BLUE,
+  WAITING: AMBER,
+  RESOLVED: EMERALD,
+  CLOSED: ZINC,
 }
 
 // Semantic variant styles (fallback for non-status usage)
 const VARIANT_STYLES: Record<string, string> = {
   default: 'bg-primary/10 text-primary border-primary/20',
-  success: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  warning: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20',
-  destructive: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20',
-  info: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/20',
+  success: EMERALD,
+  warning: AMBER,
+  destructive: RED,
+  info: BLUE,
   outline: 'border-border/50 text-foreground bg-transparent',
 }
 

@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { RefreshCw, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import type { CalendarInfo } from './types'
@@ -23,6 +24,8 @@ export function SyncStatusBar({
   calendars,
   fetchEvents,
 }: SyncStatusBarProps) {
+  const handleReconnect = () => { window.location.href = '/api/auth/google' }
+
   return (
     <>
       {/* Active calendar indicator */}
@@ -30,7 +33,8 @@ export function SyncStatusBar({
         const activeCal = calendars.find((c) => c.id === brandCalendarId)
         return activeCal ? (
           <div className="flex items-center gap-2 mb-4 text-xs">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: activeCal.backgroundColor }} />
+            {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic color from API */}
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: activeCal.backgroundColor }} />
             <span className="text-muted font-medium">{activeCal.summary}</span>
           </div>
         ) : null
@@ -56,7 +60,7 @@ export function SyncStatusBar({
             <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
             <p className="text-sm text-amber-800 dark:text-amber-200">Permessi Google Calendar insufficienti. Riconnetti per ripristinare la sincronizzazione.</p>
           </div>
-          <Button size="sm" variant="outline" className="flex-shrink-0 border-amber-400 text-amber-700 hover:bg-amber-100" onClick={() => window.location.href = '/api/auth/google'}>Riconnetti Google</Button>
+          <Button size="sm" variant="outline" className="flex-shrink-0 border-amber-400 text-amber-700 hover:bg-amber-100" onClick={handleReconnect}>Riconnetti Google</Button>
         </div>
       )}
 
@@ -67,7 +71,7 @@ export function SyncStatusBar({
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
           </div>
-          <button onClick={() => fetchEvents()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+          <button onClick={fetchEvents} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
     </>

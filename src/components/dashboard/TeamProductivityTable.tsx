@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- handlers in render */
 
 import { useMemo } from 'react'
 import { Skeleton } from '@/components/ui/Skeleton'

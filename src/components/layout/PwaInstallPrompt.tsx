@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- install/dismiss handlers */
 import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect } from 'react'
@@ -12,10 +13,14 @@ interface BeforeInstallPromptEvent extends Event {
 export function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showBanner, setShowBanner] = useState(false)
-  const [isIOS, setIsIOS] = useState(false)
+  const [isIOS] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const ua = navigator.userAgent
+    return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  })
   const [showIOSGuide, setShowIOSGuide] = useState(false)
 
-   
+
   useEffect(() => {
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) return
@@ -27,12 +32,7 @@ export function PwaInstallPrompt() {
       if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return
     }
 
-    // Detect iOS
-    const ua = navigator.userAgent
-    const isiOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-    setIsIOS(isiOS)
-
-    if (isiOS) {
+    if (isIOS) {
       // On iOS, show banner after 3 seconds
       const timer = setTimeout(() => setShowBanner(true), 3000)
       return () => clearTimeout(timer)
@@ -46,7 +46,7 @@ export function PwaInstallPrompt() {
     }
     window.addEventListener('beforeinstallprompt', handler)
     return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [])
+  }, [isIOS])
 
   const handleInstall = async () => {
     if (deferredPrompt) {

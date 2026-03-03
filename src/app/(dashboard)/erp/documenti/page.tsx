@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Suspense } from 'react'
 import dynamic from 'next/dynamic'

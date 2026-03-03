@@ -46,6 +46,7 @@ function PanoramicaContent() {
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
             onClick={() => router.push(`/erp/panoramica${key === 'mensile' ? '' : `?tab=${key}`}`)}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap min-h-[44px] ${
               activeTab === key

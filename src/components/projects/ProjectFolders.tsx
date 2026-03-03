@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- complex component with many sub-components, DnD, and loop variable captures */
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { FolderOpen, Plus, Pencil, Trash2, Check, X, ChevronRight, ChevronDown, GripVertical } from 'lucide-react'
@@ -334,7 +335,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
   const [submitting, setSubmitting] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [dragActiveId, setDragActiveId] = useState<string | null>(null)
-  const [currentOverId, setCurrentOverId] = useState<string | null>(null)
+  const [, setCurrentOverId] = useState<string | null>(null)
   const [nestTargetId, setNestTargetId] = useState<string | null>(null)
   const [isDraggingTask, setIsDraggingTask] = useState(false)
   const [taskOverFolderId, setTaskOverFolderId] = useState<string | null>(null)
@@ -381,7 +382,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     })
   }
 
-  async function saveBatchOrder(updatedFolders: Folder[]) {
+  const saveBatchOrder = useCallback(async (updatedFolders: Folder[]) => {
     if (savingRef.current) return
     savingRef.current = true
     try {
@@ -395,7 +396,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
     } finally {
       savingRef.current = false
     }
-  }
+  }, [projectId, onFoldersChange])
 
   async function handleCreate() {
     if (!newName.trim()) return
@@ -661,7 +662,7 @@ export function ProjectFolders({ projectId, folders, onFoldersChange, selectedFo
       saveBatchOrder(cleaned)
       return
     }
-  }, [flatItems, folderMap, folders, nestTargetId, projectId, onFoldersChange])
+  }, [flatItems, folderMap, folders, nestTargetId, saveBatchOrder])
 
   // ---- useDndMonitor: listens to parent DndContext when disableDndContext=true ----
   useDndMonitor({

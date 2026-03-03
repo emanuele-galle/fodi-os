@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -42,6 +43,19 @@ export function CreateProjectModal({
   submitting,
   onSubmit,
 }: CreateProjectModalProps) {
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers for form fields */
+  const handleName = (e: React.ChangeEvent<HTMLInputElement>) => projectForm.setValue('name', e.target.value)
+  const handleClient = (e: React.ChangeEvent<HTMLSelectElement>) => projectForm.setValue('clientId', e.target.value)
+  const handleDesc = (e: React.ChangeEvent<HTMLTextAreaElement>) => projectForm.setValue('description', e.target.value)
+  const handlePriority = (e: React.ChangeEvent<HTMLSelectElement>) => projectForm.setValue('priority', e.target.value)
+  const handleStartDate = (e: React.ChangeEvent<HTMLInputElement>) => projectForm.setValue('startDate', e.target.value)
+  const handleEndDate = (e: React.ChangeEvent<HTMLInputElement>) => projectForm.setValue('endDate', e.target.value)
+  const handleBudget = (e: React.ChangeEvent<HTMLInputElement>) => projectForm.setValue('budgetAmount', e.target.value)
+  const handleHours = (e: React.ChangeEvent<HTMLInputElement>) => projectForm.setValue('budgetHours', e.target.value)
+  const handleColor = (color: string) => projectForm.setValue('color', color)
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+  const clientOptions = useMemo(() => [{ value: '', label: 'Seleziona cliente' }, ...clients.map((c) => ({ value: c.id, label: c.companyName }))], [clients])
+
   return (
     <Modal open={open} onClose={onClose} title="Nuovo Progetto" size="lg">
       <form onSubmit={onSubmit} className="space-y-4">
@@ -51,37 +65,34 @@ export function CreateProjectModal({
             <button type="button" onClick={projectForm.reset} className="underline hover:no-underline">Scarta bozza</button>
           </div>
         )}
-        <Input label="Nome Progetto *" required value={projectForm.values.name} onChange={(e) => projectForm.setValue('name', e.target.value)} />
+        <Input label="Nome Progetto *" required value={projectForm.values.name} onChange={handleName} />
         <Select
           label="Cliente"
           value={projectForm.values.clientId}
-          onChange={(e) => projectForm.setValue('clientId', e.target.value)}
-          options={[
-            { value: '', label: 'Seleziona cliente' },
-            ...clients.map((c) => ({ value: c.id, label: c.companyName })),
-          ]}
+          onChange={handleClient}
+          options={clientOptions}
         />
         <div className="space-y-1">
           <label className="block text-sm font-medium text-foreground">Descrizione</label>
           <textarea
             rows={3}
             value={projectForm.values.description}
-            onChange={(e) => projectForm.setValue('description', e.target.value)}
+            onChange={handleDesc}
             className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           />
         </div>
-        <Select label="Priorita" options={PRIORITY_OPTIONS} value={projectForm.values.priority} onChange={(e) => projectForm.setValue('priority', e.target.value)} />
+        <Select label="Priorita" options={PRIORITY_OPTIONS} value={projectForm.values.priority} onChange={handlePriority} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Data Inizio" type="date" value={projectForm.values.startDate} onChange={(e) => projectForm.setValue('startDate', e.target.value)} />
-          <Input label="Data Fine" type="date" value={projectForm.values.endDate} onChange={(e) => projectForm.setValue('endDate', e.target.value)} />
+          <Input label="Data Inizio" type="date" value={projectForm.values.startDate} onChange={handleStartDate} />
+          <Input label="Data Fine" type="date" value={projectForm.values.endDate} onChange={handleEndDate} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Budget (EUR)" type="number" step="0.01" value={projectForm.values.budgetAmount} onChange={(e) => projectForm.setValue('budgetAmount', e.target.value)} />
-          <Input label="Ore Previste" type="number" value={projectForm.values.budgetHours} onChange={(e) => projectForm.setValue('budgetHours', e.target.value)} />
+          <Input label="Budget (EUR)" type="number" step="0.01" value={projectForm.values.budgetAmount} onChange={handleBudget} />
+          <Input label="Ore Previste" type="number" value={projectForm.values.budgetHours} onChange={handleHours} />
         </div>
         <ColorSwatches
           value={projectForm.values.color}
-          onChange={(color) => projectForm.setValue('color', color)}
+          onChange={handleColor}
         />
         {formError && (
           <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">

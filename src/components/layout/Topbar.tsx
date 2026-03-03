@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers in non-list context, acceptable for topbar */
 
 import { Bell, Search, LogOut, Video, Bot } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'

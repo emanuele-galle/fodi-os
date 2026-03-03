@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -61,6 +62,7 @@ export default function PortalNotificationsPage() {
   const [activeTab, setActiveTab] = useState('')
 
   const fetchNotifications = useCallback(() => {
+    setLoading(true)
     const params = new URLSearchParams({ limit: '50' })
     if (activeTab === 'unread') params.set('unread', 'true')
     fetch(`/api/notifications?${params}`)
@@ -73,8 +75,7 @@ export default function PortalNotificationsPage() {
   }, [activeTab])
 
   useEffect(() => {
-    setLoading(true)
-    fetchNotifications()
+    fetchNotifications() // eslint-disable-line react-hooks/set-state-in-effect -- loading state set inside fetch callback, not a cascading render risk
   }, [fetchNotifications])
 
   useRealtimeRefresh('notification', fetchNotifications)

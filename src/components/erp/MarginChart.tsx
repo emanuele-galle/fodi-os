@@ -7,6 +7,8 @@ import {
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatCurrency } from '@/lib/utils'
 
+const BAR_RADIUS: [number, number, number, number] = [6, 6, 0, 0]
+
 interface MarginData {
   name: string
   ricavo: number
@@ -114,16 +116,18 @@ export function MarginChart() {
         <YAxis
           tick={{ fontSize: 13, fill: 'var(--color-muted)' }}
           stroke="transparent"
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- recharts callback
           tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
           width={40}
         />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.05 }} />
         <Legend
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- recharts callback
           formatter={(v) => v === 'ricavo' ? 'Ricavo' : 'Costo'}
           wrapperStyle={{ fontSize: 13 }}
         />
-        <Bar dataKey="ricavo" fill="url(#gradRicavo)" radius={[6, 6, 0, 0]} />
-        <Bar dataKey="costo" fill="url(#gradCosto)" radius={[6, 6, 0, 0]} />
+        <Bar dataKey="ricavo" fill="url(#gradRicavo)" radius={BAR_RADIUS} />
+        <Bar dataKey="costo" fill="url(#gradCosto)" radius={BAR_RADIUS} />
       </BarChart>
     </ResponsiveContainer>
   )

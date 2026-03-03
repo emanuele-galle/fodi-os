@@ -54,6 +54,7 @@ function KanbanProjectCard({ project, onClick }: { project: Project; onClick: ()
     <div
       onClick={onClick}
       className="bg-card rounded-md border border-border p-3 cursor-pointer hover:shadow-sm transition-shadow"
+      // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
       style={{ borderLeft: `3px solid ${project.color || STATUS_COLORS[project.status] || 'var(--color-primary)'}` }}
     >
       <p className="font-medium text-sm mb-1.5 truncate">{project.name}</p>
@@ -183,6 +184,7 @@ export function ProjectKanbanView({
                   <KanbanProjectCard
                     key={project.id}
                     project={project}
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                     onClick={() => onProjectClick(project.id)}
                   />
                 ))}

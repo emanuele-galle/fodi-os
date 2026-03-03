@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/utils'
@@ -45,6 +44,9 @@ export function NewChannelModal({ open, onClose, onCreated, teamMembers = [], cu
       setChannelType('PUBLIC')
     }
   }, [open])
+
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- named handler
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => setChannelType(e.target.value)
 
   const otherMembers = teamMembers.filter((m) => m.id !== currentUserId)
 
@@ -107,7 +109,7 @@ export function NewChannelModal({ open, onClose, onCreated, teamMembers = [], cu
           <label className="block text-sm font-medium text-foreground">Tipo</label>
           <select
             value={channelType}
-            onChange={(e) => setChannelType(e.target.value)}
+            onChange={handleTypeChange}
             className="flex h-10 w-full rounded-xl border border-border/50 bg-secondary/40 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/30 transition-all"
           >
             {TYPE_OPTIONS.map((opt) => (
@@ -129,6 +131,7 @@ export function NewChannelModal({ open, onClose, onCreated, teamMembers = [], cu
                   <button
                     key={member.id}
                     type="button"
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                     onClick={() => toggleMember(member.id)}
                     className={cn(
                       'w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors',

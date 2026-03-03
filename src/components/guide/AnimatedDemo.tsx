@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { brandClient } from '@/lib/branding-client'
 
 import { useRef, useState } from 'react'

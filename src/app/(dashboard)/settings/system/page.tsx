@@ -434,6 +434,7 @@ export default function SystemStatsPage() {
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-secondary/50 rounded-lg mb-6 w-fit">
         <button
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple tab setter
           onClick={() => setActiveTab('overview')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
             activeTab === 'overview'
@@ -445,6 +446,7 @@ export default function SystemStatsPage() {
           Panoramica
         </button>
         <button
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple tab setter
           onClick={() => setActiveTab('changelog')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
             activeTab === 'changelog'
@@ -501,6 +503,7 @@ export default function SystemStatsPage() {
                         <div className="h-2 bg-secondary rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-700 ${STATUS_BAR_COLORS[status] || 'bg-primary'}`}
+                            // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic width depends on computed pct
                             style={{ width: `${pct}%` }}
                           />
                         </div>
@@ -530,6 +533,7 @@ export default function SystemStatsPage() {
                         <div className="h-2 bg-secondary rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-700 ${STATUS_BAR_COLORS[status] || 'bg-primary'}`}
+                            // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic width depends on computed pct
                             style={{ width: `${pct}%` }}
                           />
                         </div>
@@ -626,6 +630,7 @@ export default function SystemStatsPage() {
               <Card key={entry.version} className={isLatest ? 'ring-1 ring-primary/10' : ''}>
                 <CardContent>
                   <button
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- handler depends on loop item
                     onClick={() => toggleVersion(entry.version)}
                     className="flex items-center justify-between w-full text-left group"
                   >

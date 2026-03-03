@@ -13,7 +13,7 @@ export function ImpersonationBanner({ userName, onExit }: ImpersonationBannerPro
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleExit = async () => {
+  const handleExit = async () => { // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- stateful handler
     setLoading(true)
     try {
       await fetch('/api/admin/impersonate', { method: 'DELETE' })

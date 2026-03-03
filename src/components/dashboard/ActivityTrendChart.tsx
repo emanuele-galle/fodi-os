@@ -26,7 +26,7 @@ interface ActivityTrendChartProps {
   height?: number
 }
 
-export function ActivityTrendChart({ color = 'var(--color-primary)', height = 260 }: ActivityTrendChartProps) {
+export function ActivityTrendChart({ color = 'var(--color-primary)' }: ActivityTrendChartProps) {
   const [data, setData] = useState<TrendDataPoint[]>([])
   const [loading, setLoading] = useState(true)
 

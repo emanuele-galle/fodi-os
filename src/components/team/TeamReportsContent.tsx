@@ -106,6 +106,7 @@ export function TeamReportsContent() {
       {/* Filters */}
       <Card className="mb-4">
         <CardContent>
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- filter setters */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Filter className="h-4 w-4 text-muted flex-shrink-0 hidden sm:block" />
             <select
@@ -134,6 +135,7 @@ export function TeamReportsContent() {
             />
             <span className="ml-auto text-xs text-muted">{total} report</span>
           </div>
+          {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
         </CardContent>
       </Card>
 
@@ -154,6 +156,7 @@ export function TeamReportsContent() {
             </div>
           ) : (
             <div className="divide-y divide-border">
+              {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- handler depends on loop item */}
               {items.map((item) => (
                 <div
                   key={item.id}
@@ -216,12 +219,14 @@ export function TeamReportsContent() {
                   </button>
                 </div>
               ))}
+              {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Pagination */}
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- pagination handlers */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-4">
           <button
@@ -243,6 +248,7 @@ export function TeamReportsContent() {
           </button>
         </div>
       )}
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
     </>
   )
 }

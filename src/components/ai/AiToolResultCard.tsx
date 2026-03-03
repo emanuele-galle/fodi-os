@@ -15,49 +15,27 @@ interface AiToolResultCardProps {
   defaultExpanded?: boolean
 }
 
+// Status badge color tokens
+const AI_BLUE = 'bg-blue-500/10 text-blue-400'
+const AI_AMBER = 'bg-amber-500/10 text-amber-400'
+const AI_EMERALD = 'bg-emerald-500/10 text-emerald-400'
+const AI_SLATE = 'bg-slate-500/10 text-slate-400'
+const AI_RED = 'bg-red-500/10 text-red-400'
+const AI_CYAN = 'bg-cyan-500/10 text-cyan-400'
+
+const AI_STATUS_COLORS: Record<string, string> = {
+  TODO: AI_SLATE, IN_PROGRESS: AI_BLUE, IN_REVIEW: AI_AMBER, DONE: AI_EMERALD, CANCELLED: AI_RED,
+  DRAFT: AI_SLATE, SENT: AI_BLUE, APPROVED: AI_EMERALD, REJECTED: AI_RED, EXPIRED: AI_AMBER, INVOICED: AI_BLUE,
+  OPEN: AI_BLUE, WAITING_CLIENT: AI_AMBER, RESOLVED: AI_EMERALD, CLOSED: AI_SLATE,
+  NEW: AI_BLUE, CONTACTED: AI_CYAN, QUALIFIED: AI_BLUE, PROPOSAL: AI_AMBER, WON: AI_EMERALD, LOST: AI_RED,
+  QUALIFICATION: AI_BLUE, NEGOTIATION: AI_AMBER, CLOSED_WON: AI_EMERALD, CLOSED_LOST: AI_RED,
+  ACTIVE: AI_EMERALD, INACTIVE: AI_SLATE, LEAD: AI_BLUE, PROSPECT: AI_CYAN, CHURNED: AI_RED,
+  PLANNING: AI_BLUE, ON_HOLD: AI_AMBER, COMPLETED: AI_EMERALD, ARCHIVED: AI_SLATE,
+}
+
 // Status badge component
 function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    // Task statuses
-    TODO: 'bg-slate-500/10 text-slate-400',
-    IN_PROGRESS: 'bg-blue-500/10 text-blue-400',
-    IN_REVIEW: 'bg-amber-500/10 text-amber-400',
-    DONE: 'bg-emerald-500/10 text-emerald-400',
-    CANCELLED: 'bg-red-500/10 text-red-400',
-    // Quote statuses
-    DRAFT: 'bg-slate-500/10 text-slate-400',
-    SENT: 'bg-blue-500/10 text-blue-400',
-    APPROVED: 'bg-emerald-500/10 text-emerald-400',
-    REJECTED: 'bg-red-500/10 text-red-400',
-    EXPIRED: 'bg-amber-500/10 text-amber-400',
-    INVOICED: 'bg-blue-500/10 text-blue-400',
-    // Ticket statuses
-    OPEN: 'bg-blue-500/10 text-blue-400',
-    WAITING_CLIENT: 'bg-amber-500/10 text-amber-400',
-    RESOLVED: 'bg-emerald-500/10 text-emerald-400',
-    CLOSED: 'bg-slate-500/10 text-slate-400',
-    // Lead/Deal statuses
-    NEW: 'bg-blue-500/10 text-blue-400',
-    CONTACTED: 'bg-cyan-500/10 text-cyan-400',
-    QUALIFIED: 'bg-blue-500/10 text-blue-400',
-    PROPOSAL: 'bg-amber-500/10 text-amber-400',
-    WON: 'bg-emerald-500/10 text-emerald-400',
-    LOST: 'bg-red-500/10 text-red-400',
-    QUALIFICATION: 'bg-blue-500/10 text-blue-400',
-    NEGOTIATION: 'bg-amber-500/10 text-amber-400',
-    CLOSED_WON: 'bg-emerald-500/10 text-emerald-400',
-    CLOSED_LOST: 'bg-red-500/10 text-red-400',
-    // Client/Project statuses
-    ACTIVE: 'bg-emerald-500/10 text-emerald-400',
-    INACTIVE: 'bg-slate-500/10 text-slate-400',
-    LEAD: 'bg-blue-500/10 text-blue-400',
-    PROSPECT: 'bg-cyan-500/10 text-cyan-400',
-    CHURNED: 'bg-red-500/10 text-red-400',
-    PLANNING: 'bg-blue-500/10 text-blue-400',
-    ON_HOLD: 'bg-amber-500/10 text-amber-400',
-    COMPLETED: 'bg-emerald-500/10 text-emerald-400',
-    ARCHIVED: 'bg-slate-500/10 text-slate-400',
-  }
+  const colors = AI_STATUS_COLORS
 
   return (
     <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', colors[status] || 'bg-muted text-muted-foreground')}>
@@ -477,7 +455,7 @@ export function AiToolResultCard({ toolName, result, defaultExpanded = false }: 
     )}>
       {/* Header - always visible */}
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => setExpanded(!expanded)} // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- toggle state
         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs hover:bg-white/[0.03] transition-colors"
       >
         <div className={cn(
@@ -489,6 +467,7 @@ export function AiToolResultCard({ toolName, result, defaultExpanded = false }: 
           ) : isCreation ? (
             <CheckCircle2 className="h-3 w-3 text-emerald-400" />
           ) : (
+            // eslint-disable-next-line react-hooks/static-components -- Icon is a stable component reference from getToolIcon lookup, not created during render
             <Icon className={cn('h-3 w-3', result.success ? 'text-emerald-400' : 'text-red-400')} />
           )}
         </div>
@@ -503,6 +482,7 @@ export function AiToolResultCard({ toolName, result, defaultExpanded = false }: 
 
       {/* Expandable content */}
       <AnimatePresence>
+        {/* eslint-disable react-perf/jsx-no-new-object-as-prop -- framer-motion animation objects */}
         {expanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}

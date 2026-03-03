@@ -18,6 +18,11 @@ export function AiChatSidebar({ open, onClose }: AiChatSidebarProps) {
   const startX = useRef(0)
   const startWidth = useRef(380)
 
+  const handleExpand = useCallback(() => {
+    onClose()
+    router.push('/ai')
+  }, [onClose, router])
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isResizing.current = true
     startX.current = e.clientX
@@ -44,6 +49,7 @@ export function AiChatSidebar({ open, onClose }: AiChatSidebarProps) {
     }
   }, [])
 
+  /* eslint-disable react-perf/jsx-no-new-object-as-prop -- framer-motion animation objects */
   return (
     <AnimatePresence>
       {open && (
@@ -85,10 +91,7 @@ export function AiChatSidebar({ open, onClose }: AiChatSidebarProps) {
             {/* Content */}
             <AiChatPanel
               compact
-              onExpand={() => {
-                onClose()
-                router.push('/ai')
-              }}
+              onExpand={handleExpand}
             />
           </motion.div>
         </>

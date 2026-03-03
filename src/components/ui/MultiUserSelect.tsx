@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers */
 
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/Avatar'
@@ -140,6 +141,7 @@ export function MultiUserSelect({
         tabIndex={0}
         role="combobox"
         aria-expanded={open}
+        aria-controls="multi-user-select-listbox"
       >
         {selectedUsers.map((user) => (
           <span

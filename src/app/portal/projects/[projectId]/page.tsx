@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- handlers + dynamic styles */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -116,8 +117,6 @@ export default function PortalProjectDetailPage() {
     if (!milestoneTasks.has(key)) milestoneTasks.set(key, [])
     milestoneTasks.get(key)!.push(task)
   }
-
-  const milestoneMap = new Map(project.milestones.map((m) => [m.id, m]))
 
   return (
     <div>

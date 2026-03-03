@@ -56,8 +56,10 @@ export function WeekView({
                     return (
                       <button
                         key={ev.id}
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                         onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev) }}
                         className="w-full text-left rounded px-1.5 py-0.5 text-[10px] truncate border-l-2 mb-0.5"
+                        // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic color
                         style={{ borderLeftColor: color, backgroundColor: color + '20', color: color }}
                       >
                         {ev.summary}
@@ -78,6 +80,7 @@ export function WeekView({
             return (
               <button
                 key={i}
+                // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                 onClick={() => { setSelectedDayKey(dk); setDesktopView('day') }}
                 className={`py-2 text-center border-l border-border hover:bg-secondary/30 transition-colors ${
                   isToday ? 'bg-primary/5' : ''
@@ -92,7 +95,9 @@ export function WeekView({
           })}
         </div>
         {/* Time grid */}
+        {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- static style */}
         <div className="max-h-[600px] overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
+          {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- computed height */}
           <div className="grid grid-cols-[60px_repeat(7,1fr)]" style={{ height: HOURS.length * SLOT_HEIGHT }}>
             {/* Time labels column */}
             <div className="relative">
@@ -100,6 +105,7 @@ export function WeekView({
                 <div
                   key={hour}
                   className="absolute w-full text-[10px] text-muted text-right pr-2"
+                  // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- computed position
                   style={{ top: hour * SLOT_HEIGHT - 8, height: SLOT_HEIGHT }}
                 >
                   {hour > 0 ? `${String(hour).padStart(2, '0')}:00` : ''}
@@ -115,6 +121,7 @@ export function WeekView({
                 <div
                   key={i}
                   className={`border-l border-border/50 relative ${isToday ? 'bg-primary/3' : ''}`}
+                  // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- computed height
                   style={{ height: HOURS.length * SLOT_HEIGHT }}
                 >
                   {/* Hour lines */}
@@ -122,7 +129,9 @@ export function WeekView({
                     <div
                       key={hour}
                       className="absolute w-full border-t border-border/30 hover:bg-secondary/20 transition-colors cursor-pointer"
+                      // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- computed position
                       style={{ top: hour * SLOT_HEIGHT, height: SLOT_HEIGHT }}
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                       onClick={() => {
                         const timeStr = `${String(hour).padStart(2, '0')}:00`
                         setNewEvent({
@@ -144,8 +153,10 @@ export function WeekView({
                     return (
                       <button
                         key={ev.id}
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                         onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev) }}
                         className="absolute left-0.5 right-0.5 rounded text-[10px] px-1.5 py-0.5 text-left border-l-2 overflow-hidden hover:z-10 transition-all hover:shadow-md"
+                        // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic position + color
                         style={{
                           top: pos.top,
                           height: pos.height,
@@ -168,6 +179,7 @@ export function WeekView({
                     return (
                       <div
                         className="absolute left-0 right-0 z-20 pointer-events-none"
+                        // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- computed position
                         style={{ top: nowTop }}
                       >
                         <div className="flex items-center">

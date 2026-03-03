@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers */
 
 import { cn } from '@/lib/utils'
 import { useEffect, useRef, useCallback, useState } from 'react'
@@ -18,10 +19,11 @@ interface ModalProps {
 }
 
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  )
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
-    setIsMobile(mq.matches)
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
@@ -43,10 +45,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
   }, [preventAccidentalClose, onClose])
 
   useEffect(() => {
-    if (!open) {
-      setShowCloseConfirm(false)
-      return
-    }
+    if (!open) return
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') attemptClose()
     }
@@ -57,6 +56,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
       document.removeEventListener('keydown', handleEscape)
       document.body.style.overflow = ''
       document.body.classList.remove('modal-open')
+      setShowCloseConfirm(false)
     }
   }, [open, attemptClose])
 

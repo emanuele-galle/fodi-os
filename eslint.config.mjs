@@ -21,6 +21,27 @@ const eslintConfig = defineConfig([
       "react-hooks/refs": "warn",
     },
   },
+  // Disable react-perf/jsx-no-new-object-as-prop in files where inline objects are intentional (framer-motion animations, Recharts props)
+  {
+    files: [
+      "**/components/guide/**",
+      "**/components/layout/CommandPalette.tsx",
+      "**/components/layout/OnboardingWizard.tsx",
+      "**/components/erp/ReportsCharts.tsx",
+      "**/components/erp/TemplatePreview.tsx",
+      "**/components/erp/MarginChart.tsx",
+      "**/components/erp/dashboard/**",
+      "**/components/dashboard/**Chart.tsx",
+      "**/components/dashboard/FinancialSummaryCard.tsx",
+      "**/components/dashboard/PipelineFunnel.tsx",
+      "**/components/dashboard/ActivityTrendChart.tsx",
+      "**/components/crm/CrmCharts.tsx",
+      "**/app/c/[slug]/opengraph-image.tsx",
+    ],
+    rules: {
+      "react-perf/jsx-no-new-object-as-prop": "off",
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",

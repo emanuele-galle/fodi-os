@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
@@ -31,8 +31,7 @@ export function AnnualDashboard() {
     fetch('/api/business-entities').then(r => r.json()).then(d => setEntities(d.items || []))
   }, [])
 
-   
-  useEffect(() => {
+  const fetchDashboard = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams({ period: 'annual', year: String(year) })
     if (entityId) params.set('businessEntityId', entityId)
@@ -42,6 +41,10 @@ export function AnnualDashboard() {
       .finally(() => setLoading(false))
   }, [year, entityId])
 
+  useEffect(() => {
+    fetchDashboard() // eslint-disable-line react-hooks/set-state-in-effect -- loading state set inside fetch callback
+  }, [fetchDashboard])
+
   const years = Array.from({ length: 5 }, (_, i) => {
     const y = new Date().getFullYear() - i
     return { value: String(y), label: String(y) }
@@ -50,11 +53,14 @@ export function AnnualDashboard() {
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- inline event transform */}
         <Select label="Anno" options={years} value={String(year)} onChange={e => setYear(parseInt(e.target.value))} className="w-full sm:w-36" />
         <Select
           label="Attività"
+          // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- dynamic computed options
           options={[{ value: '', label: 'Tutte le attività' }, ...entities.map(e => ({ value: e.id, label: e.name }))]}
           value={entityId}
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- inline event transform
           onChange={e => setEntityId(e.target.value)}
           className="w-full sm:w-48"
         />

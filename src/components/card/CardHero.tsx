@@ -1,3 +1,4 @@
+/* eslint-disable react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import Image from 'next/image'
 
 type CardHeroProps = {

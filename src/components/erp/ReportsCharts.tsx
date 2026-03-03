@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string -- chart config values repeated across chart components */
 'use client'
 
 import { useMemo } from 'react'
@@ -74,9 +75,11 @@ export function HoursPerProjectChart({ data }: { data: HoursProjectPoint[] }) {
           <BarChart data={data} layout="vertical" margin={{ left: 0, right: 10 }}>
             <CartesianGrid strokeDasharray="4 8" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.5} />
             <XAxis type="number" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
+            {/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- recharts callbacks */}
             <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 12, fill: 'var(--color-muted)' }} stroke="transparent" tickFormatter={(v: string) => v.length > 20 ? v.slice(0, 20) + '\u2026' : v} />
             <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => [`${v}h`, 'Ore']} labelFormatter={(label) => label} />
             <Bar dataKey="hours" fill="#6366f1" radius={[0, 6, 6, 0]} />
+            {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop */}
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
@@ -101,10 +104,12 @@ export function ExpensePieChart({ data }: { data: ExpenseDataPoint[] }) {
         <CardTitle className="mb-4 text-base md:text-lg">Spese per Categoria</CardTitle>
         <ResponsiveContainer width="100%" height={250}>
           <PieChart>
+            {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- recharts callbacks */}
             <Pie data={data} dataKey="amount" nameKey="category" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={2} label={({ name, percent }) => `${name} ${((percent as number) * 100).toFixed(0)}%`}>
               {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
             </Pie>
             <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value) => formatCurrency(Number(value))} />
+            {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
           </PieChart>
         </ResponsiveContainer>
       </CardContent>
@@ -133,9 +138,11 @@ export function DealsPipelineChart({ data }: { data: PipelinePoint[] }) {
             <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
             <XAxis dataKey="stage" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
             <YAxis tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" width={35} allowDecimals={false} />
+            {/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- recharts callbacks */}
             <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value, name) => [name === 'value' ? formatCurrency(Number(value)) : value, name === 'value' ? 'Valore' : 'Deals']} />
             <Legend wrapperStyle={{ fontSize: 13 }} />
             <Bar dataKey="count" name="Deals" fill="#6366f1" radius={[6, 6, 0, 0]} />
+            {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop */}
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
@@ -165,12 +172,14 @@ export function TeamPerformanceTable({ data }: { data: TeamMember[] }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/40">
+                {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- sort column handlers */}
                 <th className="text-left py-2.5 px-4 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('userName')}>Membro{sortIcon('userName')}</th>
                 <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('assigned')}>Assegnate{sortIcon('assigned')}</th>
                 <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('completed')}>Completate{sortIcon('completed')}</th>
                 <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('overdue')}>In Ritardo{sortIcon('overdue')}</th>
                 <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('hoursLogged')}>Ore{sortIcon('hoursLogged')}</th>
                 <th className="text-center py-2.5 px-3 text-xs font-medium text-muted uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => handleSort('completionRate')}>Tasso{sortIcon('completionRate')}</th>
+                {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
               </tr>
             </thead>
             <tbody>

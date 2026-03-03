@@ -1,6 +1,7 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- handlers + dynamic styles */
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { StickyNote, Plus, X, Pencil } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -22,15 +23,14 @@ const NOTE_COLORS = [
 const STORAGE_KEY = brandClient.storageKeys.stickyNotes
 
 export function StickyNotesCard() {
-  const [notes, setNotes] = useState<StickyNoteItem[]>([])
-  const [editingNote, setEditingNote] = useState<string | null>(null)
-
-  useEffect(() => {
+  const [notes, setNotes] = useState<StickyNoteItem[]>(() => {
+    if (typeof window === 'undefined') return []
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) setNotes(JSON.parse(stored))
-    } catch {}
-  }, [])
+      return stored ? JSON.parse(stored) : []
+    } catch { return [] }
+  })
+  const [editingNote, setEditingNote] = useState<string | null>(null)
 
   function saveNotes(updated: StickyNoteItem[]) {
     setNotes(updated)

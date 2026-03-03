@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import Link from 'next/link'
 import { Sparkles, Send } from 'lucide-react'
 

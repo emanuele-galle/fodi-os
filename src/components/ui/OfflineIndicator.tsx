@@ -2,26 +2,25 @@
 
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { WifiOff, Wifi } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 
 export function OfflineIndicator() {
   const isOnline = useOnlineStatus()
   const [showReconnected, setShowReconnected] = useState(false)
-  const [wasOffline, setWasOffline] = useState(false)
+  const wasOfflineRef = useRef(false)
 
   useEffect(() => {
     if (!isOnline) {
-      setWasOffline(true)
-    } else if (wasOffline) {
-      setShowReconnected(true)
-      const timer = setTimeout(() => {
-        setShowReconnected(false)
-        setWasOffline(false)
-      }, 3000)
-      return () => clearTimeout(timer)
+      wasOfflineRef.current = true
+      return
     }
-  }, [isOnline, wasOffline])
+    if (!wasOfflineRef.current) return
+    wasOfflineRef.current = false
+    setShowReconnected(true) // eslint-disable-line react-hooks/set-state-in-effect -- intentional: show reconnected banner immediately when online status changes
+    const timer = setTimeout(() => setShowReconnected(false), 3000)
+    return () => clearTimeout(timer)
+  }, [isOnline])
 
   if (isOnline && !showReconnected) return null
 

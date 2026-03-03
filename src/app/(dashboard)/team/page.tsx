@@ -54,6 +54,7 @@ function TeamPageContent() {
           return (
             <button
               key={tab.id}
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- handler depends on loop item
               onClick={() => setTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap touch-manipulation min-h-[44px] ${
                 isActive

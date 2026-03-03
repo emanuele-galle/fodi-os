@@ -6,7 +6,6 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Card({
   className,
-  variant = 'default',
   children,
   ...props
 }: CardProps) {
@@ -14,7 +13,7 @@ export function Card({
     <div
       data-slot="card"
       className={cn(
-        'rounded-xl border border-border/30 bg-card p-4 md:p-6',
+        'rounded-xl border border-border/45 bg-card p-4 md:p-6 shadow-[var(--shadow-sm)]',
         className
       )}
       {...props}
@@ -72,18 +71,6 @@ export function CardContent({
   )
 }
 
-function CardFooter({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div data-slot="card-footer" className={cn('flex items-center pt-4 border-t border-border/30 mt-4', className)} {...props}>
-      {children}
-    </div>
-  )
-}
-
 export function CardHeading({
   className,
   children,
@@ -96,26 +83,3 @@ export function CardHeading({
   )
 }
 
-function CardToolbar({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div data-slot="card-toolbar" className={cn('flex items-center gap-2.5', className)} {...props}>
-      {children}
-    </div>
-  )
-}
-
-function CardTable({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div data-slot="card-table" className={cn('grid grow', className)} {...props}>
-      {children}
-    </div>
-  )
-}

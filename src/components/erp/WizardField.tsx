@@ -33,6 +33,7 @@ interface WizardFieldProps {
 export function WizardField({ field, value, onChange, error }: WizardFieldProps) {
   const val = value ?? field.defaultValue ?? ''
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- field type handlers capture field.name */
   const renderField = () => {
     switch (field.type) {
       case 'TEXT':
@@ -217,6 +218,7 @@ export function WizardField({ field, value, onChange, error }: WizardFieldProps)
         )
     }
   }
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop */
 
   return (
     <div className="space-y-1.5">

@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'

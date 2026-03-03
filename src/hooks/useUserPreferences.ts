@@ -1,7 +1,7 @@
 'use client'
 import { brandClient } from '@/lib/branding-client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 
 interface UserPreferences {
   theme: 'light' | 'dark'

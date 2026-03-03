@@ -39,6 +39,7 @@ export function ClientSignaturesTab({ clientId }: ClientSignaturesTabProps) {
   return (
     <div className="space-y-2">
       {signatures.map(s => (
+        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
         <Card key={s.id} className="cursor-pointer hover:shadow-[var(--shadow-md)] transition-all" onClick={() => router.push(`/erp/signatures/${s.id}`)}>
           <CardContent className="flex items-center justify-between !py-3">
             <div className="min-w-0">

@@ -84,7 +84,7 @@ async function main() {
     console.log(`  User: ${user.firstName} ${user.lastName} (${user.role})`)
   }
 
-  const [emanuele, riccardo, , raffaele, matar, angelo, raffo, chiara] = users
+  // Users are accessed by index (users[0], users[1], etc.) below
 
   // Workspace Assignments
   const workspaceAssignments = [

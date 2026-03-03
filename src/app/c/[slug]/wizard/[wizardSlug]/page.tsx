@@ -71,6 +71,7 @@ export default async function WizardPage({ params }: PageProps) {
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="flex flex-col items-center mb-8 card-fade-in card-delay-1">
+          {/* eslint-disable-next-line @next/next/no-img-element -- brand logo, possibly SVG */}
           <img
             src={brand.logo.dark}
             alt={companyName}

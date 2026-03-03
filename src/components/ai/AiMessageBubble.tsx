@@ -12,6 +12,9 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 
+const REMARK_PLUGINS = [remarkGfm]
+const REHYPE_PLUGINS = [rehypeHighlight]
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractTextFromNode(node: any): string {
   if (typeof node === 'string') return node
@@ -26,6 +29,7 @@ interface AiMessageBubbleProps {
   message: AiChatMessage
 }
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- stateful copy handlers */
 function CodeCopyButton({ code }: { code: string }) {
   const [copied, setCopied] = useState(false)
 
@@ -171,8 +175,9 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
               ) : (
                 <div className="ai-markdown break-words">
                   <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeHighlight]}
+                    remarkPlugins={REMARK_PLUGINS}
+                    rehypePlugins={REHYPE_PLUGINS}
+                    // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- ReactMarkdown components config needs closure over extractText
                     components={{
                       // Headings
                       h1: ({ children }) => <h3 className="text-base font-bold mt-3 mb-1.5 first:mt-0">{children}</h3>,

@@ -15,7 +15,6 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { formatCurrency } from '@/lib/utils'
 import { Calendar, Percent } from 'lucide-react'
@@ -60,6 +59,7 @@ const SortableDealCard = memo(function SortableDealCard({ deal, onClick }: { dea
     data: { type: 'deal', deal },
   })
 
+  // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic DnD style
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -219,6 +219,7 @@ export function DealsKanban({ dealsByStage, onStageChange, onRefresh }: DealsKan
                       <SortableDealCard
                         key={deal.id}
                         deal={deal}
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                         onClick={() => handleDealClick(deal)}
                       />
                     ))}
@@ -241,7 +242,9 @@ export function DealsKanban({ dealsByStage, onStageChange, onRefresh }: DealsKan
         <EditDealModal
           deal={editingDeal}
           open={!!editingDeal}
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- inline close handler
           onOpenChange={(open) => !open && setEditingDeal(null)}
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- inline success handler
           onSuccess={() => {
             setEditingDeal(null)
             onRefresh?.()

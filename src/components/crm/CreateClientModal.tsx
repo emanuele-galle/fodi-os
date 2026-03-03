@@ -104,6 +104,7 @@ export function CreateClientModal({ open, onClose, onCreated }: CreateClientModa
             label="Ragione Sociale *"
             required
             value={clientForm.values.companyName}
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- form handler with duplicate check
             onChange={(e) => {
               clientForm.setValue('companyName', e.target.value)
               checkDuplicate(e.target.value)
@@ -116,6 +117,7 @@ export function CreateClientModal({ open, onClose, onCreated }: CreateClientModa
             </div>
           )}
         </div>
+        {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form handlers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input label="P.IVA" value={clientForm.values.vatNumber} onChange={(e) => clientForm.setValue('vatNumber', e.target.value)} />
           <Input label="Codice Fiscale" value={clientForm.values.fiscalCode} onChange={(e) => clientForm.setValue('fiscalCode', e.target.value)} />
@@ -142,6 +144,7 @@ export function CreateClientModal({ open, onClose, onCreated }: CreateClientModa
             className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           />
         </div>
+        {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={handleClose}>
             Annulla

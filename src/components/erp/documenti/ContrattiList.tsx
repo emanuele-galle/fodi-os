@@ -1,9 +1,10 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- CRUD list with many inline handlers */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, type ChangeEvent } from 'react'
 import {
-  ScrollText, FileDown, Send, Search, AlertCircle, Loader2,
-  Building2, Briefcase, Wrench, MessageSquare, TrendingUp, Server,
+  ScrollText, FileDown, Send, Search, AlertCircle,
+  Building2, Briefcase, Wrench, TrendingUp, Server,
   ExternalLink, Check,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -232,10 +233,25 @@ export function ContrattiList() {
     setSendSuccess(false)
   }
 
-  const clientOptions = [
+  const clientOptions = useMemo(() => [
     { value: '', label: 'Seleziona cliente...' },
     ...clients.map((c) => ({ value: c.id, label: c.companyName })),
-  ]
+  ], [clients])
+
+  const handleSearchChange = useCallback((e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value), [])
+  const handleCategoryChange = useCallback((e: ChangeEvent<HTMLSelectElement>) => setCategoryFilter(e.target.value), [])
+  const handleClientChange = useCallback((e: ChangeEvent<HTMLSelectElement>) => setSelectedClientId(e.target.value), [])
+  const handleCityChange = useCallback((e: ChangeEvent<HTMLInputElement>) => setCity(e.target.value), [])
+  const handleSignerNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => setSignerName(e.target.value), [])
+  const handleSignerEmailChange = useCallback((e: ChangeEvent<HTMLInputElement>) => setSignerEmail(e.target.value), [])
+  const handleCloseSendModal = useCallback(() => setSendModal(false), [])
+  const handleOpenSendModal = useCallback(() => setSendModal(true), [])
+  const handleOpenPdf = useCallback(() => {
+    if (generatedContract) window.open(generatedContract.pdfUrl, '_blank')
+  }, [generatedContract])
+  const handleSendModalClose = useCallback(() => {
+    if (sendSuccess) { resetModal() } else { setSendModal(false) }
+  }, [sendSuccess])
 
   return (
     <div>
@@ -246,14 +262,14 @@ export function ContrattiList() {
           <Input
             placeholder="Cerca template contratto..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-10"
           />
         </div>
         <Select
           options={CATEGORY_OPTIONS}
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
+          onChange={handleCategoryChange}
           className="w-full sm:w-48"
         />
       </div>
@@ -350,13 +366,13 @@ export function ContrattiList() {
               label="Cliente *"
               options={clientOptions}
               value={selectedClientId}
-              onChange={(e) => setSelectedClientId(e.target.value)}
+              onChange={handleClientChange}
             />
 
             <Input
               label="Luogo di stipula"
               value={city}
-              onChange={(e) => setCity(e.target.value)}
+              onChange={handleCityChange}
               placeholder="es. Milano"
             />
 
@@ -425,14 +441,14 @@ export function ContrattiList() {
               <Button
                 variant="outline"
                 className="flex-1"
-                onClick={() => window.open(generatedContract.pdfUrl, '_blank')}
+                onClick={handleOpenPdf}
               >
                 <ExternalLink className="h-4 w-4 mr-1" />
                 Visualizza PDF
               </Button>
               <Button
                 className="flex-1"
-                onClick={() => setSendModal(true)}
+                onClick={handleOpenSendModal}
               >
                 <Send className="h-4 w-4 mr-1" />
                 Invia per Firma
@@ -449,9 +465,7 @@ export function ContrattiList() {
       {/* ═══ SEND FOR SIGNING MODAL ═══════════════════════════ */}
       <Modal
         open={sendModal}
-        onClose={() => {
-          if (sendSuccess) { resetModal() } else { setSendModal(false) }
-        }}
+        onClose={handleSendModalClose}
         title={sendSuccess ? 'Richiesta Inviata' : 'Invia per Firma Digitale'}
         size="md"
       >
@@ -488,7 +502,7 @@ export function ContrattiList() {
               label="Nome Firmatario *"
               placeholder="Mario Rossi"
               value={signerName}
-              onChange={(e) => setSignerName(e.target.value)}
+              onChange={handleSignerNameChange}
             />
 
             <Input
@@ -496,7 +510,7 @@ export function ContrattiList() {
               type="email"
               placeholder="mario@example.com"
               value={signerEmail}
-              onChange={(e) => setSignerEmail(e.target.value)}
+              onChange={handleSignerEmailChange}
             />
 
             {sendError && (
@@ -507,7 +521,7 @@ export function ContrattiList() {
             )}
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={() => setSendModal(false)}>Indietro</Button>
+              <Button variant="outline" onClick={handleCloseSendModal}>Indietro</Button>
               <Button
                 onClick={handleSendForSigning}
                 disabled={!signerName || !signerEmail || sending}

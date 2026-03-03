@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- component handlers and dynamic props */
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
@@ -15,7 +16,7 @@ export default function NewTemplatePage() {
   const router = useRouter()
   const [clients, setClients] = useState<Client[]>([])
   const [submitting, setSubmitting] = useState(false)
-  const [previewData, setPreviewData] = useState<Partial<TemplateFormData>>({})
+  const [previewData] = useState<Partial<TemplateFormData>>({})
 
   useEffect(() => {
     fetch('/api/clients?limit=200')

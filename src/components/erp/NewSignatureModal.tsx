@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -81,7 +81,29 @@ export function NewSignatureModal({ open, onClose, onCreated, prefill }: NewSign
     }
   }, [prefill])
 
-  const handleSubmit = async () => {
+  const handleDocTypeChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setDocumentType(e.target.value), [])
+  const handleDocTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setDocumentTitle(e.target.value), [])
+  const handleDocUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setDocumentUrl(e.target.value), [])
+  const handleSignerNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setSignerName(e.target.value), [])
+  const handleSignerEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setSignerEmail(e.target.value), [])
+  const handleSignerPhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setSignerPhone(e.target.value), [])
+  const handleSignerClientChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setSignerClientId(e.target.value), [])
+  const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => setMessage(e.target.value), [])
+  const handleExpiresChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setExpiresInDays(parseInt(e.target.value)), [])
+
+  const clientOptions = useMemo(() => [
+    { value: '', label: 'Seleziona cliente...' },
+    ...clients.map((c) => ({ value: c.id, label: c.companyName })),
+  ], [clients])
+
+  const expiresOptions = useMemo(() => [
+    { value: '3', label: '3 giorni' },
+    { value: '7', label: '7 giorni' },
+    { value: '14', label: '14 giorni' },
+    { value: '30', label: '30 giorni' },
+  ], [])
+
+  const handleSubmit = useCallback(async () => {
     setError('')
     setLoading(true)
     try {
@@ -125,7 +147,7 @@ export function NewSignatureModal({ open, onClose, onCreated, prefill }: NewSign
     } finally {
       setLoading(false)
     }
-  }
+  }, [documentType, prefill?.documentId, documentTitle, documentUrl, signerName, signerEmail, signerPhone, signerClientId, message, expiresInDays, onCreated, onClose])
 
   return (
     <Modal open={open} onClose={onClose} title="Nuova Richiesta Firma" size="lg">
@@ -134,21 +156,21 @@ export function NewSignatureModal({ open, onClose, onCreated, prefill }: NewSign
           label="Tipo Documento"
           options={DOC_TYPE_OPTIONS}
           value={documentType}
-          onChange={(e) => setDocumentType(e.target.value)}
+          onChange={handleDocTypeChange}
         />
 
         <Input
           label="Titolo Documento"
           placeholder="es. Preventivo sito web Rossi Srl"
           value={documentTitle}
-          onChange={(e) => setDocumentTitle(e.target.value)}
+          onChange={handleDocTitleChange}
         />
 
         <Input
           label="URL Documento (PDF)"
           placeholder="https://..."
           value={documentUrl}
-          onChange={(e) => setDocumentUrl(e.target.value)}
+          onChange={handleDocUrlChange}
         />
 
         <div className="border-t border-border/30 pt-4">
@@ -157,9 +179,9 @@ export function NewSignatureModal({ open, onClose, onCreated, prefill }: NewSign
           <div className="space-y-3">
             <Select
               label="Cliente (opzionale)"
-              options={[{ value: '', label: 'Seleziona cliente...' }, ...clients.map((c) => ({ value: c.id, label: c.companyName }))]}
+              options={clientOptions}
               value={signerClientId}
-              onChange={(e) => setSignerClientId(e.target.value)}
+              onChange={handleSignerClientChange}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -167,14 +189,14 @@ export function NewSignatureModal({ open, onClose, onCreated, prefill }: NewSign
                 label="Nome Firmatario"
                 placeholder="Mario Rossi"
                 value={signerName}
-                onChange={(e) => setSignerName(e.target.value)}
+                onChange={handleSignerNameChange}
               />
               <Input
                 label="Email Firmatario"
                 type="email"
                 placeholder="mario@example.com"
                 value={signerEmail}
-                onChange={(e) => setSignerEmail(e.target.value)}
+                onChange={handleSignerEmailChange}
               />
             </div>
 
@@ -182,7 +204,7 @@ export function NewSignatureModal({ open, onClose, onCreated, prefill }: NewSign
               label="Telefono (opzionale)"
               placeholder="+39 333 1234567"
               value={signerPhone}
-              onChange={(e) => setSignerPhone(e.target.value)}
+              onChange={handleSignerPhoneChange}
             />
           </div>
         </div>
@@ -191,14 +213,9 @@ export function NewSignatureModal({ open, onClose, onCreated, prefill }: NewSign
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Select
               label="Scadenza"
-              options={[
-                { value: '3', label: '3 giorni' },
-                { value: '7', label: '7 giorni' },
-                { value: '14', label: '14 giorni' },
-                { value: '30', label: '30 giorni' },
-              ]}
+              options={expiresOptions}
               value={String(expiresInDays)}
-              onChange={(e) => setExpiresInDays(parseInt(e.target.value))}
+              onChange={handleExpiresChange}
             />
           </div>
 
@@ -208,7 +225,7 @@ export function NewSignatureModal({ open, onClose, onCreated, prefill }: NewSign
               className="flex w-full rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40 min-h-[80px] resize-y"
               placeholder="Gentile cliente, le chiediamo di firmare..."
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={handleMessageChange}
             />
           </div>
         </div>

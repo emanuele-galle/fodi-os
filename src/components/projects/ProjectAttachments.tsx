@@ -210,6 +210,16 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
     }
   }
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers for form interactions */
+  const handleShowLinkForm = () => setShowLinkForm(true)
+  const handleLinkUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => setLinkUrl(e.target.value)
+  const handleLinkNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setLinkName(e.target.value)
+  const handleLinkUrlKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleAddLink(); if (e.key === 'Escape') setShowLinkForm(false) }
+  const handleLinkNameKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleAddLink() }
+  const handleCancelLinkForm = () => { setShowLinkForm(false); setLinkError(null) }
+  const handleClosePreview = () => setPreviewAttachment(null)
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   return (
     <div>
       <div
@@ -228,6 +238,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
             <div className="w-full max-w-xs mx-auto h-2 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full bg-primary rounded-full transition-all duration-300"
+                // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -246,7 +257,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
       <div className="mb-4">
         {!showLinkForm ? (
           <button
-            onClick={() => setShowLinkForm(true)}
+            onClick={handleShowLinkForm}
             className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors"
           >
             <Link2 className="h-4 w-4" />
@@ -257,22 +268,22 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
             <Input
               placeholder="https://drive.google.com/..."
               value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
+              onChange={handleLinkUrlChange}
               autoFocus
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAddLink(); if (e.key === 'Escape') setShowLinkForm(false) }}
+              onKeyDown={handleLinkUrlKeyDown}
             />
             <Input
               placeholder="Nome (opzionale)"
               value={linkName}
-              onChange={(e) => setLinkName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAddLink() }}
+              onChange={handleLinkNameChange}
+              onKeyDown={handleLinkNameKeyDown}
             />
             {linkError && <p className="text-xs text-destructive">{linkError}</p>}
             <div className="flex items-center gap-2">
               <Button size="sm" onClick={handleAddLink} disabled={addingLink || !linkUrl.trim()}>
                 {addingLink ? 'Aggiunta...' : 'Aggiungi'}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowLinkForm(false); setLinkError(null) }}>
+              <Button size="sm" variant="ghost" onClick={handleCancelLinkForm}>
                 Annulla
               </Button>
             </div>
@@ -299,6 +310,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                   <ExternalLink className="h-5 w-5 text-primary flex-shrink-0" />
                 ) : att.mimeType.startsWith('image/') ? (
                   <button
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                     onClick={() => setPreviewAttachment(att)}
                     className="flex-shrink-0 w-10 h-10 rounded overflow-hidden bg-secondary/50 hover:opacity-80 transition-opacity"
                   >
@@ -319,15 +331,18 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                     <div className="flex items-center gap-2">
                       <Input
                         value={renameValue}
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter
                         onChange={(e) => setRenameValue(e.target.value)}
                         className="h-7 text-sm"
                         autoFocus
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') handleRename(att.id)
                           if (e.key === 'Escape') setRenamingId(null)
                         }}
                       />
                       <button
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                         onClick={() => handleRename(att.id)}
                         disabled={renaming}
                         className="p-1 rounded hover:bg-primary/10 text-primary transition-colors"
@@ -335,6 +350,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                         <Check className="h-4 w-4" />
                       </button>
                       <button
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter
                         onClick={() => setRenamingId(null)}
                         className="p-1 rounded hover:bg-secondary transition-colors"
                       >
@@ -355,6 +371,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {canPreview && (
                       <button
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                         onClick={() => setPreviewAttachment(att)}
                         className="p-1.5 rounded hover:bg-primary/10 transition-colors"
                         title="Anteprima"
@@ -363,6 +380,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                       </button>
                     )}
                     <button
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                       onClick={() => startRename(att)}
                       className="p-1.5 rounded hover:bg-primary/10 transition-colors"
                       title="Rinomina"
@@ -383,6 +401,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                       <a
                         href={`/api/projects/${projectId}/attachments/${att.id}/download`}
                         className="p-1.5 rounded hover:bg-primary/10 transition-colors"
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple inline stopPropagation
                         onClick={(e) => e.stopPropagation()}
                         title="Scarica"
                         download
@@ -391,6 +410,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
                       </a>
                     )}
                     <button
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                       onClick={() => handleDelete(att.id)}
                       className="p-1.5 rounded hover:bg-destructive/10 transition-colors"
                       title="Elimina"
@@ -408,7 +428,7 @@ export function ProjectAttachments({ projectId, folderId }: ProjectAttachmentsPr
       {/* Preview Modal */}
       <Modal
         open={!!previewAttachment}
-        onClose={() => setPreviewAttachment(null)}
+        onClose={handleClosePreview}
         title={previewAttachment?.fileName || 'Anteprima'}
         size="lg"
       >

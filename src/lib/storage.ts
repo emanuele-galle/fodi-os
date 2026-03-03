@@ -2,7 +2,7 @@ import { brand } from '@/lib/branding'
 import { google } from 'googleapis'
 import { prisma } from './prisma'
 import { getAuthenticatedClient, getDriveService } from './google'
-import { uploadFile as s3Upload, deleteFile as s3Delete, isR2Active } from './s3'
+import { uploadFile as s3Upload, deleteFile as s3Delete } from './s3'
 import { logger } from '@/lib/logger'
 
 // Cached admin drive client (avoid DB query on every upload)
@@ -45,19 +45,6 @@ async function getAdminDriveClient() {
   return drive
 }
 
-/**
- * Check if Google Drive is available (configured and admin connected).
- * Returns false without throwing if GDrive is not available.
- */
-async function isGDriveAvailable(): Promise<boolean> {
-  if (!process.env.GOOGLE_CLIENT_ID) return false
-  try {
-    await getAdminDriveClient()
-    return true
-  } catch {
-    return false
-  }
-}
 
 /**
  * Ensure a folder exists on Google Drive, creating it if necessary.

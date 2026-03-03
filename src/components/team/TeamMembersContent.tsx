@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Users, Search, Mail, Phone, CheckCircle2, Clock, Calendar, Video, ChevronDown, ChevronUp, Plus, ListTodo, AlertCircle, Globe, Wifi, CreditCard } from 'lucide-react'
+import { Users, Search, Mail, Phone, Clock, Video, ChevronDown, ChevronUp, Plus, ListTodo, AlertCircle, Wifi, CreditCard } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -275,6 +275,7 @@ export function TeamMembersContent() {
     <>
       {!loading && members.length > 0 && (
         <div className="mb-8">
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- computed props from members */}
           <TeamActivityCard
             totalHours={teamSummary.totalWeeklyHours}
             breakdown={[
@@ -289,9 +290,11 @@ export function TeamMembersContent() {
             }))}
             onManageTeam={() => router.push('/tasks')}
           />
+          {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop */}
         </div>
       )}
 
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- filter setters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
@@ -317,6 +320,7 @@ export function TeamMembersContent() {
           />
         )}
       </div>
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
 
       {fetchError && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
@@ -324,6 +328,7 @@ export function TeamMembersContent() {
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
           </div>
+          {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- retry handler */}
           <button onClick={() => loadTeam(true)} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
@@ -342,6 +347,7 @@ export function TeamMembersContent() {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- handlers and styles depend on loop item */}
           {filtered.map((member) => {
             const activity = getActivityStatus(member.lastActiveAt, member.lastLoginAt)
             const isExpanded = expandedMember === member.id
@@ -509,10 +515,12 @@ export function TeamMembersContent() {
               </Card>
             )
           })}
+          {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop */}
         </div>
       )}
 
       {/* Assign Task Modal */}
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- modal and form handlers */}
       <Modal
         open={!!assignModalMember}
         onClose={() => { setAssignModalMember(null); setTaskSearch(''); setNewTaskTitle(''); setSearchResults([]) }}
@@ -582,6 +590,7 @@ export function TeamMembersContent() {
           </div>
         </div>
       </Modal>
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
     </>
   )
 }

@@ -25,14 +25,6 @@ const FIELD_TYPES = [
   'DATE', 'FILE', 'RATING', 'SCALE',
 ] as const
 
-const CRM_MAPPINGS = [
-  'client.companyName', 'client.vatNumber', 'client.fiscalCode',
-  'client.pec', 'client.sdi', 'client.website', 'client.industry',
-  'client.source', 'client.notes',
-  'contact.firstName', 'contact.lastName', 'contact.email',
-  'contact.phone', 'contact.role', 'contact.notes',
-] as const
-
 export const createWizardTemplateSchema = z.object({
   name: z.string().min(1, 'Nome obbligatorio').max(200),
   description: z.string().optional(),

@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Send, Paperclip, FileText, Download, ArrowDown } from 'lucide-react'

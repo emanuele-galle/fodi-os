@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Calendar, Clock, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 
 type BookingStep = 'loading' | 'date' | 'time' | 'form' | 'success'
@@ -26,11 +27,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', notes: '' })
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    fetchAvailability()
-  }, [slug])
-
-  async function fetchAvailability() {
+  const fetchAvailability = useCallback(async () => {
     try {
       const res = await fetch(`/api/c/${slug}/availability`)
       if (!res.ok) {
@@ -45,7 +42,11 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
       setError('Errore nel caricamento disponibilità')
       setStep('date')
     }
-  }
+  }, [slug])
+
+  useEffect(() => {
+    fetchAvailability()
+  }, [fetchAvailability])
 
   function handleDateSelect(dateStr: string) {
     setSelectedDate(dateStr)

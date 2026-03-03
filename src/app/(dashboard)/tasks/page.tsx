@@ -1,9 +1,9 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- page-level component with many UI interaction handlers */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { CheckSquare, ListTodo, LayoutGrid, ChevronDown, ChevronRight, Download, AlertTriangle, User, Send, Users, Plus } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { getDueUrgency } from '@/lib/task-utils'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -42,7 +42,7 @@ export default function TasksPage() {
   const [projectFilter, setProjectFilter] = useState('')
   const [assigneeFilter, setAssigneeFilter] = useState('')
   const [sortBy, setSortBy] = useState('createdAt')
-  const [sortOrder, setSortOrder] = useState('desc')
+  const [sortOrder] = useState('desc')
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
   const [users, setUsers] = useState<{ id: string; firstName: string; lastName: string }[]>([])
   const [activeTab, setActiveTab] = useState<TabKey>('mine')

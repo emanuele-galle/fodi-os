@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Building2, Plus, AlertCircle, Pencil, Trash2, ArrowRightLeft } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -273,9 +273,26 @@ export default function AccountsPage() {
     }
   }
 
-  const accountOptions = accounts
-    .filter((a) => a.isActive)
-    .map((a) => ({ value: a.id, label: `${a.icon || ''} ${a.name}`.trim() }))
+  const handleRetry = useCallback(() => {
+    setFetchError(null)
+    fetchAccounts()
+    fetchTransfers()
+  }, [fetchAccounts, fetchTransfers])
+
+  const handleCloseAccountModal = useCallback(() => {
+    setAccountModalOpen(false)
+    setEditAccount(null)
+  }, [])
+
+  const handleCloseTransferModal = useCallback(() => setTransferModalOpen(false), [])
+  const handleCloseDeleteConfirm = useCallback(() => setDeleteAccountConfirm(null), [])
+
+  const accountSelectOptions = useMemo(() => [
+    { value: '', label: 'Seleziona conto...' },
+    ...accounts
+      .filter((a) => a.isActive)
+      .map((a) => ({ value: a.id, label: `${a.icon || ''} ${a.name}`.trim() })),
+  ], [accounts])
 
   return (
     <div className="animate-fade-in">
@@ -333,7 +350,7 @@ export default function AccountsPage() {
             <p className="text-sm text-destructive">{fetchError}</p>
           </div>
           <button
-            onClick={() => { setFetchError(null); fetchAccounts(); fetchTransfers() }}
+            onClick={handleRetry}
             className="text-sm font-medium text-destructive hover:underline flex-shrink-0"
           >
             Riprova
@@ -371,6 +388,7 @@ export default function AccountsPage() {
             <div key={type} className="mb-8">
               <h2 className="text-base font-semibold mb-4">{label}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- loop variable capture for account handlers */}
                 {sectionAccounts.map((account) => (
                   <div key={account.id} className="relative group">
                     <AccountBalanceCard
@@ -401,6 +419,7 @@ export default function AccountsPage() {
                     </div>
                   </div>
                 ))}
+                {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
               </div>
             </div>
           )
@@ -495,7 +514,7 @@ export default function AccountsPage() {
       {/* Modal Crea/Modifica Conto */}
       <Modal
         open={accountModalOpen}
-        onClose={() => { setAccountModalOpen(false); setEditAccount(null) }}
+        onClose={handleCloseAccountModal}
         title={editAccount ? 'Modifica Conto' : 'Nuovo Conto'}
         size="md"
       >
@@ -530,7 +549,7 @@ export default function AccountsPage() {
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</div>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => { setAccountModalOpen(false); setEditAccount(null) }}>
+            <Button type="button" variant="outline" onClick={handleCloseAccountModal}>
               Annulla
             </Button>
             <Button type="submit" loading={submitting}>
@@ -543,7 +562,7 @@ export default function AccountsPage() {
       {/* Modal Conferma Eliminazione Conto */}
       <Modal
         open={!!deleteAccountConfirm}
-        onClose={() => setDeleteAccountConfirm(null)}
+        onClose={handleCloseDeleteConfirm}
         title="Elimina Conto"
         size="sm"
       >
@@ -560,7 +579,7 @@ export default function AccountsPage() {
         )}
         <p className="text-xs text-destructive mb-4">Questa azione non può essere annullata.</p>
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => setDeleteAccountConfirm(null)}>Annulla</Button>
+          <Button variant="outline" onClick={handleCloseDeleteConfirm}>Annulla</Button>
           <Button variant="destructive" onClick={handleDeleteAccount} loading={submitting}>Elimina</Button>
         </div>
       </Modal>
@@ -568,7 +587,7 @@ export default function AccountsPage() {
       {/* Modal Nuovo Giroconto */}
       <Modal
         open={transferModalOpen}
-        onClose={() => setTransferModalOpen(false)}
+        onClose={handleCloseTransferModal}
         title="Nuovo Giroconto"
         size="md"
       >
@@ -592,13 +611,13 @@ export default function AccountsPage() {
             <Select
               name="fromAccountId"
               label="Da (Conto Origine) *"
-              options={[{ value: '', label: 'Seleziona conto...' }, ...accountOptions]}
+              options={accountSelectOptions}
               required
             />
             <Select
               name="toAccountId"
               label="A (Conto Destinazione) *"
-              options={[{ value: '', label: 'Seleziona conto...' }, ...accountOptions]}
+              options={accountSelectOptions}
               required
             />
           </div>
@@ -620,7 +639,7 @@ export default function AccountsPage() {
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</div>
           )}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => setTransferModalOpen(false)}>
+            <Button type="button" variant="outline" onClick={handleCloseTransferModal}>
               Annulla
             </Button>
             <Button type="submit" loading={submitting}>

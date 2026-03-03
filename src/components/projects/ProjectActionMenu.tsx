@@ -30,15 +30,24 @@ export function ProjectActionMenu({ project, onDuplicate, onArchive, onDelete }:
     }
   }, [isOpen])
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers for menu actions */
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsOpen(!isOpen)
+  }
+
+  const handleEdit = (e: React.MouseEvent) => { e.stopPropagation(); setIsOpen(false); router.push(`/projects/${project.id}`) }
+  const handleDuplicate = (e: React.MouseEvent) => { e.stopPropagation(); setIsOpen(false); onDuplicate(project.id) }
+  const handleArchive = (e: React.MouseEvent) => { e.stopPropagation(); setIsOpen(false); onArchive(project.id) }
+  const handleDeleteClick = (e: React.MouseEvent) => { e.stopPropagation(); setIsOpen(false); onDelete(project.id) }
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   return (
     <div className="relative inline-block" ref={menuRef}>
       <Button
         variant="ghost"
         size="icon"
-        onClick={(e) => {
-          e.stopPropagation()
-          setIsOpen(!isOpen)
-        }}
+        onClick={handleToggle}
         aria-label="Azioni progetto"
       >
         <MoreVertical className="h-4 w-4" />
@@ -46,28 +55,28 @@ export function ProjectActionMenu({ project, onDuplicate, onArchive, onDelete }:
       {isOpen && (
         <div className="absolute right-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[160px]">
           <button
-            onClick={(e) => { e.stopPropagation(); setIsOpen(false); router.push(`/projects/${project.id}`) }}
+            onClick={handleEdit}
             className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 flex items-center gap-2"
           >
             <Pencil className="h-4 w-4" />
             Modifica
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDuplicate(project.id) }}
+            onClick={handleDuplicate}
             className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 flex items-center gap-2"
           >
             <Copy className="h-4 w-4" />
             Duplica
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onArchive(project.id) }}
+            onClick={handleArchive}
             className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 flex items-center gap-2"
           >
             <Archive className="h-4 w-4" />
             Archivia
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDelete(project.id) }}
+            onClick={handleDeleteClick}
             className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 flex items-center gap-2 text-destructive"
           >
             <Trash2 className="h-4 w-4" />

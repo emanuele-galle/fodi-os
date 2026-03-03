@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
+import { useState } from 'react'
 import { brandClient } from '@/lib/branding-client'
 import { Card, CardTitle, CardContent } from '@/components/ui/Card'
 import { Sun, Moon } from 'lucide-react'

@@ -85,6 +85,7 @@ export function TemplatePreview({
           {/* Left: Logo + Company Info */}
           <div className="flex items-start gap-2">
             {(logoUrl || true) && (
+              // eslint-disable-next-line @next/next/no-img-element -- dynamic logo URL
               <img
                 src={logoUrl || '/logo-official.png'}
                 alt="Logo"

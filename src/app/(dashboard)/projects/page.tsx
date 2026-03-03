@@ -247,6 +247,7 @@ export default function ProjectsPage() {
   const showContent = viewMode === 'kanban' || filteredProjects.length > 0
   const showEmptyFiltered = viewMode !== 'kanban' && !loading && filteredProjects.length === 0
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- page-level component with many UI interaction handlers */
   return (
     <div className="animate-fade-in">
       {/* Header */}

@@ -2,7 +2,7 @@
  * Haptic feedback utility for mobile devices.
  * Uses navigator.vibrate() with graceful fallback.
  */
-export function haptic(type: 'light' | 'medium' | 'heavy' | 'error' = 'light') {
+export function haptic(type: 'light' | 'medium' | 'heavy' | 'error' | 'selection' | 'success' = 'light') {
   if (typeof navigator === 'undefined' || !('vibrate' in navigator)) return
 
   const patterns: Record<typeof type, number | number[]> = {
@@ -10,6 +10,8 @@ export function haptic(type: 'light' | 'medium' | 'heavy' | 'error' = 'light') {
     medium: 15,
     heavy: 30,
     error: [30, 50, 30],
+    selection: 3,
+    success: [5, 50, 10],
   }
 
   try {

@@ -98,6 +98,20 @@ export function MessageInput({ onSend, onSendFile, onSendLink, onTyping, replyTo
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers */
+  const handleFileClick = () => fileInputRef.current?.click()
+  const handleToggleEmoji = () => setEmojiOpen(!emojiOpen)
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setValue(e.target.value)
+    adjustHeight()
+    if (onTyping) {
+      if (typingTimeout.current) clearTimeout(typingTimeout.current)
+      onTyping()
+      typingTimeout.current = setTimeout(() => { typingTimeout.current = null }, 2000)
+    }
+  }
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   const hasContent = value.trim().length > 0
 
   return (
@@ -121,7 +135,7 @@ export function MessageInput({ onSend, onSendFile, onSendLink, onTyping, replyTo
           <>
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handleFileClick}
               disabled={disabled}
               className="h-[42px] w-[42px] rounded-xl flex items-center justify-center text-muted-foreground/50 hover:text-muted-foreground hover:bg-secondary/60 transition-all flex-shrink-0"
               title="Allega file"
@@ -141,15 +155,7 @@ export function MessageInput({ onSend, onSendFile, onSendLink, onTyping, replyTo
           <textarea
             ref={textareaRef}
             value={value}
-            onChange={(e) => {
-              setValue(e.target.value)
-              adjustHeight()
-              if (onTyping) {
-                if (typingTimeout.current) clearTimeout(typingTimeout.current)
-                onTyping()
-                typingTimeout.current = setTimeout(() => { typingTimeout.current = null }, 2000)
-              }
-            }}
+            onChange={handleTextChange}
             onKeyDown={handleKeyDown}
             placeholder="Scrivi un messaggio..."
             disabled={disabled}
@@ -165,7 +171,7 @@ export function MessageInput({ onSend, onSendFile, onSendLink, onTyping, replyTo
           <div className="absolute right-3 bottom-2.5" ref={emojiRef}>
             <button
               type="button"
-              onClick={() => setEmojiOpen(!emojiOpen)}
+              onClick={handleToggleEmoji}
               className="text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
             >
               <Smile className="h-4.5 w-4.5" />
@@ -177,6 +183,7 @@ export function MessageInput({ onSend, onSendFile, onSendLink, onTyping, replyTo
                     <button
                       key={emoji}
                       type="button"
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                       onClick={() => insertEmoji(emoji)}
                       className="h-10 w-10 md:h-8 md:w-8 flex items-center justify-center rounded-lg hover:bg-secondary/80 transition-colors text-xl md:text-lg touch-manipulation"
                     >

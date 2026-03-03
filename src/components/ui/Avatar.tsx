@@ -38,6 +38,7 @@ export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
 
   if (src) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element -- external/blob URLs not supported by next/image
       <img
         src={src}
         alt={name}

@@ -1,3 +1,4 @@
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- CRUD list with many inline handlers */
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'

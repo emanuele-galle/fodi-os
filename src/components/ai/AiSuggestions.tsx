@@ -46,6 +46,7 @@ interface AiSuggestionsProps {
   currentPage?: string
 }
 
+/* eslint-disable react-perf/jsx-no-new-object-as-prop, react-perf/jsx-no-new-function-as-prop -- framer-motion animation objects + loop handlers need closure */
 export function AiSuggestions({ suggestions, onSelect, variant = 'empty', currentPage }: AiSuggestionsProps) {
   const contextSuggestions = currentPage ? PAGE_SUGGESTIONS[currentPage] : undefined
   const items = suggestions?.length ? suggestions : (contextSuggestions || DEFAULT_SUGGESTIONS)

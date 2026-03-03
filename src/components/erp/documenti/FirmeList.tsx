@@ -1,6 +1,7 @@
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- CRUD list with many inline handlers */
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, type ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileSignature, Plus, Search, ChevronLeft, ChevronRight, Send, AlertCircle, X, RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -119,6 +120,15 @@ export function FirmeList() {
   const canCancel = (status: string) => !['SIGNED', 'CANCELLED'].includes(status)
   const canResend = (status: string) => ['PENDING', 'OTP_SENT'].includes(status)
 
+  const handleSearchChange = useCallback((e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value), [])
+  const handleStatusChange = useCallback((e: ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value), [])
+  const handleOpenModal = useCallback(() => setShowModal(true), [])
+  const handleCloseModal = useCallback(() => setShowModal(false), [])
+  const handlePrevPage = useCallback(() => setPage((p) => p - 1), [])
+  const handleNextPage = useCallback(() => setPage((p) => p + 1), [])
+  const handleCloseCancelModal = useCallback(() => setCancelConfirm(null), [])
+  const handleCreated = useCallback(() => fetchItems(), [fetchItems])
+
   return (
     <div>
       {/* Search + Filters + Action */}
@@ -128,23 +138,23 @@ export function FirmeList() {
           <Input
             placeholder="Cerca per titolo, firmatario..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-10"
           />
         </div>
         <Select
           options={STATUS_OPTIONS}
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={handleStatusChange}
           className="w-full sm:w-48"
         />
         <div className="hidden sm:block flex-shrink-0">
-          <Button size="sm" onClick={() => setShowModal(true)}>
+          <Button size="sm" onClick={handleOpenModal}>
             <Plus className="h-4 w-4 mr-1" />
             Nuova Richiesta
           </Button>
         </div>
-        <Button onClick={() => setShowModal(true)} className="sm:hidden flex-shrink-0">
+        <Button onClick={handleOpenModal} className="sm:hidden flex-shrink-0">
           <Plus className="h-4 w-4 mr-1" />
           Nuova
         </Button>
@@ -171,7 +181,7 @@ export function FirmeList() {
           description={search || statusFilter ? 'Prova a modificare i filtri.' : 'Crea la tua prima richiesta di firma digitale.'}
           action={
             !search && !statusFilter ? (
-              <Button onClick={() => setShowModal(true)}>
+              <Button onClick={handleOpenModal}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nuova Richiesta
               </Button>
@@ -181,6 +191,7 @@ export function FirmeList() {
       ) : (
         <>
           {/* Mobile Card View */}
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- loop captures req.id */}
           <div className="md:hidden space-y-3">
             {items.map((req) => (
               <div
@@ -223,8 +234,10 @@ export function FirmeList() {
               </div>
             ))}
           </div>
+          {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
 
           {/* Desktop Table View */}
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- table sort handlers and loop row handlers */}
           <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
             <table className="w-full text-sm">
               <thead>
@@ -292,16 +305,17 @@ export function FirmeList() {
               </tbody>
             </table>
           </div>
+          {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-muted">{total} richieste totali</p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={handlePrevPage}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted">{page} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={handleNextPage}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -312,12 +326,12 @@ export function FirmeList() {
 
       <NewSignatureModal
         open={showModal}
-        onClose={() => setShowModal(false)}
-        onCreated={() => fetchItems()}
+        onClose={handleCloseModal}
+        onCreated={handleCreated}
       />
 
       {/* Modal Conferma Annullamento */}
-      <Modal open={!!cancelConfirm} onClose={() => setCancelConfirm(null)} title="Annulla Richiesta Firma" size="sm">
+      <Modal open={!!cancelConfirm} onClose={handleCloseCancelModal} title="Annulla Richiesta Firma" size="sm">
         <p className="text-sm text-muted mb-2">Sei sicuro di voler annullare questa richiesta di firma?</p>
         {cancelConfirm && (
           <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
@@ -329,7 +343,7 @@ export function FirmeList() {
         )}
         <p className="text-xs text-destructive mb-4">La richiesta verrà annullata e il firmatario non potrà più firmare.</p>
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => setCancelConfirm(null)}>Indietro</Button>
+          <Button variant="outline" onClick={handleCloseCancelModal}>Indietro</Button>
           <Button variant="destructive" onClick={handleCancel} loading={actionLoading}>Annulla Richiesta</Button>
         </div>
       </Modal>

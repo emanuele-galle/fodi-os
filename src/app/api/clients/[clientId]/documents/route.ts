@@ -156,7 +156,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     // Upload: MinIO (primary) + GDrive (optional backup)
     const gDrivePath = `CRM/${client.companyName}`
-    const { fileUrl, driveFileId, webViewLink } = await uploadWithBackup(
+    const { fileUrl, driveFileId } = await uploadWithBackup(
       safeFileName,
       buffer,
       mimeType,

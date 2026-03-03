@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string -- JSON schema property types are repeated by design */
 import type { Priority } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getTaskParticipants, dispatchNotification } from '@/lib/notifications'

@@ -5,6 +5,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Download, Printer, Loader2 } from 'lucide-react'
 
+const PDF_CONTAINER_STYLE = { height: '70vh' } as const
+
 interface PdfPreviewModalProps {
   open: boolean
   onClose: () => void
@@ -87,7 +89,7 @@ export function PdfPreviewModal({ open, onClose, pdfUrl, fileName, title }: PdfP
           <span className="text-xs text-muted ml-auto">{fileName}</span>
         </div>
 
-        <div className="rounded-lg border border-border/30 overflow-hidden bg-secondary/30" style={{ height: '70vh' }}>
+        <div className="rounded-lg border border-border/30 overflow-hidden bg-secondary/30" style={PDF_CONTAINER_STYLE}>
           {loading && (
             <div className="flex items-center justify-center h-full gap-2 text-muted">
               <Loader2 className="h-5 w-5 animate-spin" />

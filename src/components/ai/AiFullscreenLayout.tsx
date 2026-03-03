@@ -1,16 +1,15 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, type CSSProperties } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   Search, Plus, MessageSquare, Trash2, ChevronLeft,
   CheckSquare, Users, Calendar, Receipt,
-  BarChart3, Bot, Loader2, Send, Paperclip, X,
-  FileText, Image as ImageIcon
+  Loader2, Send, Paperclip, X,
+  FileText,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AiChatPanel } from './AiChatPanel'
-import { AiAnimatedAvatar } from './AiAnimatedAvatar'
 
 interface Conversation {
   id: string
@@ -86,9 +85,16 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
 
   const grouped = useMemo(() => groupByDate(filtered), [filtered])
 
-  const handleNewConversation = () => {
+  const handleNewConversation = useCallback(() => {
     setSelectedId(null)
-  }
+  }, [])
+
+  const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), [])
+
+  const handleWelcomeAction = useCallback((msg: string) => {
+    setPendingMessage(msg)
+    setSelectedId('new')
+  }, [])
 
   const handleDeleteConversation = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -103,6 +109,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
     <div className="flex h-full ai-mesh-bg">
       {/* Sidebar */}
       <AnimatePresence>
+        {/* eslint-disable react-perf/jsx-no-new-object-as-prop -- framer-motion animation objects */}
         {sidebarOpen && (
           <motion.div
             initial={{ width: 0, opacity: 0 }}
@@ -119,6 +126,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
                   type="text"
                   placeholder="Cerca conversazioni..."
                   value={search}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple input handler
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.03] border border-white/[0.06] focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all placeholder:text-muted-foreground/40"
                 />
@@ -154,6 +162,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
                     {group.items.map((conv) => (
                       <button
                         key={conv.id}
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler needs closure over conv.id
                         onClick={() => setSelectedId(conv.id)}
                         className={cn(
                           'w-full text-left px-3 py-2.5 flex items-center gap-2.5 transition-all group relative',
@@ -183,6 +192,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
                           </p>
                         </div>
                         <button
+                          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler needs closure over conv.id
                           onClick={(e) => handleDeleteConversation(conv.id, e)}
                           className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-all"
                         >
@@ -200,7 +210,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
 
       {/* Toggle sidebar button */}
       <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
+        onClick={toggleSidebar}
         className="absolute top-3 left-2 z-10 p-1 rounded-lg hover:bg-muted transition-colors"
       >
         <ChevronLeft className={cn('h-4 w-4 transition-transform', !sidebarOpen && 'rotate-180')} />
@@ -215,10 +225,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
             initialMessage={pendingMessage || undefined}
           />
         ) : (
-          <WelcomeScreen userName={userName} onAction={(msg) => {
-            setPendingMessage(msg)
-            setSelectedId('new')
-          }} />
+          <WelcomeScreen userName={userName} onAction={handleWelcomeAction} />
         )}
       </div>
     </div>
@@ -232,6 +239,20 @@ function getGreeting(): string {
   return 'Buonasera'
 }
 
+const PARTICLE_STYLES: CSSProperties[] = Array.from({ length: 6 }).map((_, i) => ({
+  left: `${20 + i * 12}%`,
+  bottom: '25%',
+  '--particle-x': `${(i % 2 === 0 ? 1 : -1) * (10 + i * 5)}px`,
+  '--particle-duration': `${3 + i * 0.5}s`,
+  '--particle-delay': `${i * 0.7}s`,
+  background: i % 3 === 0
+    ? 'rgba(0, 122, 255, 0.4)'
+    : i % 3 === 1
+      ? 'rgba(10, 132, 255, 0.3)'
+      : 'rgba(50, 173, 255, 0.4)',
+} as CSSProperties))
+
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- event handlers + framer-motion in welcome screen */
 function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (msg: string) => void }) {
   const [input, setInput] = useState('')
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
@@ -263,6 +284,20 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
     setPendingFiles(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  const openFileInput = () => fileInputRef.current?.click()
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(e.target.files)
+    e.target.value = ''
+  }
+
   return (
     <div
       className="flex-1 flex items-center justify-center p-6 relative overflow-hidden"
@@ -286,22 +321,11 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
       <div className="ai-orb ai-orb-3" />
 
       {/* Floating particles */}
-      {Array.from({ length: 6 }).map((_, i) => (
+      {PARTICLE_STYLES.map((style, i) => (
         <div
           key={i}
           className="ai-particle"
-          style={{
-            left: `${20 + i * 12}%`,
-            bottom: '25%',
-            '--particle-x': `${(i % 2 === 0 ? 1 : -1) * (10 + i * 5)}px`,
-            '--particle-duration': `${3 + i * 0.5}s`,
-            '--particle-delay': `${i * 0.7}s`,
-            background: i % 3 === 0
-              ? 'rgba(0, 122, 255, 0.4)'
-              : i % 3 === 1
-                ? 'rgba(10, 132, 255, 0.3)'
-                : 'rgba(50, 173, 255, 0.4)',
-          } as React.CSSProperties}
+          style={style}
         />
       ))}
 
@@ -357,6 +381,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
                   <div key={i} className="relative group">
                     {file.type.startsWith('image/') ? (
                       <div className="ai-file-card w-24 h-24 rounded-xl overflow-hidden border border-border/40">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- blob URL preview */}
                         <img
                           src={URL.createObjectURL(file)}
                           alt={file.name}
@@ -387,12 +412,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
                 ref={textareaRef}
                 value={input}
                 onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSend()
-                  }
-                }}
+                onKeyDown={handleKeyDown}
                 placeholder="Scrivi un messaggio..."
                 rows={1}
                 className="w-full resize-none bg-transparent text-sm leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none"
@@ -403,7 +423,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
             <div className="flex items-center justify-between px-3 pb-3">
               <div className="flex items-center gap-0.5">
                 <button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={openFileInput}
                   disabled={pendingFiles.length >= 3}
                   className="p-2 rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-30"
                   title="Allega file"
@@ -433,10 +453,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
             multiple
             accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
             className="hidden"
-            onChange={(e) => {
-              handleFileSelect(e.target.files)
-              e.target.value = ''
-            }}
+            onChange={handleFileInputChange}
           />
         </motion.div>
 

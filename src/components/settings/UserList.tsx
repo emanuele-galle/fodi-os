@@ -58,6 +58,7 @@ export function UserList({
           <EmptyState icon={Users} title="Nessun utente trovato" description={search || roleFilter ? 'Prova a modificare i filtri.' : 'Nessun utente registrato.'} />
         ) : (
           <div className="divide-y divide-border">
+            {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- handlers depend on loop item */}
             {filtered.map((u) => (
               <div key={u.id} className={`py-3 px-2 -mx-2 rounded-md transition-colors ${u.isActive ? 'hover:bg-secondary/30' : 'opacity-60'}`}>
                 {/* Mobile layout */}
@@ -109,6 +110,7 @@ export function UserList({
                 </div>
               </div>
             ))}
+            {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
           </div>
         )}
       </CardContent>

@@ -76,7 +76,7 @@ export const chatTools: AiToolDefinition[] = [
     },
     module: 'chat',
     requiredPermission: 'write',
-    // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
+     
     execute: async (input: AiToolInput, context: AiToolContext) => {
       const channelId = input.channelId as string
       const content = sanitizeHtml(input.content as string)

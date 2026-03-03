@@ -32,6 +32,7 @@ export function TaskFilters({
         <Input
           placeholder="Cerca per titolo, descrizione, cliente..."
           value={search}
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- form handler
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-10"
         />
@@ -40,21 +41,25 @@ export function TaskFilters({
         <Select
           options={TASK_STATUS_OPTIONS}
           value={statusFilter}
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- form handler
           onChange={(e) => onStatusFilterChange(e.target.value)}
           className="w-44"
         />
         <Select
           options={PRIORITY_OPTIONS}
           value={priorityFilter}
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- form handler
           onChange={(e) => onPriorityFilterChange(e.target.value)}
           className="w-44"
         />
         <Select
+          // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- computed from clients prop
           options={[
             { value: '', label: 'Tutti i clienti' },
             ...clients.map(c => ({ value: c.id, label: c.companyName }))
           ]}
           value={clientFilter}
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- form handler
           onChange={(e) => onClientFilterChange(e.target.value)}
           className="w-48"
         />

@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string -- test data: role names are intentionally repeated */
 import { describe, it, expect } from 'vitest'
 import type { Role } from '@/generated/prisma/client'
 

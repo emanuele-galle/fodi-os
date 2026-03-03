@@ -73,16 +73,22 @@ function DraggableTaskCard({ task, activeTab, userId, onClick, expanded, subtask
     opacity: isDragging ? 0.4 : 1,
   }
 
+  // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value (transform/transition)
+  const dragStyle = { ...style, touchAction: 'none' as const }
+
   return (
-    <div ref={setNodeRef} style={{ ...style, touchAction: 'none' }} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={dragStyle} {...attributes} {...listeners}>
     <Card
+      // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
       style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
       className={cn('!p-3 cursor-grab active:cursor-grabbing', (urgency === 'overdue' || urgency === 'today') && `${urgencyStyles.border} ${urgencyStyles.bg}`)}
+      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- depends on isDragging state
       onClick={(e) => { if (!isDragging) { e.stopPropagation(); onClick() } }}
     >
       <div className="flex items-center gap-1.5 mb-2">
         {hasSubtasks && onToggleSubtasks && (
           <button
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- wraps callback with task.id
             onClick={(e) => { e.stopPropagation(); onToggleSubtasks(task.id, e) }}
             className="p-0.5 rounded hover:bg-secondary/60 transition-colors flex-shrink-0"
           >
@@ -143,8 +149,10 @@ function DraggableTaskCard({ task, activeTab, userId, onClick, expanded, subtask
             subtasks.map((sub) => (
               <div
                 key={sub.id}
+                // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                 onClick={(e) => { e.stopPropagation(); onSubtaskClick?.(sub.id) }}
                 className="flex items-center gap-1.5 py-1 px-2 rounded bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors"
+                // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
                 style={{ borderLeft: `2px solid ${PRIORITY_COLORS[sub.priority] || 'var(--color-primary)'}` }}
               >
                 <span className={cn('text-[10px] font-medium truncate flex-1', sub.status === 'DONE' && 'line-through text-muted')}>{sub.title}</span>
@@ -238,6 +246,7 @@ export function TaskKanbanView({ tasks, activeTab, userId, onTaskClick, onStatus
                   </span>
                   {isDoneCol && columnTasks.length > 0 && (
                     <button
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple callback wrapper
                       onClick={(e) => { e.stopPropagation(); onToggleDoneCollapsed?.() }}
                       className={`p-0.5 rounded ${col.headerText} hover:bg-white/20 transition-colors`}
                     >
@@ -249,6 +258,7 @@ export function TaskKanbanView({ tasks, activeTab, userId, onTaskClick, onStatus
               {isCollapsed ? (
                 <div className="min-h-[60px] flex items-center justify-center">
                   <button
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple callback wrapper
                     onClick={() => onToggleDoneCollapsed?.()}
                     className="text-xs text-muted hover:text-foreground transition-colors"
                   >
@@ -259,6 +269,7 @@ export function TaskKanbanView({ tasks, activeTab, userId, onTaskClick, onStatus
                 <SortableContext items={columnTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
                   <div className={cn('space-y-2 flex-1 min-h-[60px]', isDoneCol && 'opacity-60')}>
                     {columnTasks.map((task) => (
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                       <DraggableTaskCard key={task.id} task={task} activeTab={activeTab} userId={userId} onClick={() => onTaskClick(task.id)} expanded={expandedTasks?.has(task.id)} subtasks={subtasksCache?.[task.id]} loadingSubtasks={loadingSubtasks?.has(task.id)} onToggleSubtasks={onToggleSubtasks} onSubtaskClick={onTaskClick} />
                     ))}
                     {columnTasks.length === 0 && (
@@ -278,6 +289,7 @@ export function TaskKanbanView({ tasks, activeTab, userId, onTaskClick, onStatus
         {activeTask && (
           <Card
             className="!p-3 shadow-lg border-2 border-primary w-72"
+            // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
             style={{ borderLeft: `3px solid ${PRIORITY_COLORS[activeTask.priority] || 'var(--color-primary)'}` }}
           >
             <p className="text-sm font-medium line-clamp-2 mb-2">{activeTask.title}</p>

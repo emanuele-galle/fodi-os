@@ -26,6 +26,7 @@ export function ClientProjectsTab({ projects }: ClientProjectsTabProps) {
             <Card
               key={p.id}
               className="cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200"
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
               onClick={() => router.push(`/projects/${p.id}`)}
             >
               <CardContent className="flex items-center justify-between">

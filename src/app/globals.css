@@ -16,7 +16,7 @@ html {
   --color-secondary-foreground: #1D1D1F;
   --color-accent: #34C759;
   --color-destructive: #FF3B30;
-  --color-muted: #86868B;
+  --color-muted: #6E6E73;
   --color-border: #D2D2D7;
   --color-background: #FFFFFF;
   --color-foreground: #1D1D1F;
@@ -31,11 +31,11 @@ html {
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
 
-  /* Shadow system - Apple-soft */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
-  --shadow-xl: 0 16px 48px rgba(0,0,0,0.12);
+  /* Shadow system - Apple-defined */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.07), 0 0 1px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.05);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+  --shadow-xl: 0 24px 56px rgba(0,0,0,0.13), 0 8px 16px rgba(0,0,0,0.07);
 }
 
 /* ===== Theme System ===== */
@@ -48,7 +48,7 @@ html {
   --color-secondary: #F5F5F7;
   --color-secondary-foreground: #1D1D1F;
   --color-border: #D2D2D7;
-  --color-muted: #86868B;
+  --color-muted: #6E6E73;
   --color-sidebar: #F5F5F7;
   --color-sidebar-foreground: #1D1D1F;
 }
@@ -73,6 +73,14 @@ html {
   --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.35);
   --shadow-xl: 0 16px 48px rgba(0,0,0,0.4);
+}
+
+/* ===== Sheet (always dark — iOS Control Center style) ===== */
+:root, [data-theme="light"], [data-theme="dark"] {
+  --color-sheet: #1C1C1E;
+  --color-sheet-foreground: #F5F5F7;
+  --color-sheet-muted: #8E8E93;
+  --color-sheet-border: rgba(255,255,255,0.08);
 }
 
 /* ===== Keyframes ===== */
@@ -576,7 +584,7 @@ html {
 /* ===== Enterprise Card Utilities ===== */
 
 .card-elevated {
-  border: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 45%, transparent);
   background: var(--color-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
@@ -587,7 +595,7 @@ html {
 }
 
 .card-flat {
-  border: 1px solid color-mix(in srgb, var(--color-border) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 35%, transparent);
   background: var(--color-card);
   border-radius: var(--radius-lg);
 }
@@ -790,6 +798,13 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+@media (max-width: 767px) {
+  [data-bottom-nav] svg,
+  .mobile-bottom-sheet svg {
+    stroke-width: 1.5;
+  }
+}
+
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -861,14 +876,44 @@ body,
   padding: 1rem;
   border-radius: var(--radius-lg);
   background: var(--color-card);
-  border: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 45%, transparent);
   box-shadow: var(--shadow-sm);
 }
 
 .mobile-section-header {
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+  margin-bottom: 0.25rem;
 }
+
+.ios-grouped-section {
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  border: 1px solid color-mix(in srgb, var(--color-border) 45%, transparent);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.ios-grouped-row {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  min-height: 44px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent);
+  background: var(--color-card);
+  transition: background-color 0.15s;
+}
+.ios-grouped-row:last-child { border-bottom: none; }
+.ios-grouped-row:active { background: var(--color-secondary); }
+
+.ios-press {
+  transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.1s;
+}
+.ios-press:active { transform: scale(0.97); opacity: 0.85; }
 
 @media (max-width: 767px) {
   input, select, textarea {

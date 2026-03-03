@@ -170,6 +170,7 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
   const selectClass = "flex h-11 md:h-10 w-full rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-base md:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40"
 
   return (
+    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- close handler
     <Modal open={open} onClose={() => onOpenChange(false)} title="Nuova Opportunità" size="xl" preventAccidentalClose={isDirty}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -179,6 +180,7 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
           </div>
         )}
 
+        {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form handlers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1.5">
@@ -343,11 +345,13 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
                 </div>
               )}
             </div>
+        {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
 
         <div className="flex justify-end gap-3 pt-4">
           <Button
             type="button"
             variant="outline"
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- close handler
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >

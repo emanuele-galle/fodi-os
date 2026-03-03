@@ -17,6 +17,3 @@ export const updateTicketSchema = z.object({
   category: z.string().max(50).optional(),
 })
 
-export const createTicketCommentSchema = z.object({
-  content: z.string().min(1, 'Contenuto obbligatorio'),
-})

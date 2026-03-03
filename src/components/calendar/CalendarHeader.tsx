@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import Link from 'next/link'
 import {
   ChevronLeft,
@@ -42,6 +43,11 @@ export function CalendarHeader({
   nextMonth,
   openNewEventForDate,
 }: CalendarHeaderProps) {
+  const handleMonthView = () => setDesktopView('month')
+  const handleWeekView = () => setDesktopView('week')
+  const handleDayView = () => { setDesktopView('day'); setSelectedDayKey(todayKey) }
+  const handleNewEvent = () => openNewEventForDate(todayKey)
+
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
       <div className="flex items-center gap-3">
@@ -80,7 +86,7 @@ export function CalendarHeader({
 
         <div className="hidden md:flex items-center rounded-lg border border-border bg-secondary/30 p-0.5">
           <button
-            onClick={() => setDesktopView('month')}
+            onClick={handleMonthView}
             className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
               desktopView === 'month' ? 'bg-card shadow-sm text-foreground' : 'text-muted hover:text-foreground'
             }`}
@@ -88,7 +94,7 @@ export function CalendarHeader({
             Mese
           </button>
           <button
-            onClick={() => setDesktopView('week')}
+            onClick={handleWeekView}
             className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
               desktopView === 'week' ? 'bg-card shadow-sm text-foreground' : 'text-muted hover:text-foreground'
             }`}
@@ -96,7 +102,7 @@ export function CalendarHeader({
             Settimana
           </button>
           <button
-            onClick={() => { setDesktopView('day'); setSelectedDayKey(todayKey) }}
+            onClick={handleDayView}
             className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
               desktopView === 'day' ? 'bg-card shadow-sm text-foreground' : 'text-muted hover:text-foreground'
             }`}
@@ -111,7 +117,7 @@ export function CalendarHeader({
             <span className="hidden sm:inline">Disponibilita</span>
           </Button>
         </Link>
-        <Button size="sm" className="ml-auto sm:ml-0" onClick={() => openNewEventForDate(todayKey)}>
+        <Button size="sm" className="ml-auto sm:ml-0" onClick={handleNewEvent}>
           <Plus className="h-4 w-4 mr-1" />
           <span className="hidden sm:inline">Nuovo Evento</span>
           <span className="sm:hidden">Nuovo</span>

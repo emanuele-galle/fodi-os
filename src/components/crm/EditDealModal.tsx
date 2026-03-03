@@ -201,6 +201,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
   }
 
   return (
+    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- close handler
     <Modal open={open} onClose={() => onOpenChange(false)} title="Modifica Opportunità" size="xl" preventAccidentalClose={isDirty}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -210,6 +211,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
           </div>
         )}
 
+        {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form handlers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1.5">
@@ -337,6 +339,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
                 </select>
               </div>
             </div>
+        {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
 
         <div className="flex justify-between pt-4">
           <Button
@@ -352,6 +355,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
             <Button
               type="button"
               variant="outline"
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- close handler
               onClick={() => onOpenChange(false)}
               disabled={loading || deleting}
             >

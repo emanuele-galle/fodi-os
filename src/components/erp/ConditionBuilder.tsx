@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback, useMemo } from 'react'
 import { Select } from '@/components/ui/Select'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -37,13 +38,30 @@ const OPERATORS = [
 ]
 
 export function ConditionBuilder({ condition, onChange, availableFields }: ConditionBuilderProps) {
+  const handleAdd = useCallback(() => onChange({ fieldId: '', operator: 'eq', value: '' }), [onChange])
+  const handleRemove = useCallback(() => onChange(null), [onChange])
+  const handleFieldChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    onChange({ ...condition!, fieldId: e.target.value })
+  }, [condition, onChange])
+  const handleOperatorChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    onChange({ ...condition!, operator: e.target.value })
+  }, [condition, onChange])
+  const handleValueChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...condition!, value: e.target.value })
+  }, [condition, onChange])
+
+  const fieldOptions = useMemo(() => [
+    { value: '', label: 'Seleziona campo...' },
+    ...availableFields.map((f) => ({ value: f.name, label: f.label })),
+  ], [availableFields])
+
   if (!condition) {
     return (
       <Button
         variant="outline"
         size="sm"
         type="button"
-        onClick={() => onChange({ fieldId: '', operator: 'eq', value: '' })}
+        onClick={handleAdd}
         disabled={availableFields.length === 0}
       >
         + Aggiungi condizione
@@ -58,12 +76,9 @@ export function ConditionBuilder({ condition, onChange, availableFields }: Condi
       <div className="flex-1 min-w-0">
         <label className="text-xs text-muted mb-1 block">Campo</label>
         <Select
-          options={[
-            { value: '', label: 'Seleziona campo...' },
-            ...availableFields.map((f) => ({ value: f.name, label: f.label })),
-          ]}
+          options={fieldOptions}
           value={condition.fieldId}
-          onChange={(e) => onChange({ ...condition, fieldId: e.target.value })}
+          onChange={handleFieldChange}
         />
       </div>
       <div className="w-full sm:w-44">
@@ -71,7 +86,7 @@ export function ConditionBuilder({ condition, onChange, availableFields }: Condi
         <Select
           options={OPERATORS}
           value={condition.operator}
-          onChange={(e) => onChange({ ...condition, operator: e.target.value })}
+          onChange={handleOperatorChange}
         />
       </div>
       {needsValue && (
@@ -79,7 +94,7 @@ export function ConditionBuilder({ condition, onChange, availableFields }: Condi
           <label className="text-xs text-muted mb-1 block">Valore</label>
           <Input
             value={condition.value}
-            onChange={(e) => onChange({ ...condition, value: e.target.value })}
+            onChange={handleValueChange}
             placeholder="Valore..."
           />
         </div>
@@ -88,7 +103,7 @@ export function ConditionBuilder({ condition, onChange, availableFields }: Condi
         variant="ghost"
         size="icon"
         type="button"
-        onClick={() => onChange(null)}
+        onClick={handleRemove}
         className="flex-shrink-0 text-destructive"
         aria-label="Rimuovi condizione"
       >

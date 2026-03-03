@@ -75,6 +75,12 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
   const [teamExpanded, setTeamExpanded] = useState(true)
   const [channelsExpanded, setChannelsExpanded] = useState(true)
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers */
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)
+  const handleToggleTeam = () => setTeamExpanded(!teamExpanded)
+  const handleToggleChannels = () => setChannelsExpanded(!channelsExpanded)
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   const filtered = channels.filter((ch) =>
     ch.name.toLowerCase().includes(search.toLowerCase())
   )
@@ -134,7 +140,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
           <input
             placeholder="Cerca persone o canali..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             className="w-full pl-9 pr-3 py-2 text-[13px] rounded-lg bg-secondary/50 border border-border/30 placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 focus:bg-card transition-all duration-200"
           />
         </div>
@@ -145,7 +151,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
         {teamMembers.length > 0 && (
           <div className="px-2 mb-1">
             <button
-              onClick={() => setTeamExpanded(!teamExpanded)}
+              onClick={handleToggleTeam}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left rounded-md hover:bg-secondary/40 transition-colors duration-150"
             >
               <ChevronDown className={cn(
@@ -171,6 +177,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                   return (
                     <button
                       key={member.id}
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                       onClick={() => handleMemberClick(member)}
                       className={cn(
                         'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 text-left group',
@@ -227,6 +234,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                   return (
                     <button
                       key={member.id}
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                       onClick={() => handleMemberClick(member)}
                       className={cn(
                         'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150 text-left group',
@@ -286,7 +294,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
         {regularChannels.length > 0 && (
           <div className="px-2">
             <button
-              onClick={() => setChannelsExpanded(!channelsExpanded)}
+              onClick={handleToggleChannels}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 text-left rounded-md hover:bg-secondary/40 transition-colors duration-150"
             >
               <ChevronDown className={cn(
@@ -306,6 +314,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                   return (
                     <button
                       key={channel.id}
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                       onClick={() => onSelect(channel.id)}
                       className={cn(
                         'w-full flex items-start gap-2.5 px-2.5 py-2 text-left rounded-lg transition-all duration-150 relative group',

@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- handlers + dynamic styles */
 
 import { cn } from '@/lib/utils'
 import { Check } from 'lucide-react'

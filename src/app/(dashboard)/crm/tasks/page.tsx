@@ -14,6 +14,11 @@ import {
   emptyNewTask, emptyEditForm,
 } from '@/components/crm/tasks/types'
 
+function isOverdue(task: CrmTask): boolean {
+  if (task.status === 'DONE' || !task.dueDate) return false
+  return new Date(task.dueDate) < new Date()
+}
+
 export default function CrmTasksPage() {
   const [tasks, setTasks] = useState<CrmTask[]>([])
   const [loading, setLoading] = useState(true)
@@ -80,12 +85,17 @@ export default function CrmTasksPage() {
 
   const totalPages = Math.ceil(total / limit)
 
-  const isOverdue = (task: CrmTask) => {
-    if (task.status === 'DONE' || !task.dueDate) return false
-    return new Date(task.dueDate) < new Date()
-  }
-
   const overdueCount = tasks.filter(isOverdue).length
+
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- page-level handlers */
+  const handleOpenModal = () => { setModalOpen(true); setFormError(null) }
+  const handleCloseModal = () => setModalOpen(false)
+  const handleCloseEditTask = () => setEditTaskId(null)
+  const handleCloseDeleteTask = () => setDeleteTaskId(null)
+  const handleViewList = () => setViewMode('list')
+  const handleViewKanban = () => setViewMode('kanban')
+  const handleRetry = () => fetchTasks()
+  const handleDeleteTask = (id: string) => { setDeleteTaskId(id); setFormError(null) }
 
   const handleCreate = async () => {
     setSubmitting(true)
@@ -216,21 +226,21 @@ export default function CrmTasksPage() {
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-1 bg-secondary/30 rounded-lg p-0.5">
             <button
-              onClick={() => setViewMode('list')}
+              onClick={handleViewList}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${viewMode === 'list' ? 'bg-card text-foreground shadow-sm' : 'text-muted hover:text-foreground'}`}
             >
               <List className="h-3.5 w-3.5" />
               Lista
             </button>
             <button
-              onClick={() => setViewMode('kanban')}
+              onClick={handleViewKanban}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${viewMode === 'kanban' ? 'bg-card text-foreground shadow-sm' : 'text-muted hover:text-foreground'}`}
             >
               <LayoutGrid className="h-3.5 w-3.5" />
               Kanban
             </button>
           </div>
-          <Button onClick={() => { setModalOpen(true); setFormError(null) }} size="sm">
+          <Button onClick={handleOpenModal} size="sm">
             <Plus className="h-4 w-4 mr-1.5" />
             Nuova Attività
           </Button>
@@ -260,7 +270,7 @@ export default function CrmTasksPage() {
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
           </div>
-          <button onClick={() => fetchTasks()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+          <button onClick={handleRetry} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
 
@@ -285,7 +295,7 @@ export default function CrmTasksPage() {
           isOverdue={isOverdue}
           onComplete={handleComplete}
           onEdit={openEdit}
-          onDelete={(id) => { setDeleteTaskId(id); setFormError(null) }}
+          onDelete={handleDeleteTask}
           page={page}
           totalPages={totalPages}
           total={total}
@@ -295,7 +305,7 @@ export default function CrmTasksPage() {
 
       <TaskCreateModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={handleCloseModal}
         form={newTask}
         onFormChange={setNewTask}
         clients={clients}
@@ -307,7 +317,7 @@ export default function CrmTasksPage() {
 
       <TaskEditModal
         open={!!editTaskId}
-        onClose={() => setEditTaskId(null)}
+        onClose={handleCloseEditTask}
         form={editForm}
         onFormChange={setEditForm}
         clients={clients}
@@ -319,11 +329,12 @@ export default function CrmTasksPage() {
 
       <TaskDeleteModal
         open={!!deleteTaskId}
-        onClose={() => setDeleteTaskId(null)}
+        onClose={handleCloseDeleteTask}
         onConfirm={handleDelete}
         submitting={submitting}
         formError={formError}
       />
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
     </div>
   )
 }

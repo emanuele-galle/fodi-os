@@ -1,3 +1,4 @@
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- quote detail page with many form handlers, line items, and modal callbacks */
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'

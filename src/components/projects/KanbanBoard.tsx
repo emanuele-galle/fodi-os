@@ -79,6 +79,7 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
     data: { type: 'task', task },
   })
 
+  // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value (transform/transition)
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -92,6 +93,7 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
       style={style}
       {...attributes}
       {...listeners}
+      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- depends on isDragging state
       onClick={(e) => {
         if (!isDragging && onClick) {
           e.stopPropagation()
@@ -103,6 +105,7 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
       <p className="font-medium text-sm mb-1.5">{task.title}</p>
       {task.folderName && (
         <div className="flex items-center gap-1 mb-1.5">
+          {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value */}
           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: task.folderColor || '#007AFF' }} />
           <span className="text-[10px] text-muted truncate">{task.folderName}</span>
         </div>
@@ -267,6 +270,7 @@ export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskCl
             >
               <div className="space-y-2 min-h-[60px] mb-2">
                 {tasks.map((task) => (
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                   <SortableTaskCard key={task.id} task={task} onClick={onTaskClick ? () => onTaskClick(task.id) : undefined} />
                 ))}
               </div>
@@ -274,6 +278,7 @@ export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskCl
 
             {onAddTask && (
               <button
+                // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                 onClick={() => onAddTask(col.key)}
                 className="w-full text-sm text-muted hover:text-foreground hover:bg-secondary rounded-md py-2 transition-colors"
               >

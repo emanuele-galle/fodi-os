@@ -70,8 +70,3 @@ export function startScheduler() {
   logger.info('[scheduler] All cron jobs registered')
 }
 
-function stopScheduler() {
-  for (const job of jobs) job.stop()
-  jobs.length = 0
-  logger.info('[scheduler] All cron jobs stopped')
-}

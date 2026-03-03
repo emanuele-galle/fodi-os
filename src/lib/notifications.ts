@@ -349,13 +349,3 @@ export async function getTaskParticipants(taskId: string): Promise<string[]> {
   return Array.from(ids)
 }
 
-/**
- * Get all member user IDs for a project.
- */
-async function getProjectMembers(projectId: string): Promise<string[]> {
-  const members = await prisma.projectMember.findMany({
-    where: { projectId },
-    select: { userId: true },
-  })
-  return members.map((m) => m.userId)
-}

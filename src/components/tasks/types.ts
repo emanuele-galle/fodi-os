@@ -1,4 +1,4 @@
-import type { User, Send, Users } from 'lucide-react'
+import type { User } from 'lucide-react'
 
 export interface TaskUser {
   id: string

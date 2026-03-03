@@ -57,6 +57,7 @@ export function ClientTimelineTab({ clientId }: ClientTimelineTabProps) {
       </div>
       {hasMore && (
         <button
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- pagination handler
           onClick={() => { const next = page + 1; setPage(next); fetchTimeline(next) }}
           className="mt-4 w-full text-center text-sm text-primary hover:text-primary/80 font-medium py-2"
         >

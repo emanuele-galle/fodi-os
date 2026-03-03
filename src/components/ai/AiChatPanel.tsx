@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Plus, Loader2, AlertCircle, History, X, Maximize2, Minimize2, Paperclip, FileText, Image as ImageIcon } from 'lucide-react'
+import { Send, Plus, Loader2, AlertCircle, History, X, Maximize2, Minimize2, Paperclip, FileText } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAiChat } from '@/hooks/useAiChat'
@@ -51,11 +51,11 @@ function getPageLabel(pathname: string): string | undefined {
   return match ? PAGE_LABELS[match] : undefined
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
+ 
 export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConversationId, initialMessage }: AiChatPanelProps) {
   const pathname = usePathname()
   const currentPage = getPageLabel(pathname)
-  const { messages, isLoading, error, suggestedFollowups, conversationId, sendMessage, sendMessageWithFiles, loadConversation, clearMessages } = useAiChat()
+  const { messages, isLoading, error, suggestedFollowups, sendMessage, sendMessageWithFiles, loadConversation, clearMessages } = useAiChat()
   const [input, setInput] = useState('')
   const [showHistory, setShowHistory] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -176,6 +176,14 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
     await loadConversation(id)
   }, [loadConversation])
 
+  const closeHistory = useCallback(() => setShowHistory(false), [])
+  const openFileInput = useCallback(() => fileInputRef.current?.click(), [])
+  const handleSendClick = useCallback(() => handleSend(), [handleSend])
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(e.target.files)
+    e.target.value = ''
+  }, [handleFileSelect])
+
   // Determine active tool name for typing indicator
   const lastMessage = messages[messages.length - 1]
   const showTyping = isLoading && lastMessage?.role === 'assistant' && !lastMessage.content
@@ -259,7 +267,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-xl flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
             <h3 className="text-sm font-semibold">Conversazioni</h3>
-            <button onClick={() => setShowHistory(false)} className="p-1 rounded-lg hover:bg-white/[0.06]">
+            <button onClick={closeHistory} className="p-1 rounded-lg hover:bg-white/[0.06]">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -274,6 +282,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
               conversations.map((c) => (
                 <button
                   key={c.id}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler needs closure over c.id
                   onClick={() => selectConversation(c.id)}
                   className="w-full text-left px-4 py-3 hover:bg-white/[0.03] transition-colors border-b border-white/[0.04]"
                 >
@@ -302,7 +311,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
                 {welcomeMessage || 'Posso gestire task, coordinare il team, inviare messaggi, controllare il calendario, generare report e molto altro.'}
               </p>
             </div>
-            <AiSuggestions onSelect={(s) => handleSend(s)} variant="empty" currentPage={currentPage} />
+            <AiSuggestions onSelect={handleSend} variant="empty" currentPage={currentPage} />
           </div>
         )}
 
@@ -326,7 +335,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         {!isLoading && suggestedFollowups.length > 0 && messages.length > 0 && (
           <AiSuggestions
             suggestions={suggestedFollowups}
-            onSelect={(s) => handleSend(s)}
+            onSelect={handleSend}
             variant="followup"
           />
         )}
@@ -344,6 +353,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
                 <div key={i} className="relative group">
                   {file.type.startsWith('image/') ? (
                     <div className="ai-file-card w-20 h-20 rounded-xl overflow-hidden border border-border/40">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- blob URL preview */}
                       <img
                         src={URL.createObjectURL(file)}
                         alt={file.name}
@@ -358,6 +368,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
                     </div>
                   )}
                   <button
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler needs closure over index
                     onClick={() => removeFile(i)}
                     className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-foreground/80 text-background opacity-0 group-hover:opacity-100 transition-opacity"
                   >
@@ -390,7 +401,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
           <div className="flex items-center justify-between px-2.5 pb-2.5">
             <div className="flex items-center gap-0.5">
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={openFileInput}
                 disabled={isLoading || pendingFiles.length >= 3}
                 className="p-1.5 rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-30"
                 title="Allega file"
@@ -399,7 +410,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
               </button>
             </div>
             <button
-              onClick={() => handleSend()}
+              onClick={handleSendClick}
               disabled={(!input.trim() && pendingFiles.length === 0) || isLoading}
               className={cn(
                 'p-2.5 rounded-xl transition-all duration-200',
@@ -420,10 +431,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
           multiple
           accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
           className="hidden"
-          onChange={(e) => {
-            handleFileSelect(e.target.files)
-            e.target.value = ''
-          }}
+          onChange={handleFileInputChange}
         />
 
         {!compact && (

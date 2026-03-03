@@ -116,7 +116,7 @@ export default function PipelinePage() {
     if (activeTab === 'clients' && Object.keys(clientsByStatus).length === 0) {
       loadClients()
     }
-  }, [activeTab])
+  }, [activeTab, clientsByStatus])
 
   // Deals stage change handler
   async function handleStageChange(dealId: string, newStage: string) {
@@ -205,6 +205,12 @@ export default function PipelinePage() {
     ? (closedWon.length / (closedWon.length + closedLost.length) * 100).toFixed(1)
     : '0.0'
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- extracted handlers */
+  const handleOpenCreateModal = () => setCreateModalOpen(true)
+  const handleTabDeals = () => setActiveTab('deals')
+  const handleTabClients = () => setActiveTab('clients')
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   const loading = activeTab === 'deals' ? dealsLoading : clientsLoading
   const fetchError = activeTab === 'deals' ? dealsError : clientsError
   const retry = activeTab === 'deals' ? loadDeals : loadClients
@@ -225,7 +231,7 @@ export default function PipelinePage() {
           </div>
         </div>
         {activeTab === 'deals' && (
-          <Button onClick={() => setCreateModalOpen(true)} size="sm">
+          <Button onClick={handleOpenCreateModal} size="sm">
             <Plus className="h-4 w-4 mr-1.5" />
             Nuova Opportunità
           </Button>
@@ -235,7 +241,7 @@ export default function PipelinePage() {
       {/* Tab Toggle */}
       <div className="flex items-center gap-1 mb-6 bg-secondary/30 rounded-lg p-1 w-fit">
         <button
-          onClick={() => setActiveTab('deals')}
+          onClick={handleTabDeals}
           className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
             activeTab === 'deals'
               ? 'bg-card text-foreground shadow-sm'
@@ -246,7 +252,7 @@ export default function PipelinePage() {
           Opportunità
         </button>
         <button
-          onClick={() => setActiveTab('clients')}
+          onClick={handleTabClients}
           className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
             activeTab === 'clients'
               ? 'bg-card text-foreground shadow-sm'

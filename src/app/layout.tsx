@@ -1,3 +1,4 @@
+/* eslint-disable react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { brand } from '@/lib/branding'
 import type { Metadata } from 'next'
 import './globals.css'

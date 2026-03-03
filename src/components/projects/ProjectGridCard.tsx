@@ -28,6 +28,7 @@ function BudgetBar({ project }: { project: Project }) {
       <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${percent >= 90 ? 'bg-destructive' : percent >= 70 ? 'bg-amber-500' : 'bg-accent'}`}
+          // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -48,11 +49,13 @@ export function ProjectGridCard({ project: p, onClick, actionMenu }: ProjectGrid
     <Card
       className="cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98] relative group"
       onClick={onClick}
+      // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
       style={{ borderTop: `3px solid ${p.color || STATUS_COLORS[p.status] || 'var(--color-primary)'}` }}
     >
       <CardContent>
         <div className="flex items-center justify-between mb-2">
           <span className="font-semibold truncate text-sm md:text-base flex-1">{p.name}</span>
+          {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple inline stopPropagation */}
           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
             {actionMenu}
           </div>
@@ -83,6 +86,7 @@ export function ProjectGridCard({ project: p, onClick, actionMenu }: ProjectGrid
             <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all bg-primary"
+                // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
                 style={{ width: `${(doneTasks / totalTasks) * 100}%` }}
               />
             </div>

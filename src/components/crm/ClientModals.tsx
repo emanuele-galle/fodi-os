@@ -67,6 +67,7 @@ export function AddInteractionModal({ open, onClose, onSubmit, submitting, conta
           <Select
             name="contactId"
             label="Contatto"
+            // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- computed from contacts prop
             options={[
               { value: '', label: 'Nessun contatto specifico' },
               ...contacts.map(c => ({ value: c.id, label: `${c.firstName} ${c.lastName}${c.role ? ` - ${c.role}` : ''}` }))
@@ -107,6 +108,7 @@ export function EditClientModal({ open, onClose, onSubmit, submitting, editForm,
   return (
     <Modal open={open} onClose={onClose} title="Modifica Cliente" size="lg">
       <form onSubmit={onSubmit} className="space-y-4">
+        {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form handlers */}
         <Input label="Ragione Sociale *" required value={editForm.companyName} onChange={e => setEditForm(f => ({ ...f, companyName: e.target.value }))} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input label="P.IVA" value={editForm.vatNumber} onChange={e => setEditForm(f => ({ ...f, vatNumber: e.target.value }))} />
@@ -125,6 +127,7 @@ export function EditClientModal({ open, onClose, onSubmit, submitting, editForm,
           <label className="block text-sm font-medium text-foreground">Note</label>
           <textarea rows={3} value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" />
         </div>
+        {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onClose}>Annulla</Button>
           <Button type="submit" loading={submitting}>Salva Modifiche</Button>
@@ -173,6 +176,7 @@ export function EditContactModal({ open, onClose, onSubmit, submitting, editCont
   return (
     <Modal open={open} onClose={onClose} title="Modifica Contatto" size="md">
       <form onSubmit={onSubmit} className="space-y-4">
+        {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form handlers */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input label="Nome *" required value={editContactForm.firstName} onChange={e => setEditContactForm(f => ({ ...f, firstName: e.target.value }))} />
           <Input label="Cognome *" required value={editContactForm.lastName} onChange={e => setEditContactForm(f => ({ ...f, lastName: e.target.value }))} />
@@ -194,6 +198,7 @@ export function EditContactModal({ open, onClose, onSubmit, submitting, editCont
           <input type="checkbox" checked={editContactForm.isPrimary} onChange={e => setEditContactForm(f => ({ ...f, isPrimary: e.target.checked }))} className="rounded border-border" />
           Contatto principale
         </label>
+        {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onClose}>Annulla</Button>
           <Button type="submit" loading={submitting}>Salva</Button>
@@ -240,6 +245,7 @@ export function EditInteractionModal({ open, onClose, onSubmit, submitting, edit
   return (
     <Modal open={open} onClose={onClose} title="Modifica Interazione" size="md">
       <form onSubmit={onSubmit} className="space-y-4">
+        {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form handlers */}
         <Select
           label="Tipo *"
           options={INTERACTION_TYPES}
@@ -255,6 +261,7 @@ export function EditInteractionModal({ open, onClose, onSubmit, submitting, edit
         {contacts.length > 0 && (
           <Select
             label="Contatto"
+            // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- computed from contacts prop
             options={[
               { value: '', label: 'Nessun contatto specifico' },
               ...contacts.map(c => ({ value: c.id, label: `${c.firstName} ${c.lastName}${c.role ? ` - ${c.role}` : ''}` }))
@@ -278,6 +285,7 @@ export function EditInteractionModal({ open, onClose, onSubmit, submitting, edit
           value={editInteractionForm.date}
           onChange={e => setEditInteractionForm(f => ({ ...f, date: e.target.value }))}
         />
+        {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onClose}>Annulla</Button>
           <Button type="submit" loading={submitting}>Salva</Button>

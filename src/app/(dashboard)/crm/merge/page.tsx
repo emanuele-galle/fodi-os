@@ -119,10 +119,6 @@ export default function MergePage() {
     fetchClients()
   }, [sourceId, targetId])
 
-  function toggleField(key: string) {
-    setFields(prev => ({ ...prev, [key]: prev[key] === 'source' ? 'target' : 'source' }))
-  }
-
   function toggleRelation(key: string) {
     setMergeRelations(prev => {
       const next = new Set(prev)
@@ -171,6 +167,9 @@ export default function MergePage() {
     }
   }
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- extracted handler
+  const handleNavigateToCrm = () => router.push('/crm')
+
   if (loading) {
     return (
       <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -190,7 +189,7 @@ export default function MergePage() {
           <AlertTriangle className="h-5 w-5 flex-shrink-0" />
           <p>{error}</p>
         </div>
-        <Button variant="outline" className="mt-4" onClick={() => router.push('/crm')}>
+        <Button variant="outline" className="mt-4" onClick={handleNavigateToCrm}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Torna al CRM
         </Button>
       </div>
@@ -201,7 +200,7 @@ export default function MergePage() {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={() => router.push('/crm')}>
+        <Button variant="outline" size="sm" onClick={handleNavigateToCrm}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Indietro
         </Button>
         <div>
@@ -267,6 +266,7 @@ export default function MergePage() {
                         ? 'bg-primary/10 text-primary font-medium'
                         : 'hover:bg-muted/30'
                     }`}
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                     onClick={() => setFields(prev => ({ ...prev, [key]: 'source' }))}
                   >
                     <span className="truncate block">{srcVal}</span>
@@ -280,6 +280,7 @@ export default function MergePage() {
                         ? 'bg-primary/10 text-primary font-medium'
                         : 'hover:bg-muted/30'
                     }`}
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                     onClick={() => setFields(prev => ({ ...prev, [key]: 'target' }))}
                   >
                     <span className="truncate block">{tgtVal}</span>
@@ -321,6 +322,7 @@ export default function MergePage() {
                   <input
                     type="checkbox"
                     checked={mergeRelations.has(key)}
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                     onChange={() => toggleRelation(key)}
                     className="rounded border-border mr-3"
                   />
@@ -337,7 +339,7 @@ export default function MergePage() {
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-2">
-        <Button variant="outline" onClick={() => router.push('/crm')}>
+        <Button variant="outline" onClick={handleNavigateToCrm}>
           Annulla
         </Button>
         <Button

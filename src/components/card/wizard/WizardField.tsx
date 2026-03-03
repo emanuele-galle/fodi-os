@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 interface Field {
   id: string
   label: string

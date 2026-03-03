@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-object-as-prop -- dynamic styles */
 
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/Avatar'

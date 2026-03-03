@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { use } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'

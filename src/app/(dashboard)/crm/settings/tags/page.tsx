@@ -41,7 +41,7 @@ export default function TagManagementPage() {
   )
   const { data: clientsRaw } = useFetch<{ items: ClientOption[] }>('/api/clients?limit=200')
 
-  const tags = tagsRaw?.success ? tagsRaw.data : []
+  const tags = useMemo(() => tagsRaw?.success ? tagsRaw.data : [], [tagsRaw])
   const clients = (clientsRaw?.items || []).map((c) => ({ id: c.id, companyName: c.companyName }))
 
   const [search, setSearch] = useState('')
@@ -83,6 +83,7 @@ export default function TagManagementPage() {
     return result
   }, [tags, search, sortKey, sortAsc])
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-object-as-prop -- page-level handlers */
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortAsc(!sortAsc)
@@ -193,6 +194,21 @@ export default function TagManagementPage() {
   const totalTags = tags.length
   const totalUsage = tags.reduce((sum, t) => sum + t.totalCount, 0)
 
+  // Extracted handlers
+  const handleOpenCreate = () => setCreateOpen(true)
+  const handleCloseCreate = () => setCreateOpen(false)
+  const handleCloseRename = () => setRenameTag(null)
+  const handleCloseMerge = () => setMergeSource(null)
+  const handleCloseDelete = () => setDeleteTag(null)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)
+  const handleSortName = () => handleSort('name')
+  const handleSortCount = () => handleSort('totalCount')
+  const handleNewTagNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewTagName(e.target.value)
+  const handleNewTagClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => setNewTagClientId(e.target.value)
+  const handleNewNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewName(e.target.value)
+  const handleRenameKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleRename() }
+  const handleMergeTargetChange = (e: React.ChangeEvent<HTMLSelectElement>) => setMergeTarget(e.target.value)
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -200,7 +216,7 @@ export default function TagManagementPage() {
           <h1 className="text-2xl font-bold">Gestione Tag</h1>
           <p className="text-muted mt-1">Gestisci, rinomina e unisci i tag di clienti e attività</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} size="sm">
+        <Button onClick={handleOpenCreate} size="sm">
           <Plus className="h-4 w-4 mr-1.5" />
           Nuovo Tag
         </Button>
@@ -229,7 +245,7 @@ export default function TagManagementPage() {
           <Input
             placeholder="Cerca tag..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-9"
           />
         </div>
@@ -237,7 +253,7 @@ export default function TagManagementPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleSort('name')}
+            onClick={handleSortName}
           >
             <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
             Nome {sortKey === 'name' && (sortAsc ? '(A-Z)' : '(Z-A)')}
@@ -245,7 +261,7 @@ export default function TagManagementPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleSort('totalCount')}
+            onClick={handleSortCount}
           >
             <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
             Utilizzo {sortKey === 'totalCount' && (sortAsc ? '(min)' : '(max)')}
@@ -298,6 +314,7 @@ export default function TagManagementPage() {
                   <td className="text-center px-4 py-3 text-sm font-medium">{tag.totalCount}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
+
                       <Button
                         variant="ghost"
                         size="icon"
@@ -306,6 +323,7 @@ export default function TagManagementPage() {
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
+
                       <Button
                         variant="ghost"
                         size="icon"
@@ -314,6 +332,7 @@ export default function TagManagementPage() {
                       >
                         <Merge className="h-4 w-4" />
                       </Button>
+
                       <Button
                         variant="ghost"
                         size="icon"
@@ -343,6 +362,7 @@ export default function TagManagementPage() {
                 <div key={tag.name} className="flex items-center gap-3">
                   <span className="text-xs text-muted w-28 truncate">{tag.name}</span>
                   <div className="flex-1 h-5 bg-secondary/30 rounded-full overflow-hidden">
+
                     <div
                       className={`h-full rounded-full transition-all ${TAG_COLORS[i % TAG_COLORS.length].split(' ')[0].replace('/10', '/40')}`}
                       style={{ width: `${Math.max(pct, 4)}%` }}
@@ -357,7 +377,7 @@ export default function TagManagementPage() {
       )}
 
       {/* Create Tag Modal */}
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Nuovo Tag" size="sm">
+      <Modal open={createOpen} onClose={handleCloseCreate} title="Nuovo Tag" size="sm">
         <div className="space-y-4">
           <p className="text-sm text-muted">
             Crea un nuovo tag assegnandolo a un cliente.
@@ -365,7 +385,7 @@ export default function TagManagementPage() {
           <Input
             label="Nome Tag"
             value={newTagName}
-            onChange={(e) => setNewTagName(e.target.value)}
+            onChange={handleNewTagNameChange}
             placeholder="es. VIP, Enterprise, Partner"
           />
           <Select
@@ -375,10 +395,10 @@ export default function TagManagementPage() {
               ...clients.map(c => ({ value: c.id, label: c.companyName }))
             ]}
             value={newTagClientId}
-            onChange={(e) => setNewTagClientId(e.target.value)}
+            onChange={handleNewTagClientChange}
           />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Annulla</Button>
+            <Button variant="outline" onClick={handleCloseCreate}>Annulla</Button>
             <Button onClick={handleCreate} loading={createLoading} disabled={!newTagName.trim() || !newTagClientId}>
               Crea Tag
             </Button>
@@ -387,19 +407,19 @@ export default function TagManagementPage() {
       </Modal>
 
       {/* Rename Modal */}
-      <Modal open={!!renameTag} onClose={() => setRenameTag(null)} title="Rinomina Tag" size="sm">
+      <Modal open={!!renameTag} onClose={handleCloseRename} title="Rinomina Tag" size="sm">
         <div className="space-y-4">
           <p className="text-sm text-muted">
             Rinomina <strong>{renameTag}</strong> in tutti i clienti e le attività.
           </p>
           <Input
             value={newName}
-            onChange={(e) => setNewName(e.target.value)}
+            onChange={handleNewNameChange}
             placeholder="Nuovo nome tag"
-            onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+            onKeyDown={handleRenameKeyDown}
           />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setRenameTag(null)}>Annulla</Button>
+            <Button variant="outline" onClick={handleCloseRename}>Annulla</Button>
             <Button onClick={handleRename} loading={renameLoading} disabled={!newName.trim() || newName.trim() === renameTag}>
               Rinomina
             </Button>
@@ -408,7 +428,7 @@ export default function TagManagementPage() {
       </Modal>
 
       {/* Merge Modal */}
-      <Modal open={!!mergeSource} onClose={() => setMergeSource(null)} title="Unisci Tag" size="sm">
+      <Modal open={!!mergeSource} onClose={handleCloseMerge} title="Unisci Tag" size="sm">
         <div className="space-y-4">
           <p className="text-sm text-muted">
             Unisci <strong>{mergeSource}</strong> in un altro tag. Il tag sorgente verrà rimosso.
@@ -416,7 +436,7 @@ export default function TagManagementPage() {
           <select
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
             value={mergeTarget}
-            onChange={(e) => setMergeTarget(e.target.value)}
+            onChange={handleMergeTargetChange}
           >
             <option value="">Seleziona tag destinazione...</option>
             {tags
@@ -427,7 +447,7 @@ export default function TagManagementPage() {
               ))}
           </select>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setMergeSource(null)}>Annulla</Button>
+            <Button variant="outline" onClick={handleCloseMerge}>Annulla</Button>
             <Button onClick={handleMerge} loading={mergeLoading} disabled={!mergeTarget}>
               Unisci
             </Button>
@@ -436,19 +456,20 @@ export default function TagManagementPage() {
       </Modal>
 
       {/* Delete Confirm Modal */}
-      <Modal open={!!deleteTag} onClose={() => setDeleteTag(null)} title="Elimina Tag" size="sm">
+      <Modal open={!!deleteTag} onClose={handleCloseDelete} title="Elimina Tag" size="sm">
         <div className="space-y-4">
           <p className="text-sm text-muted">
             Sei sicuro di voler eliminare il tag <strong>{deleteTag}</strong>? Verrà rimosso da tutti i clienti e le attività.
           </p>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteTag(null)}>Annulla</Button>
+            <Button variant="outline" onClick={handleCloseDelete}>Annulla</Button>
             <Button variant="destructive" onClick={handleDelete} loading={deleteLoading}>
               Elimina
             </Button>
           </div>
         </div>
       </Modal>
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop */}
     </div>
   )
 }

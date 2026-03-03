@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-object-as-prop -- dynamic styles */
 
 import { useRef, useCallback, useState } from 'react'
 import { cn } from '@/lib/utils'

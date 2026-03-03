@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -119,6 +119,24 @@ export function ProjectEditModal({ open, onClose, projectId, initialData, client
     }
   }
 
+  const handleField = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setEditForm((f) => ({ ...f, [field]: e.target.value }))
+
+  const handleName = handleField('name')
+  const handleWorkspace = handleField('workspaceId')
+  const handleClient = handleField('clientId')
+  const handleDesc = handleField('description')
+  const handleStatus = handleField('status')
+  const handlePriority = handleField('priority')
+  const handleStartDate = handleField('startDate')
+  const handleEndDate = handleField('endDate')
+  const handleBudget = handleField('budgetAmount')
+  const handleHours = handleField('budgetHours')
+  const handleColor = (color: string) => setEditForm((f) => ({ ...f, color })) // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- named handler
+
+  const workspaceOptions = useMemo(() => [{ value: '', label: 'Seleziona workspace' }, ...workspaces.map((w) => ({ value: w.id, label: w.name }))], [workspaces])
+  const clientOptions = useMemo(() => [{ value: '', label: 'Nessun cliente' }, ...clients.map((c) => ({ value: c.id, label: c.companyName }))], [clients])
+
   return (
     <Modal open={open} onClose={onClose} title="Modifica Progetto" size="lg">
       <form onSubmit={handleEditProject} className="space-y-4">
@@ -126,26 +144,20 @@ export function ProjectEditModal({ open, onClose, projectId, initialData, client
           label="Nome Progetto *"
           required
           value={editForm.name}
-          onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+          onChange={handleName}
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
             label="Workspace"
             value={editForm.workspaceId}
-            onChange={(e) => setEditForm((f) => ({ ...f, workspaceId: e.target.value }))}
-            options={[
-              { value: '', label: 'Seleziona workspace' },
-              ...workspaces.map((w) => ({ value: w.id, label: w.name })),
-            ]}
+            onChange={handleWorkspace}
+            options={workspaceOptions}
           />
           <Select
             label="Cliente"
             value={editForm.clientId}
-            onChange={(e) => setEditForm((f) => ({ ...f, clientId: e.target.value }))}
-            options={[
-              { value: '', label: 'Nessun cliente' },
-              ...clients.map((c) => ({ value: c.id, label: c.companyName })),
-            ]}
+            onChange={handleClient}
+            options={clientOptions}
           />
         </div>
         <div className="space-y-1">
@@ -153,7 +165,7 @@ export function ProjectEditModal({ open, onClose, projectId, initialData, client
           <textarea
             rows={3}
             value={editForm.description}
-            onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+            onChange={handleDesc}
             className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           />
         </div>
@@ -161,13 +173,13 @@ export function ProjectEditModal({ open, onClose, projectId, initialData, client
           <Select
             label="Stato"
             value={editForm.status}
-            onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+            onChange={handleStatus}
             options={STATUS_OPTIONS}
           />
           <Select
             label="Priorità"
             value={editForm.priority}
-            onChange={(e) => setEditForm((f) => ({ ...f, priority: e.target.value }))}
+            onChange={handlePriority}
             options={PRIORITY_OPTIONS}
           />
         </div>
@@ -176,13 +188,13 @@ export function ProjectEditModal({ open, onClose, projectId, initialData, client
             label="Data Inizio"
             type="date"
             value={editForm.startDate}
-            onChange={(e) => setEditForm((f) => ({ ...f, startDate: e.target.value }))}
+            onChange={handleStartDate}
           />
           <Input
             label="Data Fine"
             type="date"
             value={editForm.endDate}
-            onChange={(e) => setEditForm((f) => ({ ...f, endDate: e.target.value }))}
+            onChange={handleEndDate}
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -191,18 +203,18 @@ export function ProjectEditModal({ open, onClose, projectId, initialData, client
             type="number"
             step="0.01"
             value={editForm.budgetAmount}
-            onChange={(e) => setEditForm((f) => ({ ...f, budgetAmount: e.target.value }))}
+            onChange={handleBudget}
           />
           <Input
             label="Ore Previste"
             type="number"
             value={editForm.budgetHours}
-            onChange={(e) => setEditForm((f) => ({ ...f, budgetHours: e.target.value }))}
+            onChange={handleHours}
           />
         </div>
         <ColorSwatches
           value={editForm.color || '#3B82F6'}
-          onChange={(color) => setEditForm((f) => ({ ...f, color }))}
+          onChange={handleColor}
         />
         {editError && (
           <p className="text-sm text-destructive">{editError}</p>

@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- wizard step handlers */
 import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect } from 'react'
@@ -214,8 +215,14 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
   const [googleConnected, setGoogleConnected] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(true)
   const [pwaPrompt, setPwaPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [isIOS, setIsIOS] = useState(false)
-  const [isPWA, setIsPWA] = useState(false)
+  const [isIOS] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const ua = navigator.userAgent
+    return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  })
+  const [isPWA, setIsPWA] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches
+  )
   const [showIOSGuide, setShowIOSGuide] = useState(false)
 
   const totalSteps = 6
@@ -230,14 +237,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
   }, [])
 
   // PWA install prompt
-   
   useEffect(() => {
-    const standalone = window.matchMedia('(display-mode: standalone)').matches
-    setIsPWA(standalone)
-
-    const ua = navigator.userAgent
-    setIsIOS(/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
-
     const handler = (e: Event) => {
       e.preventDefault()
       setPwaPrompt(e as BeforeInstallPromptEvent)

@@ -31,12 +31,14 @@ export function MobileTaskCard({ task, activeTab, userId, onClick, expanded, sub
         'p-4 space-y-2.5 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)] rounded-lg border bg-card',
         urgency === 'overdue' || urgency === 'today' ? `${urgencyStyles.border} ${urgencyStyles.bg}` : 'border-border/80'
       )}
+      // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
       style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           {task._count && task._count.subtasks > 0 && onToggleSubtasks && (
             <button
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- wraps callback with task.id
               onClick={(e) => onToggleSubtasks(task.id, e)}
               className="p-0.5 rounded hover:bg-secondary/60 transition-colors flex-shrink-0"
             >
@@ -103,11 +105,13 @@ export function MobileTaskCard({ task, activeTab, userId, onClick, expanded, sub
               return (
                 <div
                   key={sub.id}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                   onClick={(e) => { e.stopPropagation(); onSubtaskClick?.(sub.id) }}
                   className={cn(
                     'p-2.5 rounded-md border bg-secondary/30 cursor-pointer hover:bg-secondary/60 transition-colors',
                     'border-border/50'
                   )}
+                  // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
                   style={{ borderLeft: `2px solid ${PRIORITY_COLORS[sub.priority] || 'var(--color-primary)'}` }}
                 >
                   <div className="flex items-center justify-between gap-2">

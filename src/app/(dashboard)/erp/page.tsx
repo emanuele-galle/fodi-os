@@ -131,6 +131,7 @@ export default function ErpPage() {
             <Card
               key={section.href}
               className="cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.02] transition-all duration-200 touch-manipulation active:scale-[0.98] group"
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
               onClick={() => router.push(section.href)}
             >
               <CardHeader>
@@ -160,6 +161,7 @@ export default function ErpPage() {
       {!loading && (
         <div className="mt-6">
           <QuickActionsGrid
+            // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- static quick actions with navigation callbacks
             actions={[
               { icon: TrendingUp, title: 'Entrata', description: 'Registra', onClick: () => router.push('/erp/movimenti?tab=entrate') },
               { icon: CreditCard, title: 'Spesa', description: 'Registra', onClick: () => router.push('/erp/movimenti') },

@@ -7,10 +7,9 @@ import { Users, Plus, Search, ChevronLeft, ChevronRight, AlertCircle, Download, 
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { Card, CardContent } from '@/components/ui/Card'
+import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Avatar } from '@/components/ui/Avatar'
@@ -206,6 +205,43 @@ export default function CrmPage() {
     }
   }
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- page-level handlers */
+  const handleOpenModal = () => setModalOpen(true)
+  const handleCloseModal = () => setModalOpen(false)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)
+  const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)
+  const handleToggleFilters = () => setFiltersOpen(!filtersOpen)
+  const handleIndustryChange = (e: React.ChangeEvent<HTMLSelectElement>) => { setIndustryFilter(e.target.value); setPage(1) }
+  const handleSourceChange = (e: React.ChangeEvent<HTMLSelectElement>) => { setSourceFilter(e.target.value); setPage(1) }
+  const handleRevenueMinChange = (e: React.ChangeEvent<HTMLInputElement>) => { setRevenueMin(e.target.value); setPage(1) }
+  const handleRevenueMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => { setRevenueMax(e.target.value); setPage(1) }
+  const handleTagFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => { setTagFilter(e.target.value); setPage(1) }
+  const handleCreatedAfterChange = (e: React.ChangeEvent<HTMLInputElement>) => { setCreatedAfter(e.target.value); setPage(1) }
+  const handleCreatedBeforeChange = (e: React.ChangeEvent<HTMLInputElement>) => { setCreatedBefore(e.target.value); setPage(1) }
+  const handleNeglectedChange = (e: React.ChangeEvent<HTMLInputElement>) => { setNeglectedFilter(e.target.checked); setPage(1) }
+  const handleClearAllFilters = () => {
+    setIndustryFilter(''); setSourceFilter(''); setNeglectedFilter(false)
+    setRevenueMin(''); setRevenueMax(''); setTagFilter('')
+    setCreatedAfter(''); setCreatedBefore(''); setPage(1)
+  }
+  const handleClearIndustry = () => setIndustryFilter('')
+  const handleClearSource = () => setSourceFilter('')
+  const handleClearRevenueMin = () => setRevenueMin('')
+  const handleClearRevenueMax = () => setRevenueMax('')
+  const handleClearNeglected = () => setNeglectedFilter(false)
+  const handleClearTagFilter = () => setTagFilter('')
+  const handleClearCreatedAfter = () => setCreatedAfter('')
+  const handleClearCreatedBefore = () => setCreatedBefore('')
+  const handleRetry = () => fetchClients()
+  const handleClearSelection = () => setSelectedIds(new Set())
+  const handlePrevPage = () => setPage((p) => p - 1)
+  const handleNextPage = () => setPage((p) => p + 1)
+
+  const BULK_STATUS_OPTIONS = [
+    { value: '', label: 'Cambia stato...' },
+    ...STATUS_OPTIONS.filter(o => o.value !== '')
+  ]
+
   return (
     <div className="animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
@@ -225,12 +261,12 @@ export default function CrmPage() {
               Esporta CSV
             </Button>
           )}
-          <Button size="sm" onClick={() => setModalOpen(true)}>
+          <Button size="sm" onClick={handleOpenModal}>
             <Plus className="h-4 w-4" />
             Nuovo Cliente
           </Button>
         </div>
-        <Button onClick={() => setModalOpen(true)} className="sm:hidden w-full">
+        <Button onClick={handleOpenModal} className="sm:hidden w-full">
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Cliente
         </Button>
@@ -242,20 +278,20 @@ export default function CrmPage() {
           <Input
             placeholder="Cerca clienti, contatti, email, telefono..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-10"
           />
         </div>
         <Select
           options={STATUS_OPTIONS}
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={handleStatusFilterChange}
           className="w-full sm:w-48"
         />
         <Button
           variant={filtersOpen || industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax || tagFilter || createdAfter || createdBefore ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setFiltersOpen(!filtersOpen)}
+          onClick={handleToggleFilters}
           className="h-10"
         >
           <Filter className="h-4 w-4 mr-1.5" />
@@ -276,13 +312,13 @@ export default function CrmPage() {
               label="Settore"
               options={INDUSTRY_OPTIONS}
               value={industryFilter}
-              onChange={(e) => { setIndustryFilter(e.target.value); setPage(1) }}
+              onChange={handleIndustryChange}
             />
             <Select
               label="Fonte"
               options={SOURCE_OPTIONS}
               value={sourceFilter}
-              onChange={(e) => { setSourceFilter(e.target.value); setPage(1) }}
+              onChange={handleSourceChange}
             />
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">Fatturato min (€)</label>
@@ -290,7 +326,7 @@ export default function CrmPage() {
                 type="number"
                 placeholder="0"
                 value={revenueMin}
-                onChange={(e) => { setRevenueMin(e.target.value); setPage(1) }}
+                onChange={handleRevenueMinChange}
               />
             </div>
             <div>
@@ -299,26 +335,26 @@ export default function CrmPage() {
                 type="number"
                 placeholder="∞"
                 value={revenueMax}
-                onChange={(e) => { setRevenueMax(e.target.value); setPage(1) }}
+                onChange={handleRevenueMaxChange}
               />
             </div>
             <Input
               label="Tag (virgola separati)"
               placeholder="vip, premium"
               value={tagFilter}
-              onChange={(e) => { setTagFilter(e.target.value); setPage(1) }}
+              onChange={handleTagFilterChange}
             />
             <Input
               label="Creato dal"
               type="date"
               value={createdAfter}
-              onChange={(e) => { setCreatedAfter(e.target.value); setPage(1) }}
+              onChange={handleCreatedAfterChange}
             />
             <Input
               label="Creato fino al"
               type="date"
               value={createdBefore}
-              onChange={(e) => { setCreatedBefore(e.target.value); setPage(1) }}
+              onChange={handleCreatedBeforeChange}
             />
           </div>
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/20">
@@ -326,24 +362,14 @@ export default function CrmPage() {
               <input
                 type="checkbox"
                 checked={neglectedFilter}
-                onChange={(e) => { setNeglectedFilter(e.target.checked); setPage(1) }}
+                onChange={handleNeglectedChange}
                 className="rounded border-border"
               />
               <span className="text-sm text-muted">Solo clienti trascurati <span className="text-xs">(nessun contatto da 30+ giorni)</span></span>
             </label>
             {(industryFilter || sourceFilter || neglectedFilter || revenueMin || revenueMax || tagFilter || createdAfter || createdBefore) && (
               <button
-                onClick={() => {
-                  setIndustryFilter('')
-                  setSourceFilter('')
-                  setNeglectedFilter(false)
-                  setRevenueMin('')
-                  setRevenueMax('')
-                  setTagFilter('')
-                  setCreatedAfter('')
-                  setCreatedBefore('')
-                  setPage(1)
-                }}
+                onClick={handleClearAllFilters}
                 className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
               >
                 <X className="h-3 w-3" />
@@ -360,53 +386,53 @@ export default function CrmPage() {
           {industryFilter && (
             <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Settore: {INDUSTRY_OPTIONS.find(o => o.value === industryFilter)?.label}
-              <button onClick={() => setIndustryFilter('')} className="p-0.5"><X className="h-3 w-3" /></button>
+              <button onClick={handleClearIndustry} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {sourceFilter && (
             <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Fonte: {SOURCE_OPTIONS.find(o => o.value === sourceFilter)?.label}
-              <button onClick={() => setSourceFilter('')} className="p-0.5"><X className="h-3 w-3" /></button>
+              <button onClick={handleClearSource} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {revenueMin && (
             <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Min: {revenueMin}
-              <button onClick={() => setRevenueMin('')} className="p-0.5"><X className="h-3 w-3" /></button>
+              <button onClick={handleClearRevenueMin} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {revenueMax && (
             <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Max: {revenueMax}
-              <button onClick={() => setRevenueMax('')} className="p-0.5"><X className="h-3 w-3" /></button>
+              <button onClick={handleClearRevenueMax} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {neglectedFilter && (
             <span className="inline-flex items-center gap-1.5 text-xs bg-amber-500/10 text-amber-600 px-2.5 py-1.5 rounded-full">
               Trascurati
-              <button onClick={() => setNeglectedFilter(false)} className="p-0.5"><X className="h-3 w-3" /></button>
+              <button onClick={handleClearNeglected} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {tagFilter && (
             <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Tag: {tagFilter}
-              <button onClick={() => setTagFilter('')} className="p-0.5"><X className="h-3 w-3" /></button>
+              <button onClick={handleClearTagFilter} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {createdAfter && (
             <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Dal: {createdAfter}
-              <button onClick={() => setCreatedAfter('')} className="p-0.5"><X className="h-3 w-3" /></button>
+              <button onClick={handleClearCreatedAfter} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           {createdBefore && (
             <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1.5 rounded-full">
               Fino al: {createdBefore}
-              <button onClick={() => setCreatedBefore('')} className="p-0.5"><X className="h-3 w-3" /></button>
+              <button onClick={handleClearCreatedBefore} className="p-0.5"><X className="h-3 w-3" /></button>
             </span>
           )}
           <button
-            onClick={() => { setIndustryFilter(''); setSourceFilter(''); setNeglectedFilter(false); setRevenueMin(''); setRevenueMax(''); setTagFilter(''); setCreatedAfter(''); setCreatedBefore('') }}
+            onClick={handleClearAllFilters}
             className="text-xs text-muted hover:text-foreground"
           >
             Rimuovi tutto
@@ -420,7 +446,7 @@ export default function CrmPage() {
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
           </div>
-          <button onClick={() => fetchClients()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+          <button onClick={handleRetry} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
 
@@ -437,7 +463,7 @@ export default function CrmPage() {
           description={search || statusFilter ? 'Prova a modificare i filtri di ricerca.' : 'Crea il tuo primo cliente per iniziare.'}
           action={
             !search && !statusFilter ? (
-              <Button onClick={() => setModalOpen(true)}>
+              <Button onClick={handleOpenModal}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nuovo Cliente
               </Button>
@@ -454,6 +480,7 @@ export default function CrmPage() {
                 <Card
                   key={client.id}
                   className="!p-4 cursor-pointer active:bg-secondary/30 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200 touch-manipulation"
+                   
                   onClick={() => router.push(`/crm/${client.id}`)}
                 >
                   <div className="flex items-center gap-3 mb-2">
@@ -501,20 +528,20 @@ export default function CrmPage() {
               <div className="flex items-center gap-2 ml-auto">
                 <Select
                   className="w-40 h-8 text-xs"
-                  options={[
-                    { value: '', label: 'Cambia stato...' },
-                    ...STATUS_OPTIONS.filter(o => o.value !== '')
-                  ]}
+                  options={BULK_STATUS_OPTIONS}
                   value=""
+                   
                   onChange={(e) => { if (e.target.value) executeBulkAction('status', e.target.value) }}
                 />
                 {bulkAction === 'tags' ? (
                   <div className="flex items-center gap-1">
                     <input
                       value={bulkTagInput}
+                       
                       onChange={e => setBulkTagInput(e.target.value)}
                       placeholder="Tag da aggiungere..."
                       className="h-8 text-base md:text-xs border border-border rounded-md px-2 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/50 w-36"
+                       
                       onKeyDown={e => {
                         if (e.key === 'Enter' && bulkTagInput.trim()) {
                           e.preventDefault()
@@ -522,15 +549,18 @@ export default function CrmPage() {
                         }
                       }}
                     />
+                    { }
                     <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setBulkAction(null)}>Annulla</Button>
                   </div>
                 ) : (
+                   
                   <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setBulkAction('tags')}>
                     <Tag className="h-3 w-3 mr-1" />
                     Aggiungi Tag
                   </Button>
                 )}
                 {selectedIds.size === 2 && (
+                   
                   <Button size="sm" variant="outline" className="h-8 text-xs"
                     onClick={() => { const ids = Array.from(selectedIds); router.push(`/crm/merge?source=${ids[0]}&target=${ids[1]}`) }}>
                     <Users className="h-3 w-3 mr-1" /> Unisci
@@ -540,13 +570,14 @@ export default function CrmPage() {
                   size="sm"
                   variant="outline"
                   className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                   
                   onClick={async () => { const ok = await confirmAction({ message: `Eliminare ${selectedIds.size} clienti? Questa azione non può essere annullata.`, variant: 'danger' }); if (ok) executeBulkAction('delete') }}
                   disabled={bulkSubmitting}
                 >
                   <Trash2 className="h-3 w-3 mr-1" />
                   Elimina
                 </Button>
-                <button onClick={() => setSelectedIds(new Set())} className="text-xs text-muted hover:text-foreground ml-1">Annulla selezione</button>
+                <button onClick={handleClearSelection} className="text-xs text-muted hover:text-foreground ml-1">Annulla selezione</button>
               </div>
             </div>
           )}
@@ -579,6 +610,7 @@ export default function CrmPage() {
                   return (
                     <tr
                       key={client.id}
+                       
                       onClick={() => router.push(`/crm/${client.id}`)}
                       className="border-b border-border/10 hover:bg-secondary/8 transition-colors cursor-pointer group even:bg-secondary/[0.03]"
                     >
@@ -586,6 +618,7 @@ export default function CrmPage() {
                         <input
                           type="checkbox"
                           checked={selectedIds.has(client.id)}
+                           
                           onChange={(e) => { e.stopPropagation(); toggleSelect(client.id) }}
                           onClick={(e) => e.stopPropagation()}
                           className="rounded border-border"
@@ -614,6 +647,7 @@ export default function CrmPage() {
                       <td className="px-4 py-3.5">
                         <div className="relative">
                           <button
+                             
                             onClick={(e) => {
                               e.stopPropagation()
                               setStatusDropdownId(statusDropdownId === client.id ? null : client.id)
@@ -628,11 +662,13 @@ export default function CrmPage() {
                           {statusDropdownId === client.id && (
                             <div
                               className="absolute z-50 top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[140px]"
+                               
                               onClick={(e) => e.stopPropagation()}
                             >
                               {STATUS_OPTIONS.filter(o => o.value !== '').map((opt) => (
                                 <button
                                   key={opt.value}
+                                   
                                   onClick={() => handleQuickStatusChange(client.id, opt.value)}
                                   className={`w-full text-left px-3 py-1.5 text-sm hover:bg-secondary/50 transition-colors ${
                                     client.status === opt.value ? 'font-medium text-primary' : 'text-foreground'
@@ -683,7 +719,7 @@ export default function CrmPage() {
                   variant="outline"
                   size="sm"
                   disabled={page <= 1}
-                  onClick={() => setPage((p) => p - 1)}
+                  onClick={handlePrevPage}
                   className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -695,7 +731,7 @@ export default function CrmPage() {
                   variant="outline"
                   size="sm"
                   disabled={page >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}
+                  onClick={handleNextPage}
                   className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -708,10 +744,11 @@ export default function CrmPage() {
 
       <CreateClientModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={handleCloseModal}
         onCreated={fetchClients}
       />
       <ConfirmDialog {...confirmProps} />
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop */}
     </div>
   )
 }

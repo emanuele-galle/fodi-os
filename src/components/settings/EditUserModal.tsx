@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -13,10 +13,12 @@ import {
 } from 'lucide-react'
 import {
   SECTIONS, SECTION_LABELS, SECTION_ICONS,
-  getDefaultSectionAccess, getEffectiveSectionAccess,
+  getDefaultSectionAccess,
   type SectionAccessMap,
 } from '@/lib/section-access'
 import { formatDistanceToNow, format } from 'date-fns'
+
+const CONNECTION_ERROR = 'Errore di connessione'
 import { it } from 'date-fns/locale'
 import {
   type UserItem, type CustomRoleOption, type UserPermission, type UserStats, type ModalTab,
@@ -119,7 +121,7 @@ export function EditUserModal({ user, customRoles, onClose, onUserUpdated, onUse
       if (!res.ok) { setEditError(data.error || 'Errore durante il salvataggio'); return }
       onUserUpdated(user.id, data.data)
     } catch {
-      setEditError('Errore di connessione')
+      setEditError(CONNECTION_ERROR)
     } finally {
       setEditSaving(false)
     }
@@ -134,7 +136,7 @@ export function EditUserModal({ user, customRoles, onClose, onUserUpdated, onUse
       if (res.ok) setResetResult(data.tempPassword)
       else setEditError(data.error || 'Errore reset password')
     } catch {
-      setEditError('Errore di connessione')
+      setEditError(CONNECTION_ERROR)
     } finally {
       setResetLoading(false)
     }
@@ -185,7 +187,7 @@ export function EditUserModal({ user, customRoles, onClose, onUserUpdated, onUse
         setEditError(data.error || 'Errore salvataggio permessi')
       }
     } catch {
-      setEditError('Errore di connessione')
+      setEditError(CONNECTION_ERROR)
     } finally {
       setPermsSaving(false)
     }
@@ -210,7 +212,7 @@ export function EditUserModal({ user, customRoles, onClose, onUserUpdated, onUse
       if (res.ok) { onUserDeleted(user.id); handleClose() }
       else { const data = await res.json(); setEditError(data.error || 'Errore eliminazione utente') }
     } catch {
-      setEditError('Errore di connessione')
+      setEditError(CONNECTION_ERROR)
     } finally {
       setDeleteLoading(false)
     }
@@ -231,7 +233,7 @@ export function EditUserModal({ user, customRoles, onClose, onUserUpdated, onUse
       if (!res.ok) { setEditError(data.error || 'Errore salvataggio sezioni'); return }
       onUserUpdated(user.id, { sectionAccess: payload })
     } catch {
-      setEditError('Errore di connessione')
+      setEditError(CONNECTION_ERROR)
     } finally {
       setSectionsSaving(false)
     }
@@ -248,7 +250,7 @@ export function EditUserModal({ user, customRoles, onClose, onUserUpdated, onUse
       if (res.ok) window.location.href = '/dashboard'
       else { const data = await res.json(); setEditError(data.error || 'Errore impersonificazione') }
     } catch {
-      setEditError('Errore di connessione')
+      setEditError(CONNECTION_ERROR)
     } finally {
       setImpersonating(false)
     }
@@ -316,6 +318,7 @@ export function EditUserModal({ user, customRoles, onClose, onUserUpdated, onUse
         </div>
       </div>
 
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- modal form handlers, loop handlers, computed options */}
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-border overflow-x-auto scrollbar-none">
         {(['profile', 'permissions', 'sections'] as const).map((tab) => (
@@ -368,7 +371,7 @@ export function EditUserModal({ user, customRoles, onClose, onUserUpdated, onUse
                 <p className="text-sm text-muted">Nuova password temporanea:</p>
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-mono font-semibold">{resetResult}</p>
-                  <button onClick={() => copyResetPassword(resetResult)} className="p-1 rounded hover:bg-background transition-colors" title="Copia password" aria-label="Copia password">
+            <button onClick={() => copyResetPassword(resetResult)} className="p-1 rounded hover:bg-background transition-colors" title="Copia password" aria-label="Copia password">
                     {copiedResetPw ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-muted" />}
                   </button>
                 </div>
@@ -514,6 +517,7 @@ export function EditUserModal({ user, customRoles, onClose, onUserUpdated, onUse
           </div>
         </div>
       )}
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop */}
     </Modal>
   )
 }

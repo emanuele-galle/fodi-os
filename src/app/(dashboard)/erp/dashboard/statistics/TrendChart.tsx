@@ -11,6 +11,7 @@ interface MonthStats {
 }
 
 const MONTH_LABELS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic']
+const BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0]
 
 export default function TrendChart({ months }: { months: MonthStats[] }) {
   const chartData = months.map(m => ({
@@ -25,11 +26,13 @@ export default function TrendChart({ months }: { months: MonthStats[] }) {
       <BarChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" opacity={0.3} />
         <XAxis dataKey="name" fontSize={12} />
+        {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- recharts callbacks */}
         <YAxis fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
         <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+        {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
         <Legend />
-        <Bar dataKey="Entrate" fill="#10B981" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="Spese" fill="#EF4444" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="Entrate" fill="#10B981" radius={BAR_RADIUS} />
+        <Bar dataKey="Spese" fill="#EF4444" radius={BAR_RADIUS} />
       </BarChart>
     </ResponsiveContainer>
   )

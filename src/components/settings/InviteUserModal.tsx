@@ -68,6 +68,7 @@ export function InviteUserModal({ open, onClose, customRoles, onInvited }: Invit
       onClose={handleClose}
       title={inviteResult ? 'Utente Creato' : 'Invita Nuovo Utente'}
     >
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- form field setters, copy handler, computed options */}
       {inviteResult ? (
         <div className="text-center">
           <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
@@ -128,6 +129,7 @@ export function InviteUserModal({ open, onClose, customRoles, onInvited }: Invit
           </div>
         </form>
       )}
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop */}
     </Modal>
   )
 }

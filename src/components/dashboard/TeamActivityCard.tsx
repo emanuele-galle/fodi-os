@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-object-as-prop -- framer-motion animation objects */
 
 import { Users, Clock, ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'

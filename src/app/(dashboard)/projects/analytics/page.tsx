@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   CheckCircle2, TrendingUp, AlertTriangle, Clock,
   BarChart3, PieChart as PieChartIcon, Users, Timer, AlertCircle,
@@ -110,6 +110,26 @@ export default function ProjectsAnalyticsPage() {
     ? Math.round((data.summary.overdue / data.summary.total) * 100)
     : 0
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers for form fields */
+  const handleProjectIdChange = (e: React.ChangeEvent<HTMLSelectElement>) => setProjectId(e.target.value)
+  const handleUserIdChange = (e: React.ChangeEvent<HTMLSelectElement>) => setUserId(e.target.value)
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+  const projectOptions = useMemo(() => [
+    { value: '', label: 'Tutti i progetti' },
+    ...projects.map((p) => ({ value: p.id, label: p.name })),
+  ], [projects])
+  const userOptions = useMemo(() => [
+    { value: '', label: 'Tutti i membri' },
+    ...users.map((u) => ({ value: u.id, label: u.name })),
+  ], [users])
+
+  const destructiveColorMixStyle = useMemo(() => ({ background: 'color-mix(in srgb, var(--color-destructive) 10%, transparent)', color: 'var(--color-destructive)' }), [])
+  const warningColorMixStyle = useMemo(() => ({ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }), [])
+  const emptyWeeklyTrend = useMemo(() => [] as AnalyticsData['weeklyTrend'], [])
+  const emptyByStatus = useMemo(() => [] as AnalyticsData['byStatus'], [])
+  const emptyHoursComparison = useMemo(() => [] as AnalyticsData['hoursComparison'], [])
+  const emptyByUser = useMemo(() => [] as AnalyticsData['byUser'], [])
+
   return (
     <div className="animate-fade-in">
       {/* HEADER */}
@@ -132,21 +152,15 @@ export default function ProjectsAnalyticsPage() {
         <div className="w-48">
           <Select
             value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-            options={[
-              { value: '', label: 'Tutti i progetti' },
-              ...projects.map((p) => ({ value: p.id, label: p.name })),
-            ]}
+            onChange={handleProjectIdChange}
+            options={projectOptions}
           />
         </div>
         <div className="w-48">
           <Select
             value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            options={[
-              { value: '', label: 'Tutti i membri' },
-              ...users.map((u) => ({ value: u.id, label: u.name })),
-            ]}
+            onChange={handleUserIdChange}
+            options={userOptions}
           />
         </div>
       </div>
@@ -157,6 +171,7 @@ export default function ProjectsAnalyticsPage() {
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
           </div>
+          {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple callback wrapper */}
           <button onClick={() => loadAnalytics()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
@@ -194,7 +209,7 @@ export default function ProjectsAnalyticsPage() {
             <Card>
               <CardContent>
                 <div className="flex items-start justify-between mb-3">
-                  <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-destructive) 10%, transparent)', color: 'var(--color-destructive)' }}>
+                  <div className="p-2 rounded-lg" style={destructiveColorMixStyle}>
                     <AlertTriangle className="h-4 w-4" />
                   </div>
                 </div>
@@ -206,7 +221,7 @@ export default function ProjectsAnalyticsPage() {
             <Card>
               <CardContent>
                 <div className="flex items-start justify-between mb-3">
-                  <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
+                  <div className="p-2 rounded-lg" style={warningColorMixStyle}>
                     <Timer className="h-4 w-4" />
                   </div>
                 </div>
@@ -228,7 +243,7 @@ export default function ProjectsAnalyticsPage() {
               </div>
               <CardTitle>Trend Completamento Task</CardTitle>
             </div>
-            <TaskCompletionChart data={data?.weeklyTrend ?? []} loading={loading} />
+            <TaskCompletionChart data={data?.weeklyTrend ?? emptyWeeklyTrend} loading={loading} />
           </CardContent>
         </Card>
 
@@ -240,7 +255,7 @@ export default function ProjectsAnalyticsPage() {
               </div>
               <CardTitle>Distribuzione per Status</CardTitle>
             </div>
-            <TaskStatusChart data={data?.byStatus ?? []} loading={loading} />
+            <TaskStatusChart data={data?.byStatus ?? emptyByStatus} loading={loading} />
           </CardContent>
         </Card>
       </div>
@@ -250,12 +265,12 @@ export default function ProjectsAnalyticsPage() {
         <Card>
           <CardContent>
             <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
+              <div className="p-2 rounded-lg" style={warningColorMixStyle}>
                 <Clock className="h-4 w-4" />
               </div>
               <CardTitle>Ore Stimate vs Effettive</CardTitle>
             </div>
-            <HoursComparisonChart data={data?.hoursComparison ?? []} loading={loading} />
+            <HoursComparisonChart data={data?.hoursComparison ?? emptyHoursComparison} loading={loading} />
           </CardContent>
         </Card>
       </div>
@@ -270,7 +285,7 @@ export default function ProjectsAnalyticsPage() {
               </div>
               <CardTitle>Produttività Team</CardTitle>
             </div>
-            <TeamProductivityTable data={data?.byUser ?? []} loading={loading} />
+            <TeamProductivityTable data={data?.byUser ?? emptyByUser} loading={loading} />
           </CardContent>
         </Card>
       </div>

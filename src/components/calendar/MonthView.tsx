@@ -64,6 +64,7 @@ export function MonthView({
             return (
               <div
                 key={i}
+                // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                 onClick={() => {
                   if (isCurrentMonth && cellDate) {
                     setSelectedDayKey(cellDate)
@@ -94,6 +95,7 @@ export function MonthView({
                           <div
                             key={ev.id}
                             className="w-1.5 h-1.5 rounded-full"
+                            // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic color
                             style={{ backgroundColor: color }}
                           />
                         )
@@ -108,8 +110,10 @@ export function MonthView({
                         return (
                           <button
                             key={ev.id}
+                            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                             onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev) }}
                             className="w-full text-left rounded-md px-1.5 py-0.5 text-[10px] truncate border-l-2 transition-all hover:shadow-sm"
+                            // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic color
                             style={{
                               borderLeftColor: color,
                               backgroundColor: color + '15',
@@ -118,6 +122,7 @@ export function MonthView({
                             title={`${isAllDay ? '' : formatTime(ev.start.dateTime) + ' '}${ev.summary}${ev._ownerName ? ` (${ev._ownerName})` : ''}`}
                           >
                             {!isAllDay && (
+                              // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic color
                               <span className="font-semibold mr-0.5" style={{ color }}>{formatTime(ev.start.dateTime)}</span>
                             )}
                             {ev.summary}
@@ -126,6 +131,7 @@ export function MonthView({
                       })}
                       {dayEvents.length > 4 && (
                         <button
+                          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                           onClick={(e) => {
                             e.stopPropagation()
                             setSelectedDayKey(cellDate!)

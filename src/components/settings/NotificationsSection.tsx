@@ -87,6 +87,7 @@ export function NotificationsSection({ setMessage }: NotificationsSectionProps) 
     return outputArray
   }
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- used as onClick handler
   const handleTogglePush = async () => {
     setPushLoading(true)
     try {
@@ -151,6 +152,7 @@ export function NotificationsSection({ setMessage }: NotificationsSectionProps) 
     }
   }
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- used as onClick handler
   const handleToggleDigest = async () => {
     setDigestSaving(true)
     try {
@@ -192,6 +194,7 @@ export function NotificationsSection({ setMessage }: NotificationsSectionProps) 
 
   return (
     <>
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- notification toggle handlers */}
       <Card className="rounded-xl border border-border/20">
         <CardTitle>Riepilogo Giornaliero via Email</CardTitle>
         <CardContent>
@@ -367,6 +370,7 @@ export function NotificationsSection({ setMessage }: NotificationsSectionProps) 
           )}
         </CardContent>
       </Card>
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
     </>
   )
 }

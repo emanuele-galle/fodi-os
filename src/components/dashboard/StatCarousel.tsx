@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-object-as-prop, react-perf/jsx-no-new-function-as-prop -- framer-motion animation objects */
 
 import { useRouter } from 'next/navigation'
 import { Skeleton } from '@/components/ui/Skeleton'

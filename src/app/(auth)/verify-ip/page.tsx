@@ -1,10 +1,10 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { brandClient } from '@/lib/branding-client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
 import { ShieldCheck } from 'lucide-react'
 

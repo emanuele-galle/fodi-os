@@ -1,5 +1,5 @@
-import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib'
-import type { ContractTemplate, ContractClause } from './contract-templates'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import type { ContractTemplate } from './contract-templates'
 import { fetchLogoBytes } from './pdf-generator'
 import { hexToRgb, drawText, drawTextCenter as centerText, wrapText } from '@/lib/pdf-utils'
 
@@ -54,8 +54,8 @@ export async function generateContractPdf(data: ContractPdfData): Promise<Uint8A
   const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold)
   const helveticaOblique = await doc.embedFont(StandardFonts.HelveticaOblique)
 
-  const primaryHex = data.primaryColor || '#1a1a2e'
-  const secondaryHex = data.secondaryColor || '#16213e'
+  const primaryHex = data.primaryColor || '#007AFF'
+  const secondaryHex = data.secondaryColor || '#1D1D1F'
   const primary = hexToRgb(primaryHex)
   const secondary = hexToRgb(secondaryHex)
   const primaryRgb = rgb(primary.r, primary.g, primary.b)
@@ -63,8 +63,8 @@ export async function generateContractPdf(data: ContractPdfData): Promise<Uint8A
   const grayText = rgb(0.4, 0.4, 0.4)
   const darkText = rgb(0.15, 0.15, 0.15)
   const white = rgb(1, 1, 1)
-  const lightBg = rgb(0.97, 0.97, 0.98)
-  const borderColor = rgb(0.88, 0.88, 0.88)
+  const lightBg = rgb(0.949, 0.949, 0.969)
+  const borderColor = rgb(0.898, 0.898, 0.918)
 
   const PAGE_W = 595.28
   const PAGE_H = 841.89
@@ -99,7 +99,7 @@ export async function generateContractPdf(data: ContractPdfData): Promise<Uint8A
   function replaceFields(text: string): string {
     if (!data.customFields) return text
     let result = text
-    for (const [key, value] of Object.entries(data.customFields)) {
+    for (const [, value] of Object.entries(data.customFields)) {
       result = result.replace(new RegExp(`________`, 'g'), value)
     }
     return result

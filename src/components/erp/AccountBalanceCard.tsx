@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import { formatCurrency } from '@/lib/utils'
 
 interface AccountSummary {
@@ -36,6 +37,11 @@ export function AccountBalanceCard({
   realBalance,
   onRealBalanceChange,
 }: AccountBalanceCardProps) {
+  const handleRealBalanceBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value)
+    if (!isNaN(val)) onRealBalanceChange?.(val)
+  }, [onRealBalanceChange])
+
   const calculatedBalance = summary
     ? balance + summary.totalIncome - summary.totalExpenses + summary.transfersIn - summary.transfersOut
     : null
@@ -99,10 +105,7 @@ export function AccountBalanceCard({
             step="0.01"
             className="w-full rounded-md border border-border/30 bg-secondary/5 px-2.5 py-1.5 text-sm tabular-nums focus:outline-none focus:ring-1 focus:ring-primary/30"
             defaultValue={realBalance ?? ''}
-            onBlur={(e) => {
-              const val = parseFloat(e.target.value)
-              if (!isNaN(val)) onRealBalanceChange(val)
-            }}
+            onBlur={handleRealBalanceBlur}
           />
           {delta != null && delta !== 0 && (
             <p className={`text-xs mt-1 font-medium ${Math.abs(delta) < 1 ? 'text-amber-500' : 'text-red-500'}`}>

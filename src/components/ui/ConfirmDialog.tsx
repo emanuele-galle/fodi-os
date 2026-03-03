@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers */
 
 import { useEffect, useRef } from 'react'
 import { AlertTriangle, X } from 'lucide-react'

@@ -7,7 +7,7 @@ import type { Role } from '@/generated/prisma/client'
  * Extract and validate portal client from request headers.
  * All portal API routes should use this helper.
  */
-export async function getPortalClient(request: NextRequest) {
+async function getPortalClient(request: NextRequest) {
   const role = request.headers.get('x-user-role') as Role
   const userId = request.headers.get('x-user-id')!
   requirePermission(role, 'portal', 'read')
@@ -34,7 +34,7 @@ export async function requirePortalClient(request: NextRequest) {
   return client
 }
 
-export class PortalClientNotFoundError extends Error {
+class PortalClientNotFoundError extends Error {
   constructor() {
     super('Client non trovato')
   }

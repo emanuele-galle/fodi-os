@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { useState } from 'react'
 import { Card, CardTitle, CardContent } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'

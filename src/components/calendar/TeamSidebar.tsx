@@ -42,6 +42,7 @@ function TeamMemberList({
         {size === 'md' && (
           <div className="flex gap-2">
             <button
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- computed set
               onClick={() => {
                 const allIds = teamMembers.filter((m) => m.hasGoogleCalendar).map((m) => m.id)
                 setSelectedTeamIds(allIds)
@@ -51,6 +52,7 @@ function TeamMemberList({
               Tutti
             </button>
             <button
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- computed set
               onClick={() => setSelectedTeamIds(userId ? [userId] : [])}
               className="text-xs text-muted hover:underline"
             >
@@ -62,6 +64,7 @@ function TeamMemberList({
       {size === 'sm' && (
         <div className="flex gap-2 mb-3">
           <button
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- computed set
             onClick={() => {
               const allIds = teamMembers.filter((m) => m.hasGoogleCalendar).map((m) => m.id)
               setSelectedTeamIds(allIds)
@@ -71,6 +74,7 @@ function TeamMemberList({
             Tutti
           </button>
           <button
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- computed set
             onClick={() => setSelectedTeamIds(userId ? [userId] : [])}
             className="text-xs text-muted hover:underline"
           >
@@ -88,6 +92,7 @@ function TeamMemberList({
             return (
               <button
                 key={m.id}
+                // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                 onClick={() => {
                   if (isSelf) return
                   setSelectedTeamIds((prev) =>
@@ -102,6 +107,7 @@ function TeamMemberList({
                   className={`w-3 h-3 rounded-sm border-2 ${size === 'sm' ? 'flex-shrink-0 ' : ''}flex items-center justify-center ${
                     isSelected ? '' : 'border-border'
                   }`}
+                  // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic color
                   style={isSelected ? { backgroundColor: color, borderColor: color } : {}}
                 >
                   {isSelected && <Check className="h-2 w-2 text-white" />}
@@ -157,6 +163,7 @@ function CalendarList({
           return (
             <button
               key={cal.id}
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
               onClick={() => {
                 setSelectedCalendars((prev) => {
                   const next = new Set(prev)
@@ -173,6 +180,7 @@ function CalendarList({
                 className={`w-3 h-3 rounded-sm border-2 ${size === 'sm' ? 'flex-shrink-0 ' : ''}flex items-center justify-center ${
                   isSelected ? '' : 'border-border'
                 }`}
+                // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic color
                 style={isSelected ? { backgroundColor: cal.backgroundColor, borderColor: cal.backgroundColor } : {}}
               >
                 {isSelected && <Check className="h-2 w-2 text-white" />}
@@ -288,12 +296,14 @@ export function CalendarsSidebarDesktop({
           </div>
           <div className="flex gap-2 mb-3">
             <button
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- computed set
               onClick={() => setSelectedCalendars(new Set(calendars.map((c) => c.id)))}
               className="text-xs text-primary hover:underline"
             >
               Tutti
             </button>
             <button
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- computed set
               onClick={() => {
                 const primary = calendars.find((c) => c.primary)
                 setSelectedCalendars(new Set(primary ? [primary.id] : []))
@@ -309,6 +319,7 @@ export function CalendarsSidebarDesktop({
               return (
                 <button
                   key={cal.id}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                   onClick={() => {
                     setSelectedCalendars((prev) => {
                       const next = new Set(prev)
@@ -325,6 +336,7 @@ export function CalendarsSidebarDesktop({
                     className={`w-3 h-3 rounded-sm border-2 flex-shrink-0 flex items-center justify-center ${
                       isSelected ? '' : 'border-border'
                     }`}
+                    // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic color
                     style={isSelected ? { backgroundColor: cal.backgroundColor, borderColor: cal.backgroundColor } : {}}
                   >
                     {isSelected && <Check className="h-2 w-2 text-white" />}

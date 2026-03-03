@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import { Select } from '@/components/ui/Select'
 
 const CRM_MAPPING_OPTIONS = [
@@ -27,13 +28,15 @@ interface CrmMappingEditorProps {
 }
 
 export function CrmMappingEditor({ value, onChange }: CrmMappingEditorProps) {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value || null), [onChange])
+
   return (
     <div>
       <label className="text-xs font-medium text-muted mb-1 block">Mapping CRM</label>
       <Select
         options={CRM_MAPPING_OPTIONS}
         value={value || ''}
-        onChange={(e) => onChange(e.target.value || null)}
+        onChange={handleChange}
       />
       <p className="text-xs text-muted mt-1">
         Collega questo campo a una proprieta del CRM per importare automaticamente i dati

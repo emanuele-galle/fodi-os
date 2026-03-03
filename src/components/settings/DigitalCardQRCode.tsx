@@ -38,6 +38,7 @@ export function DigitalCardQRCode({ slug }: DigitalCardQRCodeProps) {
 
           {/* QR Image */}
           <div className="p-4 bg-white rounded-lg border border-border mb-4">
+            {/* eslint-disable-next-line @next/next/no-img-element -- dynamic QR code URL */}
             <img
               src={qrUrl}
               alt="QR Code Card"

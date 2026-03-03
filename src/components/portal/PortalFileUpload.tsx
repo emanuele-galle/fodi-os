@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { useState, useRef, useCallback } from 'react'
 import { Upload, X, FileText, Loader2 } from 'lucide-react'
 

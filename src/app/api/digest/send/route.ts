@@ -171,7 +171,7 @@ function buildEmail(firstName: string, data: Data): string {
 <style>
 *{box-sizing:border-box}
 body,table,td{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
-body{margin:0;padding:0;background:#F3F4F6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{margin:0;padding:0;background:#F2F2F7;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 a{text-decoration:none}
 @media(max-width:600px){
   .outer{padding:12px!important}
@@ -185,7 +185,7 @@ a{text-decoration:none}
 <!-- Preview text -->
 <div style="display:none;max-height:0;overflow:hidden">${esc(subtitle)}&nbsp;&#8204;&nbsp;&#8204;&nbsp;&#8204;&nbsp;&#8204;&nbsp;&#8204;&nbsp;&#8204;&nbsp;&#8204;&nbsp;&#8204;</div>
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#F3F4F6;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F2F7;">
 <tr><td class="outer" style="padding:40px 16px;" align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
 
@@ -195,14 +195,14 @@ a{text-decoration:none}
   </td></tr>
 
   <!-- MAIN CARD -->
-  <tr><td style="background:#FFFFFF;border-radius:16px;border:1px solid #E5E7EB;overflow:hidden;">
+  <tr><td style="background:#FFFFFF;border-radius:16px;border:1px solid #E5E5EA;box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden;">
     <table width="100%" cellpadding="0" cellspacing="0">
 
       <!-- Header -->
       <tr><td class="inner" style="padding:36px 32px 28px;">
         <p style="margin:0 0 2px;font-size:14px;color:#9CA3AF;font-weight:500;">${today}</p>
-        <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#111827;letter-spacing:-0.5px;line-height:1.2;">${greeting}, ${esc(firstName)}</h1>
-        <p style="margin:0;font-size:15px;color:#6B7280;line-height:1.5;">${esc(subtitle)}</p>
+        <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#1D1D1F;letter-spacing:-0.5px;line-height:1.2;">${greeting}, ${esc(firstName)}</h1>
+        <p style="margin:0;font-size:15px;color:#3C3C43;line-height:1.5;">${esc(subtitle)}</p>
       </td></tr>
 
       <!-- STATS -->
@@ -239,7 +239,7 @@ a{text-decoration:none}
 
       <!-- CTA -->
       <tr><td style="padding:36px 32px 12px;text-align:center;">
-        <a href="${SITE_URL}/dashboard" style="display:inline-block;background:#111827;color:#FFFFFF;padding:14px 36px;border-radius:10px;font-size:14px;font-weight:600;">Apri Dashboard</a>
+        <a href="${SITE_URL}/dashboard" style="display:inline-block;background:#007AFF;color:#FFFFFF;padding:14px 40px;border-radius:980px;font-size:15px;font-weight:600;">Apri Dashboard</a>
       </td></tr>
 
       <!-- Tip -->
@@ -253,11 +253,11 @@ a{text-decoration:none}
   <!-- FOOTER -->
   <tr><td style="padding:28px 0;text-align:center;">
     <p style="margin:0 0 4px;font-size:12px;color:#9CA3AF;">
-      <a href="${SITE_URL}/settings" style="color:#6B7280;text-decoration:underline;">Disattiva email</a>
-      <span style="color:#D1D5DB;padding:0 8px;">&#183;</span>
-      <a href="${SITE_URL}/dashboard" style="color:#6B7280;text-decoration:underline;">Dashboard</a>
+      <a href="${SITE_URL}/settings" style="color:#007AFF;text-decoration:underline;">Disattiva email</a>
+      <span style="color:#C7C7CC;padding:0 8px;">&#183;</span>
+      <a href="${SITE_URL}/dashboard" style="color:#007AFF;text-decoration:underline;">Dashboard</a>
     </p>
-    <p style="margin:0;font-size:11px;color:#D1D5DB;">${brand.email.footerText} &middot; Sistema Gestionale</p>
+    <p style="margin:0;font-size:11px;color:#C7C7CC;">${brand.email.footerText} &middot; Sistema Gestionale</p>
   </td></tr>
 
 </table>
@@ -349,7 +349,7 @@ export async function POST(req: NextRequest) {
 
       const html = buildEmail(u.firstName, { overdue, dueToday, dueTomorrow, completedYesterday, recentComments })
       const ok = await sendViaSMTP(u.email, `Riepilogo del ${fmtDate(now)} — ${brand.name}`, html)
-      ok ? sent++ : errors++
+      if (ok) { sent++ } else { errors++ }
       await sleep(500)
     } catch (err) {
       logger.error(`[digest] Error for user ${u.id}`, { error: err instanceof Error ? err.message : String(err) })

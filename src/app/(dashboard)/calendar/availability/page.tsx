@@ -1,4 +1,6 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- async handlers and loop callbacks */
+
 import { brandClient } from '@/lib/branding-client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -21,7 +23,6 @@ import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Badge } from '@/components/ui/Badge'
 
-const DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
 const DAY_LABELS_FULL = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']
 // Display order: Mon-Sun
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]
@@ -97,6 +98,16 @@ export default function AvailabilityPage() {
 
   // Target calendar for blocks
   const [targetCalendarId, setTargetCalendarId] = useState('')
+
+  const handleToggleBooking = () => setShowBooking(!showBooking)
+  const handleDurationChange = (e: React.ChangeEvent<HTMLSelectElement>) => setBookingDuration(Number(e.target.value))
+  const handleDaysAheadChange = (e: React.ChangeEvent<HTMLInputElement>) => setBookingDaysAhead(Number(e.target.value))
+  const handleOpenNewBlock = () => setShowNewBlock(true)
+  const handleCloseNewBlock = () => setShowNewBlock(false)
+  const handleBlockDateChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewBlock({ ...newBlock, date: e.target.value })
+  const handleBlockStartChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewBlock({ ...newBlock, startTime: e.target.value })
+  const handleBlockEndChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewBlock({ ...newBlock, endTime: e.target.value })
+  const handleBlockReasonChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewBlock({ ...newBlock, reason: e.target.value })
 
   // Feedback messages
   const [hoursSaved, setHoursSaved] = useState(false)
@@ -319,6 +330,7 @@ export default function AvailabilityPage() {
                       >
                         {/* Toggle */}
                         <button
+                           
                           onClick={() => toggleDay(day)}
                           className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${
                             isActive ? 'bg-primary' : 'bg-border'
@@ -341,6 +353,7 @@ export default function AvailabilityPage() {
                           <div className="flex items-center gap-2 ml-auto">
                             <select
                               value={config.start}
+                               
                               onChange={(e) => updateDayHours(day, 'start', Number(e.target.value))}
                               className="rounded-md border border-border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 w-[80px]"
                             >
@@ -351,6 +364,7 @@ export default function AvailabilityPage() {
                             <span className="text-muted text-xs">—</span>
                             <select
                               value={config.end}
+                               
                               onChange={(e) => updateDayHours(day, 'end', Number(e.target.value))}
                               className="rounded-md border border-border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 w-[80px]"
                             >
@@ -400,7 +414,7 @@ export default function AvailabilityPage() {
                   <div
                     role="switch"
                     aria-checked={showBooking}
-                    onClick={() => setShowBooking(!showBooking)}
+                    onClick={handleToggleBooking}
                     className={`relative w-10 h-5 rounded-full transition-colors ${showBooking ? 'bg-primary' : 'bg-border'}`}
                   >
                     <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${showBooking ? 'translate-x-5' : ''}`} />
@@ -413,7 +427,7 @@ export default function AvailabilityPage() {
                     <label className="block text-sm font-medium mb-1">Durata slot (minuti)</label>
                     <select
                       value={bookingDuration}
-                      onChange={(e) => setBookingDuration(Number(e.target.value))}
+                      onChange={handleDurationChange}
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     >
                       {[15, 30, 45, 60, 90, 120].map((d) => (
@@ -428,7 +442,7 @@ export default function AvailabilityPage() {
                       min={1}
                       max={60}
                       value={bookingDaysAhead}
-                      onChange={(e) => setBookingDaysAhead(Number(e.target.value))}
+                      onChange={handleDaysAheadChange}
                     />
                   </div>
                 </div>
@@ -454,7 +468,7 @@ export default function AvailabilityPage() {
                 <Ban className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold">Blocchi Indisponibilità</h2>
               </div>
-              <Button size="sm" variant="outline" onClick={() => setShowNewBlock(true)}>
+              <Button size="sm" variant="outline" onClick={handleOpenNewBlock}>
                 <Plus className="h-4 w-4 mr-1" />
                 Nuovo Blocco
               </Button>
@@ -493,6 +507,7 @@ export default function AvailabilityPage() {
                       </Badge>
                     )}
                     <button
+                       
                       onClick={() => deleteBlock(block.id, block._calendarId)}
                       disabled={deletingBlockId === block.id}
                       className="p-1.5 rounded-lg text-muted hover:text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0"
@@ -514,7 +529,7 @@ export default function AvailabilityPage() {
       {/* New Block Modal */}
       <Modal
         open={showNewBlock}
-        onClose={() => setShowNewBlock(false)}
+        onClose={handleCloseNewBlock}
         title="Nuovo Blocco Indisponibilità"
         size="sm"
       >
@@ -524,7 +539,7 @@ export default function AvailabilityPage() {
             label="Data"
             type="date"
             value={newBlock.date}
-            onChange={(e) => setNewBlock({ ...newBlock, date: e.target.value })}
+            onChange={handleBlockDateChange}
             required
           />
           <div className="grid grid-cols-2 gap-3">
@@ -533,7 +548,7 @@ export default function AvailabilityPage() {
               label="Ora inizio"
               type="time"
               value={newBlock.startTime}
-              onChange={(e) => setNewBlock({ ...newBlock, startTime: e.target.value })}
+              onChange={handleBlockStartChange}
               required
             />
             <Input
@@ -541,7 +556,7 @@ export default function AvailabilityPage() {
               label="Ora fine"
               type="time"
               value={newBlock.endTime}
-              onChange={(e) => setNewBlock({ ...newBlock, endTime: e.target.value })}
+              onChange={handleBlockEndChange}
               required
             />
           </div>
@@ -549,11 +564,11 @@ export default function AvailabilityPage() {
             id="blockReason"
             label="Motivo (opzionale)"
             value={newBlock.reason}
-            onChange={(e) => setNewBlock({ ...newBlock, reason: e.target.value })}
+            onChange={handleBlockReasonChange}
             placeholder="Es. Visita medica, ferie..."
           />
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setShowNewBlock(false)}>
+            <Button type="button" variant="outline" onClick={handleCloseNewBlock}>
               Annulla
             </Button>
             <Button type="submit" loading={creatingBlock}>

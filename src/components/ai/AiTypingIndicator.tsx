@@ -2,6 +2,12 @@
 
 import { AiAnimatedAvatar } from './AiAnimatedAvatar'
 
+const DOT_STYLES = [
+  { animationDelay: '0s' },
+  { animationDelay: '0.15s' },
+  { animationDelay: '0.3s' },
+]
+
 const TOOL_MESSAGES: Record<string, string> = {
   list_tasks: 'Sto cercando i tuoi task...',
   create_task: 'Sto creando il task...',
@@ -69,11 +75,11 @@ export function AiTypingIndicator({ activeToolName }: AiTypingIndicatorProps) {
       <AiAnimatedAvatar size="sm" className="flex-shrink-0" />
       <div className="flex flex-col gap-1.5">
         <div className="rounded-2xl rounded-tl-md bg-white/[0.04] backdrop-blur-sm border border-white/[0.06] px-4 py-3 flex items-center gap-1.5">
-          {[0, 1, 2].map((i) => (
+          {DOT_STYLES.map((style, i) => (
             <div
               key={i}
               className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 ai-wave-dot"
-              style={{ animationDelay: `${i * 0.15}s` }}
+              style={style}
             />
           ))}
         </div>

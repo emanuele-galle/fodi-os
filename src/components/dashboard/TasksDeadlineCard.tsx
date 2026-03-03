@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- handlers in render */
 
 import { useRouter } from 'next/navigation'
 import { CalendarCheck, CheckCircle2 } from 'lucide-react'

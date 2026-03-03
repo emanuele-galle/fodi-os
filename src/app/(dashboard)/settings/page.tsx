@@ -114,6 +114,7 @@ export default function SettingsPage() {
               return (
                 <button
                   key={section.id}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- handler depends on loop item
                   onClick={() => section.href ? router.push(section.href) : setActiveSection(section.id)}
                   className={cn(
                     'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap touch-manipulation min-h-[44px] snap-center lg:snap-align-none',

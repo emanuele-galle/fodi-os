@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { useState, useEffect } from 'react'
 import { brandClient } from '@/lib/branding-client'
 import { Card, CardTitle, CardContent } from '@/components/ui/Card'

@@ -13,11 +13,6 @@ export function calculateDeductibleVat(vatAmount: number, deductibility: string)
   return Math.round(vatAmount * pct * 100) / 100
 }
 
-/** Formatta numero in stile contabile italiano (es. "1.234,56 €") */
-function formatAccountingNumber(n: number): string {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n)
-}
-
 /** Genera il prossimo numero fattura per l'anno corrente (formato FT-YYYY/NNN) */
 export async function generateInvoiceNumber(
   prisma: { income: { findFirst: (args: { where: { invoiceNumber: { startsWith: string } }; orderBy: { invoiceNumber: 'desc' }; select: { invoiceNumber: true } }) => Promise<{ invoiceNumber: string | null } | null> } },
@@ -42,14 +37,3 @@ export async function generateInvoiceNumber(
   return `${prefix}${String(nextNum).padStart(3, '0')}`
 }
 
-/** Calcola stato scadenza */
-function getDueDateStatus(dueDate: string | null, isPaid: boolean): 'paid' | 'due_soon' | 'overdue' | 'ok' | null {
-  if (!dueDate) return null
-  if (isPaid) return 'paid'
-  const due = new Date(dueDate)
-  const now = new Date()
-  const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  if (diffDays < 0) return 'overdue'
-  if (diffDays <= 7) return 'due_soon'
-  return 'ok'
-}

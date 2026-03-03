@@ -27,7 +27,6 @@ import {
   getDefaultSectionAccess,
   type Section,
   type SectionPermission,
-  type SectionAccessMap,
 } from '@/lib/section-access'
 import { ROLE_PERMISSIONS } from '@/lib/permissions'
 import { ROLES as BASE_ROLES, ROLE_LABELS, ROLE_BADGE } from '@/lib/constants'
@@ -304,6 +303,7 @@ export function RolesContent() {
             <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{error}</p>
           </div>
+          {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- retry handler */}
           <button onClick={() => { setError(null); loadRoles() }} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
@@ -336,6 +336,7 @@ export function RolesContent() {
             />
           ) : (
             <div className="divide-y divide-border">
+              {/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- handlers and styles depend on loop item */}
               {roles.map((role) => (
                 <div
                   key={role.id}
@@ -452,12 +453,14 @@ export function RolesContent() {
                   </div>
                 </div>
               ))}
+              {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop */}
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Delete Confirmation Modal */}
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- modal and form handlers */}
       <Modal
         open={!!deleteTarget}
         onClose={() => { setDeleteTarget(null); setDeleteConfirmText(''); setDeleteError('') }}
@@ -514,6 +517,7 @@ export function RolesContent() {
           </div>
         )}
       </Modal>
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
 
       {/* Create/Edit Modal */}
       <Modal
@@ -528,6 +532,7 @@ export function RolesContent() {
           {(['general', 'permissions', 'sections'] as const).map((tab) => (
             <button
               key={tab}
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- handler depends on loop item
               onClick={() => setModalTab(tab)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap touch-manipulation min-h-[44px] ${
                 modalTab === tab
@@ -550,6 +555,7 @@ export function RolesContent() {
         {/* General Tab */}
         {modalTab === 'general' && (
           <div className="space-y-4">
+            {/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- form field setters and color picker */}
             <Input
               label="Nome Ruolo *"
               value={form.name}
@@ -613,6 +619,7 @@ export function RolesContent() {
                 />
               </button>
             </div>
+            {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop */}
           </div>
         )}
 
@@ -648,6 +655,7 @@ export function RolesContent() {
                             role="checkbox"
                             aria-checked={hasPerm(mod.key, perm)}
                             aria-label={`${mod.label} - ${perm}`}
+                            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- handler depends on loop items
                             onClick={() => toggleModulePerm(mod.key, perm)}
                             className={`h-6 w-6 min-h-[44px] min-w-[44px] rounded border-2 transition-all inline-flex items-center justify-center ${
                               hasPerm(mod.key, perm)
@@ -696,6 +704,7 @@ export function RolesContent() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{SECTION_LABELS[section]}</p>
                     </div>
+                    {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- handlers depend on loop item */}
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <button
                         onClick={() => toggleSectionView(section)}
@@ -721,6 +730,7 @@ export function RolesContent() {
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                     </div>
+                    {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
                   </div>
                 )
               })}

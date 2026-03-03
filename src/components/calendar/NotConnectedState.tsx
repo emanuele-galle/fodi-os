@@ -1,11 +1,14 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { brandClient } from '@/lib/branding-client'
 import { Calendar, Link2Off } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 
 export function NotConnectedState() {
+  const handleConnect = () => { window.location.href = '/api/auth/google' }
+
   return (
     <div className="animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
@@ -22,7 +25,8 @@ export function NotConnectedState() {
         title="Google Calendar non connesso"
         description={`Collega il tuo account Google per visualizzare e gestire i tuoi eventi direttamente da ${brandClient.name}. Assicurati di accettare tutti i permessi richiesti (Calendario, Drive, Meet).`}
         action={
-          <Button onClick={() => window.location.href = '/api/auth/google'}>
+          <Button onClick={handleConnect}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- external Google icon */}
             <img src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png" alt="" className="h-5 w-5 mr-2" />
             Connetti Google Calendar
           </Button>

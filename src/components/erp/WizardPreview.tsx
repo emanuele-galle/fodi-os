@@ -74,6 +74,7 @@ export function WizardPreview({ name, steps, showProgressBar, completionMessage 
     return Object.keys(newErrors).length === 0
   }
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- depends on component state
   const goNext = () => {
     if (!validateCurrentStep()) return
     if (currentStep < visibleSteps.length - 1) {
@@ -83,6 +84,7 @@ export function WizardPreview({ name, steps, showProgressBar, completionMessage 
     }
   }
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- depends on component state
   const goPrev = () => {
     if (currentStep > 0) {
       setErrors({})
@@ -132,6 +134,7 @@ export function WizardPreview({ name, steps, showProgressBar, completionMessage 
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
             <div
               className="h-full bg-primary transition-all duration-300 rounded-full"
+              // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
               style={{ width: `${((currentStep + 1) / visibleSteps.length) * 100}%` }}
             />
           </div>

@@ -76,6 +76,7 @@ export function ProjectMembersPanel({ projectId, members, teamMembers, onMembers
         </div>
         <div className="flex items-center gap-2">
           {teamMembers.filter((u) => !members.some((m) => m.userId === u.id)).length > 0 && (
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step handler
             <Button size="sm" variant="outline" onClick={() => {
               const nonMembers = teamMembers.filter((u) => !members.some((m) => m.userId === u.id))
               setMemberUserIds(nonMembers.map((u) => u.id))
@@ -85,6 +86,7 @@ export function ProjectMembersPanel({ projectId, members, teamMembers, onMembers
               Aggiungi Tutti
             </Button>
           )}
+          {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step handler */}
           <Button size="sm" onClick={() => { setMemberUserIds([]); setAddMemberModalOpen(true) }}>
             <UserPlus className="h-4 w-4 mr-2" />
             Aggiungi
@@ -109,6 +111,7 @@ export function ProjectMembersPanel({ projectId, members, teamMembers, onMembers
                   {m.role === 'OWNER' ? 'Owner' : m.role === 'ADMIN' ? 'Admin' : 'Membro'}
                 </Badge>
                 <button
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                   onClick={() => handleRemoveMember(m.userId)}
                   disabled={removingMemberId === m.userId}
                   className="p-1.5 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
@@ -122,6 +125,7 @@ export function ProjectMembersPanel({ projectId, members, teamMembers, onMembers
         </div>
       )}
 
+      {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter */}
       <Modal open={addMemberModalOpen} onClose={() => setAddMemberModalOpen(false)} title="Aggiungi Membri al Progetto" size="md">
         <div className="space-y-4">
           <MultiUserSelect
@@ -132,6 +136,7 @@ export function ProjectMembersPanel({ projectId, members, teamMembers, onMembers
             placeholder="Cerca utenti..."
           />
           <div className="flex justify-end gap-3 pt-2">
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter */}
             <Button type="button" variant="outline" onClick={() => setAddMemberModalOpen(false)}>Annulla</Button>
             <Button onClick={handleAddMembers} disabled={addingMembers || memberUserIds.length === 0}>
               {addingMembers ? 'Salvataggio...' : `Aggiungi ${memberUserIds.length > 0 ? `(${memberUserIds.length})` : ''}`}

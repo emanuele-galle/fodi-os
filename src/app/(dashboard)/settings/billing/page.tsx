@@ -87,6 +87,7 @@ export default function BillingSettingsPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- used as onSubmit handler
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -130,6 +131,7 @@ export default function BillingSettingsPage() {
 
   return (
     <div className="max-w-2xl animate-fade-in">
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- billing form field setters */}
       <div className="flex items-center gap-3 mb-6">
         <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
           <Building2 className="h-6 w-6 text-primary" />
@@ -267,6 +269,7 @@ export default function BillingSettingsPage() {
           </form>
         </CardContent>
       </Card>
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
     </div>
   )
 }

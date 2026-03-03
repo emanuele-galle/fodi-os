@@ -79,12 +79,6 @@ function getCurrentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 }
 
-function formatMonthLabel(ym: string): string {
-  const [y, m] = ym.split('-')
-  const date = new Date(Number(y), Number(m) - 1)
-  return date.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
-}
-
 /* ---------- Component ---------- */
 
 // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
@@ -165,10 +159,10 @@ export function MonthlyDashboard() {
     percentage: c.percentage,
   })) ?? []
 
-  const entityOptions = [
+  const entityOptions = useMemo(() => [
     { value: '', label: 'Tutte le entità' },
     ...entities.map(e => ({ value: e.id, label: e.name })),
-  ]
+  ], [entities])
 
   return (
     <>
@@ -179,6 +173,7 @@ export function MonthlyDashboard() {
           <input
             type="month"
             value={month}
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- inline event transform
             onChange={e => setMonth(e.target.value)}
             className="flex h-11 md:h-10 rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-base md:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40"
           />
@@ -188,6 +183,7 @@ export function MonthlyDashboard() {
           <Select
             label="Entità"
             value={entityId}
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- inline event transform
             onChange={e => setEntityId(e.target.value)}
             options={entityOptions}
           />
@@ -461,10 +457,12 @@ export function MonthlyDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/30">
+                    {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- sort column handlers */}
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => piHandleSort('clientName')}>Cliente{piSortIcon('clientName')}</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => piHandleSort('date')}>Data{piSortIcon('date')}</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => piHandleSort('category')}>Categoria{piSortIcon('category')}</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => piHandleSort('amount')}>Importo{piSortIcon('amount')}</th>
+                    {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
                   </tr>
                 </thead>
                 <tbody>

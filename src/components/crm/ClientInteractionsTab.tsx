@@ -57,9 +57,11 @@ export function ClientInteractionsTab({ interactions, onAddInteraction, onEditIn
                         {new Date(i.date).toLocaleDateString('it-IT')}
                       </span>
                       <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover/interaction:opacity-100 transition-opacity ml-1">
+                        {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler */}
                         <button onClick={() => onEditInteraction(i)} className="p-1.5 md:p-1 rounded-md hover:bg-secondary/50 text-muted hover:text-foreground transition-colors" title="Modifica">
                           <Edit className="h-3.5 w-3.5 md:h-3 md:w-3" />
                         </button>
+                        {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler */}
                         <button onClick={() => onDeleteInteraction(i.id)} className="p-1.5 md:p-1 rounded-md hover:bg-destructive/10 text-muted hover:text-destructive transition-colors" title="Elimina">
                           <Trash2 className="h-3.5 w-3.5 md:h-3 md:w-3" />
                         </button>

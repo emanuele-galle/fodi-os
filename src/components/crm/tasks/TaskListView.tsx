@@ -75,13 +75,16 @@ export function TaskListView({
               <span className="text-xs text-muted">{new Date(task.createdAt).toLocaleDateString('it-IT')}</span>
               <div className="flex items-center gap-1.5">
                 {task.status !== 'DONE' && (
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                   <Button variant="ghost" size="sm" onClick={() => onComplete(task.id)} className="h-8 w-8 p-0 text-emerald-600">
                     <CheckCircle className="h-3.5 w-3.5" />
                   </Button>
                 )}
+                {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler */}
                 <Button variant="ghost" size="sm" onClick={() => onEdit(task)} className="h-8 w-8 p-0">
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
+                {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler */}
                 <Button variant="ghost" size="sm" onClick={() => onDelete(task.id)} className="h-8 w-8 p-0 text-destructive">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -161,13 +164,16 @@ export function TaskListView({
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {task.status !== 'DONE' && (
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                       <Button variant="ghost" size="sm" onClick={() => onComplete(task.id)} className="h-8 w-8 p-0 text-emerald-600" title="Completa">
                         <CheckCircle className="h-3.5 w-3.5" />
                       </Button>
                     )}
+                    {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler */}
                     <Button variant="ghost" size="sm" onClick={() => onEdit(task)} className="h-8 w-8 p-0" title="Modifica">
                       <Edit className="h-3.5 w-3.5" />
                     </Button>
+                    {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler */}
                     <Button variant="ghost" size="sm" onClick={() => onDelete(task.id)} className="h-8 w-8 p-0 text-destructive" title="Elimina">
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -184,10 +190,12 @@ export function TaskListView({
         <div className="flex items-center justify-between mt-4">
           <p className="text-sm text-muted">{total} attività totali</p>
           <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- pagination handler */}
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm text-muted">{page} / {totalPages}</span>
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- pagination handler */}
             <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
               <ChevronRight className="h-4 w-4" />
             </Button>

@@ -70,6 +70,10 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
 
+  const handleDateFromChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setDateFrom(e.target.value), [])
+  const handleDateToChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setDateTo(e.target.value), [])
+  const handleProjectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setProjectId(e.target.value), [])
+
   useEffect(() => {
     fetch('/api/projects?limit=100')
       .then(r => r.ok ? r.json() : null)
@@ -128,14 +132,14 @@ export default function ReportsPage() {
               <input
                 type="date"
                 value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
+                onChange={handleDateFromChange}
                 className="text-sm border border-border/40 rounded-lg px-3 py-1.5 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
               <span className="text-muted text-sm">&mdash;</span>
               <input
                 type="date"
                 value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
+                onChange={handleDateToChange}
                 className="text-sm border border-border/40 rounded-lg px-3 py-1.5 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
@@ -143,7 +147,7 @@ export default function ReportsPage() {
               <Filter className="h-4 w-4 text-muted" />
               <select
                 value={projectId}
-                onChange={e => setProjectId(e.target.value)}
+                onChange={handleProjectChange}
                 className="text-sm border border-border/40 rounded-lg px-3 py-1.5 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <option value="">Tutti i progetti</option>

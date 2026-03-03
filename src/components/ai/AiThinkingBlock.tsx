@@ -17,7 +17,7 @@ export function AiThinkingBlock({ thinking, isThinking }: AiThinkingBlockProps) 
   return (
     <div className="mb-2">
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => setExpanded(!expanded)} // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- toggle state
         className={cn(
           'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors',
           'hover:bg-blue-500/10 text-muted-foreground/60 hover:text-muted-foreground/80',

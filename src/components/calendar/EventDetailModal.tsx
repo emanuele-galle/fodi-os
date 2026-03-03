@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import {
   Clock,
   MapPin,
@@ -43,12 +44,17 @@ export function EventDetailModal({
   openEditEvent,
   handleDeleteEvent,
 }: EventDetailModalProps) {
+  const handleCloseDetail = () => setSelectedEvent(null)
+  const handleCloseDelete = () => setConfirmDelete(false)
+  const handleEditEvent = () => { if (selectedEvent) openEditEvent(selectedEvent) }
+  const handleConfirmDelete = () => setConfirmDelete(true)
+
   return (
     <>
       {/* Event detail modal */}
       <Modal
         open={!!selectedEvent && !confirmDelete}
-        onClose={() => setSelectedEvent(null)}
+        onClose={handleCloseDetail}
         title={selectedEvent?.summary || 'Evento'}
       >
         {selectedEvent && (
@@ -57,6 +63,7 @@ export function EventDetailModal({
               <div className="flex items-center gap-2 p-2.5 rounded-lg bg-secondary/30">
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
+                  // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic color from map
                   style={{ backgroundColor: teamColorMap.get(selectedEvent._ownerUserId || '') || TEAM_COLORS[0] }}
                 />
                 <span className="text-sm font-medium">Calendario di {selectedEvent._ownerName}</span>
@@ -145,11 +152,11 @@ export function EventDetailModal({
               <div className="flex-1" />
               {(!selectedEvent._ownerUserId || selectedEvent._ownerUserId === userId) && (
                 <>
-                  <Button variant="outline" size="sm" onClick={() => openEditEvent(selectedEvent)}>
+                  <Button variant="outline" size="sm" onClick={handleEditEvent}>
                     <Pencil className="h-3.5 w-3.5 mr-1" />
                     Modifica
                   </Button>
-                  <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
+                  <Button variant="destructive" size="sm" onClick={handleConfirmDelete}>
                     <Trash2 className="h-3.5 w-3.5 mr-1" />
                     Elimina
                   </Button>
@@ -163,7 +170,7 @@ export function EventDetailModal({
       {/* Confirm delete modal */}
       <Modal
         open={confirmDelete}
-        onClose={() => setConfirmDelete(false)}
+        onClose={handleCloseDelete}
         title="Elimina evento"
         size="sm"
       >
@@ -172,7 +179,7 @@ export function EventDetailModal({
             Sei sicuro di voler eliminare <strong>{selectedEvent?.summary}</strong>? Questa azione non può essere annullata.
           </p>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)}>
+            <Button variant="outline" size="sm" onClick={handleCloseDelete}>
               Annulla
             </Button>
             <Button variant="destructive" size="sm" loading={deleting} onClick={handleDeleteEvent}>

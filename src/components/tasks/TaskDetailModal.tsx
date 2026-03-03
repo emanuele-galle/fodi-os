@@ -66,6 +66,16 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
   const dueDate = editForm.values.dueDate
   const [assigneeIds, setAssigneeIds] = useState<string[]>([])
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers for form fields */
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => editForm.setValue('title', e.target.value)
+  const handleDescChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => editForm.setValue('description', e.target.value)
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => editForm.setValue('status', e.target.value)
+  const handlePriorityChange = (e: React.ChangeEvent<HTMLSelectElement>) => editForm.setValue('priority', e.target.value)
+  const handleDueDateChange = (e: React.ChangeEvent<HTMLInputElement>) => editForm.setValue('dueDate', e.target.value)
+  const handleConfirmDeleteCancel = () => setConfirmDelete(false)
+  const handleConfirmDeleteShow = () => setConfirmDelete(true)
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   const fetchTask = useCallback(async () => {
     if (!taskId) return
     setLoading(true)
@@ -241,14 +251,14 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
           <Input
             label="Titolo"
             value={title}
-            onChange={(e) => editForm.setValue('title', e.target.value)}
+            onChange={handleTitleChange}
           />
 
           <div className="space-y-1">
             <label className="block text-sm font-medium text-foreground">Descrizione</label>
             <textarea
               value={description}
-              onChange={(e) => editForm.setValue('description', e.target.value)}
+              onChange={handleDescChange}
               rows={3}
               className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-base md:text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               placeholder="Aggiungi una descrizione..."
@@ -260,13 +270,13 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
               label="Stato"
               options={STATUS_OPTIONS}
               value={status}
-              onChange={(e) => editForm.setValue('status', e.target.value)}
+              onChange={handleStatusChange}
             />
             <Select
               label="Priorità"
               options={PRIORITY_OPTIONS}
               value={priority}
-              onChange={(e) => editForm.setValue('priority', e.target.value)}
+              onChange={handlePriorityChange}
             />
           </div>
 
@@ -312,7 +322,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             label="Scadenza"
             type="date"
             value={dueDate}
-            onChange={(e) => editForm.setValue('dueDate', e.target.value)}
+            onChange={handleDueDateChange}
           />
 
           {task.project && (
@@ -333,6 +343,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
               taskId={task.id}
               currentProjectId={task.project?.id}
               currentFolderId={task.folderId}
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
               onMoved={() => { fetchTask(); onUpdated() }}
             />
           )}
@@ -356,7 +367,9 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
           <TaskSubtasks
             taskId={task.id}
             subtasks={subtasks}
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
             onSubtasksChange={() => { fetchSubtasks(); fetchTask() }}
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
             onSubtaskClick={(id) => { setSubtaskDetailId(id); setSubtaskDetailOpen(true) }}
           />
 
@@ -364,7 +377,9 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             <TaskDetailModal
               taskId={subtaskDetailId}
               open={subtaskDetailOpen}
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
               onClose={() => { setSubtaskDetailOpen(false); setSubtaskDetailId(null) }}
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
               onUpdated={() => { fetchSubtasks(); fetchTask(); onUpdated() }}
               userRole={userRole}
             />
@@ -402,12 +417,12 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
                   <Button size="sm" variant="destructive" onClick={handleDelete} disabled={deleting}>
                     {deleting ? 'Eliminazione...' : 'Si, elimina'}
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setConfirmDelete(false)}>
+                  <Button size="sm" variant="outline" onClick={handleConfirmDeleteCancel}>
                     No
                   </Button>
                 </div>
               ) : (
-                <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)}>
+                <Button size="sm" variant="ghost" onClick={handleConfirmDeleteShow}>
                   <Trash2 className="h-4 w-4 mr-1" />
                   Elimina
                 </Button>

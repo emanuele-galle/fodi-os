@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers */
 
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Pencil, Trash2, Save, X, BookOpen, Loader2 } from 'lucide-react'

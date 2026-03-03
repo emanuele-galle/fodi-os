@@ -6,7 +6,7 @@ import {
   Tags, GitMerge, Columns3, Clock, Milestone as MilestoneIcon, FileText,
   Receipt, CreditCard, TrendingUp, FileSignature, BookOpen,
   Upload, FolderOpen, CheckCircle2, Share2, Hash, AtSign, SmilePlus,
-  MessageSquare, Ticket, AlertTriangle, UserCheck, Wifi, Download,
+  MessageSquare, Ticket, AlertTriangle, UserCheck, Download,
   Menu, WifiOff, UserCog, Lock, Palette, CreditCard as CardIcon,
 } from 'lucide-react'
 

@@ -18,6 +18,7 @@ export function ClientQuotesTab({ quotes, clientId }: ClientQuotesTabProps) {
   return (
     <div>
       <div className="flex justify-end mb-4">
+        {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- navigation handler */}
         <Button size="sm" onClick={() => router.push(`/erp/quotes/new?clientId=${clientId}`)}>
           <Plus className="h-4 w-4 mr-2" />
           Nuovo Preventivo
@@ -29,6 +30,7 @@ export function ClientQuotesTab({ quotes, clientId }: ClientQuotesTabProps) {
           title="Nessun preventivo collegato"
           description="I preventivi di questo cliente appariranno qui."
           action={
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- navigation handler
             <Button size="sm" onClick={() => router.push(`/erp/quotes/new?clientId=${clientId}`)}>
               <Plus className="h-4 w-4 mr-2" />
               Nuovo Preventivo
@@ -41,6 +43,7 @@ export function ClientQuotesTab({ quotes, clientId }: ClientQuotesTabProps) {
             <Card
               key={q.id}
               className="cursor-pointer shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200"
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
               onClick={() => router.push(`/erp/quotes/${q.id}`)}
             >
               <CardContent className="flex items-center justify-between">

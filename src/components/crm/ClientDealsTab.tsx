@@ -27,6 +27,7 @@ export function ClientDealsTab({ clientId }: ClientDealsTabProps) {
   }, [clientId])
 
   if (loading) return <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- navigation handler
   if (deals.length === 0) return <EmptyState icon={TrendingUp} title="Nessuna opportunità" description="Le opportunità di vendita per questo cliente appariranno qui." action={<Button size="sm" onClick={() => window.location.href = '/crm/pipeline'}><Plus className="h-4 w-4 mr-1" />Nuova Opportunità</Button>} />
 
   return (

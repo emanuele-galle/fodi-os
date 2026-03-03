@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { ChevronLeft, ChevronRight, Plus, Calendar, MapPin, Video } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import type { CalendarEvent, MobileView, NewEventData } from './types'
@@ -45,6 +46,8 @@ export function DayView({
   const selDate = new Date(selectedDayKey + 'T00:00:00')
   const isToday = selectedDayKey === todayKey
 
+  const handleNewEvent = () => openNewEventForDate(selectedDayKey)
+
   const goPrevDay = () => {
     const d = new Date(selectedDayKey + 'T00:00:00')
     d.setDate(d.getDate() - 1)
@@ -77,7 +80,7 @@ export function DayView({
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => openNewEventForDate(selectedDayKey)}
+              onClick={handleNewEvent}
               className="p-2 md:p-1.5 rounded-lg hover:bg-secondary/50 transition-colors touch-manipulation"
               title="Nuovo evento"
             >
@@ -97,8 +100,10 @@ export function DayView({
               return (
                 <button
                   key={ev.id}
+                   
                   onClick={() => setSelectedEvent(ev)}
                   className="w-full text-left rounded-md px-2.5 py-1.5 text-xs border-l-2 font-medium"
+                   
                   style={{ borderLeftColor: color, backgroundColor: color + '15', color }}
                 >
                   {ev.summary}
@@ -110,13 +115,16 @@ export function DayView({
         )}
         {/* Time grid */}
         <div className="overflow-y-auto max-h-[calc(100vh-280px)] md:max-h-[650px]">
+          { }
           <div className="relative" style={{ height: HOURS.length * SLOT_HEIGHT }}>
             {/* Hour lines + labels */}
             {HOURS.map((hour) => (
               <div
                 key={hour}
                 className="absolute left-0 right-0 border-t border-border/30 flex items-start hover:bg-secondary/15 transition-colors cursor-pointer group"
+                 
                 style={{ top: hour * SLOT_HEIGHT, height: SLOT_HEIGHT }}
+                 
                 onClick={() => {
                   const timeStr = `${String(hour).padStart(2, '0')}:00`
                   setNewEvent({
@@ -144,8 +152,10 @@ export function DayView({
               return (
                 <button
                   key={ev.id}
+                   
                   onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev) }}
                   className="absolute rounded-lg text-left px-2.5 py-1.5 border-l-[3px] overflow-hidden hover:shadow-lg transition-all hover:z-20 hover:scale-[1.01]"
+                   
                   style={{
                     top: pos.top + 1,
                     height: Math.max(pos.height - 2, 24),
@@ -156,6 +166,7 @@ export function DayView({
                     zIndex: 5,
                   }}
                 >
+                  { }
                   <div className="font-semibold text-xs truncate" style={{ color }}>
                     {formatTime(ev.start.dateTime)} — {formatTime(ev.end.dateTime)}
                     {ev.conferenceData?.entryPoints?.find(ep => ep.entryPointType === 'video') && (
@@ -186,6 +197,7 @@ export function DayView({
               return (
                 <div
                   className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
+                   
                   style={{ top: nowTop }}
                 >
                   <div className="w-14 pr-1 text-right">

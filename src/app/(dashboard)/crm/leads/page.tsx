@@ -129,6 +129,7 @@ export default function LeadsPage() {
 
   const totalPages = Math.ceil(total / limit)
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- page-level handlers */
   // Create lead
   const handleCreate = async () => {
     setSubmitting(true)
@@ -256,6 +257,23 @@ export default function LeadsPage() {
 
   const convertLead = convertLeadId ? leads.find((l) => l.id === convertLeadId) : null
 
+  const handleOpenNewModal = () => { setModalOpen(true); setFormError(null) }
+  const handleCloseNewModal = () => setModalOpen(false)
+  const handleCloseEditModal = () => setEditLeadId(null)
+  const handleCloseConvertModal = () => setConvertLeadId(null)
+  const handleCloseDeleteModal = () => setDeleteLeadId(null)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)
+  const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => setAssigneeFilter(e.target.value)
+  const handleRetry = () => fetchLeads()
+  const handlePrevPage = () => setPage((p) => p - 1)
+  const handleNextPage = () => setPage((p) => p + 1)
+
+  const ASSIGNEE_OPTIONS = [
+    { value: '', label: 'Tutti gli assegnati' },
+    ...staffUsers.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))
+  ]
+
   function exportCSV() {
     if (leads.length === 0) return
     const rows = [['Nome', 'Email', 'Azienda', 'Telefono', 'Fonte', 'Stato', 'Assegnato a', 'Creato il']]
@@ -312,7 +330,7 @@ export default function LeadsPage() {
               Esporta CSV
             </Button>
           )}
-          <Button onClick={() => { setModalOpen(true); setFormError(null) }} size="sm">
+          <Button onClick={handleOpenNewModal} size="sm">
             <Plus className="h-4 w-4 mr-1.5" />
             Nuovo Lead
           </Button>
@@ -339,7 +357,7 @@ export default function LeadsPage() {
           <Input
             placeholder="Cerca per nome, email, azienda..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-10"
           />
         </div>
@@ -347,16 +365,13 @@ export default function LeadsPage() {
           <Select
             options={LEAD_STATUS_OPTIONS}
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatusChange}
             className="w-44"
           />
           <Select
-            options={[
-              { value: '', label: 'Tutti gli assegnati' },
-              ...staffUsers.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))
-            ]}
+            options={ASSIGNEE_OPTIONS}
             value={assigneeFilter}
-            onChange={(e) => setAssigneeFilter(e.target.value)}
+            onChange={handleAssigneeChange}
             className="w-44"
           />
           <span className="text-sm text-muted whitespace-nowrap">{total} totali</span>
@@ -370,7 +385,7 @@ export default function LeadsPage() {
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
           </div>
-          <button onClick={() => fetchLeads()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
+          <button onClick={handleRetry} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
 
@@ -424,14 +439,17 @@ export default function LeadsPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted">{new Date(lead.createdAt).toLocaleDateString('it-IT')}</span>
                   <div className="flex items-center gap-1.5">
+
                     <Button variant="ghost" size="sm" onClick={() => openEdit(lead)} className="h-8 w-8 p-0">
                       <Edit className="h-3.5 w-3.5" />
                     </Button>
                     {lead.status !== 'CONVERTED' && (
+
                       <Button variant="ghost" size="sm" onClick={() => openConvert(lead)} className="h-8 w-8 p-0 text-emerald-600">
                         <ArrowRightLeft className="h-3.5 w-3.5" />
                       </Button>
                     )}
+
                     <Button variant="ghost" size="sm" onClick={() => { setDeleteLeadId(lead.id); setFormError(null) }} className="h-8 w-8 p-0 text-destructive">
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -479,6 +497,7 @@ export default function LeadsPage() {
                     <td className="px-4 py-3">
                       <select
                         value={lead.status}
+  
                         onChange={(e) => handleQuickStatusChange(lead.id, e.target.value)}
                         className="text-xs font-medium rounded-md border border-border/40 bg-card/50 px-1.5 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/30"
                       >
@@ -509,14 +528,17 @@ export default function LeadsPage() {
                     <td className="px-4 py-3 text-muted">{new Date(lead.createdAt).toLocaleDateString('it-IT')}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    
                         <Button variant="ghost" size="sm" onClick={() => openEdit(lead)} className="h-8 w-8 p-0" title="Modifica">
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
                         {lead.status !== 'CONVERTED' && (
+    
                           <Button variant="ghost" size="sm" onClick={() => openConvert(lead)} className="h-8 w-8 p-0 text-emerald-600" title="Converti in cliente">
                             <ArrowRightLeft className="h-3.5 w-3.5" />
                           </Button>
                         )}
+    
                         <Button variant="ghost" size="sm" onClick={() => { setDeleteLeadId(lead.id); setFormError(null) }} className="h-8 w-8 p-0 text-destructive" title="Elimina">
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -533,11 +555,11 @@ export default function LeadsPage() {
             <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-muted">{total} lead totali</p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={handlePrevPage}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted">{page} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={handleNextPage}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -547,7 +569,7 @@ export default function LeadsPage() {
       )}
 
       {/* New Lead Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuovo Lead" size="lg">
+      <Modal open={modalOpen} onClose={handleCloseNewModal} title="Nuovo Lead" size="lg">
         <div className="space-y-4">
           {formError && (
             <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
@@ -574,7 +596,7 @@ export default function LeadsPage() {
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Annulla</Button>
+            <Button variant="outline" onClick={handleCloseNewModal}>Annulla</Button>
             <Button onClick={handleCreate} disabled={submitting || !newLead.name || !newLead.email || !newLead.message}>
               {submitting ? 'Salvataggio...' : 'Crea Lead'}
             </Button>
@@ -583,7 +605,7 @@ export default function LeadsPage() {
       </Modal>
 
       {/* Edit Lead Modal */}
-      <Modal open={!!editLeadId} onClose={() => setEditLeadId(null)} title="Modifica Lead" size="lg">
+      <Modal open={!!editLeadId} onClose={handleCloseEditModal} title="Modifica Lead" size="lg">
         <div className="space-y-4">
           {formError && (
             <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
@@ -629,7 +651,7 @@ export default function LeadsPage() {
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setEditLeadId(null)}>Annulla</Button>
+            <Button variant="outline" onClick={handleCloseEditModal}>Annulla</Button>
             <Button onClick={handleEdit} disabled={submitting}>
               {submitting ? 'Salvataggio...' : 'Salva'}
             </Button>
@@ -638,7 +660,7 @@ export default function LeadsPage() {
       </Modal>
 
       {/* Convert Lead Modal */}
-      <Modal open={!!convertLeadId} onClose={() => setConvertLeadId(null)} title="Converti Lead in Cliente" size="md">
+      <Modal open={!!convertLeadId} onClose={handleCloseConvertModal} title="Converti Lead in Cliente" size="md">
         <div className="space-y-4">
           {formError && (
             <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
@@ -668,7 +690,7 @@ export default function LeadsPage() {
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setConvertLeadId(null)}>Annulla</Button>
+            <Button variant="outline" onClick={handleCloseConvertModal}>Annulla</Button>
             <Button onClick={handleConvert} disabled={submitting || !convertForm.companyName}>
               {submitting ? 'Conversione...' : 'Converti in Cliente'}
             </Button>
@@ -677,7 +699,7 @@ export default function LeadsPage() {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal open={!!deleteLeadId} onClose={() => setDeleteLeadId(null)} title="Elimina Lead" size="sm">
+      <Modal open={!!deleteLeadId} onClose={handleCloseDeleteModal} title="Elimina Lead" size="sm">
         <div className="space-y-4">
           {formError && (
             <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
@@ -687,13 +709,14 @@ export default function LeadsPage() {
           )}
           <p className="text-sm text-muted">Sei sicuro di voler eliminare questo lead? L&apos;azione non e reversibile.</p>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteLeadId(null)}>Annulla</Button>
+            <Button variant="outline" onClick={handleCloseDeleteModal}>Annulla</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={submitting}>
               {submitting ? 'Eliminazione...' : 'Elimina'}
             </Button>
           </div>
         </div>
       </Modal>
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop */}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Calendar, Clock, Check, ChevronLeft, ChevronRight, User } from 'lucide-react'
@@ -45,7 +46,7 @@ export default function BookingWidget({ teamMembers, onBookingComplete }: Bookin
     if (selectedMember && (step === 'loading' || step === 'date')) {
       fetchAvailability(selectedMember.id)
     }
-  }, [selectedMember])
+  }, [selectedMember, step])
 
   async function fetchAvailability(userId: string) {
     setStep('loading')

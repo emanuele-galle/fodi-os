@@ -16,7 +16,6 @@ import {
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useRouter } from 'next/navigation'
-import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { formatCurrency } from '@/lib/utils'
 
@@ -47,6 +46,7 @@ const SortableClientCard = memo(function SortableClientCard({ client, onClick }:
     data: { type: 'client', client },
   })
 
+  // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic DnD style
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -166,6 +166,7 @@ export function PipelineKanban({ clientsByStatus, onStatusChange }: PipelineKanb
                     <SortableClientCard
                       key={client.id}
                       client={client}
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                       onClick={() => router.push(`/crm/${client.id}`)}
                     />
                   ))}

@@ -29,6 +29,7 @@ export function TaskFocusPanel({ tasks, onTaskClick }: TaskFocusPanelProps) {
           return (
             <div
               key={task.id}
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
               onClick={() => onTaskClick(task.id)}
               className="flex items-center justify-between py-2 px-3 rounded-lg bg-card/80 border border-border/30 cursor-pointer hover:bg-secondary/50 transition-colors"
             >

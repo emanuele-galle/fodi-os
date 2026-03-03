@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- handlers + dynamic styles */
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'

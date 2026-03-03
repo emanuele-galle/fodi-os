@@ -20,7 +20,7 @@ function formatElapsed(ms: number): string {
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
 }
 
-export function TaskTimer({ taskId, timerStartedAt, timerUserId, onTimerChange }: TaskTimerProps) {
+export function TaskTimer({ taskId, timerStartedAt, onTimerChange }: TaskTimerProps) {
   const [isRunning, setIsRunning] = useState(!!timerStartedAt)
   const [startTime, setStartTime] = useState<Date | null>(timerStartedAt ? new Date(timerStartedAt) : null)
   const [elapsed, setElapsed] = useState(0)

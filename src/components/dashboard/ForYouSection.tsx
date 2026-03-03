@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- handlers + motion objects */
 
 import { useRouter } from 'next/navigation'
 import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react'

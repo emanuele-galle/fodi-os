@@ -240,13 +240,15 @@ describe('Validation - createQuoteSchema', () => {
   })
 
   it('rifiuta senza clientId', () => {
-    const { clientId, ...rest } = validQuote
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { clientId: _clientId, ...rest } = validQuote
     const result = createQuoteSchema.safeParse(rest)
     expect(result.success).toBe(false)
   })
 
   it('rifiuta senza lineItems', () => {
-    const { lineItems, ...rest } = validQuote
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { lineItems: _lineItems, ...rest } = validQuote
     const result = createQuoteSchema.safeParse(rest)
     expect(result.success).toBe(false)
   })

@@ -1,7 +1,7 @@
 import { brand } from '@/lib/branding'
 import { ROLE_LABELS } from '@/lib/constants'
-import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont, PDFImage } from 'pdf-lib'
-import { hexToRgb, lightenColor, drawText as draw, drawTextRight as drawRight, truncate, wrapText, formatEur, formatHoursShort, formatMinsHuman } from '@/lib/pdf-utils'
+import { PDFDocument, StandardFonts, rgb, PDFImage } from 'pdf-lib'
+import { hexToRgb, lightenColor, drawText as draw, drawTextRight as drawRight, truncate, formatEur, formatHoursShort, formatMinsHuman } from '@/lib/pdf-utils'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -199,7 +199,7 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
   const bold = await doc.embedFont(StandardFonts.HelveticaBold)
 
   const primaryHex = company?.primaryColor || '#007AFF'
-  const secondaryHex = company?.secondaryColor || '#1E293B'
+  const secondaryHex = company?.secondaryColor || '#1D1D1F'
   const primary = hexToRgb(primaryHex)
   const secondary = hexToRgb(secondaryHex)
   const primaryRgb = rgb(primary.r, primary.g, primary.b)
@@ -208,7 +208,7 @@ export async function generateReportPdf(data: DailyReportData, company?: ReportC
   const darkText = rgb(0.1, 0.1, 0.1)
   const grayText = rgb(0.4, 0.4, 0.4)
   const lightGray = rgb(0.6, 0.6, 0.6)
-  const borderColor = rgb(0.9, 0.9, 0.9)
+  const borderColor = rgb(0.898, 0.898, 0.918)
   const primaryLightBg = lightenColor(primaryHex, 0.88)
 
   let logoImage: PDFImage | null = null

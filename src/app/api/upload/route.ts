@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadFile } from '@/lib/s3'
 import { validateFile } from '@/lib/file-validation'
-import type { Role } from '@/generated/prisma/client'
-
 /**
  * POST /api/upload
  * Generic file upload to MinIO. Returns fileUrl, fileName, fileSize, mimeType.
@@ -11,7 +9,6 @@ import type { Role } from '@/generated/prisma/client'
  */
 export async function POST(request: NextRequest) {
   try {
-    const role = request.headers.get('x-user-role') as Role
     const userId = request.headers.get('x-user-id')
 
     if (!userId) {

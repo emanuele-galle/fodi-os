@@ -35,6 +35,7 @@ export function FieldTypeSelector({ value, onChange }: FieldTypeSelectorProps) {
         <button
           key={type}
           type="button"
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
           onClick={() => onChange(type)}
           className={cn(
             'flex items-center gap-2 p-2.5 rounded-lg border text-sm transition-all text-left',

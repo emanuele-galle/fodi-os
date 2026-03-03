@@ -1,3 +1,4 @@
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- quotes list page with loop handlers and dynamic table rows */
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'

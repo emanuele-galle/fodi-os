@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers */
 
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/Button'

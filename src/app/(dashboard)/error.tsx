@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { AlertTriangle } from 'lucide-react'

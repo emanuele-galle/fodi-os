@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string -- test data: role names are intentionally repeated */
 import { describe, it, expect } from 'vitest'
 import { hasPermission } from '@/lib/permissions'
 import type { Module } from '@/lib/permissions'

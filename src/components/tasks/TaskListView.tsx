@@ -45,6 +45,7 @@ export function TaskListView({ tasks, activeTab, userId, onTaskClick, expandedTa
             return (
               <React.Fragment key={task.id}>
               <tr
+                // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                 onClick={() => onTaskClick(task.id)}
                 className={cn(
                   'border-b border-border/10 hover:bg-secondary/8 cursor-pointer transition-colors group even:bg-secondary/[0.03]',
@@ -56,6 +57,7 @@ export function TaskListView({ tasks, activeTab, userId, onTaskClick, expandedTa
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {hasSubtasks && onToggleSubtasks ? (
                       <button
+                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                         onClick={(e) => onToggleSubtasks(task.id, e)}
                         className="p-0.5 rounded hover:bg-secondary/60 transition-colors flex-shrink-0"
                       >
@@ -142,8 +144,10 @@ export function TaskListView({ tasks, activeTab, userId, onTaskClick, expandedTa
                           return (
                             <div
                               key={sub.id}
+                              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                               onClick={(e) => { e.stopPropagation(); onTaskClick(sub.id) }}
                               className="flex items-center gap-3 py-2 px-3 rounded-md bg-secondary/20 hover:bg-secondary/40 cursor-pointer transition-colors group/sub"
+                              // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
                               style={{ borderLeft: `2px solid ${PRIORITY_COLORS[sub.priority] || 'var(--color-primary)'}` }}
                             >
                               <div className="flex items-center gap-1.5 flex-1 min-w-0">

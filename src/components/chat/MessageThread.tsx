@@ -41,7 +41,7 @@ interface MessageThreadProps {
   onToggleSelection?: (messageId: string) => void
 }
 
-export function MessageThread({ channelId, currentUserId, newMessages, readStatus, onEditMessage, onDeleteMessage, onDeleteMessages, onReply, onReact, userRole, selectionMode, selectedMessages, onToggleSelection }: MessageThreadProps) {
+export function MessageThread({ channelId, currentUserId, newMessages, readStatus, onEditMessage, onDeleteMessage, onReply, onReact, userRole, selectionMode, selectedMessages, onToggleSelection }: MessageThreadProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -51,13 +51,14 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
   const containerRef = useRef<HTMLDivElement>(null)
   const shouldAutoScroll = useRef(true)
 
-  // Update local read status from props (SSE updates)
-   
+  // Sync read status from props (SSE updates) via callback to avoid cascading renders
+  const syncReadStatus = useCallback((status: ReadStatusMap | undefined) => {
+    if (status) setLocalReadStatus((prev) => ({ ...prev, ...status }))
+  }, [])
+
   useEffect(() => {
-    if (readStatus) {
-      setLocalReadStatus((prev) => ({ ...prev, ...readStatus }))
-    }
-  }, [readStatus])
+    syncReadStatus(readStatus) // eslint-disable-line react-hooks/set-state-in-effect -- syncing SSE prop updates into local state via callback
+  }, [readStatus, syncReadStatus])
 
   // Compute read receipts for a given message
   function getReadReceipts(msg: Message): ReadReceipt[] {
@@ -73,7 +74,12 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
     return receipts
   }
 
-  const fetchMessages = useCallback(async (cursorId?: string) => {
+  const fetchMessages = useCallback(async (cursorId?: string, reset = false) => {
+    if (reset) {
+      setLoading(true)
+      setMessages([])
+      setCursor(null)
+    }
     const params = new URLSearchParams({ limit: '50' })
     if (cursorId) params.set('cursor', cursorId)
 
@@ -83,15 +89,11 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
   }, [channelId])
 
   // Load initial messages
-   
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setMessages([])
-    setCursor(null)
     shouldAutoScroll.current = true
 
-    fetchMessages()
+    fetchMessages(undefined, true) // eslint-disable-line react-hooks/set-state-in-effect -- reset+loading state set inside fetch callback
       .then((data) => {
         if (cancelled) return
         if (data) {
@@ -111,25 +113,26 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
   }, [channelId, fetchMessages])
 
   // Handle new SSE messages (new, edited, deleted, reactions)
-   
-  useEffect(() => {
-    if (newMessages.length === 0) return
+  const mergeNewMessages = useCallback((msgs: Message[]) => {
     setMessages((prev) => {
       const updated = [...prev]
-      for (const msg of newMessages) {
+      for (const msg of msgs) {
         const existingIndex = updated.findIndex((m) => m.id === msg.id)
         if (existingIndex >= 0) {
-          // Update existing message (edit, reaction)
           updated[existingIndex] = { ...updated[existingIndex], ...msg }
         } else {
-          // New message
           updated.push(msg)
         }
       }
       return updated
     })
+  }, [])
+
+  useEffect(() => {
+    if (newMessages.length === 0) return
+    mergeNewMessages(newMessages) // eslint-disable-line react-hooks/set-state-in-effect -- merging real-time SSE messages via callback
     shouldAutoScroll.current = true
-  }, [newMessages])
+  }, [newMessages, mergeNewMessages])
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -242,6 +245,7 @@ export function MessageThread({ channelId, currentUserId, newMessages, readStatu
               <div key={msg.id} className={cn('flex items-start', selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN') && 'pl-2')}>
                 {selectionMode && (msg.author.id === currentUserId || userRole === 'ADMIN') && (
                   <button
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                     onClick={(e) => { e.stopPropagation(); onToggleSelection?.(msg.id) }}
                     className={cn(
                       'flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center transition-colors mr-1 mt-3',

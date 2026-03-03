@@ -33,6 +33,7 @@ function SortableHeader({
   return (
     <th
       className={`py-3 px-4 font-medium text-muted cursor-pointer select-none hover:text-foreground transition-colors ${className || ''}`}
+      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- wraps callback with field param
       onClick={() => onColumnSort(field)}
     >
       <div className="flex items-center gap-1">
@@ -79,12 +80,14 @@ export function ProjectTableView({
               <tr
                 key={p.id}
                 className="border-b border-border/20 hover:bg-secondary/30 cursor-pointer transition-colors"
+                // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                 onClick={() => onProjectClick(p.id)}
               >
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
                     <span
                       className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                      // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
                       style={{ background: p.color || STATUS_COLORS[p.status] || 'var(--color-primary)' }}
                     />
                     <span className="font-medium truncate max-w-[200px]">{p.name}</span>
@@ -106,6 +109,7 @@ export function ProjectTableView({
                 <td className="py-3 px-4 hidden md:table-cell">
                   <div className="flex items-center gap-2 min-w-[120px]">
                     <div className="h-2 bg-secondary rounded-full overflow-hidden flex-1">
+                      {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value */}
                       <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
                     </div>
                     <span className="text-xs text-muted w-8 text-right">{progressPercent}%</span>
@@ -117,6 +121,7 @@ export function ProjectTableView({
                 <td className="py-3 px-4 text-muted hidden lg:table-cell">
                   {p.budgetAmount ? parseFloat(p.budgetAmount).toLocaleString('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }) : '-'}
                 </td>
+                {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple stopPropagation */}
                 <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                   {renderActionMenu(p)}
                 </td>

@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont, PDFImage } from 'pdf-lib'
+import { PDFDocument, StandardFonts, rgb, PDFImage } from 'pdf-lib'
 import { hexToRgb, drawText, drawTextRight as rightAlignText, wrapText, formatEur } from '@/lib/pdf-utils'
 
 // ─── Types ──────────────────────────────────────────────────
@@ -98,8 +98,8 @@ export async function generateDocumentPdf(data: PdfDocumentData): Promise<Uint8A
   const helvetica = await doc.embedFont(StandardFonts.Helvetica)
   const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold)
 
-  const primaryHex = data.primaryColor || '#3B82F6'
-  const secondaryHex = data.secondaryColor || '#1E293B'
+  const primaryHex = data.primaryColor || '#007AFF'
+  const secondaryHex = data.secondaryColor || '#1D1D1F'
   const primary = hexToRgb(primaryHex)
   const secondary = hexToRgb(secondaryHex)
   const primaryRgb = rgb(primary.r, primary.g, primary.b)
@@ -107,8 +107,8 @@ export async function generateDocumentPdf(data: PdfDocumentData): Promise<Uint8A
   const grayText = rgb(0.4, 0.4, 0.4)
   const darkText = rgb(0.1, 0.1, 0.1)
   const white = rgb(1, 1, 1)
-  const lightBg = rgb(0.97, 0.97, 0.98)
-  const borderColor = rgb(0.9, 0.9, 0.9)
+  const lightBg = rgb(0.949, 0.949, 0.969)
+  const borderColor = rgb(0.898, 0.898, 0.918)
 
   const PAGE_W = 595.28
   const PAGE_H = 841.89
@@ -264,7 +264,6 @@ export async function generateDocumentPdf(data: PdfDocumentData): Promise<Uint8A
   const colDesc = MARGIN
   const colQty = MARGIN + CONTENT_W * 0.52
   const colPrice = MARGIN + CONTENT_W * 0.67
-  const colTotal = MARGIN + CONTENT_W * 0.84
   const tableHeaderH = 24
 
   function checkPageBreak(needed: number) {

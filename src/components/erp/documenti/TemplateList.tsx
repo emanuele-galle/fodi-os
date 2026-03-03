@@ -1,6 +1,7 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- CRUD list with many inline handlers */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, type ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileText, Plus, Search, ChevronLeft, ChevronRight, Copy, Trash2, MoreVertical, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -96,6 +97,13 @@ export function TemplateList() {
 
   const totalPages = Math.ceil(total / limit)
 
+  const handleSearchChange = useCallback((e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value), [])
+  const handleGoToNew = useCallback(() => router.push('/erp/templates/new'), [router])
+  const handlePrevPage = useCallback(() => setPage((p) => p - 1), [])
+  const handleNextPage = useCallback(() => setPage((p) => p + 1), [])
+  const handleCloseActionMenu = useCallback(() => setActionMenuId(null), [])
+  const handleCloseDeleteModal = useCallback(() => setConfirmDeleteId(null), [])
+
   return (
     <div>
       {/* Action Button + Search */}
@@ -105,17 +113,17 @@ export function TemplateList() {
           <Input
             placeholder="Cerca template..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-10"
           />
         </div>
         <div className="hidden sm:block flex-shrink-0">
-          <Button size="sm" onClick={() => router.push('/erp/templates/new')}>
+          <Button size="sm" onClick={handleGoToNew}>
             <Plus className="h-4 w-4" />
             Nuovo Template
           </Button>
         </div>
-        <Button onClick={() => router.push('/erp/templates/new')} className="sm:hidden flex-shrink-0">
+        <Button onClick={handleGoToNew} className="sm:hidden flex-shrink-0">
           <Plus className="h-4 w-4 mr-1" />
           Nuovo
         </Button>
@@ -142,7 +150,7 @@ export function TemplateList() {
           description={search ? 'Prova a modificare la ricerca.' : 'Crea il tuo primo template per velocizzare la creazione dei preventivi.'}
           action={
             !search ? (
-              <Button onClick={() => router.push('/erp/templates/new')}>
+              <Button onClick={handleGoToNew}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nuovo Template
               </Button>
@@ -152,6 +160,7 @@ export function TemplateList() {
       ) : (
         <>
           {/* Mobile Card View */}
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- loop captures template id */}
           <div className="md:hidden space-y-3">
             {templates.map((t) => (
               <div
@@ -272,15 +281,16 @@ export function TemplateList() {
             </table>
           </div>
 
+
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-muted">{total} template totali</p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={handlePrevPage}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted">{page} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={handleNextPage}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -291,20 +301,20 @@ export function TemplateList() {
 
       {/* Close action menu on click outside */}
       {actionMenuId && (
-        <div className="fixed inset-0 z-40" onClick={() => setActionMenuId(null)} />
+        <div className="fixed inset-0 z-40" onClick={handleCloseActionMenu} />
       )}
 
       {/* Delete Confirmation Modal */}
       <Modal
         open={!!confirmDeleteId}
-        onClose={() => setConfirmDeleteId(null)}
+        onClose={handleCloseDeleteModal}
         title="Elimina Template"
       >
         <p className="text-sm text-muted mb-4">
           Sei sicuro di voler eliminare questo template? Questa azione non puo essere annullata.
         </p>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={() => setConfirmDeleteId(null)}>
+          <Button variant="outline" size="sm" onClick={handleCloseDeleteModal}>
             Annulla
           </Button>
           <Button variant="destructive" size="sm" loading={deleting} onClick={handleDelete}>

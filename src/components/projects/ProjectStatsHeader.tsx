@@ -3,6 +3,8 @@
 import { Card, CardContent } from '@/components/ui/Card'
 import { FolderOpen, Clock, CheckCircle2, AlertTriangle } from 'lucide-react'
 
+const colorMixStyle = { background: 'color-mix(in srgb, currentColor 10%, transparent)' } as const
+
 interface ProjectStatsHeaderProps {
   totalCount: number
   inProgress: number
@@ -15,7 +17,7 @@ export function ProjectStatsHeader({ totalCount, inProgress, completed, overdue 
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 animate-stagger">
       <Card>
         <CardContent className="flex items-center gap-3 sm:gap-4">
-          <div className="p-2 sm:p-3 rounded-full text-primary" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+          <div className="p-2 sm:p-3 rounded-full text-primary" style={colorMixStyle}>
             <FolderOpen className="h-5 w-5" />
           </div>
           <div>
@@ -26,7 +28,7 @@ export function ProjectStatsHeader({ totalCount, inProgress, completed, overdue 
       </Card>
       <Card>
         <CardContent className="flex items-center gap-3 sm:gap-4">
-          <div className="p-2 sm:p-3 rounded-full text-accent" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+          <div className="p-2 sm:p-3 rounded-full text-accent" style={colorMixStyle}>
             <Clock className="h-5 w-5" />
           </div>
           <div>
@@ -37,7 +39,7 @@ export function ProjectStatsHeader({ totalCount, inProgress, completed, overdue 
       </Card>
       <Card>
         <CardContent className="flex items-center gap-3 sm:gap-4">
-          <div className="p-2 sm:p-3 rounded-full text-[var(--color-accent)]" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+          <div className="p-2 sm:p-3 rounded-full text-[var(--color-accent)]" style={colorMixStyle}>
             <CheckCircle2 className="h-5 w-5" />
           </div>
           <div>
@@ -48,7 +50,7 @@ export function ProjectStatsHeader({ totalCount, inProgress, completed, overdue 
       </Card>
       <Card>
         <CardContent className="flex items-center gap-3 sm:gap-4">
-          <div className="p-2 sm:p-3 rounded-full text-destructive" style={{ background: 'color-mix(in srgb, currentColor 10%, transparent)' }}>
+          <div className="p-2 sm:p-3 rounded-full text-destructive" style={colorMixStyle}>
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div>

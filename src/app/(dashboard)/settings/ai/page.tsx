@@ -55,9 +55,9 @@ const MODULE_LABELS: Record<string, { label: string; icon: typeof Sparkles; colo
 
 type Tab = 'general' | 'tools' | 'prompts'
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- settings page
+ 
 export default function AiSettingsPage() {
-  const [config, setConfig] = useState<AiConfig | null>(null)
+  const [, setConfig] = useState<AiConfig | null>(null)
   const [tools, setTools] = useState<ToolInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -115,6 +115,7 @@ export default function AiSettingsPage() {
     loadConfig()
   }, [loadConfig])
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- used as onClick handler
   const handleSave = async () => {
     setSaving(true)
     setSaved(false)
@@ -187,6 +188,7 @@ export default function AiSettingsPage() {
 
   return (
     <div className="animate-fade-in">
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- config form with many interactive controls */}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
@@ -234,6 +236,7 @@ export default function AiSettingsPage() {
         ]).map(tab => (
           <button
             key={tab.id}
+
             onClick={() => setActiveTab(tab.id)}
             className={cn(
               'px-4 py-2 rounded-md text-sm font-medium transition-all duration-200',
@@ -267,6 +270,7 @@ export default function AiSettingsPage() {
                     </p>
                   </div>
                   <button
+
                     onClick={() => setIsActive(!isActive)}
                     className={cn(
                       'relative w-11 h-6 rounded-full transition-colors',
@@ -285,6 +289,7 @@ export default function AiSettingsPage() {
                   <input
                     type="text"
                     value={name}
+
                     onChange={e => setName(e.target.value)}
                     className="w-full rounded-lg border border-border/40 bg-secondary/30 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
                     placeholder="Assistente AI"
@@ -305,6 +310,7 @@ export default function AiSettingsPage() {
                 {MODELS.map(m => (
                   <button
                     key={m.value}
+        
                     onClick={() => setModel(m.value)}
                     className={cn(
                       'w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left',
@@ -564,6 +570,7 @@ export default function AiSettingsPage() {
           </Card>
         </div>
       )}
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
     </div>
   )
 }

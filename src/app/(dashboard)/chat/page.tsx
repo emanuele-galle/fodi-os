@@ -13,6 +13,25 @@ import { useChat } from '@/hooks/useChat'
 export default function ChatPage() {
   const chat = useChat()
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers */
+  const handleRetryChannels = () => chat.fetchChannels()
+  const handleOpenNewChannel = () => chat.setModalOpen(true)
+  const handleToggleSelection = () => chat.selectionMode ? chat.exitSelectionMode() : chat.setSelectionMode(true)
+  const handleToggleSearch = () => { chat.setSearchOpen(!chat.searchOpen); if (chat.searchOpen) { chat.handleSearch('') } }
+  const handleToggleInfoPanel = () => chat.setShowInfoPanel(!chat.showInfoPanel)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => chat.handleSearch(e.target.value)
+  const handleClearSearch = () => chat.handleSearch('')
+  const handleCloseSendError = () => chat.setSendError(null)
+  const handleCloseInfoOverlay = () => chat.setShowInfoPanel(false)
+  const handleCloseModal = () => chat.setModalOpen(false)
+  const handleDeleteChannel = (id: string) => {
+    chat.setSelectedId(null)
+    chat.setShowInfoPanel(false)
+    chat.setNewMessages([])
+    chat.setChannels((prev) => prev.filter((ch) => ch.id !== id))
+  }
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   return (
     <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-4rem)] h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-4rem)] -mx-4 -mt-4 -mb-20 md:-mx-6 md:-mt-6 md:-mb-6 relative overflow-hidden">
       {/* Left panel - Channel list */}
@@ -20,14 +39,14 @@ export default function ChatPage() {
         {chat.channelError && (
           <div className="mx-3 mt-3 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
             <p className="text-xs text-destructive">{chat.channelError}</p>
-            <button onClick={() => chat.fetchChannels()} className="text-xs font-medium text-destructive hover:underline flex-shrink-0 ml-2">Riprova</button>
+            <button onClick={handleRetryChannels} className="text-xs font-medium text-destructive hover:underline flex-shrink-0 ml-2">Riprova</button>
           </div>
         )}
         <ChannelList
           channels={chat.channels}
           selectedId={chat.selectedId}
           onSelect={chat.handleSelectChannel}
-          onNewChannel={() => chat.setModalOpen(true)}
+          onNewChannel={handleOpenNewChannel}
           teamMembers={chat.teamMembers}
           currentUserId={chat.currentUserId}
           onStartDM={chat.handleStartDM}
@@ -80,7 +99,7 @@ export default function ChatPage() {
               </div>
               <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
                 <button
-                  onClick={() => chat.selectionMode ? chat.exitSelectionMode() : chat.setSelectionMode(true)}
+                  onClick={handleToggleSelection}
                   className={cn(
                     'h-10 w-10 md:h-8 md:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
                     chat.selectionMode ? 'bg-destructive/10 text-destructive' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
@@ -90,7 +109,7 @@ export default function ChatPage() {
                   <CheckSquare className="h-4 w-4 md:h-3.5 md:w-3.5" />
                 </button>
                 <button
-                  onClick={() => { chat.setSearchOpen(!chat.searchOpen); if (chat.searchOpen) { chat.handleSearch('') } }}
+                  onClick={handleToggleSearch}
                   className={cn(
                     'h-10 w-10 md:h-8 md:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
                     chat.searchOpen ? 'bg-primary/10 text-primary' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
@@ -100,7 +119,7 @@ export default function ChatPage() {
                   <Search className="h-4 w-4 md:h-3.5 md:w-3.5" />
                 </button>
                 <button
-                  onClick={() => chat.setShowInfoPanel(!chat.showInfoPanel)}
+                  onClick={handleToggleInfoPanel}
                   className={cn(
                     'h-10 w-10 md:h-8 md:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
                     chat.showInfoPanel ? 'bg-primary/10 text-primary' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
@@ -128,14 +147,14 @@ export default function ChatPage() {
                   <input
                     type="text"
                     value={chat.searchQuery}
-                    onChange={(e) => chat.handleSearch(e.target.value)}
+                    onChange={handleSearchChange}
                     placeholder="Cerca nei messaggi..."
                     className="flex-1 bg-transparent text-base md:text-sm outline-none placeholder:text-muted-foreground/40"
                     autoFocus
                   />
                   {chat.searchQuery && (
                     <button
-                      onClick={() => chat.handleSearch('')}
+                      onClick={handleClearSearch}
                       className="text-muted-foreground/40 hover:text-muted-foreground"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -207,7 +226,7 @@ export default function ChatPage() {
             {chat.sendError && (
               <div className="px-4 py-2 bg-destructive/10 border-t border-destructive/20 flex items-center justify-between">
                 <p className="text-xs text-destructive">{chat.sendError}</p>
-                <button onClick={() => chat.setSendError(null)} className="text-xs text-destructive hover:underline ml-2 flex-shrink-0">Chiudi</button>
+                <button onClick={handleCloseSendError} className="text-xs text-destructive hover:underline ml-2 flex-shrink-0">Chiudi</button>
               </div>
             )}
             <MessageInput
@@ -237,20 +256,15 @@ export default function ChatPage() {
       {/* Info panel */}
       {chat.showInfoPanel && chat.selectedId && (
         <>
-          <div className="md:hidden fixed inset-0 z-40 bg-foreground/50" onClick={() => chat.setShowInfoPanel(false)} />
+          <div className="md:hidden fixed inset-0 z-40 bg-foreground/50" onClick={handleCloseInfoOverlay} />
           <div className="fixed md:relative inset-y-0 right-0 z-50 md:z-auto">
             <ChannelInfoPanel
               channelId={chat.selectedId}
               currentUserId={chat.currentUserId}
               currentUserRole={chat.currentUserRole}
               teamMembers={chat.teamMembers}
-              onClose={() => chat.setShowInfoPanel(false)}
-              onDeleteChannel={(id) => {
-                chat.setSelectedId(null)
-                chat.setShowInfoPanel(false)
-                chat.setNewMessages([])
-                chat.setChannels((prev) => prev.filter((ch) => ch.id !== id))
-              }}
+              onClose={handleCloseInfoOverlay}
+              onDeleteChannel={handleDeleteChannel}
             />
           </div>
         </>
@@ -258,7 +272,7 @@ export default function ChatPage() {
 
       <NewChannelModal
         open={chat.modalOpen}
-        onClose={() => chat.setModalOpen(false)}
+        onClose={handleCloseModal}
         onCreated={chat.handleChannelCreated}
         teamMembers={chat.teamMembers}
         currentUserId={chat.currentUserId}

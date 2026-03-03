@@ -151,6 +151,7 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
         <Button
           variant={zoom === 'week' ? 'primary' : 'outline'}
           size="sm"
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter
           onClick={() => setZoom('week')}
         >
           Settimana
@@ -158,6 +159,7 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
         <Button
           variant={zoom === 'month' ? 'primary' : 'outline'}
           size="sm"
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter
           onClick={() => setZoom('month')}
         >
           Mese
@@ -166,6 +168,7 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
 
       <div className="hidden md:flex border border-border rounded-lg overflow-hidden">
         {/* Left labels */}
+        {/* eslint-disable react-perf/jsx-no-new-object-as-prop -- static dimension constants */}
         <div className="shrink-0 border-r border-border bg-secondary/20" style={{ width: LABEL_WIDTH }}>
           <div
             className="flex items-center px-3 text-xs font-medium text-muted border-b border-border"
@@ -178,6 +181,7 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
               key={bar.id}
               className="flex items-center px-3 text-sm truncate border-b border-border/50 cursor-pointer hover:bg-secondary/40 transition-colors"
               style={{ height: ROW_HEIGHT }}
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
               onClick={() => onTaskClick?.(bar.id)}
               title={bar.title}
             >
@@ -305,6 +309,7 @@ export function GanttChart({ tasks, milestones, dependencies = [], onTaskClick }
                 <g
                   key={bar.id}
                   className="cursor-pointer"
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                   onClick={() => onTaskClick?.(bar.id)}
                 >
                   <rect

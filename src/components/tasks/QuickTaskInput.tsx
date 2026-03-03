@@ -59,7 +59,7 @@ export function QuickTaskInput({ onCreated, users = [] }: QuickTaskInputProps) {
         <input
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)} // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- simple state setter
           onKeyDown={handleKeyDown}
           placeholder="Aggiungi un task veloce..."
           className="flex-1 bg-transparent text-base md:text-sm placeholder:text-muted focus:outline-none min-h-[44px] md:min-h-0"
@@ -72,7 +72,7 @@ export function QuickTaskInput({ onCreated, users = [] }: QuickTaskInputProps) {
             <UserPlus className="h-4 w-4 text-muted flex-shrink-0 hidden sm:block" />
             <select
               value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
+              onChange={(e) => setAssigneeId(e.target.value)} // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- simple state setter
               className="h-11 md:h-8 rounded-md border border-border bg-transparent px-2 text-base md:text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 flex-1 sm:flex-none max-w-[140px]"
             >
               <option value="">Me</option>
@@ -86,7 +86,7 @@ export function QuickTaskInput({ onCreated, users = [] }: QuickTaskInputProps) {
         )}
         <select
           value={priority}
-          onChange={(e) => setPriority(e.target.value)}
+          onChange={(e) => setPriority(e.target.value)} // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- simple state setter
           className="h-11 md:h-8 rounded-md border border-border bg-transparent px-2 text-base md:text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 flex-1 sm:flex-none"
         >
           {PRIORITY_OPTIONS.map((opt) => (

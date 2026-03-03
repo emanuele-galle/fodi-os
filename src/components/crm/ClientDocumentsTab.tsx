@@ -37,6 +37,7 @@ export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
 
   useEffect(() => { fetchDocs() }, [fetchDocs])
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- named handler
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -52,6 +53,7 @@ export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
     finally { setUploading(false); e.target.value = '' }
   }
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- named handler
   const handleAddLink = async () => {
     if (!linkUrl.trim()) return
     setAddingLink(true)
@@ -97,6 +99,7 @@ export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
         <span className="text-sm text-muted">{docs.length} document{docs.length !== 1 ? 'i' : 'o'}</span>
         <div className="flex items-center gap-2">
           <button
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- toggle handler
             onClick={() => setShowLinkForm(!showLinkForm)}
             className="inline-flex items-center gap-1.5 text-sm font-medium cursor-pointer rounded-lg border border-border/50 px-3 py-1.5 hover:bg-secondary/50 transition-colors"
           >
@@ -112,14 +115,17 @@ export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
       </div>
       {showLinkForm && (
         <div className="mb-3 space-y-2 border border-border rounded-lg p-3">
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form handlers */}
           <Input placeholder="https://drive.google.com/..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter') handleAddLink(); if (e.key === 'Escape') setShowLinkForm(false) }} />
           <Input placeholder="Nome (opzionale)" value={linkName} onChange={(e) => setLinkName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleAddLink() }} />
+          {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
           <div className="flex gap-2">
             <Button size="sm" onClick={handleAddLink} disabled={addingLink || !linkUrl.trim()}>
               {addingLink ? 'Aggiunta...' : 'Aggiungi'}
             </Button>
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- close handler */}
             <Button size="sm" variant="ghost" onClick={() => setShowLinkForm(false)}>Annulla</Button>
           </div>
         </div>
@@ -151,6 +157,7 @@ export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
                     <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-md hover:bg-secondary/50 text-muted hover:text-foreground transition-colors">
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
+                    {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler */}
                     <button onClick={() => handleDelete(doc.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted hover:text-destructive transition-colors">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

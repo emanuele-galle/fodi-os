@@ -44,7 +44,7 @@ interface ProfileSectionProps {
   setMessage: (msg: string) => void
 }
 
-export function ProfileSection({ message, setMessage }: ProfileSectionProps) {
+export function ProfileSection({ setMessage }: ProfileSectionProps) {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -56,6 +56,7 @@ export function ProfileSection({ message, setMessage }: ProfileSectionProps) {
       })
   }, [])
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- used as onSubmit handler
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
@@ -96,6 +97,7 @@ export function ProfileSection({ message, setMessage }: ProfileSectionProps) {
 
   return (
     <>
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- profile form field setters */}
       <Card className="rounded-xl border border-border/20">
         <CardTitle>Profilo</CardTitle>
         <CardContent>
@@ -272,6 +274,7 @@ export function ProfileSection({ message, setMessage }: ProfileSectionProps) {
           </div>
         </CardContent>
       </Card>
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
     </>
   )
 }

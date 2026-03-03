@@ -52,9 +52,11 @@ export function ClientContactsTab({ contacts, onAddContact, onEditContact, onDel
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
+                  {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler */}
                   <button onClick={() => onEditContact(c)} className="p-2 md:p-1.5 rounded-md hover:bg-secondary/50 text-muted hover:text-foreground transition-colors" title="Modifica">
                     <Edit className="h-4 w-4 md:h-3.5 md:w-3.5" />
                   </button>
+                  {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler */}
                   <button onClick={() => onDeleteContact(c.id)} className="p-2 md:p-1.5 rounded-md hover:bg-destructive/10 text-muted hover:text-destructive transition-colors" title="Elimina">
                     <Trash2 className="h-4 w-4 md:h-3.5 md:w-3.5" />
                   </button>

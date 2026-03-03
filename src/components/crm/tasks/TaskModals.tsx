@@ -34,12 +34,14 @@ export function TaskCreateModal({
             {formError}
           </div>
         )}
+        {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form handlers */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
             <Input label="Titolo *" value={form.title} onChange={(e) => onFormChange({ ...form, title: e.target.value })} placeholder="Descrizione breve attività" />
           </div>
           <Select
             label="Cliente *"
+            // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- computed from clients prop
             options={[
               { value: '', label: 'Seleziona cliente' },
               ...clients.map(c => ({ value: c.id, label: c.companyName }))
@@ -49,6 +51,7 @@ export function TaskCreateModal({
           />
           <Select
             label="Assegnato a"
+            // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- computed from staffUsers prop
             options={[
               { value: '', label: 'Non assegnato' },
               ...staffUsers.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))
@@ -87,6 +90,7 @@ export function TaskCreateModal({
             className="flex w-full rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-base md:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40 resize-none"
           />
         </div>
+        {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={onClose}>Annulla</Button>
           <Button onClick={onSubmit} disabled={submitting || !form.title || !form.clientId}>
@@ -122,12 +126,14 @@ export function TaskEditModal({
             {formError}
           </div>
         )}
+        {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form handlers */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
             <Input label="Titolo" value={form.title} onChange={(e) => onFormChange({ ...form, title: e.target.value })} />
           </div>
           <Select
             label="Cliente"
+            // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- computed from clients prop
             options={[
               { value: '', label: 'Nessun cliente' },
               ...clients.map(c => ({ value: c.id, label: c.companyName }))
@@ -137,6 +143,7 @@ export function TaskEditModal({
           />
           <Select
             label="Assegnato a"
+            // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- computed from staffUsers prop
             options={[
               { value: '', label: 'Non assegnato' },
               ...staffUsers.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))
@@ -180,6 +187,7 @@ export function TaskEditModal({
             className="flex w-full rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-base md:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40 resize-none"
           />
         </div>
+        {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={onClose}>Annulla</Button>
           <Button onClick={onSubmit} disabled={submitting}>

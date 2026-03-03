@@ -130,7 +130,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const s3Key = `projects/${projectId}/${timestamp}-${random}.${ext}`
 
     // Upload: MinIO (primary) + GDrive (optional backup)
-    const { fileUrl, driveFileId, webViewLink } = await uploadWithBackup(
+    const { fileUrl, driveFileId } = await uploadWithBackup(
       safeFileName,
       buffer,
       mimeType,

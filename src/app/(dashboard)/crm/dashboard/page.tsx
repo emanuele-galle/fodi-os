@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useFetch } from '@/hooks/useFetch'
@@ -328,10 +327,12 @@ export default function CrmDashboardPage() {
                       <span className="font-medium">{count}</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted/20 overflow-hidden">
+                      {/* eslint-disable react-perf/jsx-no-new-object-as-prop -- dynamic runtime value */}
                       <div
                         className={`h-full rounded-full transition-all ${STATUS_BAR_COLORS[status] || 'bg-zinc-400'}`}
                         style={{ width: `${Math.max(pct, count > 0 ? 4 : 0)}%` }}
                       />
+                      {/* eslint-enable react-perf/jsx-no-new-object-as-prop */}
                     </div>
                   </div>
                 )

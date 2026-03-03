@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -49,6 +50,7 @@ export default function PortalTicketsPage() {
   const [activeTab, setActiveTab] = useState('')
 
   const fetchTickets = useCallback(() => {
+    setLoading(true)
     const url = activeTab
       ? `/api/portal/tickets?status=${activeTab}`
       : '/api/portal/tickets'
@@ -59,8 +61,7 @@ export default function PortalTicketsPage() {
   }, [activeTab])
 
   useEffect(() => {
-    setLoading(true)
-    fetchTickets()
+    fetchTickets() // eslint-disable-line react-hooks/set-state-in-effect -- loading state set inside fetch callback, not a cascading render risk
   }, [fetchTickets])
 
   useRealtimeRefresh('ticket', fetchTickets)

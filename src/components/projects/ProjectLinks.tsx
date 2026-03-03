@@ -5,7 +5,6 @@ import { Link2, Plus, Pencil, Trash2, ExternalLink, Search, X, Tag } from 'lucid
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
-import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -59,11 +58,6 @@ function getFaviconUrl(url: string): string | null {
   } catch {
     return null
   }
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 function groupByDate(links: ProjectLinkItem[]): { date: string; links: ProjectLinkItem[] }[] {
@@ -225,6 +219,24 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
     }
   }
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers for form fields */
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)
+  const handleClearFilter = () => setFilterTag(null)
+  const handleCloseModal = () => setModalOpen(false)
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormTitle(e.target.value)
+  const handleUrlChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setFormUrl(e.target.value)
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setFormDescription(e.target.value)
+  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)
+  const handleTagKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') { e.preventDefault(); addTag() }
+    if (e.key === ',' || e.key === 'Tab') { e.preventDefault(); addTag() }
+  }
+  const handleFaviconError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    (e.target as HTMLImageElement).style.display = 'none'
+    ;(e.target as HTMLImageElement).parentElement!.innerHTML = '<svg class="h-5 w-5 text-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+  }
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   const grouped = groupByDate(links)
 
   if (loading) {
@@ -247,7 +259,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
             <Input
               placeholder="Cerca collegamenti..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-10"
             />
           </div>
@@ -255,7 +267,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
             <div className="hidden md:flex items-center gap-1.5 flex-wrap">
               {filterTag && (
                 <button
-                  onClick={() => setFilterTag(null)}
+                  onClick={handleClearFilter}
                   className="text-xs px-2 py-1 rounded-full bg-secondary hover:bg-secondary/80 text-muted transition-colors"
                 >
                   Tutti
@@ -264,6 +276,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
               {allTags.slice(0, 8).map((tag) => (
                 <button
                   key={tag}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                   onClick={() => setFilterTag(filterTag === tag ? null : tag)}
                   className={`text-xs px-2 py-1 rounded-full transition-colors ${
                     filterTag === tag
@@ -306,11 +319,12 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
                       {/* Favicon */}
                       <div className="h-10 w-10 rounded-lg bg-secondary/60 flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {favicon ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- external favicon URL
                           <img
                             src={favicon}
                             alt=""
                             className="h-6 w-6"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '<svg class="h-5 w-5 text-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>' }}
+                            onError={handleFaviconError}
                           />
                         ) : (
                           <Link2 className="h-5 w-5 text-muted" />
@@ -381,6 +395,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
                       {/* Actions */}
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                         <button
+                          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                           onClick={() => openEditModal(link)}
                           className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-secondary transition-colors"
                           title="Modifica"
@@ -388,6 +403,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button
+                          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                           onClick={() => handleDelete(link.id)}
                           className="p-1.5 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors"
                           title="Elimina"
@@ -407,7 +423,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
       {/* Add/Edit Modal */}
       <Modal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={handleCloseModal}
         title={editingLink ? 'Modifica collegamento' : 'Aggiungi un nuovo collegamento'}
         size="md"
       >
@@ -416,7 +432,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
             label="Titolo"
             placeholder="es. Ultimo progetto su ProofHQ"
             value={formTitle}
-            onChange={(e) => setFormTitle(e.target.value)}
+            onChange={handleTitleChange}
             required
           />
 
@@ -424,7 +440,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
             <label className="block text-sm font-medium text-foreground">Collegamento</label>
             <textarea
               value={formUrl}
-              onChange={(e) => setFormUrl(e.target.value)}
+              onChange={handleUrlChange}
               rows={2}
               placeholder="Inserisci qui l'URL o il link breve"
               className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
@@ -436,7 +452,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
             <label className="block text-sm font-medium text-foreground">Descrizione (Facoltativo)</label>
             <textarea
               value={formDescription}
-              onChange={(e) => setFormDescription(e.target.value)}
+              onChange={handleDescriptionChange}
               rows={4}
               placeholder="Aggiungi una descrizione..."
               className="flex w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
@@ -451,11 +467,8 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
                 <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
                 <Input
                   value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { e.preventDefault(); addTag() }
-                    if (e.key === ',' || e.key === 'Tab') { e.preventDefault(); addTag() }
-                  }}
+                  onChange={handleTagInputChange}
+                  onKeyDown={handleTagKeyDown}
                   placeholder="Aggiungi tag e premi Invio..."
                   className="pl-9"
                 />
@@ -469,6 +482,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
                     className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${getTagColor(tag)}`}
                   >
                     {tag}
+                    {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture */}
                     <button type="button" onClick={() => removeTag(tag)} className="hover:opacity-70">
                       <X className="h-3 w-3" />
                     </button>
@@ -485,7 +499,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
+            <Button type="button" variant="outline" onClick={handleCloseModal}>
               Annulla
             </Button>
             <Button type="submit" loading={submitting}>

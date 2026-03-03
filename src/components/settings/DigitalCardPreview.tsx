@@ -90,6 +90,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
               <div className="relative w-20 h-20 mb-4">
                 <div
                   className="absolute inset-0 rounded-full p-[2px]"
+                  // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- static gradient style
                   style={{
                     background: 'conic-gradient(from 0deg, transparent 10%, rgba(0,122,255,0.5), transparent 40%, rgba(10,132,255,0.4), transparent 70%)',
                   }}
@@ -137,6 +138,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
                 <div className={`mt-4 grid gap-1.5 w-full ${actionCount >= 3 ? 'grid-cols-3' : actionCount === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                   {hasPhone && (
                     <div className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                      {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- static color */}
                       <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: 'rgba(16,185,129,0.15)' }}>
                         <Phone className="w-2.5 h-2.5 text-emerald-400" />
                       </div>
@@ -145,6 +147,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
                   )}
                   {hasEmail && (
                     <div className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                      {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- static color */}
                       <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: 'rgba(59,130,246,0.15)' }}>
                         <Mail className="w-2.5 h-2.5 text-blue-400" />
                       </div>
@@ -153,6 +156,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
                   )}
                   {hasWhatsapp && (
                     <div className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                      {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- static color */}
                       <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: 'rgba(37,211,102,0.15)' }}>
                         <MessageCircle className="w-2.5 h-2.5 text-[#25D366]" />
                       </div>
@@ -178,6 +182,7 @@ export function DigitalCardPreview({ card }: DigitalCardPreviewProps) {
                         key={i}
                         className="w-6 h-6 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center"
                       >
+                        {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic color depends on loop item */}
                         <Icon className="w-3 h-3" style={{ color: `${social.color}80` }} />
                       </div>
                     )

@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import {
   AlertCircle,
   Users,
@@ -77,10 +78,56 @@ export function EventFormModal({
   setAttendeeSearch,
   handleCreateEvent,
 }: EventFormModalProps) {
+  const handleClose = () => { setShowNewEvent(false); setEditingEvent(null); setBlockMode(false) }
+  const handleCancel = () => { setShowNewEvent(false); setEditingEvent(null) }
+  const handleToggleBlock = () => {
+    setBlockMode(!blockMode)
+    if (!blockMode) setNewEvent({ ...newEvent, summary: 'Non disponibile' })
+    else setNewEvent({ ...newEvent, summary: '' })
+  }
+  const handleSummaryChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, summary: e.target.value })
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, startDate: e.target.value })
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const updated: NewEventData = { ...newEvent, startTime: e.target.value }
+    if (!newEvent.endTime) {
+      const [h, m] = e.target.value.split(':').map(Number)
+      const newH = Math.min(h + 1, 23)
+      updated.endTime = `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+    }
+    setNewEvent(updated)
+  }
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, endDate: e.target.value })
+  const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, endTime: e.target.value })
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, location: e.target.value })
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setNewEvent({ ...newEvent, description: e.target.value })
+  const handleRecurrenceTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => setRecurrenceType(e.target.value as RecurrenceType)
+  const handleRecurrenceEndNever = () => setRecurrenceEndType('never')
+  const handleRecurrenceEndDate = () => setRecurrenceEndType('date')
+  const handleRecurrenceEndCount = () => setRecurrenceEndType('count')
+  const handleRecurrenceEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => setRecurrenceEndDate(e.target.value)
+  const handleRecurrenceEndCountChange = (e: React.ChangeEvent<HTMLInputElement>) => setRecurrenceEndCount(parseInt(e.target.value) || 1)
+  const handleAttendeeSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => setAttendeeSearch(e.target.value)
+  const handleAttendeeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const val = attendeeSearch.trim()
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) && !selectedAttendees.includes(val)) {
+        setSelectedAttendees((prev) => [...prev, val])
+        setAttendeeSearch('')
+      }
+    }
+  }
+  const handleTargetCalendarChange = (e: React.ChangeEvent<HTMLSelectElement>) => setTargetCalendarId(e.target.value)
+  const handleMeetToggle = (e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, withMeet: e.target.checked })
+  const handleAddExternalAttendee = () => {
+    setSelectedAttendees((prev) => [...prev, attendeeSearch.trim()])
+    setAttendeeSearch('')
+  }
+
   return (
     <Modal
       open={showNewEvent}
-      onClose={() => { setShowNewEvent(false); setEditingEvent(null); setBlockMode(false) }}
+      onClose={handleClose}
       title={editingEvent ? 'Modifica Evento' : blockMode ? 'Blocca Disponibilità' : 'Nuovo Evento'}
     >
       <form onSubmit={handleCreateEvent} className="space-y-4">
@@ -97,11 +144,7 @@ export function EventFormModal({
             <div
               role="switch"
               aria-checked={blockMode}
-              onClick={() => {
-                setBlockMode(!blockMode)
-                if (!blockMode) setNewEvent({ ...newEvent, summary: 'Non disponibile' })
-                else setNewEvent({ ...newEvent, summary: '' })
-              }}
+              onClick={handleToggleBlock}
               className={`relative w-10 h-5 rounded-full transition-colors ${blockMode ? 'bg-orange-500' : 'bg-border'}`}
             >
               <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${blockMode ? 'translate-x-5' : ''}`} />
@@ -116,7 +159,7 @@ export function EventFormModal({
           id="summary"
           label={blockMode ? 'Motivo (opzionale)' : 'Titolo'}
           value={newEvent.summary}
-          onChange={(e) => setNewEvent({ ...newEvent, summary: e.target.value })}
+          onChange={handleSummaryChange}
           required={!blockMode}
           placeholder={blockMode ? 'Non disponibile' : ''}
         />
@@ -128,7 +171,7 @@ export function EventFormModal({
             <select
               id="targetCal"
               value={targetCalendarId}
-              onChange={(e) => setTargetCalendarId(e.target.value)}
+              onChange={handleTargetCalendarChange}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
             >
               {calendars.map((cal) => (
@@ -146,7 +189,7 @@ export function EventFormModal({
             label="Data inizio"
             type="date"
             value={newEvent.startDate}
-            onChange={(e) => setNewEvent({ ...newEvent, startDate: e.target.value })}
+            onChange={handleStartDateChange}
             required
           />
           <Input
@@ -154,15 +197,7 @@ export function EventFormModal({
             label="Ora inizio"
             type="time"
             value={newEvent.startTime}
-            onChange={(e) => {
-              const updated: NewEventData = { ...newEvent, startTime: e.target.value }
-              if (!newEvent.endTime) {
-                const [h, m] = e.target.value.split(':').map(Number)
-                const newH = Math.min(h + 1, 23)
-                updated.endTime = `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-              }
-              setNewEvent(updated)
-            }}
+            onChange={handleStartTimeChange}
             required
           />
         </div>
@@ -173,7 +208,7 @@ export function EventFormModal({
             label="Data fine"
             type="date"
             value={newEvent.endDate}
-            onChange={(e) => setNewEvent({ ...newEvent, endDate: e.target.value })}
+            onChange={handleEndDateChange}
             placeholder={newEvent.startDate}
           />
           <Input
@@ -181,7 +216,7 @@ export function EventFormModal({
             label="Ora fine"
             type="time"
             value={newEvent.endTime}
-            onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
+            onChange={handleEndTimeChange}
           />
         </div>
 
@@ -191,7 +226,7 @@ export function EventFormModal({
               id="location"
               label="Luogo"
               value={newEvent.location}
-              onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
+              onChange={handleLocationChange}
             />
 
             <div>
@@ -200,7 +235,7 @@ export function EventFormModal({
                 id="desc"
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
                 value={newEvent.description}
-                onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                onChange={handleDescriptionChange}
               />
             </div>
           </>
@@ -214,7 +249,7 @@ export function EventFormModal({
           </label>
           <select
             value={recurrenceType}
-            onChange={(e) => setRecurrenceType(e.target.value as RecurrenceType)}
+            onChange={handleRecurrenceTypeChange}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
           >
             <option value="none">Nessuna ripetizione</option>
@@ -235,6 +270,7 @@ export function EventFormModal({
                     <button
                       key={dayIdx}
                       type="button"
+                       
                       onClick={() => {
                         setRecurrenceCustomDays((prev) =>
                           isSelected ? prev.filter((d) => d !== dayIdx) : [...prev, dayIdx]
@@ -263,7 +299,7 @@ export function EventFormModal({
                     type="radio"
                     name="recurrenceEnd"
                     checked={recurrenceEndType === 'never'}
-                    onChange={() => setRecurrenceEndType('never')}
+                    onChange={handleRecurrenceEndNever}
                     className="accent-primary"
                   />
                   Mai
@@ -273,7 +309,7 @@ export function EventFormModal({
                     type="radio"
                     name="recurrenceEnd"
                     checked={recurrenceEndType === 'date'}
-                    onChange={() => setRecurrenceEndType('date')}
+                    onChange={handleRecurrenceEndDate}
                     className="accent-primary"
                   />
                   Il giorno
@@ -281,7 +317,7 @@ export function EventFormModal({
                     <input
                       type="date"
                       value={recurrenceEndDate}
-                      onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                      onChange={handleRecurrenceEndDateChange}
                       className="ml-1 rounded-md border border-border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                   )}
@@ -291,7 +327,7 @@ export function EventFormModal({
                     type="radio"
                     name="recurrenceEnd"
                     checked={recurrenceEndType === 'count'}
-                    onChange={() => setRecurrenceEndType('count')}
+                    onChange={handleRecurrenceEndCount}
                     className="accent-primary"
                   />
                   Dopo
@@ -301,7 +337,7 @@ export function EventFormModal({
                       min={1}
                       max={365}
                       value={recurrenceEndCount}
-                      onChange={(e) => setRecurrenceEndCount(parseInt(e.target.value) || 1)}
+                      onChange={handleRecurrenceEndCountChange}
                       className="ml-1 w-16 rounded-md border border-border bg-background px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                   )}
@@ -322,17 +358,8 @@ export function EventFormModal({
             type="text"
             placeholder="Cerca membro del team o inserisci email..."
             value={attendeeSearch}
-            onChange={(e) => setAttendeeSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                const val = attendeeSearch.trim()
-                if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) && !selectedAttendees.includes(val)) {
-                  setSelectedAttendees((prev) => [...prev, val])
-                  setAttendeeSearch('')
-                }
-              }
-            }}
+            onChange={handleAttendeeSearchChange}
+            onKeyDown={handleAttendeeKeyDown}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm mb-2 placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
           />
           {selectedAttendees.length > 0 && (
@@ -343,6 +370,7 @@ export function EventFormModal({
                   <button
                     key={email}
                     type="button"
+                     
                     onClick={() => setSelectedAttendees((prev) => prev.filter((a) => a !== email))}
                     className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
                   >
@@ -374,6 +402,7 @@ export function EventFormModal({
                 <button
                   key={member.id}
                   type="button"
+                   
                   onClick={() => {
                     setSelectedAttendees((prev) => [...prev, member.email])
                     setAttendeeSearch('')
@@ -394,10 +423,7 @@ export function EventFormModal({
               !teamMembers.some((m) => m.email === attendeeSearch.trim()) && (
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedAttendees((prev) => [...prev, attendeeSearch.trim()])
-                  setAttendeeSearch('')
-                }}
+                onClick={handleAddExternalAttendee}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-secondary/50 transition-colors text-sm border-t border-border/50"
               >
                 <Mail className="h-4 w-4 text-primary" />
@@ -417,7 +443,7 @@ export function EventFormModal({
               <input
                 type="checkbox"
                 checked={newEvent.withMeet || selectedAttendees.length > 0}
-                onChange={(e) => setNewEvent({ ...newEvent, withMeet: e.target.checked })}
+                onChange={handleMeetToggle}
                 disabled={selectedAttendees.length > 0}
                 className="sr-only peer"
               />
@@ -433,7 +459,7 @@ export function EventFormModal({
         )}
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" onClick={() => { setShowNewEvent(false); setEditingEvent(null) }}>
+          <Button type="button" variant="outline" onClick={handleCancel}>
             Annulla
           </Button>
           <Button type="submit" loading={creating}>

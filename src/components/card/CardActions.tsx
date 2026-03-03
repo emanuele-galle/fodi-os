@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { Phone, Mail, MessageCircle, UserPlus, Download } from 'lucide-react'
 import { useState } from 'react'
 

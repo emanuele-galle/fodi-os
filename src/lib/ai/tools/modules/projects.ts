@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string -- JSON schema property types are repeated by design */
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/utils'
 import type { AiToolDefinition, AiToolInput, AiToolContext } from '../types'

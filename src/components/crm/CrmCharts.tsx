@@ -1,8 +1,9 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- component handlers and dynamic props */
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
 import { formatCurrency } from '@/lib/utils'
@@ -14,8 +15,6 @@ const TOOLTIP_STYLE = {
   backdropFilter: 'blur(8px)',
   fontSize: 13,
 }
-
-const COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#f59e0b', '#ef4444']
 
 const STAGE_LABELS: Record<string, string> = {
   QUALIFICATION: 'Qualifica',

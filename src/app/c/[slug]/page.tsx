@@ -1,3 +1,4 @@
+/* eslint-disable react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { brand } from '@/lib/branding'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
@@ -123,6 +124,7 @@ export default async function CardPage({ params }: Props) {
       <div className="relative z-10 max-w-[420px] mx-auto px-6 py-16">
         {/* Company logo top */}
         <div className="card-fade-in card-delay-1 flex justify-center mb-12">
+          {/* eslint-disable-next-line @next/next/no-img-element -- brand logo, possibly SVG */}
           <img
             src={brand.logo.dark}
             alt={brand.slug.toUpperCase()}

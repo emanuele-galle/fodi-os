@@ -23,6 +23,7 @@ import {
   BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { haptic } from '@/lib/haptic'
 import type { Role } from '@/generated/prisma/client'
 import { getEffectiveSectionAccess, HREF_TO_SECTION, type SectionAccessMap } from '@/lib/section-access'
 
@@ -59,12 +60,12 @@ const MENU_ITEMS: MenuItem[] = [
 ]
 
 const CATEGORY_STYLES: Record<CategoryColor, string> = {
-  indigo: 'bg-indigo-500/12 text-indigo-500',
-  emerald: 'bg-emerald-500/12 text-emerald-500',
-  amber: 'bg-amber-500/12 text-amber-600',
-  violet: 'bg-blue-500/12 text-blue-500',
-  rose: 'bg-rose-500/12 text-rose-500',
-  slate: 'bg-slate-500/12 text-slate-500',
+  indigo: 'bg-indigo-400/20 text-indigo-400',
+  emerald: 'bg-emerald-400/20 text-emerald-400',
+  amber: 'bg-amber-400/20 text-amber-400',
+  violet: 'bg-blue-400/20 text-blue-400',
+  rose: 'bg-rose-400/20 text-rose-400',
+  slate: 'bg-slate-400/20 text-slate-400',
 }
 
 interface BottomNavProps {
@@ -177,22 +178,22 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             className={cn(
-              'mobile-bottom-sheet absolute bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 bg-card border-t border-border/30 rounded-t-xl max-h-[70vh] overflow-y-auto z-50 shadow-[var(--shadow-xl)]',
+              'mobile-bottom-sheet absolute bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 bg-[var(--color-sheet)] border-t border-[var(--color-sheet-border)] rounded-t-xl max-h-[70vh] overflow-y-auto z-50 shadow-[var(--shadow-xl)]',
               closing ? 'animate-menu-slide-down' : 'animate-menu-slide-up'
             )}
           >
             <div className="flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing">
-              <div className="w-10 h-1.5 rounded-full bg-muted/30" />
+              <div className="w-10 h-1.5 rounded-full bg-[var(--color-sheet-muted)]/40" />
             </div>
 
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border/20">
-              <span className="text-sm font-semibold text-foreground">Menu</span>
+            <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--color-sheet-border)]">
+              <span className="text-sm font-semibold text-[var(--color-sheet-foreground)]">Menu</span>
               <button
                 onClick={closeMenu}
                 aria-label="Chiudi menu"
-                className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-secondary/60 active:bg-secondary/80 transition-colors touch-manipulation"
+                className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-white/10 active:bg-white/15 transition-colors touch-manipulation"
               >
-                <X className="h-4 w-4 text-muted" />
+                <X className="h-4 w-4 text-[var(--color-sheet-muted)]" />
               </button>
             </div>
 
@@ -204,12 +205,13 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={closeMenu}
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
+                    onClick={() => { haptic('selection'); closeMenu() }}
                     className={cn(
-                      'flex flex-col items-center gap-2 p-3 rounded-lg transition-all touch-manipulation active:scale-95',
+                      'ios-press flex flex-col items-center gap-2 p-3 rounded-lg transition-all touch-manipulation',
                       isActive
-                        ? 'bg-primary/10'
-                        : 'hover:bg-secondary/40 active:bg-secondary/60'
+                        ? 'bg-primary/20'
+                        : 'hover:bg-white/8 active:bg-white/12'
                     )}
                   >
                     <div className={cn(
@@ -220,7 +222,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
                     </div>
                     <span className={cn(
                       'text-xs font-medium text-center leading-tight',
-                      isActive ? 'text-primary' : 'text-foreground'
+                      isActive ? 'text-primary' : 'text-[var(--color-sheet-foreground)]'
                     )}>
                       {item.label}
                     </span>
@@ -241,7 +243,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
             return (
               <button
                 key={tab.href}
-                onClick={() => handleTabClick(tab.href)}
+                onClick={() => handleTabClick(tab.href)} // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- loop handler
                 aria-label={tab.label}
                 className={cn(
                   'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[44px] transition-all duration-200 touch-manipulation active:scale-95',

@@ -4,6 +4,10 @@ import { requirePermission } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
+const ROLE_HEADER = 'x-user-role'
+const PERMISSION_DENIED_PREFIX = 'Permission denied'
+const INTERNAL_ERROR = 'Errore interno del server'
+
 const createFolderSchema = z.object({
   name: z.string().min(1, 'Nome cartella obbligatorio').max(200),
   description: z.string().optional(),
@@ -22,7 +26,7 @@ const updateFolderSchema = z.object({
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   try {
-    const role = request.headers.get('x-user-role') as Role
+    const role = request.headers.get(ROLE_HEADER) as Role
     requirePermission(role, 'pm', 'read')
 
     const { projectId } = await params
@@ -43,18 +47,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json(buildTree(null))
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+    if (e instanceof Error && e.message.startsWith(PERMISSION_DENIED_PREFIX)) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })
     }
     console.error('[projects/:projectId/folders]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return NextResponse.json({ success: false, error: INTERNAL_ERROR }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   try {
-    const userId = request.headers.get('x-user-id')!
-    const role = request.headers.get('x-user-role') as Role
+    const role = request.headers.get(ROLE_HEADER) as Role
     requirePermission(role, 'pm', 'write')
 
     const { projectId } = await params
@@ -105,18 +108,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json(folder, { status: 201 })
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+    if (e instanceof Error && e.message.startsWith(PERMISSION_DENIED_PREFIX)) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })
     }
     console.error('[projects/:projectId/folders]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return NextResponse.json({ success: false, error: INTERNAL_ERROR }, { status: 500 })
   }
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
+ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   try {
-    const role = request.headers.get('x-user-role') as Role
+    const role = request.headers.get(ROLE_HEADER) as Role
     requirePermission(role, 'pm', 'write')
 
     const { projectId } = await params
@@ -164,18 +167,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json(folder)
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+    if (e instanceof Error && e.message.startsWith(PERMISSION_DENIED_PREFIX)) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })
     }
     console.error('[projects/:projectId/folders]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return NextResponse.json({ success: false, error: INTERNAL_ERROR }, { status: 500 })
   }
 }
 
 // PUT /api/projects/:projectId/folders - Batch reorder / reparent folders
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   try {
-    const role = request.headers.get('x-user-role') as Role
+    const role = request.headers.get(ROLE_HEADER) as Role
     requirePermission(role, 'pm', 'write')
 
     const { projectId } = await params
@@ -226,17 +229,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+    if (e instanceof Error && e.message.startsWith(PERMISSION_DENIED_PREFIX)) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })
     }
     console.error('[projects/:projectId/folders/PUT]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return NextResponse.json({ success: false, error: INTERNAL_ERROR }, { status: 500 })
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   try {
-    const role = request.headers.get('x-user-role') as Role
+    const role = request.headers.get(ROLE_HEADER) as Role
     requirePermission(role, 'pm', 'write')
 
     const { projectId } = await params
@@ -280,10 +283,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
+    if (e instanceof Error && e.message.startsWith(PERMISSION_DENIED_PREFIX)) {
       return NextResponse.json({ success: false, error: e.message }, { status: 403 })
     }
     console.error('[projects/:projectId/folders]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return NextResponse.json({ success: false, error: INTERNAL_ERROR }, { status: 500 })
   }
 }

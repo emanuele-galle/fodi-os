@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { Calendar, ChevronRight, MapPin, Repeat, Video } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { CalendarEvent } from './types'
@@ -47,6 +48,7 @@ export function AgendaView({
         return (
           <div key={dateKey}>
             <button
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
               onClick={() => { setSelectedDayKey(dateKey); setMobileView('day') }}
               className={`sticky top-0 z-10 w-full text-left px-3 py-1.5 text-xs font-semibold rounded-md mb-1 flex items-center justify-between group ${
                 isToday ? 'bg-primary/10 text-primary' : 'bg-secondary/50 text-muted'
@@ -65,9 +67,11 @@ export function AgendaView({
                 return (
                   <button
                     key={ev.id}
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                     onClick={() => setSelectedEvent(ev)}
                     className="w-full text-left rounded-xl border border-border/60 bg-card p-3 flex items-center gap-3 active:bg-secondary/30 transition-all touch-manipulation shadow-sm hover:shadow-md"
                   >
+                    { }
                     <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{ev.summary}</p>

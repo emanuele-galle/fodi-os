@@ -1,3 +1,4 @@
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- settings page with many CRUD lists, loop handlers, and modal callbacks */
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -19,7 +20,7 @@ type EditTarget = { type: 'category'; item?: AccountingCategory } | { type: 'acc
 // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export default function ErpSettingsPage() {
   const [categories, setCategories] = useState<AccountingCategory[]>([])
-  const [accounts, setAccounts] = useState<BankAccount[]>([])
+  const [, setAccounts] = useState<BankAccount[]>([])
   const [entities, setEntities] = useState<BusinessEntity[]>([])
   const [vatRates, setVatRates] = useState<VatRateItem[]>([])
   const [loading, setLoading] = useState(true)

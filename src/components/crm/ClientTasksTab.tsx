@@ -25,6 +25,7 @@ export function ClientTasksTab({ clientId }: ClientTasksTabProps) {
   }, [clientId])
 
   if (loading) return <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- navigation handler
   if (tasks.length === 0) return <EmptyState icon={CheckSquare} title="Nessuna attività" description="Le attività collegate a questo cliente appariranno qui." action={<Button size="sm" onClick={() => window.location.href = '/crm/tasks'}><Plus className="h-4 w-4 mr-1" />Crea Attività</Button>} />
 
   const PRIORITY_COLORS: Record<string, string> = { URGENT: 'text-red-600', HIGH: 'text-orange-500', MEDIUM: 'text-yellow-600', LOW: 'text-muted' }

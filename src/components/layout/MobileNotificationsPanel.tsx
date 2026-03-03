@@ -143,7 +143,7 @@ export function MobileNotificationsPanel({ onClose }: MobileNotificationsPanelPr
                 return (
                   <button
                     key={notif.id}
-                    onClick={() => handleNotificationClick(notif)}
+                    onClick={() => handleNotificationClick(notif)} // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- loop handler
                     className={`w-full text-left px-4 py-3.5 flex items-start gap-3 active:bg-secondary/40 transition-colors touch-manipulation ${
                       !notif.isRead ? 'bg-primary/[0.04]' : ''
                     }`}

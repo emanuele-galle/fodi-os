@@ -67,6 +67,7 @@ export function TemplateLineItemsEditor({ items, onChange }: TemplateLineItemsEd
             <div className="w-10" />
           </div>
 
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- loop index capture required for each item's handlers */}
           {items.map((item, index) => (
             <div key={index} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 p-3 md:p-2 rounded-lg border border-border/40 bg-card/50">
               {/* Reorder buttons */}
@@ -150,6 +151,7 @@ export function TemplateLineItemsEditor({ items, onChange }: TemplateLineItemsEd
               </div>
             </div>
           ))}
+          {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
 
           {items.length > 0 && (
             <div className="flex justify-end pt-2 text-sm">

@@ -65,6 +65,7 @@ export function DigitalCardForm({ card, onSave }: DigitalCardFormProps) {
     <Card>
       <CardContent>
         <div className="space-y-6">
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form fields calling handleChange */}
           {/* Professional */}
           <div>
             <h3 className="text-sm font-semibold mb-3">Informazioni Professionali</h3>
@@ -255,6 +256,8 @@ export function DigitalCardForm({ card, onSave }: DigitalCardFormProps) {
               {message.text}
             </div>
           )}
+
+          {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
 
           {/* Save */}
           <Button onClick={handleSubmit} loading={saving} className="w-full">

@@ -20,11 +20,10 @@ import {
   Settings,
   Bot,
   ChevronRight,
-  ChevronLeft,
   PanelLeftClose,
   PanelLeft,
 } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import type { Role } from '@/generated/prisma/client'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -170,20 +169,13 @@ interface SidebarProps {
 export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unreadChat = 0, pendingTaskCount = 0, unreadNotifications = 0 }: SidebarProps) {
   const pathname = usePathname()
   const { preferences, updatePreference, loaded } = useUserPreferences()
-  const [expanded, setExpanded] = useState(true)
+  const expanded = loaded ? !preferences.sidebarCollapsed : true
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
 
-   
-  useEffect(() => {
-    if (loaded) setExpanded(!preferences.sidebarCollapsed)
-  }, [loaded, preferences.sidebarCollapsed])
-
   const toggleSidebar = useCallback(() => {
-    const next = !expanded
-    setExpanded(next)
-    updatePreference('sidebarCollapsed', !next)
-    if (!next) setExpandedItem(null)
-  }, [expanded, updatePreference])
+    updatePreference('sidebarCollapsed', !preferences.sidebarCollapsed)
+    if (!preferences.sidebarCollapsed) setExpandedItem(null)
+  }, [preferences.sidebarCollapsed, updatePreference])
 
   const effective = getEffectiveSectionAccess(userRole, sectionAccess, customRoleSectionAccess)
   const filteredNav = navigation.filter((item) => {
@@ -192,6 +184,7 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
     return !item.roles || item.roles.includes(userRole)
   })
 
+  /* eslint-disable react-perf/jsx-no-new-object-as-prop, react-perf/jsx-no-new-function-as-prop -- framer-motion animation objects + loop handlers */
   return (
     <motion.aside
       animate={{ width: expanded ? 260 : 64 }}

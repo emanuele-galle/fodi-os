@@ -249,12 +249,6 @@ export async function deleteTodoTask(userId: string, listId: string, todoTaskId:
   }
 }
 
-async function getTodoTask(userId: string, listId: string, todoTaskId: string) {
-  const res = await graphFetch(userId, `/me/todo/lists/${listId}/tasks/${todoTaskId}`)
-  if (!res.ok) return null
-  return res.json()
-}
-
 export async function listTodoTasks(userId: string, listId: string) {
   const allTasks: Array<{
     id: string

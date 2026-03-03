@@ -1,3 +1,4 @@
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- CRUD form with many inline handlers capturing local state */
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
@@ -152,6 +153,7 @@ export function SpeseContent() {
       case 'vatDeductible': return computeDeductibleVat(item.amount, item.vatRate, item.deductibility ?? 100)
       default: return (item as unknown as Record<string, unknown>)[key]
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pure functions defined below, stable references
   }, [])
 
   const sortedExpenses = useMemo(

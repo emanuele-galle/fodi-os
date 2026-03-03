@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers */
 
 import { useState, useRef } from 'react'
 import { Avatar } from '@/components/ui/Avatar'

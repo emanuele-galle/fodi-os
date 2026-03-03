@@ -32,12 +32,6 @@ const r2Active = !!(r2AccountId && r2Bucket && r2Token)
 
 const R2_BASE = `https://api.cloudflare.com/client/v4/accounts/${r2AccountId}/r2/buckets/${r2Bucket}/objects`
 
-/**
- * Whether Cloudflare R2 is configured and active.
- */
-export function isR2Active(): boolean {
-  return r2Active
-}
 
 /**
  * Upload file to R2 via Cloudflare REST API.
@@ -150,23 +144,3 @@ export async function deleteFile(key: string): Promise<void> {
   await Promise.all(promises)
 }
 
-/**
- * Upload directly to MinIO only (bypasses R2).
- * Useful for internal/dev files that only need local VPS access.
- */
-async function uploadToMinioOnly(
-  key: string,
-  body: Buffer | Uint8Array,
-  contentType: string,
-): Promise<string> {
-  await minio.send(
-    new PutObjectCommand({
-      Bucket: minioBucket,
-      Key: key,
-      Body: body,
-      ContentType: contentType,
-    }),
-  )
-  const publicBase = process.env.S3_PUBLIC_URL || process.env.S3_ENDPOINT!
-  return `${publicBase}/${minioBucket}/${key}`
-}

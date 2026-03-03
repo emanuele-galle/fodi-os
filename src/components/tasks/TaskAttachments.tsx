@@ -105,6 +105,13 @@ export function TaskAttachments({ taskId, projectId, attachments, onAttachmentsC
     onAttachmentsChange()
   }
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers for form interactions */
+  const handleClickUpload = () => fileInputRef.current?.click()
+  const handleToggleLinkForm = () => setShowLinkForm(!showLinkForm)
+  const handleLinkUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => setLinkUrl(e.target.value)
+  const handleLinkKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') handleAddLink(); if (e.key === 'Escape') setShowLinkForm(false) }
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   return (
     <div className="border-t border-border pt-4">
       <div className="flex items-center justify-between mb-3">
@@ -128,7 +135,7 @@ export function TaskAttachments({ taskId, projectId, attachments, onAttachmentsC
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleClickUpload}
             disabled={uploading}
           >
             <Paperclip className="h-3.5 w-3.5 mr-1" />
@@ -138,7 +145,7 @@ export function TaskAttachments({ taskId, projectId, attachments, onAttachmentsC
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => setShowLinkForm(!showLinkForm)}
+            onClick={handleToggleLinkForm}
           >
             <Link2 className="h-3.5 w-3.5 mr-1" />
             Link
@@ -151,10 +158,10 @@ export function TaskAttachments({ taskId, projectId, attachments, onAttachmentsC
           <Input
             placeholder="https://drive.google.com/..."
             value={linkUrl}
-            onChange={(e) => setLinkUrl(e.target.value)}
+            onChange={handleLinkUrlChange}
             className="h-8 text-sm flex-1"
             autoFocus
-            onKeyDown={(e) => { if (e.key === 'Enter') handleAddLink(); if (e.key === 'Escape') setShowLinkForm(false) }}
+            onKeyDown={handleLinkKeyDown}
           />
           <Button size="sm" onClick={handleAddLink} disabled={addingLink || !linkUrl.trim()}>
             {addingLink ? '...' : 'Aggiungi'}
@@ -196,6 +203,7 @@ export function TaskAttachments({ taskId, projectId, attachments, onAttachmentsC
                     {isExternal ? <ExternalLink className="h-3.5 w-3.5 text-primary" /> : <Download className="h-3.5 w-3.5 text-muted" />}
                   </a>
                   <button
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                     onClick={() => handleDeleteAttachment(att.id)}
                     className="p-1 rounded hover:bg-destructive/10 transition-colors"
                     title="Rimuovi"

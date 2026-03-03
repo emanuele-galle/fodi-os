@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { WizardField } from './WizardField'
 import { evaluateCondition, type WizardCondition } from '@/lib/wizard-conditions'
 import { Button } from '@/components/ui/Button'
-import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 
 interface FieldDef {
   id: string
@@ -66,9 +66,9 @@ export function WizardRunner({
   )
 
   const step = visibleSteps[currentStep]
-  const visibleFields = step?.fields.filter((f) =>
+  const visibleFields = useMemo(() => step?.fields.filter((f) =>
     evaluateCondition(f.condition as WizardCondition | null, answers)
-  ) || []
+  ) || [], [step, answers])
 
   const handleFieldChange = (name: string, value: unknown) => {
     setAnswers((prev) => ({ ...prev, [name]: value }))
@@ -134,6 +134,7 @@ export function WizardRunner({
     }
   }, [apiBase, submissionId, answers])
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- depends on component state
   const goNext = async () => {
     if (!validateStep()) return
 
@@ -166,6 +167,7 @@ export function WizardRunner({
     }
   }
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- depends on component state
   const goPrev = async () => {
     if (currentStep > 0) {
       const prevStep = currentStep - 1
@@ -203,6 +205,7 @@ export function WizardRunner({
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
             <div
               className="h-full bg-primary transition-all duration-300 rounded-full"
+              // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
               style={{ width: `${((currentStep + 1) / visibleSteps.length) * 100}%` }}
             />
           </div>

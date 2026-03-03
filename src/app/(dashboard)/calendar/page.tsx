@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { brandClient } from '@/lib/branding-client'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
@@ -669,7 +670,7 @@ export default function CalendarPage() {
         setSelectedEvent={setSelectedEvent}
         setConfirmDelete={setConfirmDelete}
         openEditEvent={openEditEvent}
-        handleDeleteEvent={handleDeleteEvent}
+        handleDeleteEvent={handleDeleteEvent}  
       />
 
       <EventFormModal
@@ -701,7 +702,7 @@ export default function CalendarPage() {
         setRecurrenceEndCount={setRecurrenceEndCount}
         setSelectedAttendees={setSelectedAttendees}
         setAttendeeSearch={setAttendeeSearch}
-        handleCreateEvent={handleCreateEvent}
+        handleCreateEvent={handleCreateEvent}  
       />
     </div>
   )

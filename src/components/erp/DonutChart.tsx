@@ -14,6 +14,7 @@ const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#007AFF', '#EC4899'
 
 export function DonutChart({ data, total, label, height = 200 }: DonutChartProps) {
   return (
+    // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
     <div className="relative" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
@@ -46,6 +47,7 @@ export function DonutLegend({ data }: { data: { name: string; value: number; col
       {data.map((item, i) => (
         <div key={i} className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value */}
             <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color || COLORS[i % COLORS.length] }} />
             <span className="truncate">{item.name}</span>
           </div>

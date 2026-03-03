@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { ArrowRightLeft, FolderOpen } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
@@ -73,6 +73,7 @@ export function TaskMovePanel({ taskId, currentProjectId, currentFolderId, onMov
     return (
       <div className="border-t border-border pt-4">
         <button
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step setup handler
           onClick={() => {
             setShowMovePanel(true)
             setMoveProjectId(currentProjectId || '')
@@ -100,6 +101,7 @@ export function TaskMovePanel({ taskId, currentProjectId, currentFolderId, onMov
           <label className="block text-xs font-medium text-muted mb-1">Progetto destinazione</label>
           <select
             value={moveProjectId}
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step handler
             onChange={(e) => {
               setMoveProjectId(e.target.value)
               setMoveFolderId('')
@@ -121,6 +123,7 @@ export function TaskMovePanel({ taskId, currentProjectId, currentFolderId, onMov
             </label>
             <select
               value={moveFolderId}
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter
               onChange={(e) => setMoveFolderId(e.target.value)}
               className="w-full h-10 rounded-lg border border-border/60 bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
@@ -135,6 +138,7 @@ export function TaskMovePanel({ taskId, currentProjectId, currentFolderId, onMov
           <Button size="sm" onClick={handleMoveTask} disabled={moving}>
             {moving ? 'Spostamento...' : 'Sposta'}
           </Button>
+          {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter */}
           <Button size="sm" variant="outline" onClick={() => setShowMovePanel(false)}>
             Annulla
           </Button>

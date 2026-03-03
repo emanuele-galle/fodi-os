@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Activity, FileText, Filter, ChevronLeft, ChevronRight,
+  Activity, Filter, ChevronLeft, ChevronRight,
   Plus, Pencil, Trash2, Archive, LogIn, LogOut,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -104,6 +104,7 @@ export function TeamActivityContent() {
       {/* Filters */}
       <Card className="mb-4">
         <CardContent>
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- filter setters */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Filter className="h-4 w-4 text-muted flex-shrink-0 hidden sm:block" />
             <select
@@ -128,6 +129,7 @@ export function TeamActivityContent() {
             </select>
             <span className="ml-auto text-xs text-muted">{total} risultati</span>
           </div>
+          {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
         </CardContent>
       </Card>
 
@@ -148,6 +150,7 @@ export function TeamActivityContent() {
             </div>
           ) : (
             <div className="divide-y divide-border">
+              {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- handler depends on loop item */}
               {items.map((item) => {
                 const config = ACTION_CONFIG[item.action] || { label: item.action, icon: Activity, color: 'text-muted' }
                 const ActionIcon = config.icon
@@ -205,12 +208,14 @@ export function TeamActivityContent() {
                   </div>
                 )
               })}
+              {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Pagination */}
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- pagination handlers */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-4">
           <button
@@ -232,6 +237,7 @@ export function TeamActivityContent() {
           </button>
         </div>
       )}
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
     </>
   )
 }

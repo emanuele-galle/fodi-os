@@ -1,7 +1,8 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- framer-motion + handlers */
 
 import { useState, useEffect } from 'react'
-import { Bell, X, CheckCircle, Loader2 } from 'lucide-react'
+import { Bell, X, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 
 const LS_DISMISSED_KEY = 'setup-banner-dismissed'
@@ -25,34 +26,23 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 export function SetupBanner() {
-  const [status, setStatus] = useState<SetupStatus>({
-    notifications: 'unknown',
+  const [status, setStatus] = useState<SetupStatus>(() => ({
+    notifications: typeof Notification !== 'undefined' ? Notification.permission as SetupStatus['notifications'] : 'unknown',
     google: 'loading',
     pushSubscribed: false,
-  })
-  const [dismissed, setDismissed] = useState(true) // default hidden to avoid flash
-  const [subscribing, setSubscribing] = useState(false)
-
-  // Check dismissed state from localStorage
-   
-  useEffect(() => {
+  }))
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined') return true
     try {
       const raw = localStorage.getItem(LS_DISMISSED_KEY)
       if (raw) {
         const ts = parseInt(raw, 10)
-        if (Date.now() - ts < LS_DISMISSED_EXPIRY) return // still dismissed
+        if (Date.now() - ts < LS_DISMISSED_EXPIRY) return true
       }
     } catch {}
-    setDismissed(false)
-  }, [])
-
-  // Check notification permission
-   
-  useEffect(() => {
-    if (typeof Notification !== 'undefined') {
-      setStatus((s) => ({ ...s, notifications: Notification.permission as SetupStatus['notifications'] }))
-    }
-  }, [])
+    return false
+  })
+  const [subscribing, setSubscribing] = useState(false)
 
   // Check Google connection
   useEffect(() => {

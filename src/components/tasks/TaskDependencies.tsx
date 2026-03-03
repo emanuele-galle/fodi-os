@@ -99,7 +99,8 @@ export function TaskDependencies({ taskId }: { taskId: string }) {
           <Link2 className="h-4 w-4" />
           Dipendenze ({deps.length})
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setAdding(!adding)}>
+        {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple toggle */}
+      <Button variant="ghost" size="sm" onClick={() => setAdding(!adding)}>
           <Plus className="h-3.5 w-3.5 mr-1" />
           Aggiungi
         </Button>
@@ -110,6 +111,7 @@ export function TaskDependencies({ taskId }: { taskId: string }) {
           <input
             type="text"
             value={search}
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cerca task..."
             className="w-full px-3 py-2 text-sm rounded-lg border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -121,6 +123,7 @@ export function TaskDependencies({ taskId }: { taskId: string }) {
               {results.map((task) => (
                 <button
                   key={task.id}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                   onClick={() => addDep(task.id)}
                   className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/50 transition-colors flex items-center gap-2"
                 >
@@ -146,6 +149,7 @@ export function TaskDependencies({ taskId }: { taskId: string }) {
                 <span className="text-sm truncate flex-1">{dep.dependsOn.title}</span>
                 <span className="text-xs text-muted">{dep.dependsOn.status}</span>
                 <button
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
                   onClick={() => removeDep(dep.dependsOnId)}
                   className="opacity-0 group-hover:opacity-100 text-muted hover:text-destructive transition-all p-1"
                 >

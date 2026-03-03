@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string -- AI suggestion labels are intentionally repeated */
 import type { Role, Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { brand } from '@/lib/branding'

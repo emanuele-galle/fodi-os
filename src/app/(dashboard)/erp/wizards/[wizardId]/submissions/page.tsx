@@ -1,9 +1,9 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers and dynamic props */
 import { useState, useEffect, useCallback, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ArrowLeft, ClipboardList, Plus } from 'lucide-react'
@@ -29,12 +29,6 @@ interface Submission {
   completedAt: string | null
   createdAt: string
   template: SubmissionTemplate
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  IN_PROGRESS: 'In corso',
-  COMPLETED: 'Completata',
-  ABANDONED: 'Abbandonata',
 }
 
 export default function WizardSubmissionsPage({ params }: { params: Promise<{ wizardId: string }> }) {

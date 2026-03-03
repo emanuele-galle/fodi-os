@@ -36,10 +36,15 @@ export function CategoryBreakdownTable({ data, type }: CategoryBreakdownTablePro
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border/30">
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture */}
             <th className={`${thClass} text-left`} onClick={() => handleSort('category')}>Categoria{sortIcon('category')}</th>
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture */}
             <th className={`${thClass} text-right`} onClick={() => handleSort('gross')}>Lordo{sortIcon('gross')}</th>
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture */}
             <th className={`${thClass} text-right`} onClick={() => handleSort('vat')}>{type === 'income' ? 'IVA' : 'IVA Detr.'}{sortIcon('vat')}</th>
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture */}
             <th className={`${thClass} text-right`} onClick={() => handleSort('net')}>Netto{sortIcon('net')}</th>
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture */}
             <th className={`${thClass} text-right`} onClick={() => handleSort('percentage')}>%{sortIcon('percentage')}</th>
           </tr>
         </thead>

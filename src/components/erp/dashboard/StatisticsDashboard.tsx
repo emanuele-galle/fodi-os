@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -35,8 +35,7 @@ export function StatisticsDashboard() {
   const [goals, setGoals] = useState<ProfitGoal[]>([])
   const [loading, setLoading] = useState(true)
 
-   
-  useEffect(() => {
+  const fetchStatistics = useCallback(() => {
     setLoading(true)
     Promise.all([
       fetch(`/api/accounting/statistics?year=${year}`).then(r => r.json()),
@@ -48,6 +47,10 @@ export function StatisticsDashboard() {
       })
       .finally(() => setLoading(false))
   }, [year])
+
+  useEffect(() => {
+    fetchStatistics() // eslint-disable-line react-hooks/set-state-in-effect -- loading state set inside fetch callback
+  }, [fetchStatistics])
 
   const years = Array.from({ length: 5 }, (_, i) => {
     const y = new Date().getFullYear() - i
@@ -69,6 +72,7 @@ export function StatisticsDashboard() {
   return (
     <>
       <div className="mb-6">
+        {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- inline event transform */}
         <Select label="Anno" options={years} value={String(year)} onChange={e => setYear(parseInt(e.target.value))} className="w-36" />
       </div>
 

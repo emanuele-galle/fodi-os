@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react-perf/jsx-no-new-array-as-prop -- page-level component with many sub-components and UI interaction handlers */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
@@ -85,10 +86,6 @@ interface ProjectDetail {
 interface FolderNode {
   id: string; name: string; description: string | null; color: string; sortOrder: number
   parentId?: string | null; _count?: { tasks: number }; children?: FolderNode[]
-}
-
-const PRIORITY_BADGE: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', URGENT: 'destructive',
 }
 
 const BOARD_COLUMNS = [

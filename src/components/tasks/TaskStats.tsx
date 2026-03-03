@@ -2,6 +2,8 @@ import { Target, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import type { Task } from './types'
 
+const colorMixStyle = { background: 'color-mix(in srgb, currentColor 10%, transparent)' } as const
+
 interface TaskStatsProps {
   tasks: Task[]
 }
@@ -39,7 +41,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
         {stats.map((s) => (
           <Card key={s.label} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
             <CardContent className="flex items-center gap-2.5 md:gap-3 py-2.5 md:py-3">
-              <div className={`p-2.5 rounded-xl ${s.color}`} style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+              <div className={`p-2.5 rounded-xl ${s.color}`} style={colorMixStyle}>
                 <s.icon className="h-4.5 w-4.5" />
               </div>
               <div className="min-w-0">
@@ -69,6 +71,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
               <div
                 key={s.key}
                 className={`${s.color} transition-all duration-500`}
+                // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
                 style={{ width: `${(s.count / activeTotal) * 100}%` }}
               />
             ))}

@@ -1,3 +1,4 @@
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- quote form page with many form handlers and line item loops */
 'use client'
 
 import { useState, useEffect } from 'react'

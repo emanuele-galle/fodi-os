@@ -73,7 +73,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const hours = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100 // Round to 2 decimals
 
     // Create TimeEntry + log activity + reset timer in a transaction
-    const { timeEntry, activityLog } = await prisma.$transaction(async (tx) => {
+    const { timeEntry } = await prisma.$transaction(async (tx) => {
       const timeEntry = await tx.timeEntry.create({
         data: {
           userId: task.timerUserId || userId,

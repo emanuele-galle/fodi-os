@@ -11,9 +11,19 @@ interface TaskCommentsProps {
   onCommentAdded: () => void
 }
 
-export function TaskComments({ taskId, comments, highlightCommentId, onCommentAdded }: TaskCommentsProps) {
+export function TaskComments({ taskId, comments, onCommentAdded }: TaskCommentsProps) {
   const [commentText, setCommentText] = useState('')
   const [sendingComment, setSendingComment] = useState(false)
+
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers for comment input */
+  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => setCommentText(e.target.value)
+  const handleCommentKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleAddComment()
+    }
+  }
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
 
   async function handleAddComment() {
     if (!commentText.trim() || sendingComment) return
@@ -72,13 +82,8 @@ export function TaskComments({ taskId, comments, highlightCommentId, onCommentAd
         <input
           type="text"
           value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              handleAddComment()
-            }
-          }}
+          onChange={handleCommentChange}
+          onKeyDown={handleCommentKeyDown}
           placeholder="Scrivi un commento..."
           className="flex-1 h-11 md:h-9 rounded-md border border-border bg-transparent px-3 text-base md:text-sm placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
         />

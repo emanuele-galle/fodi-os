@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { Select } from '@/components/ui/Select'
 import { FieldTypeSelector } from './FieldTypeSelector'
 import { CrmMappingEditor } from './CrmMappingEditor'
 import { ConditionBuilder } from './ConditionBuilder'
@@ -59,24 +58,26 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
   const [data, setData] = useState<WizardFieldData>(field)
   const [dirty, setDirty] = useState(false)
 
-  const update = (partial: Partial<WizardFieldData>) => {
+  const update = useCallback((partial: Partial<WizardFieldData>) => {
     setData((prev) => ({ ...prev, ...partial }))
     setDirty(true)
-  }
+  }, [])
 
-  const handleLabelChange = (label: string) => {
-    const autoName = !field.id || data.name === slugifyName(field.label)
-    update({
-      label,
-      ...(autoName && { name: slugifyName(label) }),
+  const handleLabelChange = useCallback((label: string) => {
+    setData((prev) => {
+      const autoName = !field.id || prev.name === slugifyName(field.label)
+      return { ...prev, label, ...(autoName && { name: slugifyName(label) }) }
     })
-  }
+    setDirty(true)
+  }, [field.id, field.label])
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- depends on component state
   const handleSave = () => {
     onSave(data)
     setDirty(false)
   }
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- depends on component state
   const addOption = () => {
     const options = [...(data.options || [])]
     options.push({ label: '', value: '' })
@@ -99,11 +100,22 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
     update({ options })
   }
 
+  const handleToggle = useCallback(() => setExpanded((v) => !v), [])
+  const handleLabelInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => handleLabelChange(e.target.value), [handleLabelChange])
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => update({ name: e.target.value }), [update])
+  const handlePlaceholderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => update({ placeholder: e.target.value }), [update])
+  const handleDefaultValueChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => update({ defaultValue: e.target.value }), [update])
+  const handleHelpTextChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => update({ helpText: e.target.value }), [update])
+  const handleRequiredChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => update({ isRequired: e.target.checked }), [update])
+  const handleTypeChange = useCallback((type: string) => update({ type }), [update])
+  const handleCrmMappingChange = useCallback((crmMapping: string | null) => update({ crmMapping }), [update])
+  const handleConditionChange = useCallback((condition: { fieldId: string; operator: string; value: string } | null) => update({ condition }), [update])
+
   return (
     <div className={cn('border border-border/40 rounded-lg', expanded && 'bg-secondary/10')}>
       <div
         className="flex items-center gap-2 p-3 cursor-pointer hover:bg-secondary/20 transition-colors"
-        onClick={() => setExpanded(!expanded)}
+        onClick={handleToggle}
       >
         <GripVertical className="h-4 w-4 text-muted flex-shrink-0" />
         <span className="text-xs text-muted font-mono">{index + 1}</span>
@@ -118,7 +130,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
         <div className="px-3 pb-3 space-y-4 border-t border-border/30">
           <div className="pt-3">
             <label className="text-xs font-medium text-muted mb-1 block">Tipo campo</label>
-            <FieldTypeSelector value={data.type} onChange={(type) => update({ type })} />
+            <FieldTypeSelector value={data.type} onChange={handleTypeChange} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -126,7 +138,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
               <label className="text-xs font-medium text-muted mb-1 block">Etichetta *</label>
               <Input
                 value={data.label}
-                onChange={(e) => handleLabelChange(e.target.value)}
+                onChange={handleLabelInput}
                 placeholder="es. Ragione Sociale"
               />
             </div>
@@ -134,7 +146,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
               <label className="text-xs font-medium text-muted mb-1 block">Nome campo</label>
               <Input
                 value={data.name}
-                onChange={(e) => update({ name: e.target.value })}
+                onChange={handleNameChange}
                 placeholder="es. ragione_sociale"
                 className="font-mono text-xs"
               />
@@ -146,7 +158,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
               <label className="text-xs font-medium text-muted mb-1 block">Placeholder</label>
               <Input
                 value={data.placeholder || ''}
-                onChange={(e) => update({ placeholder: e.target.value })}
+                onChange={handlePlaceholderChange}
                 placeholder="Testo segnaposto..."
               />
             </div>
@@ -154,7 +166,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
               <label className="text-xs font-medium text-muted mb-1 block">Valore predefinito</label>
               <Input
                 value={data.defaultValue || ''}
-                onChange={(e) => update({ defaultValue: e.target.value })}
+                onChange={handleDefaultValueChange}
               />
             </div>
           </div>
@@ -163,7 +175,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
             <label className="text-xs font-medium text-muted mb-1 block">Testo di aiuto</label>
             <Input
               value={data.helpText || ''}
-              onChange={(e) => update({ helpText: e.target.value })}
+              onChange={handleHelpTextChange}
               placeholder="Breve descrizione per guidare l'utente..."
             />
           </div>
@@ -173,7 +185,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
               <input
                 type="checkbox"
                 checked={data.isRequired}
-                onChange={(e) => update({ isRequired: e.target.checked })}
+                onChange={handleRequiredChange}
                 className="rounded border-border"
               />
               Campo obbligatorio
@@ -188,16 +200,19 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
                   <div key={i} className="flex items-center gap-2">
                     <Input
                       value={opt.label}
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop captures index
                       onChange={(e) => updateOption(i, { label: e.target.value })}
                       placeholder="Etichetta"
                       className="flex-1"
                     />
                     <Input
                       value={opt.value}
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop captures index
                       onChange={(e) => updateOption(i, { value: e.target.value })}
                       placeholder="Valore"
                       className="flex-1 font-mono text-xs"
                     />
+                    {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop captures index */}
                     <Button variant="ghost" size="icon" type="button" onClick={() => removeOption(i)} aria-label="Rimuovi opzione">
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>
@@ -218,6 +233,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
                 <Input
                   type="number"
                   value={data.validation?.min ?? ''}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- dynamic validation merge
                   onChange={(e) => update({ validation: { ...data.validation, min: e.target.value ? Number(e.target.value) : undefined } })}
                 />
               </div>
@@ -226,6 +242,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
                 <Input
                   type="number"
                   value={data.validation?.max ?? ''}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- dynamic validation merge
                   onChange={(e) => update({ validation: { ...data.validation, max: e.target.value ? Number(e.target.value) : undefined } })}
                 />
               </div>
@@ -239,6 +256,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
                 <Input
                   type="number"
                   value={data.validation?.minLength ?? ''}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- dynamic validation merge
                   onChange={(e) => update({ validation: { ...data.validation, minLength: e.target.value ? Number(e.target.value) : undefined } })}
                 />
               </div>
@@ -247,6 +265,7 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
                 <Input
                   type="number"
                   value={data.validation?.maxLength ?? ''}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- dynamic validation merge
                   onChange={(e) => update({ validation: { ...data.validation, maxLength: e.target.value ? Number(e.target.value) : undefined } })}
                 />
               </div>
@@ -255,14 +274,14 @@ export function FieldEditor({ field, index, onSave, onDelete, availableFields }:
 
           <CrmMappingEditor
             value={data.crmMapping}
-            onChange={(crmMapping) => update({ crmMapping })}
+            onChange={handleCrmMappingChange}
           />
 
           <div>
             <label className="text-xs font-medium text-muted mb-2 block">Condizione di visibilita</label>
             <ConditionBuilder
               condition={data.condition}
-              onChange={(condition) => update({ condition })}
+              onChange={handleConditionChange}
               availableFields={availableFields}
             />
           </div>

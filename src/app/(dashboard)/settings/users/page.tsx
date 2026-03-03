@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useFetch } from '@/hooks/useFetch'
 import { Button } from '@/components/ui/Button'
@@ -36,7 +36,7 @@ function UsersPageContent() {
   const { data: usersRaw, loading, error: fetchError, refetch: refetchUsers } = useFetch<{ users: UserItem[] }>('/api/users')
   const { data: rolesRaw } = useFetch<{ items: { id: string; name: string; color: string | null; isActive: boolean }[] }>('/api/roles')
 
-  const [users, setUsers] = useState<UserItem[]>([])
+  const users = usersRaw?.users || []
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [showInviteForm, setShowInviteForm] = useState(false)
@@ -47,19 +47,13 @@ function UsersPageContent() {
     .filter((r) => r.isActive)
     .map((r) => ({ id: r.id, name: r.name, color: r.color }))
 
-  // Sync fetched users into local state (needed for optimistic updates after PATCH)
-   
-  useEffect(() => {
-    if (usersRaw?.users) setUsers(usersRaw.users)
-  }, [usersRaw])
-
   async function handleRoleChange(userId: string, newRole: string) {
     try {
       const res = await fetch(`/api/users/${userId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
       })
-      if (res.ok) setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)))
+      if (res.ok) refetchUsers()
     } catch {}
     setEditingRole(null)
   }
@@ -70,7 +64,7 @@ function UsersPageContent() {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !currentActive }),
       })
-      if (res.ok) setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isActive: !currentActive } : u)))
+      if (res.ok) refetchUsers()
     } catch {}
   }
 
@@ -103,7 +97,9 @@ function UsersPageContent() {
           const Icon = tab.icon
           const isActive = activePageTab === tab.id
           return (
-            <button key={tab.id} onClick={() => setPageTab(tab.id)}
+            <button key={tab.id}
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- handler depends on loop item
+              onClick={() => setPageTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap touch-manipulation min-h-[44px] ${isActive ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-foreground'}`}>
               <Icon className="h-4 w-4" />{tab.label}
             </button>
@@ -117,10 +113,12 @@ function UsersPageContent() {
         <>
           <div className="flex flex-col sm:flex-row sm:items-center justify-end mb-4 gap-3">
             <div className="hidden sm:block flex-shrink-0">
+              {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple setter */}
               <Button size="sm" onClick={() => setShowInviteForm(true)}>
                 <UserPlus className="h-4 w-4 mr-2" />Invita Utente
               </Button>
             </div>
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple setter */}
             <Button onClick={() => setShowInviteForm(true)} className="sm:hidden w-full">
               <UserPlus className="h-4 w-4 mr-2" />Invita Utente
             </Button>
@@ -128,21 +126,24 @@ function UsersPageContent() {
 
           <InviteUserModal
             open={showInviteForm}
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple setter
             onClose={() => setShowInviteForm(false)}
             customRoles={customRoles}
             onInvited={refetchUsers}
           />
 
+          {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- callbacks depend on state updaters */}
           <EditUserModal
             user={editUser}
             customRoles={customRoles}
             onClose={() => setEditUser(null)}
-            onUserUpdated={(userId, data) => {
-              setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, ...data } : u)))
+            onUserUpdated={(_userId, data) => {
+              refetchUsers()
               if (data && 'firstName' in data) setEditUser((prev) => prev ? { ...prev, ...data } as UserItem : prev)
             }}
-            onUserDeleted={(userId) => setUsers((prev) => prev.filter((u) => u.id !== userId))}
+            onUserDeleted={() => refetchUsers()}
           />
+          {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
 
           {fetchError && (
             <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
@@ -150,6 +151,7 @@ function UsersPageContent() {
                 <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
                 <p className="text-sm text-destructive">{fetchError}</p>
               </div>
+              {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- retry handler */}
               <button onClick={() => refetchUsers()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
             </div>
           )}
@@ -157,8 +159,10 @@ function UsersPageContent() {
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+              {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- search input setter */}
               <Input placeholder="Cerca per nome o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
+            {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- filter setter and computed options */}
             <Select options={[{ value: '', label: 'Tutti i ruoli' }, ...ROLES]} value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="w-full sm:w-48" />
           </div>
 

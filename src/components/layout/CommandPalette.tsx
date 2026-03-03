@@ -1,6 +1,7 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- loop handlers throughout command palette */
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'motion/react'
@@ -163,15 +164,15 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     fetchSearchResults(debouncedQuery)
   }, [debouncedQuery, fetchSearchResults])
 
-  const filteredCommands = query
+  const filteredCommands = useMemo(() => query
     ? commands.filter(
         (cmd) =>
           cmd.label.toLowerCase().includes(query.toLowerCase()) ||
           cmd.description?.toLowerCase().includes(query.toLowerCase())
       )
-    : commands
+    : commands, [query])
 
-  const filtered = [...filteredCommands, ...searchResults]
+  const filtered = useMemo(() => [...filteredCommands, ...searchResults], [filteredCommands, searchResults])
 
   useEffect(() => {
     if (open) {

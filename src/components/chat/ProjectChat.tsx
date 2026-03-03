@@ -218,6 +218,11 @@ export function ProjectChat({ projectId, folderId }: ProjectChatProps) {
     }
   }
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers */
+  const handleToggleSelection = () => selectionMode ? exitSelectionMode() : setSelectionMode(true)
+  const handleCancelReply = () => setReplyTo(null)
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -241,7 +246,7 @@ export function ProjectChat({ projectId, folderId }: ProjectChatProps) {
       <div className="px-3 py-1.5 border-b border-border/50 bg-card/80 flex items-center justify-between">
         <span className="text-xs text-muted-foreground/60 font-medium">Chat progetto</span>
         <button
-          onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
+          onClick={handleToggleSelection}
           className={cn(
             'h-7 w-7 rounded-md flex items-center justify-center transition-all duration-150',
             selectionMode ? 'bg-destructive/10 text-destructive' : 'text-muted-foreground/50 hover:bg-secondary/80 hover:text-foreground'
@@ -294,7 +299,7 @@ export function ProjectChat({ projectId, folderId }: ProjectChatProps) {
         onSendFile={handleSendFile}
         onSendLink={handleSendLink}
         replyTo={replyTo}
-        onCancelReply={() => setReplyTo(null)}
+        onCancelReply={handleCancelReply}
         disabled={sending}
       />
     </div>

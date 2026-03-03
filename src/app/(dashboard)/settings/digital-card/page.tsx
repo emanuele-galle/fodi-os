@@ -180,6 +180,7 @@ export default function DigitalCardPage() {
                     Apple Wallet
                   </a>
                   <button
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- async handler depends on card.slug
                     onClick={async () => {
                       try {
                         const res = await fetch(`/api/c/${card.slug}/wallet/google`)

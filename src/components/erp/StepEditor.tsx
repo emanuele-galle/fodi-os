@@ -153,11 +153,15 @@ export function StepEditor({ step, index, wizardId, onUpdate, onDelete, allField
 
   const allAvailableFields = [...allFieldsFromPreviousSteps, ...fieldsForCondition]
 
+  const handleToggle = useCallback(() => setExpanded((v) => !v), [])
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value), [])
+  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value), [])
+
   return (
     <div className={cn('border border-border/40 rounded-xl', expanded && 'bg-card')}>
       <div
         className="flex items-center gap-2 p-4 cursor-pointer hover:bg-secondary/20 transition-colors rounded-xl"
-        onClick={() => setExpanded(!expanded)}
+        onClick={handleToggle}
       >
         <GripVertical className="h-4 w-4 text-muted flex-shrink-0" />
         <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex-shrink-0">
@@ -173,11 +177,11 @@ export function StepEditor({ step, index, wizardId, onUpdate, onDelete, allField
           <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-muted mb-1 block">Titolo step *</label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="es. Dati Azienda" />
+              <Input value={title} onChange={handleTitleChange} placeholder="es. Dati Azienda" />
             </div>
             <div>
               <label className="text-xs font-medium text-muted mb-1 block">Descrizione</label>
-              <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrizione opzionale..." />
+              <Input value={description} onChange={handleDescriptionChange} placeholder="Descrizione opzionale..." />
             </div>
           </div>
 
@@ -220,7 +224,9 @@ export function StepEditor({ step, index, wizardId, onUpdate, onDelete, allField
                       key={field.id || `new-${fi}`}
                       field={field}
                       index={fi}
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop captures step.id
                       onSave={(updated) => saveField(updated, step.id!)}
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop captures field.id, step.id
                       onDelete={() => field.id ? deleteField(field.id, step.id!) : onUpdate()}
                       availableFields={allAvailableFields}
                     />

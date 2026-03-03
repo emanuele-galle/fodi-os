@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { getAuthenticatedClient, getCalendarService } from '@/lib/google'
 import { brand } from '@/lib/branding'
@@ -9,7 +9,7 @@ import { brand } from '@/lib/branding'
  * Searches both primary and any brand-specific calendar.
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
-export async function GET(request: NextRequest) {
+export async function GET() {
   const session = await getSession()
   if (!session) {
     return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })

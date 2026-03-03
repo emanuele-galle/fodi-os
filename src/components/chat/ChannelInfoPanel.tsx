@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Hash, Lock, Users, FolderKanban, UserPlus, LogOut, Settings, Pencil, Archive, Trash2 } from 'lucide-react'
+import { X, Hash, Lock, Users, FolderKanban, UserPlus, Pencil, Archive, Trash2 } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
-import { cn } from '@/lib/utils'
 import { CHANNEL_ROLE_LABELS } from '@/lib/constants'
 
 interface ChannelMember {
@@ -137,6 +136,32 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
   const existingMemberIds = new Set(channel.members.map((m) => m.userId))
   const availableMembers = teamMembers.filter((m) => !existingMemberIds.has(m.id))
 
+  /* eslint-disable react-perf/jsx-no-new-function-as-prop -- named handlers */
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setNameValue(e.target.value)
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') { handleUpdateChannel({ name: nameValue.trim() }); setEditingName(false) }
+    if (e.key === 'Escape') setEditingName(false)
+  }
+  const handleStartEditName = () => setEditingName(true)
+  const handleDescChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setDescValue(e.target.value)
+  const handleDescKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleUpdateChannel({ description: descValue.trim() || null }); setEditingDesc(false) }
+    if (e.key === 'Escape') setEditingDesc(false)
+  }
+  const handleStartEditDesc = () => setEditingDesc(true)
+  const handleToggleAddMember = () => setShowAddMember(!showAddMember)
+  const handleToggleArchive = () => handleUpdateChannel({ isArchived: !channel.isArchived })
+  const handleStartDelete = () => setConfirmDelete(true)
+  const handleCancelDelete = () => setConfirmDelete(false)
+  const handleConfirmDelete = async () => {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/chat/channels/${channelId}`, { method: 'DELETE' })
+      if (res.ok) onDeleteChannel?.(channelId)
+    } finally { setDeleting(false) }
+  }
+  /* eslint-enable react-perf/jsx-no-new-function-as-prop */
+
   return (
     <div className="w-[85vw] md:w-[320px] border-l border-border/50 bg-card/95 flex-shrink-0 flex flex-col h-full overflow-hidden">
       {/* Header */}
@@ -162,14 +187,8 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
                 <div className="flex items-center gap-1">
                   <input
                     value={nameValue}
-                    onChange={(e) => setNameValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleUpdateChannel({ name: nameValue.trim() })
-                        setEditingName(false)
-                      }
-                      if (e.key === 'Escape') setEditingName(false)
-                    }}
+                    onChange={handleNameChange}
+                    onKeyDown={handleNameKeyDown}
                     className="text-lg font-semibold bg-transparent border-b border-primary/30 outline-none w-full"
                     autoFocus
                   />
@@ -178,7 +197,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold truncate">{channel.name}</h2>
                   {isOwnerOrAdmin && (
-                    <button onClick={() => setEditingName(true)} className="text-muted-foreground/40 hover:text-muted-foreground transition-colors">
+                    <button onClick={handleStartEditName} className="text-muted-foreground/40 hover:text-muted-foreground transition-colors">
                       <Pencil className="h-3 w-3" />
                     </button>
                   )}
@@ -198,15 +217,8 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
                 <div className="mt-1">
                   <textarea
                     value={descValue}
-                    onChange={(e) => setDescValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleUpdateChannel({ description: descValue.trim() || null })
-                        setEditingDesc(false)
-                      }
-                      if (e.key === 'Escape') setEditingDesc(false)
-                    }}
+                    onChange={handleDescChange}
+                    onKeyDown={handleDescKeyDown}
                     className="w-full text-sm bg-secondary/40 rounded-lg px-3 py-2 outline-none border border-border/30 focus:ring-1 focus:ring-primary/20 resize-none"
                     rows={3}
                     autoFocus
@@ -218,7 +230,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
                     {channel.description || 'Nessuna descrizione'}
                   </p>
                   {isOwnerOrAdmin && (
-                    <button onClick={() => setEditingDesc(true)} className="text-muted-foreground/40 hover:text-muted-foreground transition-colors mt-0.5">
+                    <button onClick={handleStartEditDesc} className="text-muted-foreground/40 hover:text-muted-foreground transition-colors mt-0.5">
                       <Pencil className="h-3 w-3" />
                     </button>
                   )}
@@ -244,7 +256,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
             </span>
             {isOwnerOrAdmin && channel.type !== 'DIRECT' && (
               <button
-                onClick={() => setShowAddMember(!showAddMember)}
+                onClick={handleToggleAddMember}
                 className="h-6 w-6 rounded-md bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center transition-colors"
               >
                 <UserPlus className="h-3 w-3" />
@@ -258,6 +270,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
               {availableMembers.map((member) => (
                 <button
                   key={member.id}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                   onClick={() => handleAddMember(member.id)}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-secondary/60 transition-colors text-left"
                 >
@@ -288,6 +301,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
                 </span>
                 {isOwnerOrAdmin && member.role !== 'OWNER' && member.userId !== currentUserId && channel.type !== 'DIRECT' && (
                   <button
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                     onClick={() => handleRemoveMember(member.userId)}
                     disabled={removingMember === member.userId}
                     className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
@@ -306,7 +320,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
           <div className="border-t border-border/30 p-4 space-y-1">
             {channel.type !== 'DIRECT' && (
               <button
-                onClick={() => handleUpdateChannel({ isArchived: !channel.isArchived })}
+                onClick={handleToggleArchive}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/60 transition-colors text-sm text-muted-foreground"
               >
                 <Archive className="h-4 w-4" />
@@ -315,7 +329,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
             )}
             {!confirmDelete ? (
               <button
-                onClick={() => setConfirmDelete(true)}
+                onClick={handleStartDelete}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-destructive/10 transition-colors text-sm text-destructive"
               >
                 <Trash2 className="h-4 w-4" />
@@ -330,24 +344,14 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
                 </p>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={async () => {
-                      setDeleting(true)
-                      try {
-                        const res = await fetch(`/api/chat/channels/${channelId}`, { method: 'DELETE' })
-                        if (res.ok) {
-                          onDeleteChannel?.(channelId)
-                        }
-                      } finally {
-                        setDeleting(false)
-                      }
-                    }}
+                    onClick={handleConfirmDelete}
                     disabled={deleting}
                     className="flex-1 text-xs font-medium px-3 py-1.5 rounded-md bg-destructive text-white hover:bg-destructive/90 transition-colors disabled:opacity-50"
                   >
                     {deleting ? 'Eliminazione...' : 'Conferma'}
                   </button>
                   <button
-                    onClick={() => setConfirmDelete(false)}
+                    onClick={handleCancelDelete}
                     className="flex-1 text-xs font-medium px-3 py-1.5 rounded-md bg-secondary hover:bg-secondary/80 transition-colors"
                   >
                     Annulla

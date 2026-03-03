@@ -3,7 +3,6 @@ import { hasPermission, requirePermission } from '@/lib/permissions'
 import type { Module, Permission } from '@/lib/permissions'
 import type { Role } from '@/generated/prisma/client'
 
-const ALL_ROLES: Role[] = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT', 'CLIENT']
 const ALL_MODULES: Module[] = ['crm', 'erp', 'pm', 'kb', 'content', 'support', 'admin', 'portal', 'chat']
 
 describe('Permissions - hasPermission', () => {

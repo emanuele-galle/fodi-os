@@ -174,6 +174,7 @@ export function TimeTrackingContent() {
     URL.revokeObjectURL(url)
   }
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- async handler with state deps
   const handleClockOut = async () => {
     setClockingOut(true)
     try {
@@ -271,6 +272,7 @@ export function TimeTrackingContent() {
       )}
 
       {/* Filters */}
+      {/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop -- filter setters and computed options */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} label="Dal" className="w-full sm:w-44" />
         <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} label="Al" className="w-full sm:w-44" />
@@ -285,6 +287,7 @@ export function TimeTrackingContent() {
           className="w-full sm:w-52"
         />
       </div>
+      {/* eslint-enable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-array-as-prop */}
 
       {fetchError && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
@@ -292,6 +295,7 @@ export function TimeTrackingContent() {
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{fetchError}</p>
           </div>
+          {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- retry handler */}
           <button onClick={() => fetchSessions()} className="text-sm font-medium text-destructive hover:underline flex-shrink-0">Riprova</button>
         </div>
       )}
@@ -363,6 +367,7 @@ export function TimeTrackingContent() {
               {/* Desktop table view */}
               <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80 shadow-[var(--shadow-sm)]">
                 <table className="w-full text-sm">
+                  {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- sort column handlers */}
                   <thead>
                     <tr className="border-b border-border text-left text-muted bg-secondary/40">
                       <th className="py-2.5 px-4 font-medium text-xs uppercase tracking-wider cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => tsHandleSort('userName')}>Utente{tsSortIcon('userName')}</th>
@@ -372,6 +377,7 @@ export function TimeTrackingContent() {
                       <th className="py-2.5 pr-4 font-medium text-xs uppercase tracking-wider w-24 cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => tsHandleSort('isActive')}>Stato{tsSortIcon('isActive')}</th>
                     </tr>
                   </thead>
+                  {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}
                   <tbody>
                     {sortData(group.sessions, tsSortKey, tsSortDir, getSessionValue).map((s) => (
                       <tr key={s.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors even:bg-secondary/20">
