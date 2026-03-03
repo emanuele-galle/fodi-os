@@ -44,6 +44,15 @@ ENV BRAND_LOGO_LIGHT=$BRAND_LOGO_LIGHT
 ENV BRAND_STORAGE_URL=$BRAND_STORAGE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Copy brand-specific favicons to public root so /favicon.ico always matches the brand
+RUN if [ -n "$BRAND_SLUG" ] && [ -d "public/brands/$BRAND_SLUG" ]; then \
+      cp -f "public/brands/$BRAND_SLUG/favicon.png" public/favicon.png 2>/dev/null || true; \
+      cp -f "public/brands/$BRAND_SLUG/favicon.svg" public/favicon.svg 2>/dev/null || true; \
+      cp -f "public/brands/$BRAND_SLUG/apple-touch-icon.png" public/icons/apple-touch-icon.png 2>/dev/null || true; \
+      cp -f "public/brands/$BRAND_SLUG/icon-192.png" public/icons/icon-192.png 2>/dev/null || true; \
+      cp -f "public/brands/$BRAND_SLUG/icon-512.png" public/icons/icon-512.png 2>/dev/null || true; \
+    fi
+
 RUN DATABASE_URL="$DATABASE_URL" npx prisma generate
 RUN npm run build
 
