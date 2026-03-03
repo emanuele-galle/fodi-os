@@ -636,6 +636,7 @@ export default function CalendarPage() {
                   setCreateError={setCreateError}
                   setShowNewEvent={setShowNewEvent}
                   mobileView={mobileView}
+                  desktopView={desktopView}
                 />
               )}
 

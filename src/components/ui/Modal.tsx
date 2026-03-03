@@ -80,7 +80,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
     >
       <div
         className={cn(
-          'glass-card bg-card/80 backdrop-blur-2xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in flex flex-col',
+          'glass-card bg-card/95 backdrop-blur-2xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in flex flex-col',
           // Mobile fallback (forceDialog or preventAccidentalClose): full-screen
           'w-full h-[100dvh] rounded-none',
           // Desktop: centered dialog

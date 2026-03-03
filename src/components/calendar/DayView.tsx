@@ -3,7 +3,7 @@
 /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { ChevronLeft, ChevronRight, Plus, Calendar, MapPin, Video } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
-import type { CalendarEvent, MobileView, NewEventData } from './types'
+import type { CalendarEvent, DesktopView, MobileView, NewEventData } from './types'
 import { HOURS, SLOT_HEIGHT } from './constants'
 import { formatTime, addHour, getEventPositionStyle } from './utils'
 
@@ -22,6 +22,7 @@ interface DayViewProps {
   setCreateError: (err: string | null) => void
   setShowNewEvent: (show: boolean) => void
   mobileView: MobileView
+  desktopView: DesktopView
 }
 
 export function DayView({
@@ -39,6 +40,7 @@ export function DayView({
   setCreateError,
   setShowNewEvent,
   mobileView,
+  desktopView,
 }: DayViewProps) {
   const selDayEvents = eventsByDate.get(selectedDayKey) || []
   const allDayEvs = selDayEvents.filter((ev) => !!ev.start.date)
@@ -64,7 +66,7 @@ export function DayView({
   }
 
   return (
-    <Card className={`overflow-hidden ${mobileView === 'day' ? '' : 'hidden md:block'}`}>
+    <Card className={`overflow-hidden ${mobileView === 'day' ? '' : 'hidden'} ${desktopView !== 'day' ? 'md:hidden' : 'md:block'}`}>
       <CardContent className="p-0">
         {/* Day header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/10">
