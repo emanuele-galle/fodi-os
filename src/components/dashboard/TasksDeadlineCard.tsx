@@ -70,11 +70,11 @@ export function TasksDeadlineCard({ tasks, fullWidth }: TasksDeadlineCardProps) 
                     <span className={`text-xs font-semibold uppercase tracking-wider ${section.color}`}>{section.label}</span>
                   </div>
                   {section.tasks.map(task => (
-                    <div key={task.id} onClick={() => router.push(`/tasks?taskId=${task.id}`)} className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+                    <div key={task.id} onClick={() => router.push(`/tasks?taskId=${task.id}`)} className="flex items-center justify-between py-2.5 px-3 -mx-1 rounded-xl hover:bg-secondary/50 active:bg-secondary/60 transition-colors cursor-pointer touch-manipulation">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{task.title}</p>
+                        <p className="text-[15px] md:text-sm font-medium truncate">{task.title}</p>
                         {task.project && (
-                          <p className="text-xs text-muted mt-0.5">{task.project.name}</p>
+                          <p className="text-[12px] text-muted mt-0.5">{task.project.name}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0 ml-4">

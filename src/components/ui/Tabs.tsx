@@ -21,17 +21,17 @@ export function Tabs({ tabs, defaultTab, className }: TabsProps) {
 
   return (
     <div className={className}>
-      {/* Segmented control */}
-      <div className="flex bg-secondary/50 rounded-lg p-1 overflow-x-auto scrollbar-none -mx-1">
+      {/* iOS segmented control */}
+      <div className="flex gap-0.5 p-[3px] rounded-[10px] bg-secondary/60 overflow-x-auto scrollbar-none">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'px-4 py-2 md:py-1.5 text-sm font-medium transition-all rounded-lg whitespace-nowrap touch-manipulation min-h-[44px] md:min-h-0 flex-1',
+              'flex-1 text-[13px] font-medium py-[7px] px-3 rounded-[8px] transition-all duration-200 touch-manipulation whitespace-nowrap min-h-[44px] md:min-h-0',
               activeTab === tab.id
-                ? 'bg-card text-foreground shadow-[var(--shadow-sm)]'
-                : 'text-muted hover:text-foreground'
+                ? 'bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                : 'text-muted active:opacity-60'
             )}
           >
             {tab.label}

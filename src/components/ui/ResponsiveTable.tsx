@@ -88,46 +88,49 @@ export function ResponsiveTable<T>({
         </table>
       </div>
 
-      {/* Mobile: Card List */}
-      <div className="md:hidden space-y-2">
-        {data.map(item => (
+      {/* Mobile: iOS grouped list */}
+      <div className="md:hidden ios-grouped-section">
+        {data.map((item, idx) => (
           <div
             key={keyExtractor(item)}
             onClick={() => onRowClick?.(item)}
             className={cn(
-              'rounded-lg border border-border/30 bg-card p-3.5 transition-colors',
-              onRowClick && 'cursor-pointer active:bg-secondary/50 touch-manipulation'
+              'ios-grouped-row',
+              onRowClick && 'cursor-pointer touch-manipulation',
+              idx === data.length - 1 && '!border-b-0'
             )}
           >
-            {/* Primary + Secondary */}
-            <div className="flex items-start justify-between gap-2 mb-1.5">
-              <div className="min-w-0 flex-1">
-                {primaryCol && (
-                  <p className="text-sm font-semibold truncate">{primaryCol.render(item)}</p>
-                )}
-                {secondaryCol && (
-                  <p className="text-xs text-muted truncate mt-0.5">{secondaryCol.render(item)}</p>
+            <div className="flex-1 min-w-0">
+              {/* Primary + Secondary */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  {primaryCol && (
+                    <p className="text-[15px] font-medium truncate">{primaryCol.render(item)}</p>
+                  )}
+                  {secondaryCol && (
+                    <p className="text-[12px] text-muted truncate mt-0.5">{secondaryCol.render(item)}</p>
+                  )}
+                </div>
+                {/* Show last detail column as a badge on the right */}
+                {detailCols.length > 0 && (
+                  <div className="flex-shrink-0">
+                    {detailCols[detailCols.length - 1].render(item)}
+                  </div>
                 )}
               </div>
-              {/* Show last detail column as a badge on the right */}
-              {detailCols.length > 0 && (
-                <div className="flex-shrink-0">
-                  {detailCols[detailCols.length - 1].render(item)}
+
+              {/* Detail columns as inline tags */}
+              {detailCols.length > 1 && (
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+                  {detailCols.slice(0, -1).map(col => (
+                    <div key={col.key} className="flex items-center gap-1 text-[12px] text-muted">
+                      <span className="font-medium text-foreground/70">{col.label}:</span>
+                      <span>{col.render(item)}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-
-            {/* Detail columns as inline tags */}
-            {detailCols.length > 1 && (
-              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-                {detailCols.slice(0, -1).map(col => (
-                  <div key={col.key} className="flex items-center gap-1 text-xs text-muted">
-                    <span className="font-medium text-foreground/70">{col.label}:</span>
-                    <span>{col.render(item)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         ))}
       </div>

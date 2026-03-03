@@ -20,22 +20,22 @@ export function OperativeSummaryCard({ overdue, today, inProgress, completedMont
           </div>
           <CardTitle>Riepilogo Operativo</CardTitle>
         </div>
-        <div className="grid grid-cols-2 gap-3 md:gap-4">
-          <div className="text-center p-3 rounded-lg bg-red-500/5 border border-red-200/30 dark:border-red-800/30">
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{overdue}</p>
-            <p className="text-xs text-muted mt-1">Scadute</p>
+        <div className="grid grid-cols-2 gap-2 md:gap-4">
+          <div className="text-center p-3 rounded-xl bg-red-500/5 border border-red-200/30 dark:border-red-800/30">
+            <p className="text-xl md:text-2xl font-bold tabular-nums text-red-600 dark:text-red-400">{overdue}</p>
+            <p className="text-[11px] md:text-xs text-muted mt-0.5">Scadute</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-amber-500/5 border border-amber-200/30 dark:border-amber-800/30">
-            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{today}</p>
-            <p className="text-xs text-muted mt-1">Oggi</p>
+          <div className="text-center p-3 rounded-xl bg-amber-500/5 border border-amber-200/30 dark:border-amber-800/30">
+            <p className="text-xl md:text-2xl font-bold tabular-nums text-amber-600 dark:text-amber-400">{today}</p>
+            <p className="text-[11px] md:text-xs text-muted mt-0.5">Oggi</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-blue-500/5 border border-blue-200/30 dark:border-blue-800/30">
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{inProgress}</p>
-            <p className="text-xs text-muted mt-1">In Corso</p>
+          <div className="text-center p-3 rounded-xl bg-blue-500/5 border border-blue-200/30 dark:border-blue-800/30">
+            <p className="text-xl md:text-2xl font-bold tabular-nums text-blue-600 dark:text-blue-400">{inProgress}</p>
+            <p className="text-[11px] md:text-xs text-muted mt-0.5">In Corso</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-emerald-500/5 border border-emerald-200/30 dark:border-emerald-800/30">
-            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{completedMonth}</p>
-            <p className="text-xs text-muted mt-1">Completate (mese)</p>
+          <div className="text-center p-3 rounded-xl bg-emerald-500/5 border border-emerald-200/30 dark:border-emerald-800/30">
+            <p className="text-xl md:text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{completedMonth}</p>
+            <p className="text-[11px] md:text-xs text-muted mt-0.5">Completate (mese)</p>
           </div>
         </div>
       </CardContent>

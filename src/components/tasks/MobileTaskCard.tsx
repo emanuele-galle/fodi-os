@@ -28,11 +28,9 @@ export function MobileTaskCard({ task, activeTab, userId, onClick, expanded, sub
     <div
       onClick={onClick}
       className={cn(
-        'p-4 space-y-2.5 cursor-pointer active:scale-[0.98] transition-transform touch-manipulation shadow-[var(--shadow-sm)] rounded-lg border bg-card',
-        urgency === 'overdue' || urgency === 'today' ? `${urgencyStyles.border} ${urgencyStyles.bg}` : 'border-border/80'
+        'p-4 space-y-2.5 cursor-pointer active:opacity-80 transition-all touch-manipulation rounded-2xl border bg-card shadow-[var(--shadow-sm)]',
+        urgency === 'overdue' || urgency === 'today' ? `${urgencyStyles.border} ${urgencyStyles.bg}` : 'border-border/25'
       )}
-      // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
-      style={{ borderLeft: `3px solid ${PRIORITY_COLORS[task.priority] || 'var(--color-primary)'}` }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">

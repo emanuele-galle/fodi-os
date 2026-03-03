@@ -37,16 +37,16 @@ export function TaskStats({ tasks }: TaskStatsProps) {
 
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-4 mb-4 animate-stagger">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 animate-stagger">
         {stats.map((s) => (
           <Card key={s.label} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
-            <CardContent className="flex items-center gap-2.5 md:gap-3 py-2.5 md:py-3">
-              <div className={`p-2.5 rounded-xl ${s.color}`} style={colorMixStyle}>
-                <s.icon className="h-4.5 w-4.5" />
+            <CardContent className="flex items-center gap-2 md:gap-3 py-2 md:py-3">
+              <div className={`p-2 md:p-2.5 rounded-[10px] ${s.color}`} style={colorMixStyle}>
+                <s.icon className="h-4 w-4 md:h-4.5 md:w-4.5" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-muted font-medium truncate">{s.label}</p>
-                <p className="text-xl font-bold animate-count-up">{s.value}</p>
+                <p className="text-[11px] md:text-xs text-muted font-medium truncate">{s.label}</p>
+                <p className="text-lg md:text-xl font-bold tabular-nums animate-count-up">{s.value}</p>
               </div>
             </CardContent>
           </Card>
@@ -66,7 +66,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
             </div>
             <span className="text-xs font-medium text-muted">{completionPct}%</span>
           </div>
-          <div className="h-2 bg-secondary/60 rounded-full overflow-hidden flex">
+          <div className="h-1.5 md:h-2 bg-secondary/60 rounded-full overflow-hidden flex">
             {progressSegments.filter((s) => s.count > 0).map((s) => (
               <div
                 key={s.key}

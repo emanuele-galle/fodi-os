@@ -20,7 +20,7 @@ interface TaskTabBarProps {
 
 export function TaskTabBar({ tabs, activeTab, onTabChange, tabCounts }: TaskTabBarProps) {
   return (
-    <div className="flex bg-secondary/60 rounded-lg p-1 mb-4 overflow-x-auto scrollbar-none">
+    <div className="flex gap-0.5 p-[3px] rounded-[10px] bg-secondary/60 mb-4 overflow-x-auto scrollbar-none">
       {tabs.map((tab) => {
         const Icon = tab.icon
         const count = tabCounts[tab.key]
@@ -30,17 +30,17 @@ export function TaskTabBar({ tabs, activeTab, onTabChange, tabCounts }: TaskTabB
             // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
             onClick={() => onTabChange(tab.key)}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 md:py-1.5 text-sm font-medium transition-all rounded-lg whitespace-nowrap touch-manipulation min-h-[44px] md:min-h-0 flex-1',
+              'flex items-center justify-center gap-1.5 text-[13px] font-medium py-[7px] px-3 rounded-[8px] transition-all duration-200 touch-manipulation whitespace-nowrap min-h-[44px] md:min-h-0 flex-1',
               activeTab === tab.key
-                ? 'bg-card text-foreground shadow-[var(--shadow-sm)]'
-                : 'text-muted hover:text-foreground'
+                ? 'bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                : 'text-muted active:opacity-60'
             )}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
             <span>{tab.label}</span>
             {count > 0 && (
               <span className={cn(
-                'text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center',
+                'text-[11px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold',
                 activeTab === tab.key
                   ? 'bg-primary/10 text-primary'
                   : 'bg-secondary text-muted'
