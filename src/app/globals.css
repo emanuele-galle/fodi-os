@@ -21,7 +21,7 @@ html {
   --color-background: #F2F2F7;
   --color-foreground: #1D1D1F;
   --color-card: #FFFFFF;
-  --color-sidebar: #E8E8ED;
+  --color-sidebar: #D1D1D6;
   --color-sidebar-foreground: #1D1D1F;
   --color-sidebar-active: #007AFF;
   --color-warning: #FF9500;
@@ -49,7 +49,7 @@ html {
   --color-secondary-foreground: #1D1D1F;
   --color-border: #C7C7CC;
   --color-muted: #8E8E93;
-  --color-sidebar: #E8E8ED;
+  --color-sidebar: #D1D1D6;
   --color-sidebar-foreground: #1D1D1F;
 }
 
