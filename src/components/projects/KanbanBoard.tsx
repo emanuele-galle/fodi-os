@@ -252,7 +252,7 @@ export function KanbanBoard({ tasksByColumn, onColumnChange, onAddTask, onTaskCl
   }
 
   const boardContent = (
-    <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none -mx-4 px-4 md:mx-0 md:px-0">
+    <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none scroll-edge">
       {BOARD_COLUMNS.map((col) => {
         const tasks = tasksByColumn[col.key] || []
         return (

@@ -227,7 +227,7 @@ export default function DashboardLayout({
         <SetupBanner />
         <ActiveTimerBanner />
 
-        <main className="flex-1 overflow-auto p-4 md:p-8 pb-20 md:pb-8 [&>*]:max-w-[1400px] [&>*]:mx-auto">
+        <main className="flex-1 overflow-auto py-4 md:py-8 pb-24 md:pb-8 [&>*]:max-w-[1400px] [&>*]:mx-auto safe-area-x">
           <PullToRefresh onRefresh={handleRefresh}>
           <UserProvider user={user}>
           <Suspense fallback={

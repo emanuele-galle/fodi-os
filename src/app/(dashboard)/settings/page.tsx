@@ -108,7 +108,7 @@ export default function SettingsPage() {
 
       <div className="flex flex-col lg:flex-row gap-6">
         <nav className="lg:w-60 flex-shrink-0">
-          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 lg:border lg:border-border/30 lg:rounded-xl lg:p-2 lg:bg-secondary/20 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory lg:snap-none">
+          <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 lg:border lg:border-border/30 lg:rounded-xl lg:p-2 lg:bg-secondary/20 scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 snap-x snap-mandatory lg:snap-none">
             {sections.map((section) => {
               const Icon = section.icon
               return (

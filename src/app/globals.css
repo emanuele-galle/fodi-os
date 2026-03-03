@@ -799,10 +799,37 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* PWA standalone: safe area padding */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  body {
-    padding-bottom: env(safe-area-inset-bottom);
+/* ===== Safe Area Insets & Mobile Content Padding ===== */
+
+/* Main content horizontal padding — used by edge-to-edge scroll patterns */
+:root {
+  --content-px: 1.25rem; /* 20px on mobile */
+}
+@media (min-width: 768px) {
+  :root {
+    --content-px: 2rem; /* 32px on desktop */
+  }
+}
+
+/* Horizontal safe areas for landscape / notch devices */
+.safe-area-x {
+  padding-left: max(var(--content-px), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--content-px), env(safe-area-inset-right, 0px));
+}
+
+/* Edge-to-edge scroll pattern (used by kanban, carousel, etc.) */
+.scroll-edge {
+  margin-left: calc(-1 * var(--content-px));
+  margin-right: calc(-1 * var(--content-px));
+  padding-left: var(--content-px);
+  padding-right: var(--content-px);
+}
+@media (min-width: 768px) {
+  .scroll-edge {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 
@@ -1018,10 +1045,26 @@ body,
     border-radius: 0;
     border-left: none;
     border-right: none;
-    margin-left: -1rem;
-    margin-right: -1rem;
-    width: calc(100% + 2rem);
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    width: calc(100% + 2.5rem);
   }
+}
+
+/* ===== iPhone / Mobile Refinements ===== */
+
+/* Prevent horizontal overflow on mobile */
+@media (max-width: 767px) {
+  html, body {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Slightly smaller page titles on small phones */
+  h1 { word-break: break-word; }
+
+  /* Tables and wide content must scroll */
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 
 @layer base {

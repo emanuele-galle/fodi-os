@@ -168,7 +168,7 @@ export function TeamPerformanceTable({ data }: { data: TeamMember[] }) {
     <Card>
       <CardContent>
         <CardTitle className="mb-4 text-base md:text-lg">Performance Team</CardTitle>
-        <div className="overflow-x-auto -mx-4 md:-mx-6">
+        <div className="overflow-x-auto -mx-4 md:-mx-6 -webkit-overflow-scrolling-touch">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/40">

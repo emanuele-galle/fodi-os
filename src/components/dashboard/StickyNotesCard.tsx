@@ -87,7 +87,7 @@ export function StickyNotesCard() {
             </Button>
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 md:overflow-visible scrollbar-none">
+          <div className="flex gap-3 overflow-x-auto pb-2 scroll-edge md:grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 md:overflow-visible scrollbar-none">
             {notes.map((note) => (
               <div
                 key={note.id}

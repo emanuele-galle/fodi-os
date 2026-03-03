@@ -145,7 +145,7 @@ export function PipelineKanban({ clientsByStatus, onStatusChange }: PipelineKanb
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none -mx-4 px-4 md:mx-0 md:px-0">
+      <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none scroll-edge">
         {COLUMNS.map((col) => {
           const clients = clientsByStatus[col.status] || []
           return (

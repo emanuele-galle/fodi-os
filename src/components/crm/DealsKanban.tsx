@@ -191,7 +191,7 @@ export function DealsKanban({ dealsByStage, onStageChange, onRefresh }: DealsKan
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none scroll-edge">
           {COLUMNS.map((col) => {
             const deals = dealsByStage[col.stage] || []
             const stageValue = deals.reduce((sum, d) => sum + parseFloat(d.value || '0'), 0)

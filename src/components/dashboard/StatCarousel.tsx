@@ -35,7 +35,7 @@ export function StatCarousel({ stats, loading }: StatCarouselProps) {
   return (
     <>
       {/* Mobile: horizontal scrollable */}
-      <div className="md:hidden flex gap-2.5 overflow-x-auto scrollbar-none -mx-4 px-4 mb-6 snap-x snap-mandatory">
+      <div className="md:hidden flex gap-2.5 overflow-x-auto scrollbar-none scroll-edge mb-6 snap-x snap-mandatory">
         {stats.map((stat) => (
           <div
             key={stat.label}

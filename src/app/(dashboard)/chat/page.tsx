@@ -33,7 +33,7 @@ export default function ChatPage() {
   /* eslint-enable react-perf/jsx-no-new-function-as-prop */
 
   return (
-    <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-4rem)] h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-4rem)] -mx-4 -mt-4 -mb-20 md:-mx-6 md:-mt-6 md:-mb-6 relative overflow-hidden">
+    <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-4rem)] h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-4rem)] -mx-5 -mt-4 -mb-24 md:-mx-8 md:-mt-8 md:-mb-8 relative overflow-hidden">
       {/* Left panel - Channel list */}
       <div className={`w-full md:w-[320px] lg:w-[340px] border-r border-border/50 flex-shrink-0 bg-card/95 backdrop-blur-sm ${chat.selectedId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
         {chat.channelError && (

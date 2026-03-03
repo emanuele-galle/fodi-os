@@ -48,7 +48,7 @@ export function MobileHeader({ user, unreadCount, onOpenSearch, onOpenNotificati
   const sectionName = getCurrentSection(pathname)
 
   return (
-    <header className="flex items-center justify-between h-12 px-4 bg-background/80 backdrop-blur-2xl saturate-[1.8] border-b border-border/15 md:hidden">
+    <header className="flex items-center justify-between h-11 px-4 pt-[env(safe-area-inset-top,0px)] bg-background/80 backdrop-blur-2xl saturate-[1.8] border-b border-border/15 md:hidden">
       <div className="flex items-center gap-2 min-w-0">
         {sectionName ? (
           <h1 className="text-[17px] font-semibold truncate">{sectionName}</h1>
