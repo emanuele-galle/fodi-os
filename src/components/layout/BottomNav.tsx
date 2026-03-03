@@ -120,6 +120,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
   }
 
   function handleTabClick(href: string) {
+    haptic('selection')
     if (href === '#menu') {
       if (menuOpen) {
         closeMenu()
@@ -191,7 +192,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
               <button
                 onClick={closeMenu}
                 aria-label="Chiudi menu"
-                className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-white/10 active:bg-white/15 transition-colors touch-manipulation"
+                className="h-11 w-11 rounded-full flex items-center justify-center hover:bg-[var(--color-sheet-border)] active:bg-[var(--color-sheet-border)] transition-colors touch-manipulation"
               >
                 <X className="h-4 w-4 text-[var(--color-sheet-muted)]" />
               </button>
@@ -230,7 +231,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
       )}
 
       {/* Bottom Nav Bar */}
-      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/80 backdrop-blur-2xl saturate-[1.8] border-t border-border/20 pb-[env(safe-area-inset-bottom,0px)]">
+      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[var(--color-sheet)] backdrop-blur-2xl saturate-[var(--glass-saturation)] border-t border-[var(--color-sheet-border)] pb-[env(safe-area-inset-bottom,0px)]">
         <div className="flex items-center justify-around h-[50px]">
           {TAB_ITEMS.map((tab) => {
             const active = isTabActive(tab.href)

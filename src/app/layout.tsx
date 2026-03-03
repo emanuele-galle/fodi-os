@@ -55,13 +55,18 @@ export default function RootLayout({
   return (
     <html lang="it">
       <head>
-        <meta name="theme-color" content="#27272A" />
+        <meta name="theme-color" content="#F2F2F7" id="theme-color-meta" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         {process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && (
           <meta name="vapid-public-key" content={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY} />
         )}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var k='${brand.storageKeys.theme}';var t=localStorage.getItem(k);if(t==='system'||!t){t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}if(t!=='light'&&t!=='dark')t='light';document.documentElement.setAttribute('data-theme',t);var m=document.getElementById('theme-color-meta');if(m)m.setAttribute('content',t==='dark'?'#000000':'#F2F2F7')}catch(e){}})()`,
+          }}
+        />
       </head>
       <body className="antialiased">
         {children}

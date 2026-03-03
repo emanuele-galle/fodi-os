@@ -12,6 +12,8 @@ import { ContextualFAB } from '@/components/layout/ContextualFAB'
 import { SetupBanner } from '@/components/layout/SetupBanner'
 import { ActiveTimerBanner } from '@/components/tasks/ActiveTimerBanner'
 import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useRouter } from 'next/navigation'
+import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import dynamic from 'next/dynamic'
 import { SSEProvider } from '@/providers/SSEProvider'
 import { UserProvider } from '@/providers/UserProvider'
@@ -62,6 +64,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const router = useRouter()
   const [user, setUser] = useState<UserSession | null>(null)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [unreadNotifications, setUnreadNotifications] = useState(0)
@@ -143,6 +146,13 @@ export default function DashboardLayout({
     return () => clearInterval(interval)
   }, [fetchCounts])
 
+  // PullToRefresh handler: refresh page data + badge counts
+  const handleRefresh = useCallback(async () => {
+    router.refresh()
+    fetchCounts()
+    await new Promise(r => setTimeout(r, 500))
+  }, [router, fetchCounts])
+
   // Heartbeat: update lastActiveAt every 60s, pause when tab hidden
   useEffect(() => {
     function sendHeartbeat() {
@@ -218,6 +228,7 @@ export default function DashboardLayout({
         <ActiveTimerBanner />
 
         <main className="flex-1 overflow-auto p-4 md:p-8 pb-20 md:pb-8 [&>*]:max-w-[1400px] [&>*]:mx-auto">
+          <PullToRefresh onRefresh={handleRefresh}>
           <UserProvider user={user}>
           <Suspense fallback={
             <div className="animate-fade-in space-y-4">
@@ -241,6 +252,7 @@ export default function DashboardLayout({
             {children}
           </Suspense>
           </UserProvider>
+          </PullToRefresh>
         </main>
       </div>
 

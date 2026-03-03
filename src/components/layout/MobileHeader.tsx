@@ -1,10 +1,13 @@
 'use client'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers with haptic */
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Bell, Search } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Logo } from '@/components/ui/Logo'
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
+import { haptic } from '@/lib/haptic'
 
 const SECTION_NAMES: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -57,18 +60,20 @@ export function MobileHeader({ user, unreadCount, onOpenSearch, onOpenNotificati
       </div>
 
       <div className="flex items-center gap-0 flex-shrink-0">
+        <ThemeSwitcher />
+
         <button
-          onClick={onOpenSearch}
+          onClick={() => { haptic('light'); onOpenSearch() }}
           aria-label="Cerca"
-          className="h-10 w-10 flex items-center justify-center active:opacity-50 transition-opacity touch-manipulation"
+          className="h-11 w-11 flex items-center justify-center active:opacity-50 transition-opacity touch-manipulation"
         >
           <Search className="h-[18px] w-[18px] text-primary" />
         </button>
 
         <button
-          onClick={onOpenNotifications}
+          onClick={() => { haptic('light'); onOpenNotifications() }}
           aria-label="Notifiche"
-          className="relative h-10 w-10 flex items-center justify-center active:opacity-50 transition-opacity touch-manipulation"
+          className="relative h-11 w-11 flex items-center justify-center active:opacity-50 transition-opacity touch-manipulation"
         >
           <Bell className="h-[18px] w-[18px] text-primary" />
           {unreadCount > 0 && (
@@ -81,7 +86,7 @@ export function MobileHeader({ user, unreadCount, onOpenSearch, onOpenNotificati
         <Link
           href="/settings"
           aria-label="Profilo"
-          className="h-10 w-10 flex items-center justify-center touch-manipulation ml-0.5"
+          className="h-11 w-11 flex items-center justify-center touch-manipulation ml-0.5"
         >
           <Avatar
             name={`${user.firstName} ${user.lastName}`}

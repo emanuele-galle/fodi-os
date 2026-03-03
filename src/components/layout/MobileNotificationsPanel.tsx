@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { type Notification, NOTIF_ICONS } from '@/lib/notification-constants'
+import { haptic } from '@/lib/haptic'
 
 interface MobileNotificationsPanelProps {
   onClose: () => void
@@ -59,11 +60,13 @@ export function MobileNotificationsPanel({ onClose }: MobileNotificationsPanelPr
       if (res.ok) {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
         setUnreadCount(0)
+        haptic('success')
       }
     } catch {}
   }
 
   function handleNotificationClick(notif: Notification) {
+    haptic('selection')
     if (!notif.isRead) {
       fetch('/api/notifications', {
         method: 'PATCH',
@@ -91,7 +94,7 @@ export function MobileNotificationsPanel({ onClose }: MobileNotificationsPanelPr
       />
 
       {/* Panel - slides up from bottom */}
-      <div className="absolute bottom-0 left-0 right-0 bg-card rounded-t-xl shadow-[var(--shadow-xl)] animate-slide-up max-h-[85vh] flex flex-col">
+      <div className="absolute bottom-0 left-0 right-0 bg-[var(--color-sheet)] backdrop-blur-2xl saturate-[var(--glass-saturation)] rounded-t-xl shadow-[var(--shadow-xl)] animate-slide-up max-h-[85vh] flex flex-col">
         {/* Drag handle */}
         <div className="flex justify-center pt-2.5 pb-1">
           <div className="w-10 h-1.5 rounded-full bg-border/40" />
@@ -109,7 +112,7 @@ export function MobileNotificationsPanel({ onClose }: MobileNotificationsPanelPr
           </div>
           <button
             onClick={onClose}
-            className="h-9 w-9 rounded-full flex items-center justify-center bg-secondary/60 active:bg-secondary/80 transition-colors touch-manipulation"
+            className="h-11 w-11 rounded-full flex items-center justify-center bg-secondary/60 active:bg-secondary/80 transition-colors touch-manipulation"
             aria-label="Chiudi notifiche"
           >
             <X className="h-4 w-4 text-muted" />

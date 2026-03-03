@@ -21,9 +21,14 @@ html {
   --color-background: #F2F2F7;
   --color-foreground: #1D1D1F;
   --color-card: #FFFFFF;
-  --color-sidebar: #2C2C2E;
-  --color-sidebar-foreground: #F5F5F7;
-  --color-sidebar-active: #0A84FF;
+  --color-sidebar: #F2F2F7;
+  --color-sidebar-foreground: #1D1D1F;
+  --color-sidebar-active: #007AFF;
+  --color-sidebar-muted: #6E6E73;
+  --color-sidebar-hover: rgba(0, 0, 0, 0.04);
+  --color-sidebar-active-bg: rgba(0, 122, 255, 0.10);
+  --color-sidebar-border: rgba(0, 0, 0, 0.06);
+  --color-sidebar-divider: rgba(0, 0, 0, 0.08);
   --color-warning: #FF9500;
 
   /* iOS 26 Liquid Glass material */
@@ -61,8 +66,14 @@ html {
   --color-secondary-foreground: #1D1D1F;
   --color-border: #C7C7CC;
   --color-muted: #6E6E73;
-  --color-sidebar: #2C2C2E;
-  --color-sidebar-foreground: #F5F5F7;
+  --color-sidebar: #F2F2F7;
+  --color-sidebar-foreground: #1D1D1F;
+  --color-sidebar-active: #007AFF;
+  --color-sidebar-muted: #6E6E73;
+  --color-sidebar-hover: rgba(0, 0, 0, 0.04);
+  --color-sidebar-active-bg: rgba(0, 122, 255, 0.10);
+  --color-sidebar-border: rgba(0, 0, 0, 0.06);
+  --color-sidebar-divider: rgba(0, 0, 0, 0.08);
   --color-label-secondary: rgba(60, 60, 67, 0.60);
   --color-label-tertiary: rgba(60, 60, 67, 0.36);
 }
@@ -81,6 +92,11 @@ html {
   --color-sidebar: #1C1C1E;
   --color-sidebar-foreground: #F5F5F7;
   --color-sidebar-active: #0A84FF;
+  --color-sidebar-muted: #8E8E93;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.07);
+  --color-sidebar-active-bg: rgba(10, 132, 255, 0.15);
+  --color-sidebar-border: rgba(255, 255, 255, 0.06);
+  --color-sidebar-divider: rgba(255, 255, 255, 0.10);
   --color-accent: #30D158;
   --color-warning: #FF9F0A;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
@@ -91,12 +107,18 @@ html {
   --color-label-tertiary: rgba(235, 235, 245, 0.36);
 }
 
-/* ===== Sheet (always dark — iOS Control Center style) ===== */
-:root, [data-theme="light"], [data-theme="dark"] {
-  --color-sheet: #1C1C1E;
+/* ===== Sheet — Glass translucent (theme-aware) ===== */
+:root, [data-theme="light"] {
+  --color-sheet: rgba(255, 255, 255, 0.85);
+  --color-sheet-foreground: #1D1D1F;
+  --color-sheet-muted: #6E6E73;
+  --color-sheet-border: rgba(0, 0, 0, 0.08);
+}
+[data-theme="dark"] {
+  --color-sheet: rgba(28, 28, 30, 0.85);
   --color-sheet-foreground: #F5F5F7;
   --color-sheet-muted: #8E8E93;
-  --color-sheet-border: rgba(255,255,255,0.08);
+  --color-sheet-border: rgba(255, 255, 255, 0.08);
 }
 
 /* ===== Keyframes ===== */
@@ -745,13 +767,13 @@ html {
 
 /* iOS 26 Liquid Glass — Sidebar */
 .glass-sidebar {
-  background: color-mix(in srgb, var(--color-sidebar) 88%, transparent);
+  background: rgba(255, 255, 255, 0.72);
   backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur));
   -webkit-backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur));
 }
 
 [data-theme="dark"] .glass-sidebar {
-  background: color-mix(in srgb, var(--color-sidebar) 85%, transparent);
+  background: rgba(28, 28, 30, 0.85);
 }
 
 /* Stat card hover */
@@ -885,8 +907,9 @@ body.modal-open [data-bottom-nav] {
 body,
 .glass-card,
 .glass-header,
+.glass-sidebar,
 [data-theme] > div {
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Respect reduced motion preference */
@@ -989,6 +1012,18 @@ body,
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Mobile card edge-to-edge (opt-in, iOS Settings style) */
+@media (max-width: 767px) {
+  .card-edge-mobile {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -998,51 +1033,46 @@ body,
   }
 }
 
-/* Syntax highlight theme (Tokyo Night inspired) for rehype-highlight */
-.hljs {
-  color: #a9b1d6;
-}
-.hljs-keyword,
-.hljs-built_in,
-.hljs-type {
-  color: #bb9af7;
-}
-.hljs-string,
-.hljs-template-variable {
-  color: #9ece6a;
-}
-.hljs-number,
-.hljs-literal {
-  color: #ff9e64;
-}
-.hljs-comment {
-  color: #565f89;
-  font-style: italic;
-}
-.hljs-function .hljs-title,
-.hljs-title.function_ {
-  color: #7aa2f7;
-}
-.hljs-variable,
-.hljs-attr {
-  color: #e0af68;
-}
-.hljs-params {
-  color: #c0caf5;
-}
-.hljs-tag {
-  color: #f7768e;
-}
-.hljs-attribute {
-  color: #bb9af7;
-}
-.hljs-selector-class,
-.hljs-selector-id {
-  color: #7dcfff;
-}
-.hljs-meta {
-  color: #565f89;
-}
-.hljs-regexp {
-  color: #b4f9f8;
-}
+/* Syntax highlight — Light theme (GitHub Light inspired) */
+[data-theme="light"] .hljs { color: #24292f; }
+[data-theme="light"] .hljs-keyword,
+[data-theme="light"] .hljs-built_in,
+[data-theme="light"] .hljs-type { color: #8250df; }
+[data-theme="light"] .hljs-string,
+[data-theme="light"] .hljs-template-variable { color: #0a3069; }
+[data-theme="light"] .hljs-number,
+[data-theme="light"] .hljs-literal { color: #0550ae; }
+[data-theme="light"] .hljs-comment { color: #6e7781; font-style: italic; }
+[data-theme="light"] .hljs-function .hljs-title,
+[data-theme="light"] .hljs-title.function_ { color: #6639ba; }
+[data-theme="light"] .hljs-variable,
+[data-theme="light"] .hljs-attr { color: #953800; }
+[data-theme="light"] .hljs-params { color: #24292f; }
+[data-theme="light"] .hljs-tag { color: #116329; }
+[data-theme="light"] .hljs-attribute { color: #8250df; }
+[data-theme="light"] .hljs-selector-class,
+[data-theme="light"] .hljs-selector-id { color: #0550ae; }
+[data-theme="light"] .hljs-meta { color: #6e7781; }
+[data-theme="light"] .hljs-regexp { color: #0a3069; }
+
+/* Syntax highlight — Dark theme (Tokyo Night inspired) */
+[data-theme="dark"] .hljs { color: #a9b1d6; }
+[data-theme="dark"] .hljs-keyword,
+[data-theme="dark"] .hljs-built_in,
+[data-theme="dark"] .hljs-type { color: #bb9af7; }
+[data-theme="dark"] .hljs-string,
+[data-theme="dark"] .hljs-template-variable { color: #9ece6a; }
+[data-theme="dark"] .hljs-number,
+[data-theme="dark"] .hljs-literal { color: #ff9e64; }
+[data-theme="dark"] .hljs-comment { color: #565f89; font-style: italic; }
+[data-theme="dark"] .hljs-function .hljs-title,
+[data-theme="dark"] .hljs-title.function_ { color: #7aa2f7; }
+[data-theme="dark"] .hljs-variable,
+[data-theme="dark"] .hljs-attr { color: #e0af68; }
+[data-theme="dark"] .hljs-params { color: #c0caf5; }
+[data-theme="dark"] .hljs-tag { color: #f7768e; }
+[data-theme="dark"] .hljs-attribute { color: #bb9af7; }
+[data-theme="dark"] .hljs-selector-class,
+[data-theme="dark"] .hljs-selector-id { color: #7dcfff; }
+[data-theme="dark"] .hljs-meta { color: #565f89; }
+[data-theme="dark"] .hljs-regexp { color: #b4f9f8; }
