@@ -201,7 +201,7 @@ export function TeamActivityContent() {
                         )}
                       </p>
                     </div>
-                    <span className="text-[11px] text-muted whitespace-nowrap flex-shrink-0">
+                    <span className="text-xs text-muted whitespace-nowrap flex-shrink-0">
                       {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true, locale: it })}
                     </span>
                     {link && <ChevronRight className="h-4 w-4 text-muted flex-shrink-0" />}

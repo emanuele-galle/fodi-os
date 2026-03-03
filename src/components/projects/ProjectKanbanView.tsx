@@ -59,18 +59,18 @@ function KanbanProjectCard({ project, onClick }: { project: Project; onClick: ()
     >
       <p className="font-medium text-sm mb-1.5 truncate">{project.name}</p>
       {project.client && (
-        <p className="text-[11px] text-muted mb-2">{project.client.companyName}</p>
+        <p className="text-xs text-muted mb-2">{project.client.companyName}</p>
       )}
       <div className="flex items-center justify-between">
         <Badge status={project.priority} className="text-[10px]">
           {PRIORITY_LABELS[project.priority] || project.priority}
         </Badge>
-        <span className="text-[11px] text-muted">
+        <span className="text-xs text-muted">
           {totalTasks > 0 ? `${doneTasks}/${totalTasks}` : '0 task'}
         </span>
       </div>
       {project.endDate && (
-        <p className="text-[11px] text-muted mt-1.5">
+        <p className="text-xs text-muted mt-1.5">
           Scadenza: {new Date(project.endDate).toLocaleDateString('it-IT')}
         </p>
       )}

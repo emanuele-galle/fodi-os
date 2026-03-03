@@ -209,17 +209,17 @@ export default function NotificationsPage() {
                     {notif.metadata && (
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         {!!notif.metadata.projectName && (
-                          <Badge variant="default" className="text-[11px]">
+                          <Badge variant="default" className="text-xs">
                             {String(notif.metadata.projectName)}
                           </Badge>
                         )}
                         {!!notif.metadata.clientName && (
-                          <Badge variant="success" className="text-[11px]">
+                          <Badge variant="success" className="text-xs">
                             {String(notif.metadata.clientName)}
                           </Badge>
                         )}
                         {!!notif.metadata.ticketNumber && (
-                          <Badge variant="warning" className="text-[11px]">
+                          <Badge variant="warning" className="text-xs">
                             #{String(notif.metadata.ticketNumber)}
                           </Badge>
                         )}

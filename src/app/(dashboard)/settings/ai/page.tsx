@@ -355,7 +355,7 @@ export default function AiSettingsPage() {
                     onChange={e => setTemperature(parseFloat(e.target.value))}
                     className="w-full accent-primary"
                   />
-                  <div className="flex justify-between text-[11px] text-muted mt-1">
+                  <div className="flex justify-between text-xs text-muted mt-1">
                     <span>Preciso</span>
                     <span>Creativo</span>
                   </div>

@@ -463,7 +463,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <CardTitle>Fatturato Mensile</CardTitle>
-                      <p className="text-[11px] text-muted mt-0.5">Ultimi 12 mesi</p>
+                      <p className="text-xs text-muted mt-0.5">Ultimi 12 mesi</p>
                     </div>
                   </div>
                 </div>
@@ -482,7 +482,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <CardTitle>Cash Flow</CardTitle>
-                      <p className="text-[11px] text-muted mt-0.5">Entrate vs Uscite</p>
+                      <p className="text-xs text-muted mt-0.5">Entrate vs Uscite</p>
                     </div>
                   </div>
                 </div>
@@ -513,7 +513,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <CardTitle>Pipeline Commerciale</CardTitle>
-                      <p className="text-[11px] text-muted mt-0.5">Distribuzione clienti</p>
+                      <p className="text-xs text-muted mt-0.5">Distribuzione clienti</p>
                     </div>
                   </div>
                 </div>
@@ -537,7 +537,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <CardTitle>Trend Attività</CardTitle>
-                      <p className="text-[11px] text-muted mt-0.5">Ultime 4 settimane</p>
+                      <p className="text-xs text-muted mt-0.5">Ultime 4 settimane</p>
                     </div>
                   </div>
                 </div>

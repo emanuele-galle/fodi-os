@@ -94,7 +94,7 @@ export function TemplatePreview({
               />
             )}
             <div className="text-white">
-              <div className="font-bold text-[11px]">{ragioneSociale}</div>
+              <div className="font-bold text-xs">{ragioneSociale}</div>
               <div className="text-white/80 text-[8px] leading-tight mt-0.5">
                 <div>P.IVA: {partitaIva}</div>
                 <div>{indirizzo}, {cap} {citta} ({provincia})</div>
@@ -107,7 +107,7 @@ export function TemplatePreview({
           {/* Right: Quote number + Date */}
           <div className="text-right text-white flex-shrink-0 ml-3">
             <div className="text-[8px] uppercase tracking-wider text-white/60 font-medium">Preventivo</div>
-            <div className="font-bold text-[11px] font-mono">{sampleNumber}</div>
+            <div className="font-bold text-xs font-mono">{sampleNumber}</div>
             <div className="text-[8px] text-white/70 mt-0.5">Data: {displayDate}</div>
           </div>
         </div>
@@ -116,7 +116,7 @@ export function TemplatePreview({
       <div className="p-4 space-y-2.5">
         {/* Template Name */}
         <div className="text-center">
-          <span className="font-bold text-[11px]" style={{ color: primaryColor }}>{name || 'Nome template'}</span>
+          <span className="font-bold text-xs" style={{ color: primaryColor }}>{name || 'Nome template'}</span>
         </div>
 
         {/* Client Section */}

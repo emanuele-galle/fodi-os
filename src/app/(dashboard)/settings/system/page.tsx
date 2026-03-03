@@ -574,7 +574,7 @@ export default function SystemStatsPage() {
                           <Badge variant="outline" className="text-[10px]">
                             {ROLE_LABELS[user.role] || user.role}
                           </Badge>
-                          <p className="text-[11px] text-muted mt-1">
+                          <p className="text-xs text-muted mt-1">
                             {formatDistanceToNow(new Date(user.lastLoginAt), { addSuffix: true, locale: it })}
                           </p>
                         </div>

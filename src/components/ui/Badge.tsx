@@ -92,7 +92,7 @@ export function Badge({ className, variant = 'default', status, pulse, dotColor,
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-[3px] text-[11px] font-semibold border transition-colors duration-200',
+        'inline-flex items-center rounded-full px-2.5 py-[3px] text-xs font-semibold border transition-colors duration-200',
         colorClasses,
         pulse && 'animate-pulse',
         dotColor && 'gap-1.5',

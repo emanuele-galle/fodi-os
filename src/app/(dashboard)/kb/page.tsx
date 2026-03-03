@@ -159,7 +159,7 @@ export default function KbPage() {
                           <Eye className="h-3 w-3" /> Pubblicato
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-[11px] text-muted bg-secondary/60 px-1.5 py-0.5 rounded-full">
+                        <span className="flex items-center gap-1 text-xs text-muted bg-secondary/60 px-1.5 py-0.5 rounded-full">
                           <EyeOff className="h-3 w-3" /> Bozza
                         </span>
                       )}
@@ -177,9 +177,9 @@ export default function KbPage() {
                         </span>
                       ))}
                       {item.tags.length > 3 && (
-                        <span className="text-[11px] text-muted">+{item.tags.length - 3}</span>
+                        <span className="text-xs text-muted">+{item.tags.length - 3}</span>
                       )}
-                      <span className="text-[11px] text-muted ml-auto">
+                      <span className="text-xs text-muted ml-auto">
                         {new Date(item.updatedAt).toLocaleDateString('it-IT')}
                       </span>
                     </div>

@@ -102,7 +102,7 @@ export function MobileNotificationsPanel({ onClose }: MobileNotificationsPanelPr
           <div className="flex items-center gap-2">
             <h2 className="text-[17px] font-semibold">Notifiche</h2>
             {unreadCount > 0 && (
-              <span className="text-[11px] bg-destructive text-white px-2 py-0.5 rounded-full font-bold min-w-[20px] text-center">
+              <span className="text-xs bg-destructive text-white px-2 py-0.5 rounded-full font-bold min-w-[20px] text-center">
                 {unreadCount}
               </span>
             )}

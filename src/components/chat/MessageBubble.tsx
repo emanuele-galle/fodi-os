@@ -98,7 +98,7 @@ function renderRichText(text: string, isOwn: boolean) {
               </span>
               <span className="flex-1 min-w-0">
                 <span className="block text-sm font-semibold text-foreground">Google Meet</span>
-                <span className="block text-[11px] text-muted-foreground/60 truncate">{meetUrl.replace('https://', '')}</span>
+                <span className="block text-xs text-muted-foreground/60 truncate">{meetUrl.replace('https://', '')}</span>
               </span>
             </span>
             <button
@@ -162,7 +162,7 @@ function ReadReceiptIndicator({ receipts }: { receipts?: ReadReceipt[] }) {
         )}
       </button>
       {showTooltip && isRead && receipts && receipts.length > 0 && (
-        <div className="absolute bottom-full mb-1.5 right-0 bg-card border border-border/30 rounded-xl shadow-[var(--shadow-lg)] p-2 z-50 min-w-[180px] text-[11px]">
+        <div className="absolute bottom-full mb-1.5 right-0 bg-card border border-border/30 rounded-xl shadow-[var(--shadow-lg)] p-2 z-50 min-w-[180px] text-xs">
           <p className="font-semibold text-foreground/70 mb-1.5">Letto da</p>
           {receipts.map((r) => (
             <div key={r.userId} className="flex items-center justify-between gap-3 py-0.5">
@@ -266,7 +266,7 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
   if (message.type === 'SYSTEM') {
     return (
       <div className="flex justify-center py-3">
-        <span className="text-[11px] text-muted-foreground/60 bg-secondary/50 px-4 py-1.5 rounded-full font-medium">
+        <span className="text-xs text-muted-foreground/60 bg-secondary/50 px-4 py-1.5 rounded-full font-medium">
           {message.content}
         </span>
       </div>
@@ -295,7 +295,7 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
               <span className={cn('text-[12px] font-semibold', isOwn ? 'text-primary/60' : 'text-foreground/80')}>
                 {isOwn ? 'Tu' : authorName}
               </span>
-              <span className="text-[11px] text-muted-foreground/60 font-medium">{time}</span>
+              <span className="text-xs text-muted-foreground/60 font-medium">{time}</span>
             </div>
           )}
           <div className={cn(
@@ -362,7 +362,7 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
               <span className={cn('text-[12px] font-semibold', isOwn ? 'text-primary/60' : 'text-foreground/80')}>
                 {isOwn ? 'Tu' : authorName}
               </span>
-              <span className="text-[11px] text-muted-foreground/60 font-medium">{time}</span>
+              <span className="text-xs text-muted-foreground/60 font-medium">{time}</span>
             </div>
           )}
           <div
@@ -496,11 +496,11 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
             <span className={cn('text-[12px] font-semibold', isOwn ? 'text-primary/60' : 'text-foreground/80')}>
               {isOwn ? 'Tu' : authorName}
             </span>
-            <span className="text-[11px] text-muted-foreground/60 font-medium">
+            <span className="text-xs text-muted-foreground/60 font-medium">
               {time}
             </span>
             {message.editedAt && (
-              <span className="text-[11px] text-muted-foreground/50 italic">(modificato)</span>
+              <span className="text-xs text-muted-foreground/50 italic">(modificato)</span>
             )}
           </div>
         )}
@@ -510,7 +510,7 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
             'mb-1 px-3 py-1.5 rounded-lg border-l-2 border-primary/40 text-[12px] max-w-full',
             isOwn ? 'bg-primary/5' : 'bg-secondary/60'
           )}>
-            <span className="font-semibold block text-[11px] text-primary/70">
+            <span className="font-semibold block text-xs text-primary/70">
               {meta.replyToAuthor as string}
             </span>
             <span className="truncate block text-muted-foreground/60">

@@ -248,7 +248,7 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
                 )}
                 {/* Group title (hidden when collapsed, null for system group) */}
                 {expanded && groupLabel && (
-                  <div className="text-[11px] uppercase tracking-wider text-sidebar-foreground/55 px-3 pt-3 pb-1 select-none">
+                  <div className="text-xs uppercase tracking-wider text-sidebar-foreground/55 px-3 pt-3 pb-1 select-none">
                     {groupLabel}
                   </div>
                 )}
@@ -308,7 +308,7 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
                         )}
                       </AnimatePresence>
                       {expanded && badgeCount > 0 && !item.children && (
-                        <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-[11px] font-bold text-white flex-shrink-0">
+                        <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-xs font-bold text-white flex-shrink-0">
                           {badgeCount > 99 ? '99+' : badgeCount}
                         </span>
                       )}

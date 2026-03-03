@@ -147,7 +147,7 @@ export function NewChannelModal({ open, onClose, onCreated, teamMembers = [], cu
                     <span className="text-sm flex-1 truncate">
                       {member.firstName} {member.lastName}
                     </span>
-                    <span className="text-[11px] text-muted-foreground/65 uppercase">{member.role}</span>
+                    <span className="text-xs text-muted-foreground/65 uppercase">{member.role}</span>
                     {selected && (
                       <Check className="h-4 w-4 text-primary flex-shrink-0" />
                     )}

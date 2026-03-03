@@ -76,7 +76,7 @@ export function EventDetailModal({
                 <p className="text-sm font-medium">
                   {formatDateFull(selectedEvent.start.dateTime || selectedEvent.start.date)}
                 </p>
-                <p className="text-sm text-muted">
+                <p className="text-sm text-foreground/65">
                   {formatDateRange(selectedEvent.start, selectedEvent.end)}
                 </p>
               </div>

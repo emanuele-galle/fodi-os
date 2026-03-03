@@ -43,7 +43,7 @@ export function TeamActivityCard({
             </div>
             <div>
               <h3 className="text-[15px] font-semibold">Attività Team</h3>
-              <p className="text-[11px] text-muted mt-0.5">Questa settimana</p>
+              <p className="text-xs text-muted mt-0.5">Questa settimana</p>
             </div>
           </div>
           {onManageTeam && (

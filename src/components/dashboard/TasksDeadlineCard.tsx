@@ -35,7 +35,7 @@ export function TasksDeadlineCard({ tasks, fullWidth }: TasksDeadlineCardProps) 
             </div>
             <div>
               <CardTitle>Task in Scadenza</CardTitle>
-              <p className="text-[11px] text-muted mt-0.5">Le tue task ordinate per scadenza</p>
+              <p className="text-xs text-muted mt-0.5">Le tue task ordinate per scadenza</p>
             </div>
           </div>
           <button

@@ -194,8 +194,8 @@ export default function QuotesPage() {
                   </Badge>
                 </div>
                 <p className="text-sm truncate mb-1">{q.title}</p>
-                <p className="text-xs text-muted mb-2">{q.client.companyName}</p>
-                <div className="flex items-center justify-between text-xs">
+                <p className="text-sm text-foreground/65 mb-2">{q.client.companyName}</p>
+                <div className="flex items-center justify-between text-sm">
                   <span className="text-muted">
                     {q.validUntil ? `Val. ${new Date(q.validUntil).toLocaleDateString('it-IT')}` : 'Nessuna scadenza'}
                   </span>
@@ -240,17 +240,17 @@ export default function QuotesPage() {
                   >
                     <td className="px-4 py-3.5 font-medium">{q.number}</td>
                     <td className="px-4 py-3.5">{q.title}</td>
-                    <td className="px-4 py-3.5 text-muted">{q.client.companyName}</td>
+                    <td className="px-4 py-3.5 text-foreground/65">{q.client.companyName}</td>
                     <td className="px-4 py-3.5">
                       <Badge status={q.status}>
                         {STATUS_LABELS[q.status] || q.status}
                       </Badge>
                     </td>
                     <td className="px-4 py-3.5 font-medium text-right tabular-nums">{formatCurrency(q.total)}</td>
-                    <td className="px-4 py-3.5 text-muted hidden lg:table-cell">
+                    <td className="px-4 py-3.5 text-foreground/65 hidden lg:table-cell">
                       {q.validUntil ? new Date(q.validUntil).toLocaleDateString('it-IT') : '—'}
                     </td>
-                    <td className="px-4 py-3.5 text-muted hidden lg:table-cell">
+                    <td className="px-4 py-3.5 text-foreground/65 hidden lg:table-cell">
                       {new Date(q.createdAt).toLocaleDateString('it-IT')}
                     </td>
                     <td className="px-4 py-3.5 text-right">

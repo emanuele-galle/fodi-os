@@ -40,7 +40,7 @@ export function TaskTabBar({ tabs, activeTab, onTabChange, tabCounts }: TaskTabB
             <span>{tab.label}</span>
             {count > 0 && (
               <span className={cn(
-                'text-[11px] rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold',
+                'text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-semibold',
                 activeTab === tab.key
                   ? 'bg-primary/10 text-primary'
                   : 'bg-secondary text-muted'

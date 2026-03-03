@@ -45,7 +45,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
                 <s.icon className="h-4 w-4 md:h-4.5 md:w-4.5" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] md:text-xs text-muted font-medium truncate">{s.label}</p>
+                <p className="text-xs md:text-xs text-muted font-medium truncate">{s.label}</p>
                 <p className="text-lg md:text-xl font-bold tabular-nums animate-count-up">{s.value}</p>
               </div>
             </CardContent>

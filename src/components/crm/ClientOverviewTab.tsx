@@ -31,7 +31,7 @@ export function ClientOverviewTab({ client }: ClientOverviewTabProps) {
         {client.notes && (
           <div className="mt-4 pt-4 border-t border-border">
             <p className="text-sm font-medium mb-1">Note</p>
-            <p className="text-sm text-muted whitespace-pre-wrap">{client.notes}</p>
+            <p className="text-sm text-foreground/65 whitespace-pre-wrap">{client.notes}</p>
           </div>
         )}
         <div className="mt-4 pt-4 border-t border-border flex justify-between text-sm text-muted">

@@ -28,7 +28,7 @@ export function DashboardQuickActions({ actions }: DashboardQuickActionsProps) {
               <div className={`w-[52px] h-[52px] rounded-[14px] ${action.bg} ${action.color} flex items-center justify-center`}>
                 <Icon className="h-[22px] w-[22px]" />
               </div>
-              <span className="text-[11px] font-medium text-muted leading-tight text-center max-w-[64px]">
+              <span className="text-xs font-medium text-muted leading-tight text-center max-w-[64px]">
                 {action.description}
               </span>
             </button>

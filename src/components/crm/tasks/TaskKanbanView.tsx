@@ -50,7 +50,7 @@ export function TaskKanbanView({ tasks, isOverdue, onStatusChange }: TaskKanbanV
                       {PRIORITY_LABELS[task.priority]}
                     </Badge>
                     {task.dueDate && (
-                      <span className={`text-[11px] ${isOverdue(task) ? 'text-destructive font-medium' : 'text-muted'}`}>
+                      <span className={`text-xs ${isOverdue(task) ? 'text-destructive font-medium' : 'text-muted'}`}>
                         {new Date(task.dueDate).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
                       </span>
                     )}
@@ -58,7 +58,7 @@ export function TaskKanbanView({ tasks, isOverdue, onStatusChange }: TaskKanbanV
                   {task.assignee && (
                     <div className="flex items-center gap-1.5 pt-0.5">
                       <Avatar name={`${task.assignee.firstName} ${task.assignee.lastName}`} src={task.assignee.avatarUrl} size="xs" />
-                      <span className="text-[11px] text-muted">{task.assignee.firstName} {task.assignee.lastName}</span>
+                      <span className="text-xs text-muted">{task.assignee.firstName} {task.assignee.lastName}</span>
                     </div>
                   )}
                 </div>

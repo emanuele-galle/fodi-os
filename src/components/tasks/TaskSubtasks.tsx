@@ -216,7 +216,7 @@ function SubtaskRow({ subtask, depth, expandedIds, loadingIds, childrenMap, onTo
 
         {/* Subtask count badge */}
         {hasChildren && (
-          <span className="text-[11px] text-muted">{subtask._count!.subtasks}</span>
+          <span className="text-xs text-muted">{subtask._count!.subtasks}</span>
         )}
 
         {/* Add child button */}

@@ -89,7 +89,7 @@ export function TaskListView({ tasks, activeTab, userId, onTaskClick, expandedTa
                     {task.creator && task.creator.id !== userId && (
                       <>
                         <Avatar name={`${task.creator.firstName} ${task.creator.lastName}`} src={task.creator.avatarUrl} size="sm" />
-                        <span className="text-xs text-muted">{task.creator.firstName}</span>
+                        <span className="text-sm text-muted">{task.creator.firstName}</span>
                         <ArrowRight className="h-3 w-3 text-muted mx-0.5" />
                       </>
                     )}
@@ -102,7 +102,7 @@ export function TaskListView({ tasks, activeTab, userId, onTaskClick, expandedTa
                           src={task.assignee.avatarUrl}
                           size="sm"
                         />
-                        <span className="text-sm text-muted">
+                        <span className="text-sm text-foreground/65">
                           {task.assignee.firstName} {task.assignee.lastName}
                         </span>
                       </div>
@@ -163,7 +163,7 @@ export function TaskListView({ tasks, activeTab, userId, onTaskClick, expandedTa
                               {sub.assignee && (
                                 <div className="flex items-center gap-1 flex-shrink-0 hidden lg:flex">
                                   <Avatar name={`${sub.assignee.firstName} ${sub.assignee.lastName}`} src={sub.assignee.avatarUrl} size="xs" />
-                                  <span className="text-[11px] text-muted">{sub.assignee.firstName}</span>
+                                  <span className="text-xs text-muted">{sub.assignee.firstName}</span>
                                 </div>
                               )}
                               {sub.dueDate && (

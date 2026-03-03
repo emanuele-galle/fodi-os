@@ -216,7 +216,7 @@ export default function InternalPage() {
                   }}
                 />
               </div>
-              <span className="text-[11px] text-muted mt-1 block text-right">
+              <span className="text-xs text-muted mt-1 block text-right">
                 {Math.round((doneT / totalT) * 100)}%
               </span>
             </div>
@@ -233,7 +233,7 @@ export default function InternalPage() {
                 />
               ))}
               {p.members.length > 4 && (
-                <span className="text-[11px] text-muted ml-2">+{p.members.length - 4}</span>
+                <span className="text-xs text-muted ml-2">+{p.members.length - 4}</span>
               )}
             </div>
           )}
@@ -295,7 +295,7 @@ export default function InternalPage() {
                   <stat.icon className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-muted font-medium">{stat.label}</p>
+                  <p className="text-xs text-muted font-medium">{stat.label}</p>
                   <p className="text-3xl font-bold mt-1 tracking-tight">{stat.value}</p>
                 </div>
               </CardContent>

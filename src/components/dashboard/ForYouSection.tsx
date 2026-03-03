@@ -67,7 +67,7 @@ export function ForYouSection({ tasks, onTaskComplete, onTaskPostpone }: ForYouS
                   <p className="text-[15px] font-medium truncate">{task.title}</p>
                   {task.project && <p className="text-[12px] text-muted mt-0.5">{task.project.name}</p>}
                 </div>
-                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ml-3 ${
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ml-3 ${
                   urgency === 'overdue' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'
                 }`}>
                   {urgency === 'overdue' ? 'Scaduta' : 'Oggi'}

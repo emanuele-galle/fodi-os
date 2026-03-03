@@ -222,7 +222,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
               <h2 className="text-sm font-semibold">Assistente AI</h2>
             </div>
             {!compact && (
-              <p className="text-[11px] text-muted-foreground/50">Task, CRM, chat, calendario, report e team</p>
+              <p className="text-xs text-muted-foreground/50">Task, CRM, chat, calendario, report e team</p>
             )}
           </div>
         </div>
@@ -364,7 +364,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
                     <div className="ai-file-card w-20 h-20 rounded-xl border border-border/40 bg-secondary/50 flex flex-col items-center justify-center gap-1 p-2">
                       <FileText className="h-4 w-4 text-muted-foreground/60" />
                       <span className="text-[8px] text-muted-foreground/70 truncate w-full text-center">{file.name}</span>
-                      <span className="text-[11px] text-muted-foreground/50">{(file.size / 1024).toFixed(0)} KB</span>
+                      <span className="text-xs text-muted-foreground/50">{(file.size / 1024).toFixed(0)} KB</span>
                     </div>
                   )}
                   <button
@@ -435,7 +435,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         />
 
         {!compact && (
-          <div className="flex items-center justify-center gap-1.5 mt-1.5 text-[11px] text-muted-foreground/50">
+          <div className="flex items-center justify-center gap-1.5 mt-1.5 text-xs text-muted-foreground/50">
             <span>Sviluppato da</span>
             <a href="https://www.fodisrl.it" target="_blank" rel="noopener noreferrer" className="text-blue-400/40 hover:text-blue-400/70 transition-colors font-medium">Fodi S.r.l.</a>
           </div>

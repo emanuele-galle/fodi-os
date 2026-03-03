@@ -289,7 +289,7 @@ export function WizardField({ field, value, onChange, error }: WizardFieldProps)
     <div>
       {renderField()}
       {field.helpText && !error && (
-        <p className="text-[11px] text-white/20 mt-1.5">{field.helpText}</p>
+        <p className="text-xs text-white/20 mt-1.5">{field.helpText}</p>
       )}
     </div>
   )

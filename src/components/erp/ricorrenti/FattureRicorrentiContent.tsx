@@ -339,10 +339,10 @@ export function FattureRicorrentiContent() {
                 <div key={inv.id} className="rounded-lg border border-border bg-card p-3">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${status.color}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
                         {status.label}
                       </span>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${FREQUENCY_COLORS[inv.frequency] || ''}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${FREQUENCY_COLORS[inv.frequency] || ''}`}>
                         {FREQUENCY_LABELS[inv.frequency] || inv.frequency}
                       </span>
                     </div>
@@ -393,7 +393,7 @@ export function FattureRicorrentiContent() {
                       <td className="px-4 py-3.5 text-muted">{inv.supplierName || '\u2014'}</td>
                       <td className="px-4 py-3.5 text-right font-medium tabular-nums">{formatCurrency(inv.amount)}</td>
                       <td className="px-4 py-3.5">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${FREQUENCY_COLORS[inv.frequency] || ''}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${FREQUENCY_COLORS[inv.frequency] || ''}`}>
                           {FREQUENCY_LABELS[inv.frequency] || inv.frequency}
                         </span>
                       </td>
@@ -404,7 +404,7 @@ export function FattureRicorrentiContent() {
                         {inv.nextDueDate ? new Date(inv.nextDueDate).toLocaleDateString('it-IT') : '\u2014'}
                       </td>
                       <td className="px-4 py-3.5">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${status.color}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
                           {status.label}
                         </span>
                       </td>

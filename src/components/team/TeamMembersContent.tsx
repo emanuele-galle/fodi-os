@@ -384,12 +384,12 @@ export function TeamMembersContent() {
                   </div>
 
                   <div className="mt-3 space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted">
+                    <div className="flex items-center gap-2 text-sm text-foreground/65">
                       <Mail className="h-3.5 w-3.5 flex-shrink-0" />
                       <span className="truncate">{member.email}</span>
                     </div>
                     {member.phone && (
-                      <div className="flex items-center gap-2 text-sm text-muted">
+                      <div className="flex items-center gap-2 text-sm text-foreground/65">
                         <Phone className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>{member.phone}</span>
                       </div>
@@ -413,15 +413,15 @@ export function TeamMembersContent() {
                   <div className="mt-4 pt-3 border-t border-border/50 grid grid-cols-3 gap-2 text-center">
                     <div>
                       <p className="text-lg font-bold">{member.totalTasks}</p>
-                      <p className="text-[12px] sm:text-[11px] text-muted">Task attive</p>
+                      <p className="text-[12px] sm:text-xs text-muted">Task attive</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold">{formatHoursMinutes(member.weeklyHours)}</p>
-                      <p className="text-[12px] sm:text-[11px] text-muted">Ore settimana</p>
+                      <p className="text-[12px] sm:text-xs text-muted">Ore settimana</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold">{member.completedThisWeek}</p>
-                      <p className="text-[12px] sm:text-[11px] text-muted">Completate</p>
+                      <p className="text-[12px] sm:text-xs text-muted">Completate</p>
                     </div>
                   </div>
 

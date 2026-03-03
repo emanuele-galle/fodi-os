@@ -212,7 +212,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
           {/* Description */}
           {channel.type !== 'DIRECT' && (
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Descrizione</label>
+              <label className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">Descrizione</label>
               {editingDesc && isOwnerOrAdmin ? (
                 <div className="mt-1">
                   <textarea
@@ -241,7 +241,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
 
           {/* Created */}
           <div>
-            <label className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Creato il</label>
+            <label className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">Creato il</label>
             <p className="text-sm text-muted-foreground/60 mt-1">
               {new Date(channel.createdAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
@@ -251,7 +251,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
         {/* Members */}
         <div className="border-t border-border/30 p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
               Membri ({channel.members.length})
             </span>
             {isOwnerOrAdmin && channel.type !== 'DIRECT' && (
@@ -296,7 +296,7 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
                     {member.userId === currentUserId && <span className="text-muted-foreground/60 ml-1">(tu)</span>}
                   </span>
                 </div>
-                <span className="text-[11px] text-muted-foreground/60 font-medium">
+                <span className="text-xs text-muted-foreground/60 font-medium">
                   {CHANNEL_ROLE_LABELS[member.role] || member.role}
                 </span>
                 {isOwnerOrAdmin && member.role !== 'OWNER' && member.userId !== currentUserId && channel.type !== 'DIRECT' && (

@@ -121,7 +121,7 @@ export function MessageInput({ onSend, onSendFile, onSendLink, onTyping, replyTo
         <div className="flex items-center gap-2 mb-2 max-w-4xl mx-auto">
           <div className="flex-1 flex items-center gap-2 px-3 py-1.5 bg-secondary/60 rounded-lg border-l-2 border-primary">
             <div className="min-w-0 flex-1">
-              <span className="text-[11px] font-semibold text-primary">{replyTo.authorName}</span>
+              <span className="text-xs font-semibold text-primary">{replyTo.authorName}</span>
               <p className="text-[12px] text-muted-foreground/70 truncate">{replyTo.content}</p>
             </div>
             <button onClick={onCancelReply} className="text-muted-foreground/50 hover:text-muted-foreground transition-colors flex-shrink-0">

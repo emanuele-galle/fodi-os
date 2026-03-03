@@ -16,7 +16,7 @@ html {
   --color-secondary-foreground: #1D1D1F;
   --color-accent: #34C759;
   --color-destructive: #FF3B30;
-  --color-muted: #8E8E93;
+  --color-muted: #6E6E73;
   --color-border: #C7C7CC;
   --color-background: #F2F2F7;
   --color-foreground: #1D1D1F;
@@ -25,6 +25,18 @@ html {
   --color-sidebar-foreground: #F5F5F7;
   --color-sidebar-active: #0A84FF;
   --color-warning: #FF9500;
+
+  /* iOS 26 Liquid Glass material */
+  --glass-blur: 20px;
+  --glass-saturation: 180%;
+  --glass-bg-light: rgba(255, 255, 255, 0.72);
+  --glass-bg-dark: rgba(28, 28, 30, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-border-dark: rgba(255, 255, 255, 0.08);
+
+  /* Apple label hierarchy */
+  --color-label-secondary: rgba(60, 60, 67, 0.60);
+  --color-label-tertiary: rgba(60, 60, 67, 0.36);
 
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: 0.5rem;
@@ -48,9 +60,11 @@ html {
   --color-secondary: #E5E5EA;
   --color-secondary-foreground: #1D1D1F;
   --color-border: #C7C7CC;
-  --color-muted: #8E8E93;
+  --color-muted: #6E6E73;
   --color-sidebar: #2C2C2E;
   --color-sidebar-foreground: #F5F5F7;
+  --color-label-secondary: rgba(60, 60, 67, 0.60);
+  --color-label-tertiary: rgba(60, 60, 67, 0.36);
 }
 
 /* Dark theme - Apple true black */
@@ -61,7 +75,7 @@ html {
   --color-secondary: #2C2C2E;
   --color-secondary-foreground: #F5F5F7;
   --color-border: #38383A;
-  --color-muted: #98989D;
+  --color-muted: #A1A1A6;
   --color-primary: #0A84FF;
   --color-primary-hover: #409CFF;
   --color-sidebar: #1C1C1E;
@@ -73,6 +87,8 @@ html {
   --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.35);
   --shadow-xl: 0 16px 48px rgba(0,0,0,0.4);
+  --color-label-secondary: rgba(235, 235, 245, 0.60);
+  --color-label-tertiary: rgba(235, 235, 245, 0.36);
 }
 
 /* ===== Sheet (always dark — iOS Control Center style) ===== */
@@ -607,10 +623,18 @@ html {
   border-color: var(--color-border);
 }
 
+/* iOS 26 Liquid Glass — Card (floating elements only) */
 .glass-card {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  background: var(--glass-bg-light);
+  backdrop-filter: saturate(160%) blur(16px);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+}
+
+[data-theme="dark"] .glass-card {
+  background: var(--glass-bg-dark);
+  border-color: var(--glass-border-dark);
 }
 
 .shadow-lift {
@@ -706,19 +730,24 @@ html {
   display: none;
 }
 
-/* Apple glass header */
+/* iOS 26 Liquid Glass — Header */
 .glass-header {
-  background: color-mix(in srgb, var(--color-card) 85%, transparent);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 25%, transparent);
+  background: var(--glass-bg-light);
+  backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur));
+  -webkit-backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur));
+  border-bottom: 1px solid var(--glass-border);
 }
 
-/* Apple-style frosted sidebar (desktop) */
+[data-theme="dark"] .glass-header {
+  background: var(--glass-bg-dark);
+  border-bottom-color: var(--glass-border-dark);
+}
+
+/* iOS 26 Liquid Glass — Sidebar */
 .glass-sidebar {
-  background: color-mix(in srgb, var(--color-sidebar) 92%, transparent);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: color-mix(in srgb, var(--color-sidebar) 88%, transparent);
+  backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur));
+  -webkit-backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur));
 }
 
 [data-theme="dark"] .glass-sidebar {

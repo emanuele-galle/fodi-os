@@ -364,7 +364,7 @@ export default function CrmDashboardPage() {
                           <Badge status={interaction.type} className="text-[10px]">{interaction.type}</Badge>
                         </div>
                         <p className="text-xs text-muted truncate">{interaction.subject || 'Nessun oggetto'}</p>
-                        <p className="text-[11px] text-muted/60 mt-0.5">
+                        <p className="text-xs text-muted/60 mt-0.5">
                           {new Date(interaction.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
                         </p>
                       </div>
@@ -441,12 +441,12 @@ export default function CrmDashboardPage() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{deal.title}</p>
                       {deal.client && (
-                        <p className="text-[11px] text-muted truncate">{deal.client.companyName}</p>
+                        <p className="text-xs text-muted truncate">{deal.client.companyName}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <span className="text-sm font-semibold text-emerald-500">{formatCurrency(deal.value)}</span>
-                      <span className="text-[11px] text-muted">
+                      <span className="text-xs text-muted">
                         {new Date(deal.expectedCloseDate).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
                       </span>
                       <ArrowUpRight className="h-3.5 w-3.5 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -497,10 +497,10 @@ export default function CrmDashboardPage() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {task.client && (
-                          <span className="text-[11px] text-muted truncate max-w-[80px]">{task.client.companyName}</span>
+                          <span className="text-xs text-muted truncate max-w-[80px]">{task.client.companyName}</span>
                         )}
                         {task.dueDate && (
-                          <span className={`text-[11px] ${isOverdue ? 'text-red-500 font-medium' : 'text-muted'}`}>
+                          <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-muted'}`}>
                             {new Date(task.dueDate).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })}
                           </span>
                         )}
@@ -543,15 +543,15 @@ export default function CrmDashboardPage() {
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
                       <p className="text-lg font-bold">{openDeals.length}</p>
-                      <p className="text-[11px] text-muted">Aperte</p>
+                      <p className="text-xs text-muted">Aperte</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold text-emerald-500">{formatCurrency(totalOpen)}</p>
-                      <p className="text-[11px] text-muted">Valore Pipeline</p>
+                      <p className="text-xs text-muted">Valore Pipeline</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold text-blue-500">{formatCurrency(totalWon)}</p>
-                      <p className="text-[11px] text-muted">Vinto</p>
+                      <p className="text-xs text-muted">Vinto</p>
                     </div>
                   </div>
                   <div className="space-y-1.5">

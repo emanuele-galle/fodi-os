@@ -31,7 +31,7 @@ export function ActivityTimeline({ activities, maxItems = 10, title = 'Attività
           </div>
           <div>
             <h3 className="text-[15px] font-semibold">{title}</h3>
-            <p className="text-[11px] text-muted mt-0.5">Ultime azioni del team</p>
+            <p className="text-xs text-muted mt-0.5">Ultime azioni del team</p>
           </div>
         </div>
 

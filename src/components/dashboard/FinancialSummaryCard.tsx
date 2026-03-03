@@ -34,7 +34,7 @@ export function FinancialSummaryCard({
             </div>
             <div>
               <h3 className="text-[15px] font-semibold">Riepilogo Finanziario</h3>
-              <p className="text-[11px] text-muted mt-0.5">Mese corrente</p>
+              <p className="text-xs text-muted mt-0.5">Mese corrente</p>
             </div>
           </div>
           {onViewDetails && (

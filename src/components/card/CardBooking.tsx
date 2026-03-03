@@ -174,7 +174,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
                       <span className={`text-[12px] font-medium ${isSelected ? 'text-blue-200' : 'text-white/40'}`}>{day}</span>
                       <span className="text-lg font-bold leading-none">{num}</span>
                       <span className={`text-[12px] font-medium ${isSelected ? 'text-blue-200' : 'text-white/40'}`}>{month}</span>
-                      <span className={`text-[11px] mt-0.5 ${isSelected ? 'text-blue-200' : 'text-blue-400/60'}`}>
+                      <span className={`text-xs mt-0.5 ${isSelected ? 'text-blue-200' : 'text-blue-400/60'}`}>
                         {slotCount} slot
                       </span>
                     </button>

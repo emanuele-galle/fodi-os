@@ -309,7 +309,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
                         {' → '}
                         {a.user.firstName} {a.user.lastName}
                       </span>
-                      <span className="text-muted/50">
+                      <span className="text-foreground/50">
                         {new Date(a.assignedAt).toLocaleDateString('it-IT')}
                       </span>
                     </div>

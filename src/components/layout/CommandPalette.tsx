@@ -239,7 +239,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           initial={{ opacity: 0, scale: 0.95, y: -10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          className="w-full max-w-lg mx-4 bg-card/80 backdrop-blur-2xl rounded-2xl border border-border/30 shadow-2xl overflow-hidden"
+          className="w-full max-w-lg mx-4 glass-card bg-card/80 backdrop-blur-2xl rounded-2xl border border-border/30 shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Search input */}
@@ -277,7 +277,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               placeholder="Cerca pagine, azioni..."
               className="flex-1 h-14 bg-transparent text-foreground placeholder:text-muted/60 focus:outline-none text-[15px]"
             />
-            <kbd className="text-[11px] text-muted/70 bg-secondary/60 px-1.5 py-0.5 rounded-md font-mono">ESC</kbd>
+            <kbd className="text-xs text-muted/70 bg-secondary/60 px-1.5 py-0.5 rounded-md font-mono">ESC</kbd>
           </div>
 
           {/* Results */}
@@ -291,7 +291,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
             {groups.search.length > 0 && (
               <div className="px-2">
-                <p className="px-2 py-1.5 text-[11px] font-medium text-muted/70 uppercase tracking-wider">
+                <p className="px-2 py-1.5 text-xs font-medium text-muted/70 uppercase tracking-wider">
                   Risultati
                 </p>
                 {groups.search.map((cmd) => {
@@ -334,7 +334,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
             {groups.navigate.length > 0 && (
               <div className="px-2">
-                <p className="px-2 py-1.5 text-[11px] font-medium text-muted/70 uppercase tracking-wider">
+                <p className="px-2 py-1.5 text-xs font-medium text-muted/70 uppercase tracking-wider">
                   Navigazione
                 </p>
                 {groups.navigate.map((cmd) => {
@@ -361,7 +361,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       <cmd.icon className="h-4 w-4 flex-shrink-0 opacity-70" />
                       <span className="flex-1 text-left">{cmd.label}</span>
                       {cmd.shortcut && (
-                        <kbd className="text-[11px] text-muted/60 bg-secondary/50 px-1.5 py-0.5 rounded font-mono">
+                        <kbd className="text-xs text-muted/60 bg-secondary/50 px-1.5 py-0.5 rounded font-mono">
                           {cmd.shortcut}
                         </kbd>
                       )}
@@ -377,7 +377,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
             {groups.action.length > 0 && (
               <div className="px-2 mt-1">
-                <p className="px-2 py-1.5 text-[11px] font-medium text-muted/70 uppercase tracking-wider">
+                <p className="px-2 py-1.5 text-xs font-medium text-muted/70 uppercase tracking-wider">
                   Azioni Rapide
                 </p>
                 {groups.action.map((cmd) => {
@@ -424,7 +424,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between px-4 py-2 border-t border-border/30 text-[11px] text-muted/50">
+          <div className="flex items-center justify-between px-4 py-2 border-t border-border/30 text-xs text-foreground/50">
             <span>
               <kbd className="bg-secondary/50 px-1 py-0.5 rounded font-mono mr-0.5">↑↓</kbd> naviga
               <kbd className="bg-secondary/50 px-1 py-0.5 rounded font-mono ml-2 mr-0.5">↵</kbd> apri

@@ -216,7 +216,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
                       <Icon className="h-[22px] w-[22px]" />
                     </div>
                     <span className={cn(
-                      'text-[11px] font-medium text-center leading-tight max-w-[64px]',
+                      'text-xs font-medium text-center leading-tight max-w-[64px]',
                       isActive ? 'text-primary' : 'text-[var(--color-sheet-foreground)]/80'
                     )}>
                       {item.label}

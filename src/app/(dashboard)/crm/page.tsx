@@ -637,7 +637,7 @@ export default function CrmPage() {
                                   </span>
                                 ))}
                                 {client.tags.length > 3 && (
-                                  <span className="text-[11px] text-muted">+{client.tags.length - 3}</span>
+                                  <span className="text-xs text-muted">+{client.tags.length - 3}</span>
                                 )}
                               </div>
                             )}

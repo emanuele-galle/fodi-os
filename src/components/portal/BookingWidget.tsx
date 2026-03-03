@@ -283,7 +283,7 @@ export default function BookingWidget({ teamMembers, onBookingComplete }: Bookin
                         <span className={`text-xs font-medium ${isSelected ? 'opacity-80' : 'text-muted'}`}>{day}</span>
                         <span className="text-lg font-bold leading-none">{num}</span>
                         <span className={`text-xs font-medium ${isSelected ? 'opacity-80' : 'text-muted'}`}>{month}</span>
-                        <span className={`text-[11px] mt-0.5 ${isSelected ? 'opacity-70' : 'text-primary/60'}`}>
+                        <span className={`text-xs mt-0.5 ${isSelected ? 'opacity-70' : 'text-primary/60'}`}>
                           {slotCount} slot
                         </span>
                       </button>

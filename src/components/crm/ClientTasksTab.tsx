@@ -40,7 +40,7 @@ export function ClientTasksTab({ clientId }: ClientTasksTabProps) {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               {t.dueDate && (
-                <span className={`text-xs ${new Date(t.dueDate) < new Date() && t.status !== 'DONE' ? 'text-destructive font-medium' : 'text-muted'}`}>
+                <span className={`text-sm ${new Date(t.dueDate) < new Date() && t.status !== 'DONE' ? 'text-destructive font-medium' : 'text-muted'}`}>
                   {new Date(t.dueDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                 </span>
               )}

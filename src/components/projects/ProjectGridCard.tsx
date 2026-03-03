@@ -18,7 +18,7 @@ function BudgetBar({ project }: { project: Project }) {
 
   return (
     <div className="mt-2">
-      <div className="flex items-center justify-between text-[11px] text-muted mb-0.5">
+      <div className="flex items-center justify-between text-xs text-muted mb-0.5">
         <span className="flex items-center gap-1">
           <Euro className="h-3 w-3" />
           Budget
@@ -90,7 +90,7 @@ export function ProjectGridCard({ project: p, onClick, actionMenu }: ProjectGrid
                 style={{ width: `${(doneTasks / totalTasks) * 100}%` }}
               />
             </div>
-            <span className="text-[11px] text-muted mt-1 block text-right">
+            <span className="text-xs text-muted mt-1 block text-right">
               {Math.round((doneTasks / totalTasks) * 100)}%
             </span>
           </div>

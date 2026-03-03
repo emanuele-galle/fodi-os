@@ -216,7 +216,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
                       // Table
                       table: ({ children }) => (
                         <div className="overflow-x-auto my-2 max-w-full ai-scrollbar">
-                          <table className="w-full text-[11px] border-collapse">{children}</table>
+                          <table className="w-full text-xs border-collapse">{children}</table>
                         </div>
                       ),
                       th: ({ children }) => (

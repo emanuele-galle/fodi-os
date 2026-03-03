@@ -125,7 +125,7 @@ export function StickyNotesCard() {
                     {note.text || 'Clicca per scrivere...'}
                   </p>
                 )}
-                <div className="absolute bottom-1.5 right-2 text-[11px] text-foreground/50">
+                <div className="absolute bottom-1.5 right-2 text-xs text-foreground/50">
                   {note.text.length}/200
                 </div>
               </div>

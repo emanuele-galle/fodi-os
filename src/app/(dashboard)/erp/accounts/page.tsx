@@ -465,7 +465,7 @@ export default function AccountsPage() {
                     <ArrowRightLeft className="h-3 w-3 flex-shrink-0" />
                     <span>{t.toAccount.icon || '🏦'} {t.toAccount.name}</span>
                   </div>
-                  {t.notes && <p className="text-xs text-muted mt-1 truncate">{t.notes}</p>}
+                  {t.notes && <p className="text-xs text-foreground/65 mt-1 truncate">{t.notes}</p>}
                 </div>
               ))}
             </div>
@@ -501,7 +501,7 @@ export default function AccountsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3.5 font-medium text-right tabular-nums">{formatCurrency(t.amount)}</td>
-                      <td className="px-4 py-3.5 text-muted max-w-[200px] truncate">{t.notes || '\u2014'}</td>
+                      <td className="px-4 py-3.5 text-foreground/65 max-w-[200px] truncate">{t.notes || '\u2014'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -572,7 +572,7 @@ export default function AccountsPage() {
             <p className="font-medium text-sm">
               {deleteAccountConfirm.icon || '🏦'} {deleteAccountConfirm.name}
             </p>
-            <p className="text-xs text-muted mt-1">
+            <p className="text-sm text-muted mt-1">
               Saldo: {formatCurrency(deleteAccountConfirm.balance)}
             </p>
           </div>

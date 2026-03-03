@@ -67,7 +67,7 @@ export function AppearanceSection() {
                 <span className={cn('text-sm font-medium', isActive ? 'text-primary' : 'text-foreground')}>
                   {t.label}
                 </span>
-                <span className="text-[11px] text-muted leading-tight">{t.description}</span>
+                <span className="text-xs text-muted leading-tight">{t.description}</span>
               </button>
             )
           })}

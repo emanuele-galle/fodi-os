@@ -69,7 +69,7 @@ export function ClientInteractionsTab({ interactions, onAddInteraction, onEditIn
                     </div>
                   </div>
                   {i.content && (
-                    <p className="text-sm text-muted line-clamp-2">{i.content}</p>
+                    <p className="text-sm text-foreground/65 line-clamp-2">{i.content}</p>
                   )}
                 </div>
               </div>

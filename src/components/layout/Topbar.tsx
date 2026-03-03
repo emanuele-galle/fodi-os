@@ -148,7 +148,7 @@ export function Topbar({ user, onOpenCommandPalette, onToggleAiSidebar }: Topbar
       >
         <Search className="h-4 w-4 text-muted group-hover:text-primary transition-colors" />
         <span>Cerca o premi Cmd+K...</span>
-        <kbd className="ml-auto text-[11px] font-medium bg-secondary/80 px-1.5 py-0.5 rounded border border-border/40">Cmd+K</kbd>
+        <kbd className="ml-auto text-xs font-medium bg-secondary/80 px-1.5 py-0.5 rounded border border-border/40">Cmd+K</kbd>
       </button>
 
       {/* Right side */}

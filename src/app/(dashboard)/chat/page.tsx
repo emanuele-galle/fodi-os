@@ -79,7 +79,7 @@ export default function ChatPage() {
                   <h2 className="font-semibold text-[15px] truncate leading-tight">
                     {chat.selectedChannel?.name || 'Chat'}
                   </h2>
-                  <span className="text-[11px] text-muted-foreground/60 font-medium">
+                  <span className="text-xs text-muted-foreground/60 font-medium">
                     {chat.typingNames.length > 0
                       ? (
                         <span className="text-primary/70 animate-pulse">
@@ -169,7 +169,7 @@ export default function ChatPage() {
                           <span className="font-semibold text-[12px]">
                             {msg.author.firstName} {msg.author.lastName}
                           </span>
-                          <span className="text-[11px] text-muted-foreground/60">
+                          <span className="text-xs text-muted-foreground/60">
                             {new Date(msg.createdAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                           </span>
                         </div>

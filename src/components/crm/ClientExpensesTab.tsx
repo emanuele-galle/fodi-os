@@ -45,7 +45,7 @@ export function ClientExpensesTab({ clientId }: ClientExpensesTabProps) {
             <div className="flex items-center justify-between">
               <div className="min-w-0">
                 <span className="text-sm font-medium truncate block">{e.description}</span>
-                <span className="text-xs text-muted">{CATEGORY_LABEL[e.category] || e.category} &middot; {new Date(e.date).toLocaleDateString('it-IT')}</span>
+                <span className="text-sm text-muted">{CATEGORY_LABEL[e.category] || e.category} &middot; {new Date(e.date).toLocaleDateString('it-IT')}</span>
               </div>
               <span className="text-sm font-bold flex-shrink-0">{formatCurrency(e.amount)}</span>
             </div>

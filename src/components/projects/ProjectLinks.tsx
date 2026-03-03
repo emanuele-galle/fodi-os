@@ -358,7 +358,7 @@ export function ProjectLinks({ projectId, folderId }: ProjectLinksProps) {
                             {link.tags.map((tag) => (
                               <span
                                 key={tag}
-                                className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${getTagColor(tag)}`}
+                                className={`text-xs font-medium px-2 py-0.5 rounded-full ${getTagColor(tag)}`}
                               >
                                 {tag}
                               </span>

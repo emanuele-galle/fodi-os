@@ -279,7 +279,7 @@ function TaskList({ tasks }: { tasks: Task[] }) {
           </Badge>
           <span className="text-sm flex-1 min-w-0 truncate">{task.title}</span>
           {task._count.subtasks > 0 && (
-            <span className="text-[11px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-full shrink-0">
+            <span className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-full shrink-0">
               {task._count.subtasks} sub
             </span>
           )}

@@ -192,7 +192,7 @@ export default function PortalNotificationsPage() {
                   <p className="text-xs text-muted-foreground truncate mt-0.5">
                     {n.message}
                   </p>
-                  <p className="text-[11px] text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {relativeTime(n.createdAt)}
                   </p>
                 </div>
