@@ -21,9 +21,9 @@ html {
   --color-background: #F2F2F7;
   --color-foreground: #1D1D1F;
   --color-card: #FFFFFF;
-  --color-sidebar: #D1D1D6;
-  --color-sidebar-foreground: #1D1D1F;
-  --color-sidebar-active: #007AFF;
+  --color-sidebar: #2C2C2E;
+  --color-sidebar-foreground: #F5F5F7;
+  --color-sidebar-active: #0A84FF;
   --color-warning: #FF9500;
 
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
@@ -49,8 +49,8 @@ html {
   --color-secondary-foreground: #1D1D1F;
   --color-border: #C7C7CC;
   --color-muted: #8E8E93;
-  --color-sidebar: #D1D1D6;
-  --color-sidebar-foreground: #1D1D1F;
+  --color-sidebar: #2C2C2E;
+  --color-sidebar-foreground: #F5F5F7;
 }
 
 /* Dark theme - Apple true black */
