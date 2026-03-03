@@ -620,24 +620,45 @@ export default function CalendarPage() {
                 />
               )}
 
-              {(desktopView === 'day' || mobileView === 'day') && (
-                <DayView
-                  selectedDayKey={selectedDayKey}
-                  setSelectedDayKey={setSelectedDayKey}
-                  setYear={setYear}
-                  setMonth={setMonth}
-                  todayKey={todayKey}
-                  eventsByDate={eventsByDate}
-                  isMultiUser={isMultiUser}
-                  getEventColor={getEventColor}
-                  setSelectedEvent={setSelectedEvent}
-                  openNewEventForDate={openNewEventForDate}
-                  setNewEvent={setNewEvent}
-                  setCreateError={setCreateError}
-                  setShowNewEvent={setShowNewEvent}
-                  mobileView={mobileView}
-                  desktopView={desktopView}
-                />
+              {/* Mobile: DayView controlled by mobileView */}
+              {mobileView === 'day' && (
+                <div className="md:hidden">
+                  <DayView
+                    selectedDayKey={selectedDayKey}
+                    setSelectedDayKey={setSelectedDayKey}
+                    setYear={setYear}
+                    setMonth={setMonth}
+                    todayKey={todayKey}
+                    eventsByDate={eventsByDate}
+                    isMultiUser={isMultiUser}
+                    getEventColor={getEventColor}
+                    setSelectedEvent={setSelectedEvent}
+                    openNewEventForDate={openNewEventForDate}
+                    setNewEvent={setNewEvent}
+                    setCreateError={setCreateError}
+                    setShowNewEvent={setShowNewEvent}
+                  />
+                </div>
+              )}
+              {/* Desktop: DayView controlled by desktopView */}
+              {desktopView === 'day' && (
+                <div className="hidden md:block">
+                  <DayView
+                    selectedDayKey={selectedDayKey}
+                    setSelectedDayKey={setSelectedDayKey}
+                    setYear={setYear}
+                    setMonth={setMonth}
+                    todayKey={todayKey}
+                    eventsByDate={eventsByDate}
+                    isMultiUser={isMultiUser}
+                    getEventColor={getEventColor}
+                    setSelectedEvent={setSelectedEvent}
+                    openNewEventForDate={openNewEventForDate}
+                    setNewEvent={setNewEvent}
+                    setCreateError={setCreateError}
+                    setShowNewEvent={setShowNewEvent}
+                  />
+                </div>
               )}
 
               <MonthView
