@@ -217,7 +217,7 @@ export default function DashboardLayout({
         <SetupBanner />
         <ActiveTimerBanner />
 
-        <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6 [&>*]:max-w-[1400px] [&>*]:mx-auto">
+        <main className="flex-1 overflow-auto p-4 md:p-8 pb-20 md:pb-8 [&>*]:max-w-[1400px] [&>*]:mx-auto">
           <UserProvider user={user}>
           <Suspense fallback={
             <div className="animate-fade-in space-y-4">

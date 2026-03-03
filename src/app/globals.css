@@ -12,16 +12,16 @@ html {
   --color-primary: #007AFF;
   --color-primary-hover: #0066D6;
   --color-primary-foreground: #FFFFFF;
-  --color-secondary: #F5F5F7;
+  --color-secondary: #E5E5EA;
   --color-secondary-foreground: #1D1D1F;
   --color-accent: #34C759;
   --color-destructive: #FF3B30;
-  --color-muted: #6E6E73;
-  --color-border: #D2D2D7;
-  --color-background: #FFFFFF;
+  --color-muted: #8E8E93;
+  --color-border: #C7C7CC;
+  --color-background: #F2F2F7;
   --color-foreground: #1D1D1F;
   --color-card: #FFFFFF;
-  --color-sidebar: #F5F5F7;
+  --color-sidebar: #E8E8ED;
   --color-sidebar-foreground: #1D1D1F;
   --color-sidebar-active: #007AFF;
   --color-warning: #FF9500;
@@ -31,25 +31,25 @@ html {
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
 
-  /* Shadow system - Apple-defined */
-  --shadow-sm: 0 1px 4px rgba(0,0,0,0.07), 0 0 1px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.05);
-  --shadow-lg: 0 12px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
-  --shadow-xl: 0 24px 56px rgba(0,0,0,0.13), 0 8px 16px rgba(0,0,0,0.07);
+  /* Shadow system - Apple HIG (softer, more diffused) */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 28px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 48px rgba(0,0,0,0.10), 0 8px 16px rgba(0,0,0,0.05);
 }
 
 /* ===== Theme System ===== */
 
-/* Light theme (default) - Apple clean white */
+/* Light theme (default) - Apple HIG */
 :root, [data-theme="light"] {
-  --color-background: #FFFFFF;
+  --color-background: #F2F2F7;
   --color-foreground: #1D1D1F;
   --color-card: #FFFFFF;
-  --color-secondary: #F5F5F7;
+  --color-secondary: #E5E5EA;
   --color-secondary-foreground: #1D1D1F;
-  --color-border: #D2D2D7;
-  --color-muted: #6E6E73;
-  --color-sidebar: #F5F5F7;
+  --color-border: #C7C7CC;
+  --color-muted: #8E8E93;
+  --color-sidebar: #E8E8ED;
   --color-sidebar-foreground: #1D1D1F;
 }
 
@@ -708,10 +708,21 @@ html {
 
 /* Apple glass header */
 .glass-header {
-  background: color-mix(in srgb, var(--color-card) 80%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 30%, transparent);
+  background: color-mix(in srgb, var(--color-card) 85%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 25%, transparent);
+}
+
+/* Apple-style frosted sidebar (desktop) */
+.glass-sidebar {
+  background: color-mix(in srgb, var(--color-sidebar) 92%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+[data-theme="dark"] .glass-sidebar {
+  background: color-mix(in srgb, var(--color-sidebar) 85%, transparent);
 }
 
 /* Stat card hover */

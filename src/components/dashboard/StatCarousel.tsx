@@ -61,7 +61,7 @@ export function StatCarousel({ stats, loading }: StatCarouselProps) {
           <div
             key={stat.label}
             onClick={() => router.push(stat.href)}
-            className="relative overflow-hidden rounded-2xl border border-border/40 bg-card p-4 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-primary/25 transition-all duration-200 group touch-manipulation active:scale-[0.97]"
+            className="relative overflow-hidden rounded-2xl border border-border/25 bg-card p-5 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-border/50 transition-all duration-200 group touch-manipulation active:scale-[0.98]"
           >
             <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl opacity-80" style={{ background: 'currentColor' }} />
             <div className={`flex flex-col gap-3 ${stat.color}`}>

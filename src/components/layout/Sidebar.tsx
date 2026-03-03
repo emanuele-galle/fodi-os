@@ -189,7 +189,7 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
     <motion.aside
       animate={{ width: expanded ? 260 : 64 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-border/20 overflow-hidden"
+      className="flex flex-col h-screen glass-sidebar text-sidebar-foreground border-r border-border/15 overflow-hidden"
     >
       {/* Logo + Toggle */}
       <div className="flex items-center h-14 px-3 gap-2">

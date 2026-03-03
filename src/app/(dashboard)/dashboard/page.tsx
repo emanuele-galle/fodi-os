@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   Users, FolderKanban, TrendingUp, AlertCircle,
   Activity, UserPlus, FileText, CheckCircle2, TicketCheck,
-  LayoutDashboard, BarChart3, Wallet,
+  BarChart3, Wallet,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
@@ -203,18 +203,11 @@ function mapActivitiesToTimeline(activities: ActivityItem[]) {
 
 function DashboardHeader({ userName, subtitle }: { userName: string; subtitle: string }) {
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2.5">
-        <div className="p-2 rounded-lg bg-primary/10 text-primary">
-          <LayoutDashboard className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <h1 className="text-xl font-bold tracking-tight truncate">
-            {getGreeting()}{userName && <>, <span className="text-primary font-bold">{userName}</span></>}
-          </h1>
-          <p className="text-xs text-muted capitalize">{subtitle}</p>
-        </div>
-      </div>
+    <div className="mb-8">
+      <h1 className="text-2xl md:text-[28px] font-bold tracking-tight">
+        {getGreeting()}{userName && <>, {userName}</>}
+      </h1>
+      <p className="text-sm text-muted mt-1 capitalize">{subtitle}</p>
     </div>
   )
 }
