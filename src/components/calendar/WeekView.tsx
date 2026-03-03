@@ -45,7 +45,7 @@ export function WeekView({
         {/* All-day events row */}
         {hasAllDayEvents && (
           <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-secondary/10">
-            <div className="text-[10px] text-muted px-2 py-1 text-right pt-2">tutto giorno</div>
+            <div className="text-[11px] text-muted px-2 py-1 text-right pt-2">tutto giorno</div>
             {weekDates.map((d, i) => {
               const dk = dateKey(d)
               const allDayEvs = (eventsByDate.get(dk) || []).filter((ev) => !!ev.start.date)
@@ -104,7 +104,7 @@ export function WeekView({
               {HOURS.map((hour) => (
                 <div
                   key={hour}
-                  className="absolute w-full text-[10px] text-muted text-right pr-2"
+                  className="absolute w-full text-[11px] text-muted text-right pr-2"
                   // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- computed position
                   style={{ top: hour * SLOT_HEIGHT - 8, height: SLOT_HEIGHT }}
                 >

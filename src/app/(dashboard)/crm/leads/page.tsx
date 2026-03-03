@@ -344,7 +344,7 @@ export default function LeadsPage() {
           return (
             <div key={s} className="bg-card border border-border/40 rounded-lg p-2.5 text-center">
               <p className="text-lg font-bold">{count}</p>
-              <p className="text-[10px] text-muted">{LEAD_STATUS_LABELS[s]}</p>
+              <p className="text-[11px] text-muted">{LEAD_STATUS_LABELS[s]}</p>
             </div>
           )
         })}

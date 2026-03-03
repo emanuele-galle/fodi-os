@@ -248,7 +248,7 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
                 )}
                 {/* Group title (hidden when collapsed, null for system group) */}
                 {expanded && groupLabel && (
-                  <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground/40 px-3 pt-3 pb-1 select-none">
+                  <div className="text-[11px] uppercase tracking-wider text-sidebar-foreground/55 px-3 pt-3 pb-1 select-none">
                     {groupLabel}
                   </div>
                 )}

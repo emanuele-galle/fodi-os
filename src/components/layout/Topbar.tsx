@@ -144,11 +144,11 @@ export function Topbar({ user, onOpenCommandPalette, onToggleAiSidebar }: Topbar
       {/* Search trigger */}
       <button
         onClick={onOpenCommandPalette}
-        className="group flex items-center gap-2.5 h-9 px-4 rounded-[10px] border border-border/20 bg-secondary/50 text-muted text-sm hover:border-border/40 hover:bg-secondary/70 focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 transition-all duration-200 flex-1 max-w-96"
+        className="group flex items-center gap-2.5 h-9 px-4 rounded-[10px] border border-border/20 bg-secondary/40 text-foreground/50 text-sm hover:border-border/40 hover:bg-secondary/60 focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 transition-all duration-200 flex-1 max-w-96"
       >
         <Search className="h-4 w-4 text-muted group-hover:text-primary transition-colors" />
         <span>Cerca o premi Cmd+K...</span>
-        <kbd className="ml-auto text-[10px] font-medium bg-secondary/80 px-1.5 py-0.5 rounded border border-border/40">Cmd+K</kbd>
+        <kbd className="ml-auto text-[11px] font-medium bg-secondary/80 px-1.5 py-0.5 rounded border border-border/40">Cmd+K</kbd>
       </button>
 
       {/* Right side */}

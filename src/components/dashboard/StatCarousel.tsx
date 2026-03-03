@@ -48,7 +48,7 @@ export function StatCarousel({ stats, loading }: StatCarouselProps) {
               </div>
               <div className="min-w-0">
                 <p className="text-[22px] font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
-                <p className="text-[10px] text-muted font-medium truncate leading-tight mt-1">{stat.label}</p>
+                <p className="text-xs text-foreground/55 font-medium truncate leading-tight mt-1">{stat.label}</p>
               </div>
             </div>
           </div>
@@ -64,7 +64,7 @@ export function StatCarousel({ stats, loading }: StatCarouselProps) {
           >
             <div className={`flex items-start justify-between gap-3 ${stat.color}`}>
               <div className="min-w-0">
-                <p className="text-[11px] text-muted font-medium truncate leading-tight mb-2">{stat.label}</p>
+                <p className="text-xs text-foreground/55 font-medium truncate leading-tight mb-2">{stat.label}</p>
                 <p className="text-2xl font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
               </div>
               <div className="p-2.5 rounded-xl flex-shrink-0 transition-transform duration-200 group-hover:scale-105" style={{ background: `color-mix(in srgb, currentColor 8%, transparent)` }}>

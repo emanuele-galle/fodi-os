@@ -242,7 +242,7 @@ export default function PortalTicketDetailPage() {
                           </div>
                         )}
                       </div>
-                      <p className={`text-[10px] text-muted-foreground mt-1 ${isOwn ? 'text-right' : ''}`}>
+                      <p className={`text-[11px] text-muted-foreground mt-1 ${isOwn ? 'text-right' : ''}`}>
                         {new Date(comment.createdAt).toLocaleDateString('it-IT', {
                           day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
                         })}

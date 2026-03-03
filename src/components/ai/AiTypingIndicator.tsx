@@ -83,7 +83,7 @@ export function AiTypingIndicator({ activeToolName }: AiTypingIndicatorProps) {
             />
           ))}
         </div>
-        <span className="text-[10px] text-muted-foreground/60 pl-1 flex items-center gap-1.5">
+        <span className="text-[11px] text-muted-foreground/60 pl-1 flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-blue-400/50 animate-pulse" />
           {contextMessage}
         </span>

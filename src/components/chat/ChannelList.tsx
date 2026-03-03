@@ -201,7 +201,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                           </span>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             {dm?.lastMessage && (
-                              <span className="text-[10px] text-muted/50">
+                              <span className="text-[11px] text-muted/70">
                                 {formatTime(dm.lastMessage.createdAt)}
                               </span>
                             )}
@@ -211,7 +211,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                         {dm?.lastMessage ? (
                           <p className={cn(
                             'text-[11px] truncate mt-0.5',
-                            unread > 0 ? 'text-muted/70' : 'text-muted/45'
+                            unread > 0 ? 'text-muted/70' : 'text-muted/65'
                           )}>
                             {isOwnLastMsg && <span className="font-medium">Tu: </span>}
                             {dm.lastMessage.content}
@@ -259,7 +259,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                           </span>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             {dm?.lastMessage && (
-                              <span className="text-[10px] text-muted/50">
+                              <span className="text-[11px] text-muted/70">
                                 {formatTime(dm.lastMessage.createdAt)}
                               </span>
                             )}
@@ -267,7 +267,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                           </div>
                         </div>
                         {dm?.lastMessage ? (
-                          <p className="text-[11px] truncate mt-0.5 text-muted/45">
+                          <p className="text-[11px] truncate mt-0.5 text-muted/65">
                             {isOwnLastMsg && <span className="font-medium">Tu: </span>}
                             {dm.lastMessage.content}
                           </p>
@@ -302,7 +302,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                 !channelsExpanded && '-rotate-90'
               )} />
               <span className="text-[11px] font-semibold text-muted/70 uppercase tracking-wider">Canali</span>
-              <span className="text-[10px] text-muted/40 font-medium">{regularChannels.length}</span>
+              <span className="text-[11px] text-muted/60 font-medium">{regularChannels.length}</span>
             </button>
             {channelsExpanded && (
               <div className="pb-2 space-y-px mt-0.5">
@@ -345,7 +345,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                           )}
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             {channel.lastMessage && (
-                              <span className="text-[10px] text-muted/50">
+                              <span className="text-[11px] text-muted/70">
                                 {formatTime(channel.lastMessage.createdAt)}
                               </span>
                             )}
@@ -357,7 +357,7 @@ export function ChannelList({ channels, selectedId, onSelect, onNewChannel, team
                         {channel.lastMessage && (
                           <p className={cn(
                             'text-[11px] truncate mt-0.5 leading-tight',
-                            unread > 0 ? 'text-muted/70' : 'text-muted/45'
+                            unread > 0 ? 'text-muted/70' : 'text-muted/65'
                           )}>
                             <span className="font-medium">{channel.lastMessage.authorName.split(' ')[0]}:</span>{' '}
                             {channel.lastMessage.content}

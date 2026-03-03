@@ -332,7 +332,7 @@ export function FirmeList() {
 
       {/* Modal Conferma Annullamento */}
       <Modal open={!!cancelConfirm} onClose={handleCloseCancelModal} title="Annulla Richiesta Firma" size="sm">
-        <p className="text-sm text-muted mb-2">Sei sicuro di voler annullare questa richiesta di firma?</p>
+        <p className="text-sm text-foreground/70 mb-2">Sei sicuro di voler annullare questa richiesta di firma?</p>
         {cancelConfirm && (
           <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
             <p className="font-medium text-sm">{cancelConfirm.documentTitle}</p>

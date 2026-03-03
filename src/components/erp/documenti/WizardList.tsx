@@ -523,7 +523,7 @@ export function WizardList() {
 
       {/* Modal Conferma Eliminazione */}
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Elimina Wizard" size="sm">
-        <p className="text-sm text-muted mb-2">Sei sicuro di voler eliminare questo wizard?</p>
+        <p className="text-sm text-foreground/70 mb-2">Sei sicuro di voler eliminare questo wizard?</p>
         {deleteConfirm && (
           <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
             <p className="font-medium text-sm">{deleteConfirm.name}</p>

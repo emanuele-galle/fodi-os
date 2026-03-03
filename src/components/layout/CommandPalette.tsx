@@ -361,7 +361,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       <cmd.icon className="h-4 w-4 flex-shrink-0 opacity-70" />
                       <span className="flex-1 text-left">{cmd.label}</span>
                       {cmd.shortcut && (
-                        <kbd className="text-[10px] text-muted/60 bg-secondary/50 px-1.5 py-0.5 rounded font-mono">
+                        <kbd className="text-[11px] text-muted/60 bg-secondary/50 px-1.5 py-0.5 rounded font-mono">
                           {cmd.shortcut}
                         </kbd>
                       )}

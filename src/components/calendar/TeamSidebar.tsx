@@ -342,7 +342,7 @@ export function CalendarsSidebarDesktop({
                     {isSelected && <Check className="h-2 w-2 text-white" />}
                   </div>
                   <span className="text-xs truncate">{cal.summary}</span>
-                  {cal.primary && <span className="text-[10px] text-muted ml-auto flex-shrink-0">principale</span>}
+                  {cal.primary && <span className="text-[11px] text-muted ml-auto flex-shrink-0">principale</span>}
                 </button>
               )
             })}

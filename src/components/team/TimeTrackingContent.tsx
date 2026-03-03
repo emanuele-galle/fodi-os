@@ -237,7 +237,7 @@ export function TimeTrackingContent() {
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[11px] sm:text-[10px] text-muted font-medium">Online Adesso</p>
+              <p className="text-[12px] sm:text-[11px] text-muted font-medium">Online Adesso</p>
               <p className="text-xl font-bold">{onlineNow.length}</p>
             </div>
           </CardContent>
@@ -248,7 +248,7 @@ export function TimeTrackingContent() {
               <Clock className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[11px] sm:text-[10px] text-muted font-medium">Sessioni</p>
+              <p className="text-[12px] sm:text-[11px] text-muted font-medium">Sessioni</p>
               <p className="text-xl font-bold">{sessions.length}</p>
             </div>
           </CardContent>

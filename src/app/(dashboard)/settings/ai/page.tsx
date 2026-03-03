@@ -31,8 +31,8 @@ interface ToolInfo {
 }
 
 const MODELS = [
+  { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5', badge: 'Default', color: 'text-emerald-400' },
   { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6', badge: 'Veloce', color: 'text-blue-400' },
-  { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5', badge: 'Economico', color: 'text-emerald-400' },
   { value: 'claude-opus-4-6', label: 'Claude Opus 4.6', badge: 'Potente', color: 'text-blue-400' },
 ]
 
@@ -66,7 +66,7 @@ export default function AiSettingsPage() {
 
   // Form state
   const [name, setName] = useState('')
-  const [model, setModel] = useState('claude-sonnet-4-6')
+  const [model, setModel] = useState('claude-haiku-4-5-20251001')
   const [temperature, setTemperature] = useState(0.7)
   const [maxTokens, setMaxTokens] = useState(4096)
   const [systemPrompt, setSystemPrompt] = useState('')
@@ -355,7 +355,7 @@ export default function AiSettingsPage() {
                     onChange={e => setTemperature(parseFloat(e.target.value))}
                     className="w-full accent-primary"
                   />
-                  <div className="flex justify-between text-[10px] text-muted mt-1">
+                  <div className="flex justify-between text-[11px] text-muted mt-1">
                     <span>Preciso</span>
                     <span>Creativo</span>
                   </div>

@@ -111,14 +111,14 @@ function renderProjectList(data: { projects: Array<Record<string, unknown>>; tot
   if (!data.projects?.length) return <p className="text-xs text-muted-foreground">Nessun progetto trovato</p>
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] text-muted-foreground font-medium">{data.total} progetti trovati</p>
+      <p className="text-[11px] text-muted-foreground font-medium">{data.total} progetti trovati</p>
       {data.projects.slice(0, 8).map((project: Record<string, unknown>) => (
         <div key={project.id as string} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg bg-background/50">
           <FolderOpen className="h-3 w-3 text-muted-foreground flex-shrink-0" />
           <span className="flex-1 truncate font-medium">{project.name as string}</span>
           {project.priority ? <PriorityDot priority={project.priority as string} /> : null}
           {project.progress !== undefined ? (
-            <span className="text-[10px] text-muted-foreground">{project.progress as number}%</span>
+            <span className="text-[11px] text-muted-foreground">{project.progress as number}%</span>
           ) : null}
           {project.status ? <StatusBadge status={project.status as string} /> : null}
         </div>
@@ -142,24 +142,24 @@ function renderProjectDetails(data: Record<string, unknown>) {
       <div className="grid grid-cols-2 gap-2 text-xs">
         {data.budget !== undefined ? (
           <div className="p-1.5 rounded-lg bg-blue-500/10">
-            <span className="text-[10px] text-muted-foreground">Budget</span>
+            <span className="text-[11px] text-muted-foreground">Budget</span>
             <p className="font-medium text-blue-400">{formatCurrency(data.budget as number)}</p>
           </div>
         ) : null}
         {data.progress !== undefined ? (
           <div className="p-1.5 rounded-lg bg-blue-500/10">
-            <span className="text-[10px] text-muted-foreground">Progresso</span>
+            <span className="text-[11px] text-muted-foreground">Progresso</span>
             <p className="font-medium text-blue-400">{data.progress as number}%</p>
           </div>
         ) : null}
       </div>
       {data.members && Array.isArray(data.members) && data.members.length > 0 ? (
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-[11px] text-muted-foreground">
           {(data.members as Array<Record<string, unknown>>).length} membri
         </p>
       ) : null}
       {data.taskStats ? (
-        <div className="text-[10px] text-muted-foreground">
+        <div className="text-[11px] text-muted-foreground">
           Task: {JSON.stringify(data.taskStats)}
         </div>
       ) : null}
@@ -172,7 +172,7 @@ function renderTaskList(data: { tasks: Array<Record<string, unknown>>; total: nu
   if (!data.tasks?.length) return <p className="text-xs text-muted-foreground">Nessun task trovato</p>
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] text-muted-foreground font-medium">{data.total} task trovati</p>
+      <p className="text-[11px] text-muted-foreground font-medium">{data.total} task trovati</p>
       {data.tasks.slice(0, 8).map((task: Record<string, unknown>) => (
         <div key={task.id as string} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg bg-background/50">
           <PriorityDot priority={task.priority as string} />
@@ -188,7 +188,7 @@ function renderLeadList(data: { leads: Array<Record<string, unknown>>; total: nu
   if (!data.leads?.length) return <p className="text-xs text-muted-foreground">Nessun lead trovato</p>
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] text-muted-foreground font-medium">{data.total} lead trovati</p>
+      <p className="text-[11px] text-muted-foreground font-medium">{data.total} lead trovati</p>
       {data.leads.slice(0, 8).map((lead: Record<string, unknown>) => (
         <div key={lead.id as string} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg bg-background/50">
           <span className="flex-1 truncate font-medium">{lead.name as string}</span>
@@ -204,7 +204,7 @@ function renderDealList(data: { deals: Array<Record<string, unknown>>; total: nu
   if (!data.deals?.length) return <p className="text-xs text-muted-foreground">Nessuna trattativa trovata</p>
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] text-muted-foreground font-medium">{data.total} trattative</p>
+      <p className="text-[11px] text-muted-foreground font-medium">{data.total} trattative</p>
       {data.deals.slice(0, 8).map((deal: Record<string, unknown>) => (
         <div key={deal.id as string} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg bg-background/50">
           <span className="flex-1 truncate font-medium">{deal.title as string}</span>
@@ -220,7 +220,7 @@ function renderQuoteList(data: { quotes: Array<Record<string, unknown>>; total: 
   if (!data.quotes?.length) return <p className="text-xs text-muted-foreground">Nessun preventivo trovato</p>
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] text-muted-foreground font-medium">{data.total} preventivi</p>
+      <p className="text-[11px] text-muted-foreground font-medium">{data.total} preventivi</p>
       {data.quotes.slice(0, 8).map((quote: Record<string, unknown>) => (
         <div key={quote.id as string} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg bg-background/50">
           <span className="text-muted-foreground font-mono">{quote.number as string}</span>
@@ -237,7 +237,7 @@ function renderTicketList(data: { tickets: Array<Record<string, unknown>>; total
   if (!data.tickets?.length) return <p className="text-xs text-muted-foreground">Nessun ticket trovato</p>
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] text-muted-foreground font-medium">{data.total} ticket</p>
+      <p className="text-[11px] text-muted-foreground font-medium">{data.total} ticket</p>
       {data.tickets.slice(0, 8).map((ticket: Record<string, unknown>) => (
         <div key={ticket.id as string} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg bg-background/50">
           <PriorityDot priority={ticket.priority as string} />
@@ -274,7 +274,7 @@ function renderFinancialSummary(data: Record<string, unknown>) {
         </div>
       </div>
       {previous && (
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-[11px] text-muted-foreground">
           Mese precedente: {formatCurrency(previous.income)} entrate, {formatCurrency(previous.expenses)} spese
           {trend && <span className="ml-1">{trend === 'up' ? '📈' : trend === 'down' ? '📉' : '➡️'}</span>}
         </p>
@@ -289,7 +289,7 @@ function renderTimeEntries(data: { entries?: Array<Record<string, unknown>>; tot
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] text-muted-foreground font-medium">{data.total || data.entries.length} registrazioni</p>
+        <p className="text-[11px] text-muted-foreground font-medium">{data.total || data.entries.length} registrazioni</p>
         <p className="text-xs font-semibold text-blue-400">{totalHours.toFixed(1)}h totali</p>
       </div>
       {data.entries.slice(0, 6).map((entry: Record<string, unknown>, i: number) => (
@@ -297,7 +297,7 @@ function renderTimeEntries(data: { entries?: Array<Record<string, unknown>>; tot
           <Clock className="h-3 w-3 text-muted-foreground" />
           <span className="font-medium">{entry.hours as number}h</span>
           <span className="flex-1 truncate text-muted-foreground">{entry.description as string || (entry.task as Record<string, unknown>)?.title as string || '—'}</span>
-          {entry.date ? <span className="text-[10px] text-muted-foreground">{formatDate(entry.date as string)}</span> : null}
+          {entry.date ? <span className="text-[11px] text-muted-foreground">{formatDate(entry.date as string)}</span> : null}
         </div>
       ))}
     </div>
@@ -321,8 +321,8 @@ function renderErrorCard(result: { error?: string }) {
 function renderGenericResult(data: unknown) {
   if (!data) return null
   const str = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
-  if (str.length > 500) return <pre className="text-[10px] text-muted-foreground whitespace-pre-wrap overflow-hidden max-h-40">{str.slice(0, 500)}...</pre>
-  return <pre className="text-[10px] text-muted-foreground whitespace-pre-wrap">{str}</pre>
+  if (str.length > 500) return <pre className="text-[11px] text-muted-foreground whitespace-pre-wrap overflow-hidden max-h-40">{str.slice(0, 500)}...</pre>
+  return <pre className="text-[11px] text-muted-foreground whitespace-pre-wrap">{str}</pre>
 }
 
 // Tool name to icon mapping

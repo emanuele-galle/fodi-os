@@ -219,7 +219,7 @@ interface DeleteContactModalProps {
 export function DeleteContactModal({ open, onClose, onConfirm, submitting }: DeleteContactModalProps) {
   return (
     <Modal open={open} onClose={onClose} title="Elimina Contatto" size="sm">
-      <p className="text-sm text-muted mb-4">Sei sicuro di voler eliminare questo contatto? L&apos;azione non può essere annullata.</p>
+      <p className="text-sm text-foreground/70 mb-4">Sei sicuro di voler eliminare questo contatto? L&apos;azione non può essere annullata.</p>
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={onClose}>Annulla</Button>
         <Button variant="destructive" onClick={onConfirm} loading={submitting}>Elimina</Button>
@@ -306,7 +306,7 @@ interface DeleteInteractionModalProps {
 export function DeleteInteractionModal({ open, onClose, onConfirm, submitting }: DeleteInteractionModalProps) {
   return (
     <Modal open={open} onClose={onClose} title="Elimina Interazione" size="sm">
-      <p className="text-sm text-muted mb-4">Sei sicuro di voler eliminare questa interazione? L&apos;azione non può essere annullata.</p>
+      <p className="text-sm text-foreground/70 mb-4">Sei sicuro di voler eliminare questa interazione? L&apos;azione non può essere annullata.</p>
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={onClose}>Annulla</Button>
         <Button variant="destructive" onClick={onConfirm} loading={submitting}>Elimina</Button>

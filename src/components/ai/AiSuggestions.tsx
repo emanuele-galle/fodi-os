@@ -76,7 +76,7 @@ export function AiSuggestions({ suggestions, onSelect, variant = 'empty', curren
 
   return (
     <div className="space-y-2.5">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground/40">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
         <Sparkles className="h-3 w-3 text-blue-400/50" />
         <span>Suggerimenti</span>
       </div>

@@ -221,7 +221,7 @@ export function PrimaNota() {
                       <Badge variant={cfg.color} className="text-[10px]">{cfg.label}</Badge>
                       <span className="text-xs text-muted">{new Date(entry.date).toLocaleDateString('it-IT')}</span>
                     </div>
-                    {entry.invoiceNumber && <span className="text-[10px] text-muted font-mono">{entry.invoiceNumber}</span>}
+                    {entry.invoiceNumber && <span className="text-[11px] text-muted font-mono">{entry.invoiceNumber}</span>}
                   </div>
                   <p className="text-sm font-medium truncate">{entry.description}</p>
                   <div className="flex items-center justify-between mt-1.5">

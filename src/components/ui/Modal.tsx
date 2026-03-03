@@ -113,7 +113,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
         {/* Close confirmation bar */}
         {showCloseConfirm && (
           <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3 border-t border-border/30 bg-card flex-shrink-0">
-            <span className="text-sm text-muted">Hai modifiche non salvate.</span>
+            <span className="text-sm text-foreground/70">Hai modifiche non salvate.</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowCloseConfirm(false)}

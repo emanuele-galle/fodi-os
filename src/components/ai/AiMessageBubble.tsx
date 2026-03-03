@@ -287,7 +287,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
         {/* Timestamp */}
         {timestamp && (
           <span className={cn(
-            'text-[11px] text-muted-foreground/40',
+            'text-[12px] text-muted-foreground/60',
             isUser ? 'pr-1' : 'pl-1',
           )}>
             {timestamp}

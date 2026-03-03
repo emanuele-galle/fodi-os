@@ -59,7 +59,7 @@ export function ConfirmDialog({
           )}
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-semibold mb-1">{title}</h3>
-            <p className="text-sm text-muted">{message}</p>
+            <p className="text-sm text-foreground/70">{message}</p>
           </div>
           <button onClick={onCancel} className="text-muted hover:text-foreground transition-colors p-2 rounded-lg hover:bg-secondary flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center">
             <X className="h-5 w-5" />

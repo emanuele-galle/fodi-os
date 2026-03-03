@@ -157,22 +157,22 @@ export default function SignatureDetailPage() {
               <CardTitle className="mb-4">Informazioni Firmatario</CardTitle>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted text-xs">Nome</p>
+                  <p className="text-foreground/60 text-xs">Nome</p>
                   <p className="font-medium">{data.signerName}</p>
                 </div>
                 <div>
-                  <p className="text-muted text-xs">Email</p>
+                  <p className="text-foreground/60 text-xs">Email</p>
                   <p className="font-medium">{data.signerEmail}</p>
                 </div>
                 {data.signerPhone && (
                   <div>
-                    <p className="text-muted text-xs">Telefono</p>
+                    <p className="text-foreground/60 text-xs">Telefono</p>
                     <p className="font-medium">{data.signerPhone}</p>
                   </div>
                 )}
                 {data.signerClient && (
                   <div>
-                    <p className="text-muted text-xs">Azienda</p>
+                    <p className="text-foreground/60 text-xs">Azienda</p>
                     <p className="font-medium">{data.signerClient.companyName}</p>
                   </div>
                 )}
@@ -257,29 +257,29 @@ export default function SignatureDetailPage() {
               <CardTitle className="mb-3">Dettagli</CardTitle>
               <div className="space-y-3 text-sm">
                 <div>
-                  <p className="text-muted text-xs">Stato</p>
+                  <p className="text-foreground/60 text-xs">Stato</p>
                   <SignatureStatusBadge status={data.status} />
                 </div>
                 <div>
-                  <p className="text-muted text-xs">Richiedente</p>
+                  <p className="text-foreground/60 text-xs">Richiedente</p>
                   <p>{data.requester.firstName} {data.requester.lastName}</p>
                 </div>
                 <div>
-                  <p className="text-muted text-xs">Creato il</p>
+                  <p className="text-foreground/60 text-xs">Creato il</p>
                   <p>{new Date(data.createdAt).toLocaleString('it-IT')}</p>
                 </div>
                 <div>
-                  <p className="text-muted text-xs">Scadenza</p>
+                  <p className="text-foreground/60 text-xs">Scadenza</p>
                   <p>{new Date(data.expiresAt).toLocaleString('it-IT')}</p>
                 </div>
                 {data.signedAt && (
                   <div>
-                    <p className="text-muted text-xs">Firmato il</p>
+                    <p className="text-foreground/60 text-xs">Firmato il</p>
                     <p className="text-emerald-600 font-medium">{new Date(data.signedAt).toLocaleString('it-IT')}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-muted text-xs">OTP inviati</p>
+                  <p className="text-foreground/60 text-xs">OTP inviati</p>
                   <p>{data.otpAttempts.length} / 3</p>
                 </div>
               </div>

@@ -256,7 +256,7 @@ export default function PortalChatPage() {
             <div key={msg.id}>
               {dateSep && (
                 <div className="flex items-center justify-center my-3">
-                  <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
                     {dateSep}
                   </span>
                 </div>
@@ -302,7 +302,7 @@ export default function PortalChatPage() {
                         <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                       )}
                     </div>
-                    <p className={`text-[10px] text-muted-foreground mt-0.5 ${isOwn ? 'text-right' : ''}`}>
+                    <p className={`text-[11px] text-muted-foreground mt-0.5 ${isOwn ? 'text-right' : ''}`}>
                       {formatTime(msg.createdAt)}
                     </p>
                   </div>

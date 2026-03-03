@@ -45,7 +45,7 @@ export async function PUT(request: NextRequest) {
         brandSlug: brand.slug,
         name: name || 'Assistente AI',
         systemPrompt: systemPrompt || null,
-        model: model || 'claude-sonnet-4-6',
+        model: model || 'claude-haiku-4-5-20251001',
         temperature: temperature ?? 0.7,
         maxTokens: maxTokens || 4096,
         enabledTools: enabledTools || [],

@@ -143,7 +143,7 @@ function DraggableTaskCard({ task, activeTab, userId, onClick, expanded, subtask
           {loadingSubtasks ? (
             <div className="flex items-center gap-1.5 py-1">
               <div className="h-2.5 w-2.5 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
-              <span className="text-[10px] text-muted">Caricamento...</span>
+              <span className="text-[11px] text-muted">Caricamento...</span>
             </div>
           ) : subtasks && subtasks.length > 0 ? (
             subtasks.map((sub) => (
@@ -162,7 +162,7 @@ function DraggableTaskCard({ task, activeTab, userId, onClick, expanded, subtask
               </div>
             ))
           ) : (
-            <span className="text-[10px] text-muted">Nessuna subtask</span>
+            <span className="text-[11px] text-muted">Nessuna subtask</span>
           )}
         </div>
       )}

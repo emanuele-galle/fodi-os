@@ -163,7 +163,7 @@ export function TaskListView({ tasks, activeTab, userId, onTaskClick, expandedTa
                               {sub.assignee && (
                                 <div className="flex items-center gap-1 flex-shrink-0 hidden lg:flex">
                                   <Avatar name={`${sub.assignee.firstName} ${sub.assignee.lastName}`} src={sub.assignee.avatarUrl} size="xs" />
-                                  <span className="text-[10px] text-muted">{sub.assignee.firstName}</span>
+                                  <span className="text-[11px] text-muted">{sub.assignee.firstName}</span>
                                 </div>
                               )}
                               {sub.dueDate && (

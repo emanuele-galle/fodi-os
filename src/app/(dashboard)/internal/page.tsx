@@ -216,7 +216,7 @@ export default function InternalPage() {
                   }}
                 />
               </div>
-              <span className="text-[10px] text-muted mt-1 block text-right">
+              <span className="text-[11px] text-muted mt-1 block text-right">
                 {Math.round((doneT / totalT) * 100)}%
               </span>
             </div>
@@ -233,7 +233,7 @@ export default function InternalPage() {
                 />
               ))}
               {p.members.length > 4 && (
-                <span className="text-[10px] text-muted ml-2">+{p.members.length - 4}</span>
+                <span className="text-[11px] text-muted ml-2">+{p.members.length - 4}</span>
               )}
             </div>
           )}

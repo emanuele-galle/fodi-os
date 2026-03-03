@@ -497,7 +497,7 @@ export default function CrmDashboardPage() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {task.client && (
-                          <span className="text-[10px] text-muted truncate max-w-[80px]">{task.client.companyName}</span>
+                          <span className="text-[11px] text-muted truncate max-w-[80px]">{task.client.companyName}</span>
                         )}
                         {task.dueDate && (
                           <span className={`text-[11px] ${isOverdue ? 'text-red-500 font-medium' : 'text-muted'}`}>
@@ -543,15 +543,15 @@ export default function CrmDashboardPage() {
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
                       <p className="text-lg font-bold">{openDeals.length}</p>
-                      <p className="text-[10px] text-muted">Aperte</p>
+                      <p className="text-[11px] text-muted">Aperte</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold text-emerald-500">{formatCurrency(totalOpen)}</p>
-                      <p className="text-[10px] text-muted">Valore Pipeline</p>
+                      <p className="text-[11px] text-muted">Valore Pipeline</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold text-blue-500">{formatCurrency(totalWon)}</p>
-                      <p className="text-[10px] text-muted">Vinto</p>
+                      <p className="text-[11px] text-muted">Vinto</p>
                     </div>
                   </div>
                   <div className="space-y-1.5">

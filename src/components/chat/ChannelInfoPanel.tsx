@@ -293,10 +293,10 @@ export function ChannelInfoPanel({ channelId, currentUserId, currentUserRole, te
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium truncate block">
                     {member.user.firstName} {member.user.lastName}
-                    {member.userId === currentUserId && <span className="text-muted-foreground/40 ml-1">(tu)</span>}
+                    {member.userId === currentUserId && <span className="text-muted-foreground/60 ml-1">(tu)</span>}
                   </span>
                 </div>
-                <span className="text-[10px] text-muted-foreground/50 font-medium">
+                <span className="text-[11px] text-muted-foreground/60 font-medium">
                   {CHANNEL_ROLE_LABELS[member.role] || member.role}
                 </span>
                 {isOwnerOrAdmin && member.role !== 'OWNER' && member.userId !== currentUserId && channel.type !== 'DIRECT' && (

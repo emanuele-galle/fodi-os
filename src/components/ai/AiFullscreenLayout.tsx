@@ -187,7 +187,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
                           )}>
                             {conv.title || 'Senza titolo'}
                           </p>
-                          <p className="text-[10px] text-muted-foreground/40">
+                          <p className="text-[11px] text-muted-foreground/60">
                             {conv._count.messages} msg
                           </p>
                         </div>
@@ -392,7 +392,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
                       <div className="ai-file-card w-24 h-24 rounded-xl border border-border/40 bg-secondary/50 flex flex-col items-center justify-center gap-1 p-2">
                         <FileText className="h-5 w-5 text-muted-foreground/60" />
                         <span className="text-[9px] text-muted-foreground/70 truncate w-full text-center">{file.name}</span>
-                        <span className="text-[8px] text-muted-foreground/40">{(file.size / 1024).toFixed(0)} KB</span>
+                        <span className="text-[11px] text-muted-foreground/50">{(file.size / 1024).toFixed(0)} KB</span>
                       </div>
                     )}
                     <button
@@ -481,7 +481,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/30"
+          className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/50"
         >
           <span>Sviluppato da</span>
           <a href="https://www.fodisrl.it" target="_blank" rel="noopener noreferrer" className="text-blue-400/40 hover:text-blue-400/70 transition-colors font-medium">Fodi S.r.l.</a>

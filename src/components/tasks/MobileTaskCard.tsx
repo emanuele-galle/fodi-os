@@ -67,7 +67,7 @@ export function MobileTaskCard({ task, activeTab, userId, onClick, expanded, sub
           {task.creator && task.creator.id !== userId && (
             <div className="flex items-center gap-1">
               <Avatar name={`${task.creator.firstName} ${task.creator.lastName}`} src={task.creator.avatarUrl} size="xs" />
-              <span className="text-[10px] text-muted">{task.creator.firstName}</span>
+              <span className="text-[11px] text-muted">{task.creator.firstName}</span>
               <ArrowRight className="h-3 w-3 text-muted" />
             </div>
           )}
@@ -122,7 +122,7 @@ export function MobileTaskCard({ task, activeTab, userId, onClick, expanded, sub
                     {sub.assignee && (
                       <div className="flex items-center gap-1">
                         <Avatar name={`${sub.assignee.firstName} ${sub.assignee.lastName}`} src={sub.assignee.avatarUrl} size="xs" />
-                        <span className="text-[10px] text-muted">{sub.assignee.firstName}</span>
+                        <span className="text-[11px] text-muted">{sub.assignee.firstName}</span>
                       </div>
                     )}
                     {sub.dueDate && (

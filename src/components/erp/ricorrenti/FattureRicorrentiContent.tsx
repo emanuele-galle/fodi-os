@@ -463,7 +463,7 @@ export function FattureRicorrentiContent() {
 
       {/* Modal Conferma Eliminazione */}
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Elimina Fattura Ricorrente" size="sm">
-        <p className="text-sm text-muted mb-2">Sei sicuro di voler eliminare questa fattura ricorrente?</p>
+        <p className="text-sm text-foreground/70 mb-2">Sei sicuro di voler eliminare questa fattura ricorrente?</p>
         {deleteConfirm && (
           <div className="rounded-lg border border-border bg-secondary/5 p-3 mb-4">
             <p className="font-medium text-sm">{deleteConfirm.description}</p>

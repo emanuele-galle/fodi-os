@@ -413,15 +413,15 @@ export function TeamMembersContent() {
                   <div className="mt-4 pt-3 border-t border-border/50 grid grid-cols-3 gap-2 text-center">
                     <div>
                       <p className="text-lg font-bold">{member.totalTasks}</p>
-                      <p className="text-[11px] sm:text-[10px] text-muted">Task attive</p>
+                      <p className="text-[12px] sm:text-[11px] text-muted">Task attive</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold">{formatHoursMinutes(member.weeklyHours)}</p>
-                      <p className="text-[11px] sm:text-[10px] text-muted">Ore settimana</p>
+                      <p className="text-[12px] sm:text-[11px] text-muted">Ore settimana</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold">{member.completedThisWeek}</p>
-                      <p className="text-[11px] sm:text-[10px] text-muted">Completate</p>
+                      <p className="text-[12px] sm:text-[11px] text-muted">Completate</p>
                     </div>
                   </div>
 

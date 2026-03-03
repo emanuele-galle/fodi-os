@@ -107,7 +107,7 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
         <div className="flex items-center gap-1 mb-1.5">
           {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value */}
           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: task.folderColor || '#007AFF' }} />
-          <span className="text-[10px] text-muted truncate">{task.folderName}</span>
+          <span className="text-[11px] text-muted truncate">{task.folderName}</span>
         </div>
       )}
       <div className="flex items-center justify-between">
@@ -124,7 +124,7 @@ const SortableTaskCard = memo(function SortableTaskCard({ task, onClick }: { tas
         </div>
         <div className="flex items-center gap-2">
           {task.dueDate && (
-            <span className="text-[10px] text-muted">
+            <span className="text-[11px] text-muted">
               {new Date(task.dueDate).toLocaleDateString('it-IT')}
             </span>
           )}

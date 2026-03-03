@@ -344,7 +344,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
   let totalInputTokens = 0
   let totalOutputTokens = 0
   let finalText = ''
-  const modelId = config?.model || process.env.AI_DEFAULT_MODEL || 'claude-sonnet-4-6'
+  const modelId = config?.model || process.env.AI_DEFAULT_MODEL || 'claude-haiku-4-5-20251001'
   const usedToolNames: string[] = []
 
   // Thinking configuration

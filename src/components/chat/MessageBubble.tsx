@@ -98,7 +98,7 @@ function renderRichText(text: string, isOwn: boolean) {
               </span>
               <span className="flex-1 min-w-0">
                 <span className="block text-sm font-semibold text-foreground">Google Meet</span>
-                <span className="block text-[10px] text-muted-foreground/60 truncate">{meetUrl.replace('https://', '')}</span>
+                <span className="block text-[11px] text-muted-foreground/60 truncate">{meetUrl.replace('https://', '')}</span>
               </span>
             </span>
             <button
@@ -295,7 +295,7 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
               <span className={cn('text-[12px] font-semibold', isOwn ? 'text-primary/60' : 'text-foreground/80')}>
                 {isOwn ? 'Tu' : authorName}
               </span>
-              <span className="text-[10px] text-muted-foreground/40 font-medium">{time}</span>
+              <span className="text-[11px] text-muted-foreground/60 font-medium">{time}</span>
             </div>
           )}
           <div className={cn(
@@ -362,7 +362,7 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
               <span className={cn('text-[12px] font-semibold', isOwn ? 'text-primary/60' : 'text-foreground/80')}>
                 {isOwn ? 'Tu' : authorName}
               </span>
-              <span className="text-[10px] text-muted-foreground/40 font-medium">{time}</span>
+              <span className="text-[11px] text-muted-foreground/60 font-medium">{time}</span>
             </div>
           )}
           <div
@@ -496,11 +496,11 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
             <span className={cn('text-[12px] font-semibold', isOwn ? 'text-primary/60' : 'text-foreground/80')}>
               {isOwn ? 'Tu' : authorName}
             </span>
-            <span className="text-[10px] text-muted-foreground/40 font-medium">
+            <span className="text-[11px] text-muted-foreground/60 font-medium">
               {time}
             </span>
             {message.editedAt && (
-              <span className="text-[10px] text-muted-foreground/30 italic">(modificato)</span>
+              <span className="text-[11px] text-muted-foreground/50 italic">(modificato)</span>
             )}
           </div>
         )}

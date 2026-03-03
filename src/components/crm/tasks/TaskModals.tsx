@@ -217,7 +217,7 @@ export function TaskDeleteModal({ open, onClose, onConfirm, submitting, formErro
             {formError}
           </div>
         )}
-        <p className="text-sm text-muted">Sei sicuro di voler eliminare questa attività? L&apos;azione non è reversibile.</p>
+        <p className="text-sm text-foreground/70">Sei sicuro di voler eliminare questa attività? L&apos;azione non è reversibile.</p>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Annulla</Button>
           <Button variant="destructive" onClick={onConfirm} disabled={submitting}>

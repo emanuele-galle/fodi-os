@@ -169,7 +169,7 @@ export default function ChatPage() {
                           <span className="font-semibold text-[12px]">
                             {msg.author.firstName} {msg.author.lastName}
                           </span>
-                          <span className="text-[10px] text-muted-foreground/40">
+                          <span className="text-[11px] text-muted-foreground/60">
                             {new Date(msg.createdAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
                           </span>
                         </div>

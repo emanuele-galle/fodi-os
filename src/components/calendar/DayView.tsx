@@ -94,7 +94,7 @@ export function DayView({
         {/* All-day events */}
         {allDayEvs.length > 0 && (
           <div className="px-3 py-2 border-b border-border bg-secondary/5 space-y-1">
-            <p className="text-[10px] text-muted font-medium uppercase tracking-wide mb-1">Tutto il giorno</p>
+            <p className="text-[11px] text-muted font-medium uppercase tracking-wide mb-1">Tutto il giorno</p>
             {allDayEvs.map((ev) => {
               const color = getEventColor(ev)
               return (
@@ -137,7 +137,7 @@ export function DayView({
                   setShowNewEvent(true)
                 }}
               >
-                <span className="text-[10px] text-muted w-14 text-right pr-3 pt-1 flex-shrink-0 select-none">
+                <span className="text-[11px] text-muted w-14 text-right pr-3 pt-1 flex-shrink-0 select-none">
                   {`${String(hour).padStart(2, '0')}:00`}
                 </span>
                 <div className="flex-1 border-l border-border/20 h-full" />
@@ -177,7 +177,7 @@ export function DayView({
                     <div className="text-xs truncate mt-0.5 font-medium text-foreground/80">{ev.summary}</div>
                   )}
                   {pos.height > 55 && ev.location && (
-                    <div className="text-[10px] text-muted truncate mt-0.5">
+                    <div className="text-[11px] text-muted truncate mt-0.5">
                       <MapPin className="inline h-2.5 w-2.5 mr-0.5" />{ev.location}
                     </div>
                   )}
