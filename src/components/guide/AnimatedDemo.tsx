@@ -18,13 +18,12 @@ export function AnimatedDemo({ slug, color, videoUrl }: AnimatedDemoProps) {
 
   if (videoUrl) {
     const handlePlay = () => {
+      // play() must be called synchronously from click handler
+      // so the browser treats it as a user gesture (allows audio)
+      videoRef.current?.play().catch(() => {
+        // If autoplay blocked, at least show controls
+      })
       setPlaying(true)
-      // Wait for state update to reveal controls, then play
-      setTimeout(() => {
-        videoRef.current?.play().catch(() => {
-          // If autoplay blocked, at least show controls
-        })
-      }, 50)
     }
 
     return (
