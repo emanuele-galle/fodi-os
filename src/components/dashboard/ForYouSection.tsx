@@ -2,7 +2,7 @@
 /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- handlers + motion objects */
 
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react'
+import { CheckCircle2, Clock } from 'lucide-react'
 import { SwipeableRow } from '@/components/ui/SwipeableRow'
 import { getDueUrgency } from '@/lib/task-utils'
 
@@ -35,11 +35,8 @@ export function ForYouSection({ tasks, onTaskComplete, onTaskPostpone }: ForYouS
 
   return (
     <div className="md:hidden mb-5">
-      <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle className="h-4 w-4 text-amber-500" />
-        <span className="text-sm font-semibold">Per te</span>
-      </div>
-      <div className="space-y-2">
+      <p className="mobile-section-header">Per te</p>
+      <div className="ios-grouped-section">
         {urgentTasks.map(task => {
           const urgency = getDueUrgency(task.dueDate, task.status)
           return (
@@ -48,13 +45,13 @@ export function ForYouSection({ tasks, onTaskComplete, onTaskPostpone }: ForYouS
               leftAction={{
                 label: 'Completato',
                 icon: <CheckCircle2 className="h-4 w-4" />,
-                color: '#10B981',
+                color: '#34C759',
                 onAction: () => onTaskComplete(task.id),
               }}
               rightAction={{
                 label: 'Posticipa',
                 icon: <Clock className="h-4 w-4" />,
-                color: '#F59E0B',
+                color: '#FF9500',
                 onAction: () => {
                   const tomorrow = new Date()
                   tomorrow.setDate(tomorrow.getDate() + 1)
@@ -64,14 +61,14 @@ export function ForYouSection({ tasks, onTaskComplete, onTaskPostpone }: ForYouS
             >
               <div
                 onClick={() => router.push(`/tasks?taskId=${task.id}`)}
-                className="flex items-center justify-between p-3 cursor-pointer"
+                className="ios-grouped-row cursor-pointer"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{task.title}</p>
-                  {task.project && <p className="text-[10px] text-muted">{task.project.name}</p>}
+                  <p className="text-[15px] font-medium truncate">{task.title}</p>
+                  {task.project && <p className="text-[12px] text-muted mt-0.5">{task.project.name}</p>}
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${
-                  urgency === 'overdue' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ml-3 ${
+                  urgency === 'overdue' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'
                 }`}>
                   {urgency === 'overdue' ? 'Scaduta' : 'Oggi'}
                 </span>

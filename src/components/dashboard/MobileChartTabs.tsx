@@ -19,16 +19,16 @@ export function MobileChartTabs({ tabs }: MobileChartTabsProps) {
   return (
     <div>
       {/* Tab bar */}
-      <div className="flex gap-1 p-1 rounded-lg bg-secondary/50 mb-4">
+      <div className="flex gap-0.5 p-[3px] rounded-[10px] bg-secondary/60 mb-4">
         {tabs.map((tab, i) => (
           <button
             key={tab.label}
             onClick={() => setActiveTab(i)}
             className={cn(
-              'flex-1 text-xs font-medium py-2 px-3 rounded-md transition-all touch-manipulation',
+              'flex-1 text-[13px] font-medium py-[7px] px-3 rounded-[8px] transition-all duration-200 touch-manipulation',
               activeTab === i
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted hover:text-foreground'
+                ? 'bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                : 'text-muted active:opacity-60'
             )}
           >
             {tab.label}

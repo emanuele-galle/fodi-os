@@ -45,38 +45,34 @@ export function MobileHeader({ user, unreadCount, onOpenSearch, onOpenNotificati
   const sectionName = getCurrentSection(pathname)
 
   return (
-    <header className="flex items-center justify-between h-14 px-4 glass-header md:hidden">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <Link href="/dashboard" className="flex items-center flex-shrink-0">
-          <Logo variant="auto" width={90} height={32} />
-        </Link>
-        {sectionName && (
-          <>
-            <span className="text-border/50 text-sm flex-shrink-0">/</span>
-            <span className="text-sm font-medium text-foreground/70 truncate max-w-[140px] sm:max-w-[200px]">
-              {sectionName}
-            </span>
-          </>
+    <header className="flex items-center justify-between h-12 px-4 bg-background/80 backdrop-blur-2xl saturate-[1.8] border-b border-border/15 md:hidden">
+      <div className="flex items-center gap-2 min-w-0">
+        {sectionName ? (
+          <h1 className="text-[17px] font-semibold truncate">{sectionName}</h1>
+        ) : (
+          <Link href="/dashboard" className="flex items-center flex-shrink-0">
+            <Logo variant="auto" width={80} height={28} />
+          </Link>
         )}
       </div>
 
-      <div className="flex items-center gap-0.5 flex-shrink-0">
+      <div className="flex items-center gap-0 flex-shrink-0">
         <button
           onClick={onOpenSearch}
           aria-label="Cerca"
-          className="h-11 w-11 rounded-lg flex items-center justify-center hover:bg-secondary/50 active:bg-secondary/70 transition-colors touch-manipulation"
+          className="h-10 w-10 flex items-center justify-center active:opacity-50 transition-opacity touch-manipulation"
         >
-          <Search className="h-[18px] w-[18px] text-muted" />
+          <Search className="h-[18px] w-[18px] text-primary" />
         </button>
 
         <button
           onClick={onOpenNotifications}
           aria-label="Notifiche"
-          className="relative h-11 w-11 rounded-lg flex items-center justify-center hover:bg-secondary/50 active:bg-secondary/70 transition-colors touch-manipulation"
+          className="relative h-10 w-10 flex items-center justify-center active:opacity-50 transition-opacity touch-manipulation"
         >
-          <Bell className="h-[18px] w-[18px] text-muted" />
+          <Bell className="h-[18px] w-[18px] text-primary" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 h-[18px] min-w-[18px] px-1 flex items-center justify-center text-[10px] font-bold bg-destructive text-white rounded-full">
+            <span className="absolute top-0.5 right-0.5 h-[16px] min-w-[16px] px-1 flex items-center justify-center text-[9px] font-bold bg-destructive text-white rounded-full">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -85,7 +81,7 @@ export function MobileHeader({ user, unreadCount, onOpenSearch, onOpenNotificati
         <Link
           href="/settings"
           aria-label="Profilo"
-          className="h-11 w-11 rounded-lg flex items-center justify-center touch-manipulation"
+          className="h-10 w-10 flex items-center justify-center touch-manipulation ml-0.5"
         >
           <Avatar
             name={`${user.firstName} ${user.lastName}`}

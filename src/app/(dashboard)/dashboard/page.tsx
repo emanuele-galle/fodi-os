@@ -203,11 +203,11 @@ function mapActivitiesToTimeline(activities: ActivityItem[]) {
 
 function DashboardHeader({ userName, subtitle }: { userName: string; subtitle: string }) {
   return (
-    <div className="mb-8">
-      <h1 className="text-2xl md:text-[28px] font-bold tracking-tight">
+    <div className="mb-5 md:mb-8">
+      <h1 className="text-[22px] md:text-[28px] font-bold tracking-tight leading-tight">
         {getGreeting()}{userName && <>, {userName}</>}
       </h1>
-      <p className="text-sm text-muted mt-1 capitalize">{subtitle}</p>
+      <p className="text-[13px] md:text-sm text-muted mt-0.5 md:mt-1 capitalize">{subtitle}</p>
     </div>
   )
 }

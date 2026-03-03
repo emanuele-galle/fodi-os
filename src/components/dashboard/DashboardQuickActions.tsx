@@ -15,20 +15,20 @@ export function DashboardQuickActions({ actions }: DashboardQuickActionsProps) {
 
   return (
     <div className="mb-6 md:mb-8">
-      {/* Mobile: compact circular layout (first 4 actions) */}
-      <div className="md:hidden flex justify-around px-2 mb-0">
+      {/* Mobile: iOS-style quick actions */}
+      <div className="md:hidden flex justify-around px-1 mb-0">
         {actions.slice(0, 4).map((action) => {
           const Icon = action.icon
           return (
             <button
               key={action.key}
               onClick={() => router.push(action.href)}
-              className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform touch-manipulation"
+              className="ios-press flex flex-col items-center gap-1.5 touch-manipulation"
             >
-              <div className={`w-12 h-12 rounded-full ${action.bg} ${action.color} flex items-center justify-center shadow-sm`}>
-                <Icon className="h-5 w-5" />
+              <div className={`w-[52px] h-[52px] rounded-[14px] ${action.bg} ${action.color} flex items-center justify-center`}>
+                <Icon className="h-[22px] w-[22px]" />
               </div>
-              <span className="text-[10px] font-medium text-muted leading-tight text-center max-w-[64px]">
+              <span className="text-[11px] font-medium text-muted leading-tight text-center max-w-[64px]">
                 {action.description}
               </span>
             </button>

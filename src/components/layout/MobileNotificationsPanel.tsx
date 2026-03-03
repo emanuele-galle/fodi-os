@@ -86,34 +86,33 @@ export function MobileNotificationsPanel({ onClose }: MobileNotificationsPanelPr
     <div className="fixed inset-0 z-[60] md:hidden">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/30 backdrop-blur-xl"
         onClick={onClose}
       />
 
       {/* Panel - slides up from bottom */}
-      <div className="absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl shadow-2xl animate-slide-up max-h-[85vh] flex flex-col">
+      <div className="absolute bottom-0 left-0 right-0 bg-card rounded-t-xl shadow-[var(--shadow-xl)] animate-slide-up max-h-[85vh] flex flex-col">
         {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-border/60" />
+        <div className="flex justify-center pt-2.5 pb-1">
+          <div className="w-10 h-1.5 rounded-full bg-border/40" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border/20">
           <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-foreground" />
-            <h2 className="text-base font-semibold">Notifiche</h2>
+            <h2 className="text-[17px] font-semibold">Notifiche</h2>
             {unreadCount > 0 && (
-              <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full font-medium">
+              <span className="text-[11px] bg-destructive text-white px-2 py-0.5 rounded-full font-bold min-w-[20px] text-center">
                 {unreadCount}
               </span>
             )}
           </div>
           <button
             onClick={onClose}
-            className="h-10 w-10 rounded-lg flex items-center justify-center hover:bg-secondary/60 active:bg-secondary/80 transition-colors touch-manipulation"
+            className="h-9 w-9 rounded-full flex items-center justify-center bg-secondary/60 active:bg-secondary/80 transition-colors touch-manipulation"
             aria-label="Chiudi notifiche"
           >
-            <X className="h-5 w-5 text-muted" />
+            <X className="h-4 w-4 text-muted" />
           </button>
         </div>
 
@@ -203,7 +202,7 @@ export function MobileNotificationsPanel({ onClose }: MobileNotificationsPanelPr
           <div className="px-4 py-3 border-t border-border/30 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <button
               onClick={markAllAsRead}
-              className="w-full h-11 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/15 active:bg-primary/20 transition-colors touch-manipulation"
+              className="w-full h-[44px] rounded-[10px] bg-primary/10 text-primary text-[15px] font-semibold active:bg-primary/20 transition-colors touch-manipulation"
             >
               Segna tutte come lette
             </button>

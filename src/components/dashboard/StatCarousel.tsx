@@ -35,20 +35,19 @@ export function StatCarousel({ stats, loading }: StatCarouselProps) {
   return (
     <>
       {/* Mobile: horizontal scrollable */}
-      <div className="md:hidden flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 mb-6 snap-x snap-mandatory">
+      <div className="md:hidden flex gap-2.5 overflow-x-auto scrollbar-none -mx-4 px-4 mb-6 snap-x snap-mandatory">
         {stats.map((stat) => (
           <div
             key={stat.label}
             onClick={() => router.push(stat.href)}
-            className="relative overflow-hidden rounded-2xl border border-border/40 bg-card p-3 cursor-pointer active:scale-[0.97] transition-all touch-manipulation min-w-[140px] flex-shrink-0 snap-start"
+            className="relative overflow-hidden rounded-2xl bg-card border border-border/25 p-3.5 cursor-pointer active:scale-[0.96] active:opacity-80 transition-all touch-manipulation min-w-[130px] flex-shrink-0 snap-start shadow-[var(--shadow-sm)]"
           >
-            <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl opacity-80" style={{ background: 'currentColor' }} />
-            <div className={`flex flex-col gap-2 ${stat.color}`}>
-              <div className="p-1.5 rounded-lg w-fit" style={{ background: `color-mix(in srgb, currentColor 8%, transparent)` }}>
-                <stat.icon className="h-3.5 w-3.5" />
+            <div className={`flex flex-col gap-2.5 ${stat.color}`}>
+              <div className="p-1.5 rounded-[10px] w-fit" style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
+                <stat.icon className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-xl font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
+                <p className="text-[22px] font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
                 <p className="text-[10px] text-muted font-medium truncate leading-tight mt-1">{stat.label}</p>
               </div>
             </div>

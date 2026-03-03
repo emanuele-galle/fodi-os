@@ -197,7 +197,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
               </button>
             </div>
 
-            <nav className="p-4 grid grid-cols-3 gap-3">
+            <nav className="p-4 grid grid-cols-4 gap-x-2 gap-y-4">
               {filteredMenu.map((item) => {
                 const isActive = pathname.startsWith(item.href)
                 const Icon = item.icon
@@ -207,22 +207,17 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
                     href={item.href}
                     // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                     onClick={() => { haptic('selection'); closeMenu() }}
-                    className={cn(
-                      'ios-press flex flex-col items-center gap-2 p-3 rounded-lg transition-all touch-manipulation',
-                      isActive
-                        ? 'bg-primary/20'
-                        : 'hover:bg-white/8 active:bg-white/12'
-                    )}
+                    className="ios-press flex flex-col items-center gap-1.5 touch-manipulation"
                   >
                     <div className={cn(
-                      'w-11 h-11 rounded-lg flex items-center justify-center transition-colors',
-                      isActive ? 'bg-primary/15 text-primary' : CATEGORY_STYLES[item.category]
+                      'w-[52px] h-[52px] rounded-[14px] flex items-center justify-center transition-colors',
+                      isActive ? 'bg-primary text-white' : CATEGORY_STYLES[item.category]
                     )}>
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-[22px] w-[22px]" />
                     </div>
                     <span className={cn(
-                      'text-xs font-medium text-center leading-tight',
-                      isActive ? 'text-primary' : 'text-[var(--color-sheet-foreground)]'
+                      'text-[11px] font-medium text-center leading-tight max-w-[64px]',
+                      isActive ? 'text-primary' : 'text-[var(--color-sheet-foreground)]/80'
                     )}>
                       {item.label}
                     </span>
@@ -235,8 +230,8 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
       )}
 
       {/* Bottom Nav Bar */}
-      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/90 backdrop-blur-xl border-t border-border/30 pb-[env(safe-area-inset-bottom,0px)]">
-        <div className="flex items-center justify-around h-16">
+      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/80 backdrop-blur-2xl saturate-[1.8] border-t border-border/20 pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="flex items-center justify-around h-[50px]">
           {TAB_ITEMS.map((tab) => {
             const active = isTabActive(tab.href)
             const Icon = tab.icon
@@ -246,24 +241,19 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
                 onClick={() => handleTabClick(tab.href)} // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- loop handler
                 aria-label={tab.label}
                 className={cn(
-                  'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[44px] transition-all duration-200 touch-manipulation active:scale-95',
+                  'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[44px] transition-colors duration-150 touch-manipulation active:opacity-60',
                   active ? 'text-primary' : 'text-muted'
                 )}
               >
-                {/* Active indicator dot */}
-                {active && (
-                  <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
-
-                <div className="relative p-1">
-                  <Icon className="h-5 w-5 transition-all" />
+                <div className="relative">
+                  <Icon className={cn('h-[22px] w-[22px]', active && 'stroke-[2.2]')} />
                   {tab.href === '/chat' && unreadChat > 0 && (
-                    <span className="absolute -top-1.5 -right-2 h-[18px] min-w-[18px] px-1 flex items-center justify-center text-[10px] font-bold bg-destructive text-white rounded-full animate-pulse">
+                    <span className="absolute -top-1 -right-2.5 h-[16px] min-w-[16px] px-1 flex items-center justify-center text-[9px] font-bold bg-destructive text-white rounded-full">
                       {unreadChat > 9 ? '9+' : unreadChat}
                     </span>
                   )}
                 </div>
-                <span className={cn('text-[10px] transition-all', active ? 'font-semibold' : 'font-medium')}>
+                <span className={cn('text-[10px] leading-tight', active ? 'font-semibold' : 'font-medium')}>
                   {tab.label}
                 </span>
               </button>
