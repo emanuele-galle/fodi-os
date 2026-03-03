@@ -63,7 +63,7 @@ export function StickyNotesCard() {
       <CardContent>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
+            <div className="p-2.5 rounded-xl" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
               <StickyNote className="h-4 w-4" />
             </div>
             <CardTitle>Note Rapide</CardTitle>
@@ -91,7 +91,7 @@ export function StickyNotesCard() {
             {notes.map((note) => (
               <div
                 key={note.id}
-                className={`relative rounded-lg border p-3 min-h-[100px] min-w-[200px] flex-shrink-0 md:min-w-0 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-shadow duration-200 ${note.color}`}
+                className={`relative rounded-xl border p-3 min-h-[100px] min-w-[200px] flex-shrink-0 md:min-w-0 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-shadow duration-200 ${note.color}`}
               >
                 <div className="absolute top-1.5 right-1.5 flex gap-0.5">
                   <button

@@ -15,7 +15,7 @@ export function OperativeSummaryCard({ overdue, today, inProgress, completedMont
     <Card>
       <CardContent>
         <div className="flex items-center gap-2.5 mb-5">
-          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
             <Flame className="h-4 w-4" />
           </div>
           <CardTitle>Riepilogo Operativo</CardTitle>

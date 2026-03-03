@@ -215,7 +215,7 @@ function DashboardHeader({ userName, subtitle }: { userName: string; subtitle: s
 function ErrorBanner({ message }: { message: string | null }) {
   if (!message) return null
   return (
-    <div className="mb-6 flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+    <div className="mb-6 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
       <div className="flex items-center gap-2">
         <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
         <p className="text-sm text-destructive">{message}</p>
@@ -458,7 +458,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                    <div className="p-2.5 rounded-xl bg-accent/10 text-accent">
                       <BarChart3 className="h-4.5 w-4.5" />
                     </div>
                     <div>
@@ -477,7 +477,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-lg" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
+                    <div className="p-2.5 rounded-xl" style={{ background: 'color-mix(in srgb, var(--color-warning) 10%, transparent)', color: 'var(--color-warning)' }}>
                       <Wallet className="h-4.5 w-4.5" />
                     </div>
                     <div>
@@ -508,7 +508,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                    <div className="p-2.5 rounded-xl bg-accent/10 text-accent">
                       <TrendingUp className="h-4.5 w-4.5" />
                     </div>
                     <div>
@@ -532,7 +532,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                       <Activity className="h-4.5 w-4.5" />
                     </div>
                     <div>

@@ -26,7 +26,7 @@ export function ActivityTimeline({ activities, maxItems = 10, title = 'Attività
     <Card>
       <CardContent>
         <div className="flex items-center gap-2.5 mb-6">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
             <History className="h-4.5 w-4.5" />
           </div>
           <div>
@@ -54,7 +54,7 @@ export function ActivityTimeline({ activities, maxItems = 10, title = 'Attività
                     <div className="absolute left-[15px] top-[36px] w-px h-[calc(100%-20px)] bg-border/40" />
                   )}
 
-                  <div className={`p-1.5 rounded-md flex-shrink-0 ${item.iconColorClass || 'bg-secondary text-muted'}`}>
+                  <div className={`p-1.5 rounded-lg flex-shrink-0 ${item.iconColorClass || 'bg-secondary text-muted'}`}>
                     <Icon className="h-3.5 w-3.5" />
                   </div>
 

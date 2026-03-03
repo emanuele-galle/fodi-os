@@ -30,7 +30,7 @@ export function TasksDeadlineCard({ tasks, fullWidth }: TasksDeadlineCardProps) 
       <CardContent>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
               <CalendarCheck className="h-4 w-4" />
             </div>
             <div>
@@ -40,7 +40,7 @@ export function TasksDeadlineCard({ tasks, fullWidth }: TasksDeadlineCardProps) 
           </div>
           <button
             onClick={() => router.push('/tasks')}
-            className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-md bg-primary/5 hover:bg-primary/10 transition-all"
+            className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-lg bg-primary/5 hover:bg-primary/10 transition-all"
           >
             Vedi tutti
           </button>

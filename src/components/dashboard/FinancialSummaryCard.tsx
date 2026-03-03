@@ -29,7 +29,7 @@ export function FinancialSummaryCard({
       <CardContent>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
               <TrendingUp className="h-4.5 w-4.5" />
             </div>
             <div>
@@ -40,7 +40,7 @@ export function FinancialSummaryCard({
           {onViewDetails && (
             <button
               onClick={onViewDetails}
-              className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-md bg-primary/5 hover:bg-primary/10 transition-all"
+              className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-lg bg-primary/5 hover:bg-primary/10 transition-all"
             >
               Dettagli
             </button>

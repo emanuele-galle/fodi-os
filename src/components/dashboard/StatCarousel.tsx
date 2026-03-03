@@ -60,18 +60,15 @@ export function StatCarousel({ stats, loading }: StatCarouselProps) {
           <div
             key={stat.label}
             onClick={() => router.push(stat.href)}
-            className="relative overflow-hidden rounded-2xl border border-border/25 bg-card p-5 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-border/50 transition-all duration-200 group touch-manipulation active:scale-[0.98]"
+            className="relative overflow-hidden rounded-2xl border border-border/25 bg-card p-5 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-border/40 transition-all duration-200 group touch-manipulation active:scale-[0.98]"
           >
-            <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl opacity-80" style={{ background: 'currentColor' }} />
-            <div className={`flex flex-col gap-3 ${stat.color}`}>
-              <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg flex-shrink-0 transition-all duration-300 group-hover:scale-110" style={{ background: `color-mix(in srgb, currentColor 8%, transparent)` }}>
-                  <stat.icon className="h-4 w-4" />
-                </div>
-              </div>
+            <div className={`flex items-start justify-between gap-3 ${stat.color}`}>
               <div className="min-w-0">
+                <p className="text-[11px] text-muted font-medium truncate leading-tight mb-2">{stat.label}</p>
                 <p className="text-2xl font-bold tracking-tight truncate tabular-nums leading-none text-foreground">{stat.value}</p>
-                <p className="text-[11px] text-muted font-medium truncate leading-tight mt-1.5">{stat.label}</p>
+              </div>
+              <div className="p-2.5 rounded-xl flex-shrink-0 transition-transform duration-200 group-hover:scale-105" style={{ background: `color-mix(in srgb, currentColor 8%, transparent)` }}>
+                <stat.icon className="h-5 w-5" />
               </div>
             </div>
           </div>

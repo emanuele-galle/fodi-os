@@ -41,7 +41,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
         {stats.map((s) => (
           <Card key={s.label} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
             <CardContent className="flex items-center gap-2 md:gap-3 py-2 md:py-3">
-              <div className={`p-2 md:p-2.5 rounded-[10px] ${s.color}`} style={colorMixStyle}>
+              <div className={`p-2 md:p-2.5 rounded-xl ${s.color}`} style={colorMixStyle}>
                 <s.icon className="h-4 w-4 md:h-4.5 md:w-4.5" />
               </div>
               <div className="min-w-0">
