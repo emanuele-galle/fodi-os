@@ -80,7 +80,7 @@ export function TeamProductivityTable({ data, loading }: TeamProductivityTablePr
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted">Ore</span>
-                  <span className="tabular-nums font-medium">{user.hoursLogged}h</span>
+                  <span className="tabular-nums font-medium">{Number(user.hoursLogged).toFixed(1)}h</span>
                 </div>
               </div>
             </div>
@@ -124,7 +124,7 @@ export function TeamProductivityTable({ data, loading }: TeamProductivityTablePr
                       <span className="text-muted tabular-nums">0</span>
                     )}
                   </td>
-                  <td className="text-right py-2.5 px-3 tabular-nums font-medium">{user.hoursLogged}h</td>
+                  <td className="text-right py-2.5 px-3 tabular-nums font-medium">{Number(user.hoursLogged).toFixed(1)}h</td>
                 </tr>
               )
             })}

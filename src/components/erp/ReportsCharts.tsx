@@ -191,7 +191,7 @@ export function TeamPerformanceTable({ data }: { data: TeamMember[] }) {
                   <td className="py-2.5 px-3 text-center tabular-nums">
                     {m.overdue > 0 ? <span className="text-red-500 font-medium">{m.overdue}</span> : <span className="text-muted">0</span>}
                   </td>
-                  <td className="py-2.5 px-3 text-center tabular-nums">{m.hoursLogged}h</td>
+                  <td className="py-2.5 px-3 text-center tabular-nums">{Number(m.hoursLogged).toFixed(1)}h</td>
                   <td className="py-2.5 px-3 text-center">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                       m.completionRate >= 80 ? 'bg-emerald-500/10 text-emerald-600' :

@@ -1,6 +1,4 @@
 import { brand } from '@/lib/branding'
-import { randomInt } from 'crypto'
-import { buildLoginOtpEmail } from '@/lib/email-templates'
 import { logger } from '@/lib/logger'
 
 const SMTP_HOST = process.env.SMTP_HOST
@@ -87,20 +85,4 @@ export async function sendViaSMTP(
     logger.error('[EMAIL] Errore invio email', { error: err instanceof Error ? err.message : String(err) })
     return false
   }
-}
-
-export function generateOtpCode(): string {
-  return String(randomInt(100000, 999999))
-}
-
-export function maskEmail(email: string): string {
-  const [local, domain] = email.split('@')
-  if (local.length <= 2) return `${local[0]}***@${domain}`
-  return `${local.slice(0, 2)}***@${domain}`
-}
-
-export async function sendLoginOtpEmail(to: string, otpCode: string, ipAddress: string): Promise<boolean> {
-  const subject = `Codice di verifica - ${brand.name}`
-  const html = buildLoginOtpEmail({ otpCode, ipAddress })
-  return sendViaSMTP(to, subject, html)
 }

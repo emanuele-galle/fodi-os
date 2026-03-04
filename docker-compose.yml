@@ -20,6 +20,7 @@ services:
         - BRAND_LOGO_LIGHT=${BRAND_LOGO_LIGHT:-/brands/fodi/logo-light.png}
         - BRAND_STORAGE_URL=${BRAND_STORAGE_URL:-https://storage.fodivps2.cloud/fodi-os-assets/tutorials}
         - NEXT_PUBLIC_BRAND_STORAGE_URL=${NEXT_PUBLIC_BRAND_STORAGE_URL:-https://storage.fodivps2.cloud/fodi-os-assets/tutorials}
+        - NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
     restart: unless-stopped
     env_file:
       - .env.docker

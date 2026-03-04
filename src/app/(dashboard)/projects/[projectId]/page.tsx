@@ -659,7 +659,7 @@ export default function ProjectDetailPage() {
                   <td className="py-3 px-4">{new Date(entry.date).toLocaleDateString('it-IT')}</td>
                   <td className="py-3 px-4 hidden sm:table-cell">{entry.user.firstName} {entry.user.lastName}</td>
                   <td className="py-3 px-4 text-muted hidden md:table-cell">{entry.task?.title || '—'}</td>
-                  <td className="py-3 px-4 font-medium">{entry.hours}h</td>
+                  <td className="py-3 px-4 font-medium">{Number(entry.hours).toFixed(1)}h</td>
                   <td className="py-3 px-4 text-muted truncate max-w-xs hidden lg:table-cell">{entry.description || '—'}</td>
                   <td className="py-3 px-4">
                     <Badge variant={entry.billable ? 'success' : 'outline'}>

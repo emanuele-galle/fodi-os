@@ -295,7 +295,7 @@ function renderTimeEntries(data: { entries?: Array<Record<string, unknown>>; tot
       {data.entries.slice(0, 6).map((entry: Record<string, unknown>, i: number) => (
         <div key={(entry.id as string) || i} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg bg-background/50">
           <Clock className="h-3 w-3 text-muted-foreground" />
-          <span className="font-medium">{entry.hours as number}h</span>
+          <span className="font-medium">{Number(entry.hours).toFixed(1)}h</span>
           <span className="flex-1 truncate text-muted-foreground">{entry.description as string || (entry.task as Record<string, unknown>)?.title as string || '—'}</span>
           {entry.date ? <span className="text-xs text-muted-foreground">{formatDate(entry.date as string)}</span> : null}
         </div>

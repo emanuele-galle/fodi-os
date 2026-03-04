@@ -109,41 +109,7 @@ function ctaButton(text: string, href: string, bgColor = '#007AFF'): string {
 <!--<![endif]-->`
 }
 
-// ─── 1. Login OTP Email ─────────────────────────────────────
-
-export function buildLoginOtpEmail(params: { otpCode: string; ipAddress: string }): string {
-  const { otpCode, ipAddress } = params
-  return emailLayout({
-    previewText: `Il tuo codice di verifica: ${otpCode}`,
-    body: `
-      <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#1D1D1F;">Nuovo accesso rilevato</h2>
-      <p style="color:#3C3C43;margin:0 0 24px;font-size:14px;line-height:1.5;">
-        È stato rilevato un tentativo di accesso al tuo account da un indirizzo IP non riconosciuto:
-      </p>
-      <table width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:12px 16px;">
-          <span style="color:#92400E;font-size:13px;"><strong>IP:</strong> ${escapeHtml(ipAddress)}</span>
-        </td>
-      </tr></table>
-      <p style="color:#3C3C43;margin:20px 0 16px;font-size:14px;">
-        Inserisci il seguente codice per confermare la tua identità:
-      </p>
-      <table width="100%" cellpadding="0" cellspacing="0"><tr>
-        <td style="background:#F2F2F7;border:1px solid #E5E5EA;border-radius:8px;padding:20px;text-align:center;">
-          <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#1D1D1F;">${escapeHtml(otpCode)}</span>
-        </td>
-      </tr></table>
-      <p style="color:#9CA3AF;font-size:12px;margin:20px 0 16px;">
-        Il codice scade tra <strong>10 minuti</strong>. Non condividerlo con nessuno.
-      </p>
-      <div style="height:1px;background:#E5E5EA;margin:24px 0;"></div>
-      <p style="color:#EF4444;font-size:12px;margin:0;">
-        <strong>Se non sei stato tu</strong>, cambia immediatamente la tua password e contatta l'amministratore.
-      </p>`,
-  })
-}
-
-// ─── 2. Signature OTP Email ─────────────────────────────────
+// ─── Signature OTP Email ─────────────────────────────────
 
 interface CompanyData {
   ragioneSociale: string

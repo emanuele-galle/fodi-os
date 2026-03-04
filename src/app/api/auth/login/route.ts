@@ -4,11 +4,22 @@ import { verifyPassword, createAccessToken, createRefreshToken, setAuthCookies }
 import { loginSchema } from '@/lib/validation'
 import { rateLimit } from '@/lib/rate-limit'
 import { logActivity } from '@/lib/activity-log'
-import { generateOtpCode, maskEmail, sendLoginOtpEmail } from '@/lib/email'
-import bcrypt from 'bcryptjs'
 import { getClientIp } from '@/lib/ip'
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
+async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY
+  if (!secret) return process.env.NODE_ENV === 'development'
+
+  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ secret, response: token, remoteip: ip }),
+  })
+
+  const data = await res.json()
+  return data.success === true
+}
+
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request)
@@ -18,6 +29,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+
+    // Verify Turnstile token (if provided)
+    const turnstileToken = body.turnstileToken
+    if (turnstileToken) {
+      const turnstileValid = await verifyTurnstile(turnstileToken, ip)
+      if (!turnstileValid) {
+        return NextResponse.json({ success: false, error: 'Verifica di sicurezza fallita. Ricarica la pagina.' }, { status: 403 })
+      }
+    }
+
     const parsed = loginSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
@@ -51,81 +72,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Credenziali non valide' }, { status: 401 })
     }
 
-    // === IP VERIFICATION ===
     const clientIp = ip !== 'unknown' ? ip : ''
-    const isDev = process.env.NODE_ENV === 'development'
 
-    if (!isDev) {
-      // clientIp might be empty — treat as untrusted
-      const ipForLookup = clientIp || 'unknown'
-      const trustedIp = clientIp
-        ? await prisma.trustedIp.findUnique({
-            where: { userId_ipAddress: { userId: user.id, ipAddress: clientIp } },
-          })
-        : null
-
-      if (trustedIp) {
-        // IP trusted - aggiorna lastUsedAt e continua con il login normale
-        await prisma.trustedIp.update({
-          where: { id: trustedIp.id },
-          data: { lastUsedAt: new Date() },
-        })
-      } else {
-        // IP NON trusted or unknown - genera OTP e richiedi verifica
-
-        // Rate limit invio OTP: 3 per 10 min per userId
-        if (!rateLimit(`otp-send:${user.id}`, 3, 10 * 60 * 1000)) {
-          return NextResponse.json(
-            { success: false, error: 'Troppi codici inviati. Riprova tra qualche minuto.' },
-            { status: 429 }
-          )
-        }
-
-        // Invalidare OTP precedenti non usati per questo user+IP
-        await prisma.loginOtp.updateMany({
-          where: { userId: user.id, ipAddress: ipForLookup, isUsed: false },
-          data: { isUsed: true },
-        })
-
-        // Genera OTP
-        const otpCode = generateOtpCode()
-        const otpHash = await bcrypt.hash(otpCode, 10)
-        const userAgent = request.headers.get('user-agent')?.substring(0, 500) || null
-
-        await prisma.loginOtp.create({
-          data: {
-            userId: user.id,
-            otpHash,
-            ipAddress: ipForLookup,
-            userAgent,
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minuti
-          },
-        })
-
-        // Invia email
-        await sendLoginOtpEmail(user.email, otpCode, ipForLookup)
-
-        logActivity({
-          userId: user.id,
-          action: 'LOGIN_OTP_SENT',
-          entityType: 'AUTH',
-          entityId: user.id,
-          metadata: { ip: ipForLookup, reason: clientIp ? 'untrusted_ip' : 'unknown_ip' },
-        })
-
-        return NextResponse.json(
-          {
-            success: false,
-            requiresIpVerification: true,
-            userId: user.id,
-            maskedEmail: maskEmail(user.email),
-          },
-          { status: 403 }
-        )
-      }
-    }
-
-    // === FLUSSO NORMALE: IP trusted o IP sconosciuto ===
     const tokenPayload = {
       sub: user.id,
       email: user.email,

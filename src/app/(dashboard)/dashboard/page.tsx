@@ -162,8 +162,8 @@ function processDashboardResponse(data: Record<string, unknown>): ProcessedDashb
   }
 
   const timeItems = (data.time as { items?: { hours: number; billable: boolean }[] })?.items || []
-  const weekHours = timeItems.reduce((s, e) => s + e.hours, 0)
-  const weekBillableHours = timeItems.filter(e => e.billable).reduce((s, e) => s + e.hours, 0)
+  const weekHours = Math.round(timeItems.reduce((s, e) => s + e.hours, 0) * 10) / 10
+  const weekBillableHours = Math.round(timeItems.filter(e => e.billable).reduce((s, e) => s + e.hours, 0) * 10) / 10
 
   const accounting = data.accounting as { data?: { income?: { totalGross?: number }; expense?: { totalGross?: number } } } | undefined
   const members = (data.team as { items?: TeamMember[] })?.items || []

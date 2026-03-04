@@ -2,40 +2,44 @@
 /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { brandClient } from '@/lib/branding-client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
 import { User, Lock } from 'lucide-react'
+import { Turnstile } from '@/components/ui/Turnstile'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const router = useRouter()
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token)
+  }, [])
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken(null)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
     setLoading(true)
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, turnstileToken }),
       })
 
       const data = await res.json()
-
-      if (res.status === 403 && data.requiresIpVerification) {
-        sessionStorage.setItem('ipVerify_userId', data.userId)
-        sessionStorage.setItem('ipVerify_maskedEmail', data.maskedEmail)
-        router.push('/verify-ip')
-        return
-      }
 
       if (!res.ok) {
         setError(data.error || 'Credenziali non valide')
@@ -127,6 +131,11 @@ export default function LoginPage() {
                 />
               </div>
             </div>
+
+            <Turnstile
+              onVerify={handleTurnstileVerify}
+              onExpire={handleTurnstileExpire}
+            />
 
             {error && (
               <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-xl border border-destructive/20">

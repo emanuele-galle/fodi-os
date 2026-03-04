@@ -103,7 +103,7 @@ export default function ReportsPage() {
 
   const kpiCards = kpi ? [
     { label: 'Task Completate', value: `${kpi.completedTasks}/${kpi.totalTasks}`, sub: `${kpi.overdueTasks} in ritardo`, color: 'text-emerald-600' },
-    { label: 'Ore Loggate', value: `${kpi.hoursLogged}h`, sub: 'nel periodo', color: 'text-blue-600' },
+    { label: 'Ore Loggate', value: `${Number(kpi.hoursLogged).toFixed(1)}h`, sub: 'nel periodo', color: 'text-blue-600' },
     { label: 'Preventivi', value: String(kpi.quotesEmitted), sub: formatCurrency(kpi.quotesValue), color: 'text-blue-600' },
     { label: 'Spese', value: formatCurrency(kpi.expensesTotal), sub: 'nel periodo', color: 'text-red-500' },
     { label: 'Clienti Attivi', value: String(kpi.activeClients), sub: `${kpi.openDeals} deal aperti`, color: 'text-amber-600' },
