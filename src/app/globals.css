@@ -43,6 +43,11 @@ html {
   --color-label-secondary: rgba(60, 60, 67, 0.60);
   --color-label-tertiary: rgba(60, 60, 67, 0.36);
 
+  /* Brand colors (overridden by inline style on <html> from env vars) */
+  --brand-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  --brand-primary: #007AFF;
+  --brand-primary-dark: #0f3460;
+
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;

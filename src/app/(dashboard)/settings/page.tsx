@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Settings, Bell, Lock, User, Palette, Shield, CreditCard, ArrowRight, LogOut } from 'lucide-react'
+import { Settings, Bell, Lock, User, Palette, Shield, CreditCard, ArrowRight, Paintbrush } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/utils'
 import { ProfileSection } from '@/components/settings/ProfileSection'
@@ -15,12 +15,16 @@ export default function SettingsPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [loaded, setLoaded] = useState(false)
+  const [userRole, setUserRole] = useState('')
 
   useEffect(() => {
     fetch('/api/auth/session')
       .then((res) => res.json())
       .then((data) => {
-        if (data?.user) setLoaded(true)
+        if (data?.user) {
+          setUserRole(data.user.role || '')
+          setLoaded(true)
+        }
       })
   }, [])
 
@@ -77,6 +81,7 @@ export default function SettingsPage() {
     { id: 'profile', label: 'Profilo', icon: User },
     { id: 'digital-card', label: 'Card Digitale', icon: CreditCard, href: '/settings/digital-card' },
     { id: 'appearance', label: 'Aspetto', icon: Palette },
+    ...(userRole === 'ADMIN' ? [{ id: 'branding', label: 'Branding', icon: Paintbrush, href: '/settings/branding' }] : []),
     { id: 'security', label: 'Sicurezza', icon: Lock },
     { id: 'notifications', label: 'Notifiche', icon: Bell },
     { id: 'integrations', label: 'Integrazioni', icon: Shield },

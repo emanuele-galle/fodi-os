@@ -1796,3 +1796,19 @@ model AiUserPreference {
   @@index([userId])
   @@map("ai_user_preferences")
 }
+
+// ============================================================
+// BRAND SETTINGS (singleton)
+// ============================================================
+
+model BrandSettings {
+  id               String   @id @default("singleton")
+  colorPrimary     String?
+  colorPrimaryDark String?
+  gradientStart    String?
+  gradientMid      String?
+  gradientEnd      String?
+  updatedAt        DateTime @updatedAt
+
+  @@map("brand_settings")
+}

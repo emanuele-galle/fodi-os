@@ -15,6 +15,14 @@ export const brandClient = {
     light: process.env.NEXT_PUBLIC_BRAND_LOGO_LIGHT || `/brands/${slug}/logo-light.svg`,
   },
 
+  colors: {
+    primary: process.env.NEXT_PUBLIC_BRAND_COLOR_PRIMARY || '#007AFF',
+    primaryDark: process.env.NEXT_PUBLIC_BRAND_COLOR_PRIMARY_DARK || '#0f3460',
+    gradientStart: process.env.NEXT_PUBLIC_BRAND_GRADIENT_START || '#1a1a2e',
+    gradientMid: process.env.NEXT_PUBLIC_BRAND_GRADIENT_MID || '#16213e',
+    gradientEnd: process.env.NEXT_PUBLIC_BRAND_GRADIENT_END || '#0f3460',
+  },
+
   cookies: {
     theme: `${slug}-theme`,
   },

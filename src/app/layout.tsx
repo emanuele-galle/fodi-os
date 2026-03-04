@@ -1,5 +1,6 @@
 /* eslint-disable react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { brand } from '@/lib/branding'
+import { getBrandColors } from '@/lib/brand-colors'
 import type { Metadata } from 'next'
 import './globals.css'
 
@@ -47,13 +48,18 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const colors = await getBrandColors()
   return (
-    <html lang="it">
+    <html lang="it" style={{
+        '--brand-gradient': `linear-gradient(135deg, ${colors.gradientStart} 0%, ${colors.gradientMid} 50%, ${colors.gradientEnd} 100%)`,
+        '--brand-primary': colors.primary,
+        '--brand-primary-dark': colors.primaryDark,
+      } as React.CSSProperties}>
       <head>
         <meta name="theme-color" content="#F2F2F7" id="theme-color-meta" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

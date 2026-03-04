@@ -116,28 +116,37 @@ export default function VerifyIpPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left panel - Brand */}
-      <div className="hidden lg:flex lg:w-1/2 bg-sidebar relative flex-col items-center justify-center p-12">
-        <div className="absolute inset-0 opacity-5" style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, var(--color-primary) 1px, transparent 0)',
-          backgroundSize: '40px 40px',
+      <div className="hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center p-12 overflow-hidden" style={{
+        background: 'var(--brand-gradient)',
+      }}>
+        {/* Decorative circles */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-10" style={{
+          background: 'radial-gradient(circle, var(--brand-primary) 0%, transparent 70%)',
         }} />
+        <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full opacity-8" style={{
+          background: 'radial-gradient(circle, #0A84FF 0%, transparent 70%)',
+        }} />
+        {/* Dot grid pattern */}
+        <div className="absolute inset-0 opacity-[0.07]" style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.8) 1px, transparent 0)',
+          backgroundSize: '32px 32px',
+        }} />
+
         <div className="relative z-10 flex flex-col items-center text-center">
-          <Logo variant="light" width={220} height={77} />
-          <div className="mt-8 w-16 h-0.5 rounded-full" style={{ background: 'var(--gradient-brand)' }} />
-          <p className="mt-6 text-lg text-white/80 max-w-sm leading-relaxed">
-            Tecnologia italiana per far crescere il tuo business
+          <Logo variant="light" width={200} height={70} />
+          <div className="mt-8 w-12 h-[2px] rounded-full bg-white/20" />
+          <p className="mt-6 text-[17px] text-white/70 max-w-xs leading-relaxed font-light tracking-wide">
+            Verifica la tua identita per accedere in sicurezza
           </p>
         </div>
       </div>
 
       {/* Right panel - OTP Form */}
-      <div className="flex-1 flex items-center justify-center bg-background p-8">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
+        <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
-          <div className="lg:hidden flex justify-center mb-8">
-            <div className="bg-sidebar rounded-xl p-4">
-              <Logo variant="light" width={140} height={49} />
-            </div>
+          <div className="lg:hidden flex justify-center mb-10">
+            <Logo variant="dark" width={160} height={56} />
           </div>
 
           <div className="mb-8 text-center">
