@@ -16,6 +16,7 @@ import { formatCurrency } from '@/lib/utils'
 import { getDueUrgency } from '@/lib/task-utils'
 import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
 import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard'
+import { TeamActivityPanel } from '@/components/dashboard/TeamActivityPanel'
 import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
 import { MobileChartTabs } from '@/components/dashboard/MobileChartTabs'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
@@ -366,6 +367,7 @@ export default function DashboardPage() {
       financial: widgets.includes('financial'),
       pipeline: widgets.includes('pipeline'),
       teamActivity: widgets.includes('teamActivity'),
+      teamPanel: widgets.includes('teamPanel'),
       timeline: widgets.includes('activityTimeline'),
       notes: widgets.includes('stickyNotes'),
       revenue: charts.includes('revenue'),
@@ -532,8 +534,15 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ROW 4: TREND + TEAM ACTIVITY */}
-      {(w.activityTrend || w.teamActivity) && (
+      {/* ROW 4: TEAM ACTIVITY PANEL (unified trend + members) */}
+      {w.teamPanel && (
+        <div className="mb-5 md:mb-6">
+          <TeamActivityPanel />
+        </div>
+      )}
+
+      {/* ROW 4 LEGACY: TREND + TEAM ACTIVITY (for profiles that still use old widgets) */}
+      {!w.teamPanel && (w.activityTrend || w.teamActivity) && (
         <div className={row4Grid}>
           {w.activityTrend && (
             <Card className="overflow-hidden">

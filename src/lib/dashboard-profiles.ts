@@ -14,7 +14,7 @@ export type StatKey = 'clients' | 'projects' | 'quotes' | 'hours' | 'revenue' | 
 
 export type QuickActionKey = 'newClient' | 'newProject' | 'newQuote' | 'newTicket' | 'logHours' | 'newTask' | 'newLead' | 'chat'
 
-type WidgetKey = 'forYou' | 'tasksDeadline' | 'operative' | 'financial' | 'pipeline' | 'teamActivity' | 'activityTimeline' | 'stickyNotes'
+type WidgetKey = 'forYou' | 'tasksDeadline' | 'operative' | 'financial' | 'pipeline' | 'teamActivity' | 'activityTimeline' | 'stickyNotes' | 'teamPanel'
 
 type ChartKey = 'revenue' | 'cashFlow' | 'pipelineFunnel' | 'activityTrend'
 
@@ -103,15 +103,15 @@ const PROFILE_CONFIGS: Record<DashboardProfile, ProfileConfig> = {
   executive: {
     stats: ['clients', 'projects', 'quotes', 'hours', 'revenue', 'tickets'],
     quickActions: ['newClient', 'newProject', 'newQuote', 'newTicket', 'logHours'],
-    widgets: ['forYou', 'tasksDeadline', 'operative', 'financial', 'pipeline', 'teamActivity', 'activityTimeline', 'stickyNotes'],
-    charts: ['revenue', 'cashFlow', 'pipelineFunnel', 'activityTrend'],
+    widgets: ['forYou', 'tasksDeadline', 'operative', 'financial', 'pipeline', 'teamPanel', 'activityTimeline', 'stickyNotes'],
+    charts: ['revenue', 'cashFlow', 'pipelineFunnel'],
     greeting: 'Panoramica aziendale',
   },
   operational: {
     stats: ['projects', 'teamHours', 'tasksDone', 'tickets'],
     quickActions: ['newProject', 'newTask', 'newTicket', 'logHours'],
-    widgets: ['forYou', 'tasksDeadline', 'operative', 'teamActivity', 'activityTimeline', 'stickyNotes'],
-    charts: ['activityTrend'],
+    widgets: ['forYou', 'tasksDeadline', 'operative', 'teamPanel', 'activityTimeline', 'stickyNotes'],
+    charts: [],
     greeting: 'Riepilogo operativo',
   },
   commercial: {
@@ -124,8 +124,8 @@ const PROFILE_CONFIGS: Record<DashboardProfile, ProfileConfig> = {
   worker: {
     stats: ['myTasks', 'deadlines', 'weekHours', 'completedMonth'],
     quickActions: ['newTask', 'logHours', 'chat'],
-    widgets: ['forYou', 'tasksDeadline', 'operative', 'stickyNotes'],
-    charts: ['activityTrend'],
+    widgets: ['forYou', 'tasksDeadline', 'operative', 'teamPanel', 'stickyNotes'],
+    charts: [],
     greeting: 'I tuoi task di oggi',
   },
   support: {
