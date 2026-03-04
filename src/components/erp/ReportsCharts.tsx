@@ -168,7 +168,48 @@ export function TeamPerformanceTable({ data }: { data: TeamMember[] }) {
     <Card>
       <CardContent>
         <CardTitle className="mb-4 text-base md:text-lg">Performance Team</CardTitle>
-        <div className="overflow-x-auto -mx-4 md:-mx-6 -webkit-overflow-scrolling-touch">
+        {/* Mobile: card layout */}
+        <div className="md:hidden space-y-3">
+          {sortedData.map((m) => (
+            <div key={m.userName} className="rounded-lg border border-border/30 p-3 bg-secondary/10">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                    {m.userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+                  </div>
+                  <span className="font-medium text-sm truncate">{m.userName}</span>
+                </div>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  m.completionRate >= 80 ? 'bg-emerald-500/10 text-emerald-600' :
+                  m.completionRate >= 50 ? 'bg-amber-500/10 text-amber-600' :
+                  'bg-red-500/10 text-red-500'
+                }`}>
+                  {m.completionRate}%
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted">Assegnate</span>
+                  <span className="tabular-nums">{m.assigned}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">Completate</span>
+                  <span className="tabular-nums text-emerald-600">{m.completed}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">In Ritardo</span>
+                  {m.overdue > 0 ? <span className="text-red-500 font-medium tabular-nums">{m.overdue}</span> : <span className="text-muted tabular-nums">0</span>}
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">Ore</span>
+                  <span className="tabular-nums font-medium">{Number(m.hoursLogged).toFixed(1)}h</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Desktop: table layout */}
+        <div className="hidden md:block overflow-x-auto -mx-4 md:-mx-6 -webkit-overflow-scrolling-touch">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/40">

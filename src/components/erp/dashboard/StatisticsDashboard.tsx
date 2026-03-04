@@ -100,7 +100,8 @@ export function StatisticsDashboard() {
           {/* Monthly Table */}
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto relative">
+                <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--color-card)] to-transparent z-20 md:hidden" />
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border/30">

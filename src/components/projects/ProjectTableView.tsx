@@ -57,7 +57,56 @@ export function ProjectTableView({
   renderActionMenu,
 }: ProjectTableViewProps) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-border/40 bg-card">
+    <>
+      {/* Mobile: card layout */}
+      <div className="md:hidden space-y-3">
+        {projects.map((p) => {
+          const totalTasks = p._count?.tasks ?? 0
+          const doneTasks = p.completedTasks ?? 0
+          const progressPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0
+          return (
+            <div
+              key={p.id}
+              className="rounded-xl border border-border/30 p-4 bg-card cursor-pointer hover:bg-secondary/30 transition-colors"
+              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop variable capture
+              onClick={() => onProjectClick(p.id)}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                    // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
+                    style={{ background: p.color || STATUS_COLORS[p.status] || 'var(--color-primary)' }}
+                  />
+                  <span className="font-medium text-sm truncate">{p.name}</span>
+                </div>
+                {/* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple stopPropagation */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  {renderActionMenu(p)}
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <StatusBadge leftLabel="Stato" rightLabel={STATUS_LABELS[p.status] || p.status} status={p.status} />
+                <Badge status={p.priority}>{PRIORITY_LABELS[p.priority] || p.priority}</Badge>
+              </div>
+              {totalTasks > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="h-2 bg-secondary rounded-full overflow-hidden flex-1">
+                    {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value */}
+                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
+                  </div>
+                  <span className="text-xs text-muted w-8 text-right tabular-nums">{progressPercent}%</span>
+                </div>
+              )}
+              {p.client?.companyName && (
+                <p className="text-xs text-muted mt-2 truncate">{p.client.companyName}</p>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      {/* Desktop: table layout */}
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-border/40 bg-card">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border/30 text-left">
@@ -130,6 +179,7 @@ export function ProjectTableView({
           })}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   )
 }
