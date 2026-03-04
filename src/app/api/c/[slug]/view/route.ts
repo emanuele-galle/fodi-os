@@ -14,7 +14,7 @@ export async function POST(
     const ip = getClientIp(request)
 
     const rateLimitKey = `card-view:${slug}:${ip}`
-    const allowed = rateLimit(rateLimitKey, 1, 300000) // 5 minutes
+    const { allowed } = rateLimit(rateLimitKey, 1, 300000) // 5 minutes
 
     if (!allowed) {
       return NextResponse.json(

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createMessageSchema } from '@/lib/validation'
-import { sseManager, sendBadgeUpdate } from '@/lib/sse'
+import { sseManager } from '@/lib/sse'
+import { sendUnreadBadgeUpdates } from '@/lib/chat-utils'
 import { sendPush } from '@/lib/push'
 import { sanitizeHtml } from '@/lib/utils'
 import type { Role } from '@/generated/prisma/client'
@@ -154,23 +155,8 @@ export async function POST(
       data: message,
     })
 
-    // Badge update for other members (count actual unread messages, not just channels)
-    for (const memberId of memberUserIds.filter((id) => id !== userId)) {
-      const unreadMessages = await prisma.$queryRaw<[{ count: bigint }]>`
-        SELECT COALESCE(SUM(msg_count), 0) as count FROM (
-          SELECT COUNT(msg.id) as msg_count
-          FROM "chat_members" cm
-          JOIN "chat_channels" cc ON cc.id = cm."channelId"
-          LEFT JOIN "chat_messages" msg ON msg."channelId" = cc.id
-            AND msg."deletedAt" IS NULL
-            AND (cm."lastReadAt" IS NULL OR msg."createdAt" > cm."lastReadAt")
-          WHERE cm."userId" = ${memberId}
-            AND cc."isArchived" = false
-          GROUP BY cc.id
-        ) sub
-      `
-      sendBadgeUpdate(memberId, { chat: Number(unreadMessages[0]?.count ?? 0) })
-    }
+    // Badge update for other members (single query instead of N+1)
+    await sendUnreadBadgeUpdates(memberUserIds, userId)
 
     // Push notification for offline members (no active SSE connection)
     const offlineMembers = memberUserIds.filter(

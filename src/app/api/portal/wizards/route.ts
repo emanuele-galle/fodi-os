@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requirePortalClient, handlePortalError } from '@/lib/portal-auth'
 
 export async function GET(request: NextRequest) {
   try {
+    await requirePortalClient(request)
+
     const { searchParams } = request.nextUrl
     const category = searchParams.get('category')
 
@@ -25,7 +28,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(wizards)
   } catch (e) {
-    console.error('[portal/wizards]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return handlePortalError(e, 'portal/wizards')
   }
 }

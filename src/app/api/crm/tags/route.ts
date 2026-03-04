@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
+
+const deleteTagSchema = z.object({
+  tag: z.string().min(1).max(100),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,10 +61,11 @@ export async function DELETE(request: NextRequest) {
     const role = request.headers.get('x-user-role') as Role
     requirePermission(role, 'crm', 'write')
 
-    const { tag } = await request.json()
-    if (!tag || typeof tag !== 'string') {
+    const parsed = deleteTagSchema.safeParse(await request.json())
+    if (!parsed.success) {
       return NextResponse.json({ success: false, error: 'Tag richiesto' }, { status: 400 })
     }
+    const { tag } = parsed.data
 
     await Promise.all([
       prisma.$executeRaw`
@@ -71,6 +78,7 @@ export async function DELETE(request: NextRequest) {
       `,
     ])
 
+    broadcastDataChanged('client')
     return NextResponse.json({ success: true })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

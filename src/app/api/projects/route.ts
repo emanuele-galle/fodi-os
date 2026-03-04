@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { slugify } from '@/lib/utils'
 import { createProjectSchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
     const items = rawItems.map((p) => ({ ...p, completedTasks: completedMap.get(p.id) || 0 }))
 
     return NextResponse.json({ success: true, data: items, items, total, page, limit }, {
-      headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' },
+      headers: { 'Cache-Control': 'no-cache' },
     })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
@@ -145,6 +146,7 @@ export async function POST(request: NextRequest) {
     })
 
     logActivity({ userId, action: 'CREATE', entityType: 'PROJECT', entityId: project.id, metadata: { name: project.name } })
+    broadcastDataChanged('project')
 
     return NextResponse.json({ success: true, data: project }, { status: 201 })
   } catch (e) {

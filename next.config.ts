@@ -35,21 +35,6 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  async redirects() {
-    return [
-      { source: '/erp/dashboard/monthly', destination: '/erp/panoramica', permanent: true },
-      { source: '/erp/dashboard/annual', destination: '/erp/panoramica?tab=annuale', permanent: true },
-      { source: '/erp/dashboard/statistics', destination: '/erp/panoramica?tab=statistiche', permanent: true },
-      { source: '/erp/expenses', destination: '/erp/movimenti', permanent: true },
-      { source: '/erp/income', destination: '/erp/movimenti?tab=entrate', permanent: true },
-      { source: '/erp/journal', destination: '/erp/movimenti?tab=prima-nota', permanent: true },
-      { source: '/erp/expenses/subscriptions', destination: '/erp/ricorrenti', permanent: true },
-      { source: '/erp/invoice-monitoring', destination: '/erp/ricorrenti?tab=fatture', permanent: true },
-      { source: '/erp/templates', destination: '/erp/documenti', permanent: true },
-      { source: '/erp/signatures', destination: '/erp/documenti?tab=firme', permanent: true },
-      { source: '/erp/wizards', destination: '/erp/documenti?tab=wizard', permanent: true },
-    ]
-  },
   experimental: {
     middlewareClientMaxBodySize: '100mb',
     serverActions: {

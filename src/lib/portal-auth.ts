@@ -48,7 +48,8 @@ export function handlePortalError(e: unknown, context: string) {
     return NextResponse.json({ error: 'Client non trovato' }, { status: 404 })
   }
   if (e instanceof Error && e.message.startsWith('Permission denied')) {
-    return NextResponse.json({ error: e.message }, { status: 403 })
+    console.error(`[${context}] ${e.message}`)
+    return NextResponse.json({ error: 'Accesso negato' }, { status: 403 })
   }
   console.error(`[${context}]`, e)
   return NextResponse.json({ error: 'Errore interno del server' }, { status: 500 })

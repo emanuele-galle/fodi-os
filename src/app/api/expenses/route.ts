@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { createExpenseSchema, expenseAdvancedFields } from '@/lib/validation'
 import { calculateVat, calculateDeductibleVat } from '@/lib/accounting'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
@@ -126,6 +127,7 @@ export async function POST(request: NextRequest) {
 
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'CREATE', entityType: 'EXPENSE', entityId: expense.id, metadata: { category, amount } })
+    broadcastDataChanged('expense')
 
     return NextResponse.json({ success: true, data: expense }, { status: 201 })
   } catch (e) {

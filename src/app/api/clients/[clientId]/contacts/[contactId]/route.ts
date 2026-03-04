@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { updateContactSchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ clientId: string; contactId: string }> }) {
@@ -52,6 +53,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     })
 
+    broadcastDataChanged('client', clientId)
     return NextResponse.json({ success: true, data: contact })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
@@ -80,6 +82,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     await prisma.contact.delete({ where: { id: contactId } })
 
+    broadcastDataChanged('client', clientId)
     return NextResponse.json({ success: true })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

@@ -50,7 +50,7 @@ export function ConfirmDialog({
       className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 backdrop-blur-xl animate-fade-in"
       onClick={(e) => e.target === overlayRef.current && onCancel()}
     >
-      <div className="bg-card/80 backdrop-blur-2xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in rounded-2xl w-full max-w-sm mx-4 p-6">
+      <div role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" className="bg-card/80 backdrop-blur-2xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in rounded-2xl w-full max-w-sm mx-4 p-6">
         <div className="flex items-start gap-4">
           {variant === 'danger' && (
             <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
@@ -58,10 +58,10 @@ export function ConfirmDialog({
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold mb-1">{title}</h3>
+            <h3 id="confirm-dialog-title" className="text-base font-semibold mb-1">{title}</h3>
             <p className="text-sm text-foreground/70">{message}</p>
           </div>
-          <button onClick={onCancel} className="text-muted hover:text-foreground transition-colors p-2 rounded-lg hover:bg-secondary flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center">
+          <button onClick={onCancel} aria-label="Chiudi" className="text-muted hover:text-foreground transition-colors p-2 rounded-lg hover:bg-secondary flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center">
             <X className="h-5 w-5" />
           </button>
         </div>

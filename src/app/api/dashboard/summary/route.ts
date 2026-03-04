@@ -153,10 +153,10 @@ export async function GET(request: NextRequest) {
           })
         : Promise.resolve([]),
 
-      // 5. Expenses
+      // 5. Expenses (current month only)
       profileNeedsSection(profile, 'expenses')
         ? prisma.expense.findMany({
-            where: {},
+            where: { date: { gte: monthStart } },
             take: 200,
             orderBy: { date: 'desc' },
             include: {
@@ -249,7 +249,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(response, {
-      headers: { 'Cache-Control': 'private, max-age=15' },
+      headers: { 'Cache-Control': 'no-cache' },
     })
   } catch (e) {
     console.error('[dashboard/summary]', e)

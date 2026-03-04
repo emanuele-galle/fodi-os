@@ -13,19 +13,25 @@ const cleanupTimer = setInterval(() => {
 }, 5 * 60 * 1000)
 cleanupTimer.unref()
 
-export function rateLimit(key: string, maxAttempts: number = 5, windowMs: number = 60000): boolean {
+export interface RateLimitResult {
+  allowed: boolean
+  remaining: number
+  resetAt: number
+}
+
+export function rateLimit(key: string, maxAttempts: number = 5, windowMs: number = 60000): RateLimitResult {
   const now = Date.now()
   const entry = rateLimitMap.get(key)
 
   if (!entry || now > entry.resetAt) {
     rateLimitMap.set(key, { count: 1, resetAt: now + windowMs })
-    return true
+    return { allowed: true, remaining: maxAttempts - 1, resetAt: Math.floor((now + windowMs) / 1000) }
   }
 
   if (entry.count >= maxAttempts) {
-    return false
+    return { allowed: false, remaining: 0, resetAt: Math.floor(entry.resetAt / 1000) }
   }
 
   entry.count++
-  return true
+  return { allowed: true, remaining: maxAttempts - entry.count, resetAt: Math.floor(entry.resetAt / 1000) }
 }

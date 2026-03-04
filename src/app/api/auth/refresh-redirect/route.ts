@@ -2,7 +2,7 @@ import { brand } from '@/lib/branding'
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
-import { verifyRefreshToken, createAccessToken, createRefreshToken } from '@/lib/auth'
+import { verifyRefreshToken, createAccessToken, createRefreshToken, ACCESS_COOKIE_MAX_AGE, REFRESH_COOKIE_MAX_AGE } from '@/lib/auth'
 
 function buildUrl(request: NextRequest, path: string): URL {
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host
@@ -52,8 +52,8 @@ export async function GET(request: NextRequest) {
             sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role,
           })
           const response = NextResponse.redirect(buildUrl(request, safePath))
-          response.cookies.set(brand.cookies.access, accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60 })
-          response.cookies.set(brand.cookies.refresh, latestValid.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 })
+          response.cookies.set(brand.cookies.access, accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: ACCESS_COOKIE_MAX_AGE })
+          response.cookies.set(brand.cookies.refresh, latestValid.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: REFRESH_COOKIE_MAX_AGE })
           return response
         }
       }
@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
             sub: user.id, email: user.email, name: `${user.firstName} ${user.lastName}`, role: user.role,
           })
           const response = NextResponse.redirect(buildUrl(request, safePath))
-          response.cookies.set(brand.cookies.access, accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 30 * 60 })
-          response.cookies.set(brand.cookies.refresh, recentToken.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 })
+          response.cookies.set(brand.cookies.access, accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: ACCESS_COOKIE_MAX_AGE })
+          response.cookies.set(brand.cookies.refresh, recentToken.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: REFRESH_COOKIE_MAX_AGE })
           return response
         }
       }
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
       data: {
         token: newRefreshTokenJwt,
         userId: stored.userId,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + REFRESH_COOKIE_MAX_AGE * 1000),
       },
     })
 
@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 30 * 60,
+      maxAge: ACCESS_COOKIE_MAX_AGE,
     })
 
     response.cookies.set(brand.cookies.refresh, newRefreshTokenJwt, {
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60,
+      maxAge: REFRESH_COOKIE_MAX_AGE,
     })
 
     return response

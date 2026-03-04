@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requirePortalClient, handlePortalError } from '@/lib/portal-auth'
 import { createSubmissionSchema } from '@/lib/validation'
+import type { Role } from '@/generated/prisma/client'
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,14 +27,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Wizard non disponibile' }, { status: 404 })
     }
 
-    // For portal users, enforce that clientId matches their linked client
-    const userRole = request.headers.get('x-user-role')
+    // For portal users, use requirePortalClient for proper auth
+    const userRole = request.headers.get('x-user-role') as Role
     let resolvedClientId = parsed.data.clientId
     if (userRole === 'CLIENT') {
-      const client = await prisma.client.findUnique({ where: { portalUserId: userId } })
-      if (!client) {
-        return NextResponse.json({ error: 'Nessun cliente collegato a questo utente' }, { status: 404 })
-      }
+      const client = await requirePortalClient(request)
       // Override clientId to prevent cross-client access
       resolvedClientId = client.id
     }
@@ -53,7 +52,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(submission, { status: 201 })
   } catch (e) {
-    console.error('[portal/wizard-submissions]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return handlePortalError(e, 'portal/wizard-submissions')
   }
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
@@ -44,6 +45,8 @@ export function AnnualDashboard() {
   useEffect(() => {
     fetchDashboard() // eslint-disable-line react-hooks/set-state-in-effect -- loading state set inside fetch callback
   }, [fetchDashboard])
+  useRealtimeRefresh('expense', fetchDashboard)
+  useRealtimeRefresh('income', fetchDashboard)
 
   const years = Array.from({ length: 5 }, (_, i) => {
     const y = new Date().getFullYear() - i

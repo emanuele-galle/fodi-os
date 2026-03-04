@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { useRouter } from 'next/navigation'
 import { FileText, CreditCard, ArrowRight, Landmark, RefreshCw, FileCode, TrendingUp, Building2, Calendar, Settings, BarChart3 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
@@ -25,7 +26,7 @@ export default function ErpPage() {
     monthlySubCost: 0,
   })
 
-  useEffect(() => {
+  const fetchErpStats = useCallback(() => {
     Promise.all([
       fetch('/api/quotes?status=DRAFT&limit=1').then((r) => (r.ok ? r.json() : { total: 0 })),
       fetch('/api/expenses?limit=100').then((r) => (r.ok ? r.json() : { items: [] })),
@@ -59,6 +60,11 @@ export default function ErpPage() {
       })
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => { fetchErpStats() }, [fetchErpStats])
+  useRealtimeRefresh('expense', fetchErpStats)
+  useRealtimeRefresh('income', fetchErpStats)
+  useRealtimeRefresh('quote', fetchErpStats)
 
   const sections = [
     {

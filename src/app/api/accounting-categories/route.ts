@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createAccountingCategorySchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors }, { status: 400 })
 
     const category = await prisma.accountingCategory.create({ data: parsed.data })
+    broadcastDataChanged('category')
     return NextResponse.json({ success: true, data: category }, { status: 201 })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied'))

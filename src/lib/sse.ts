@@ -134,10 +134,17 @@ export function sendPresenceUpdate(userId: string, status: 'online' | 'offline')
   })
 }
 
-type DataEntity = 'task' | 'notification' | 'ticket' | 'project' | 'calendar'
+type DataEntity =
+  | 'task' | 'notification' | 'ticket' | 'project' | 'calendar'
+  | 'client' | 'lead' | 'deal' | 'expense' | 'income' | 'quote' | 'category'
 
 export function sendDataChanged(userIds: string[], entity: DataEntity, id?: string) {
   for (const userId of userIds) {
     sseManager.sendToUser(userId, { type: 'data_changed', data: { entity, id } })
   }
+}
+
+export function broadcastDataChanged(entity: DataEntity, id?: string) {
+  const userIds = sseManager.getConnectedUserIds()
+  sendDataChanged(userIds, entity, id)
 }

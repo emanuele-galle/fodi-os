@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { createSubscriptionSchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest) {
 
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'CREATE', entityType: 'SUBSCRIPTION', entityId: subscription.id, metadata: { category, amount, frequency, provider: provider || null } })
+    broadcastDataChanged('expense')
 
     return NextResponse.json({ success: true, data: subscription }, { status: 201 })
   } catch (e) {

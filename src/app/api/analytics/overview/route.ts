@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
           ...(projectId ? { projectId } : {}),
         },
         select: { hours: true, projectId: true },
+        take: 5000,
       }),
       prisma.quote.findMany({
         where: {
@@ -71,6 +72,7 @@ export async function GET(request: NextRequest) {
           ...(projectId ? { projectId } : {}),
         },
         select: { id: true, total: true, status: true },
+        take: 5000,
       }),
       prisma.expense.findMany({
         where: {
@@ -78,6 +80,7 @@ export async function GET(request: NextRequest) {
           ...(projectId ? { projectId } : {}),
         },
         select: { amount: true, category: true },
+        take: 5000,
       }),
       prisma.client.count({
         where: { status: { in: ['ACTIVE', 'LEAD'] } },
@@ -85,18 +88,19 @@ export async function GET(request: NextRequest) {
       prisma.deal.findMany({
         where: { stage: { notIn: ['CLOSED_WON', 'CLOSED_LOST'] } },
         select: { id: true, value: true, stage: true },
+        take: 5000,
       }),
       // Monthly trend: created tasks per month (raw SQL instead of 50k findMany)
       prisma.$queryRaw<{ month: Date; count: bigint }[]>`
         SELECT date_trunc('month', "createdAt") as month, COUNT(*) as count
-        FROM "Task"
+        FROM "tasks"
         WHERE "createdAt" >= ${sixMonthsAgo} ${projectFilter}
         GROUP BY 1
       `,
       // Monthly trend: completed tasks per month
       prisma.$queryRaw<{ month: Date; count: bigint }[]>`
         SELECT date_trunc('month', "completedAt") as month, COUNT(*) as count
-        FROM "Task"
+        FROM "tasks"
         WHERE "completedAt" IS NOT NULL AND "completedAt" >= ${sixMonthsAgo} ${projectFilter}
         GROUP BY 1
       `,

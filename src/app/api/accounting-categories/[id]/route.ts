@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { updateAccountingCategorySchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -19,6 +20,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Validazione fallita', details: parsed.error.flatten().fieldErrors }, { status: 400 })
 
     const updated = await prisma.accountingCategory.update({ where: { id }, data: parsed.data })
+    broadcastDataChanged('category', id)
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied'))
@@ -38,6 +40,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!existing) return NextResponse.json({ success: false, error: 'Categoria non trovata' }, { status: 404 })
 
     await prisma.accountingCategory.delete({ where: { id } })
+    broadcastDataChanged('category', id)
     return NextResponse.json({ success: true })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied'))

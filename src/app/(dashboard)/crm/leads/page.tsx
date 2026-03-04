@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { UserPlus, Search, Plus, Edit, Trash2, ArrowRightLeft, ChevronLeft, ChevronRight, AlertCircle, Mail, Phone, Building2, UserCheck, Download } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -117,6 +118,7 @@ export default function LeadsPage() {
   }, [page, search, statusFilter, assigneeFilter])
 
   useEffect(() => { fetchLeads() }, [fetchLeads])
+  useRealtimeRefresh('lead', fetchLeads)
   useEffect(() => { setPage(1) }, [search, statusFilter, assigneeFilter])
   useEffect(() => {
     fetch('/api/users').then(r => r.json()).then(data => {

@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
+
+const renameSchema = z.object({
+  oldName: z.string().min(1).max(100),
+  newName: z.string().min(1).max(100),
+})
 
 export async function PATCH(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
     requirePermission(role, 'crm', 'write')
 
-    const { oldName, newName } = await request.json()
-    if (!oldName || !newName || typeof oldName !== 'string' || typeof newName !== 'string') {
+    const parsed = renameSchema.safeParse(await request.json())
+    if (!parsed.success) {
       return NextResponse.json({ success: false, error: 'oldName e newName richiesti' }, { status: 400 })
     }
+    const { oldName, newName } = parsed.data
 
     if (oldName === newName) {
       return NextResponse.json({ success: false, error: 'I nomi sono uguali' }, { status: 400 })
@@ -44,6 +52,7 @@ export async function PATCH(request: NextRequest) {
       `,
     ])
 
+    broadcastDataChanged('client')
     return NextResponse.json({ success: true })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

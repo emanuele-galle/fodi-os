@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { TrendingUp, AlertCircle, Plus, Users } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Button } from '@/components/ui/Button'
@@ -64,7 +65,7 @@ export default function PipelinePage() {
   const [clientsError, setClientsError] = useState<string | null>(null)
 
   // Load deals
-  async function loadDeals() {
+  const loadDeals = useCallback(async () => {
     setDealsLoading(true)
     setDealsError(null)
     try {
@@ -85,10 +86,10 @@ export default function PipelinePage() {
     } finally {
       setDealsLoading(false)
     }
-  }
+  }, [])
 
   // Load clients
-  async function loadClients() {
+  const loadClients = useCallback(async () => {
     setClientsLoading(true)
     setClientsError(null)
     try {
@@ -109,14 +110,17 @@ export default function PipelinePage() {
     } finally {
       setClientsLoading(false)
     }
-  }
+  }, [])
 
-  useEffect(() => { loadDeals() }, [])
+  useEffect(() => { loadDeals() }, [loadDeals])
+  useRealtimeRefresh('deal', loadDeals)
   useEffect(() => {
     if (activeTab === 'clients' && Object.keys(clientsByStatus).length === 0) {
       loadClients()
     }
-  }, [activeTab, clientsByStatus])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, clientsByStatus, loadClients])
+  useRealtimeRefresh('client', loadClients)
 
   // Deals stage change handler
   async function handleStageChange(dealId: string, newStage: string) {

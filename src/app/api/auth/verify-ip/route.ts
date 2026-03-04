@@ -12,10 +12,11 @@ export async function POST(request: NextRequest) {
     const ip = getClientIp(request)
 
     // Rate limit: 5 tentativi per 5 minuti per IP
-    if (!rateLimit(`verify-ip:${ip}`, 5, 5 * 60 * 1000)) {
+    const rl = rateLimit(`verify-ip:${ip}`, 5, 5 * 60 * 1000)
+    if (!rl.allowed) {
       return NextResponse.json(
         { success: false, error: 'Troppi tentativi. Riprova tra qualche minuto.' },
-        { status: 429 }
+        { status: 429, headers: { 'X-RateLimit-Limit': '5', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(rl.resetAt), 'Retry-After': String(Math.max(0, rl.resetAt - Math.floor(Date.now() / 1000))) } },
       )
     }
 

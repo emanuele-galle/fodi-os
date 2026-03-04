@@ -79,6 +79,9 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
       onClick={(e) => e.target === overlayRef.current && attemptClose()}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'modal-title' : undefined}
         className={cn(
           'glass-card bg-card/95 backdrop-blur-2xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in flex flex-col',
           // Mobile fallback (forceDialog or preventAccidentalClose): full-screen
@@ -102,8 +105,8 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
         )}
         {title && (
           <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-border/30 flex-shrink-0">
-            <h2 className="text-base md:text-lg font-semibold">{title}</h2>
-            <button onClick={attemptClose} className="text-muted hover:text-foreground transition-colors p-2 rounded-lg hover:bg-secondary min-h-[44px] min-w-[44px] flex items-center justify-center">
+            <h2 id="modal-title" className="text-base md:text-lg font-semibold">{title}</h2>
+            <button onClick={attemptClose} aria-label="Chiudi" className="text-muted hover:text-foreground transition-colors p-2 rounded-lg hover:bg-secondary min-h-[44px] min-w-[44px] flex items-center justify-center">
               <X className="h-5 w-5" />
             </button>
           </div>

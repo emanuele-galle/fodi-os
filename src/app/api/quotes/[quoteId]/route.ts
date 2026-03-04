@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { updateQuoteSchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ quoteId: string }> }) {
@@ -101,6 +102,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       })
 
       logActivity({ userId, action: 'UPDATE', entityType: 'QUOTE', entityId: quoteId, metadata: { changedFields: Object.keys(data).join(',') } })
+      broadcastDataChanged('quote', quoteId)
       return NextResponse.json({ success: true, data: quote })
     } else if (taxRate !== undefined || discount !== undefined) {
       // Recalculate with existing line items
@@ -127,6 +129,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     })
 
     logActivity({ userId, action: 'UPDATE', entityType: 'QUOTE', entityId: quoteId, metadata: { changedFields: Object.keys(data).join(',') } })
+    broadcastDataChanged('quote', quoteId)
 
     return NextResponse.json({ success: true, data: quote })
   } catch (e) {
@@ -156,6 +159,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     await prisma.quote.delete({ where: { id: quoteId } })
 
     logActivity({ userId, action: 'DELETE', entityType: 'QUOTE', entityId: quoteId })
+    broadcastDataChanged('quote', quoteId)
 
     return NextResponse.json({ success: true })
   } catch (e) {

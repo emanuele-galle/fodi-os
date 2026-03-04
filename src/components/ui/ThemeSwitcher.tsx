@@ -91,17 +91,20 @@ export function ThemeSwitcher() {
         onClick={() => setOpen(!open)}
         className="p-2 rounded-lg hover:bg-secondary/60 transition-colors"
         title="Cambia tema"
+        aria-expanded={open}
+        aria-haspopup="menu"
       >
         <CurrentIcon className="h-[18px] w-[18px] text-muted" />
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-40 bg-card rounded-xl border border-border shadow-[var(--shadow-lg)] z-50 py-1 animate-scale-in">
+        <div className="absolute right-0 mt-2 w-40 bg-card rounded-xl border border-border shadow-[var(--shadow-lg)] z-50 py-1 animate-scale-in" role="menu">
           {THEMES.map((t) => {
             const Icon = t.icon
             return (
               <button
                 key={t.value}
+                role="menuitem"
                 onClick={() => selectTheme(t.value)}
                 className={cn(
                   'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',

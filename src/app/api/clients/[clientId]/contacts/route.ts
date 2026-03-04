@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createContactSchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ clientId: string }> }) {
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
+    broadcastDataChanged('client', clientId)
     return NextResponse.json({ success: true, data: contact }, { status: 201 })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

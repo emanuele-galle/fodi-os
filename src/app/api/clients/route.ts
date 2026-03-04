@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { slugify } from '@/lib/utils'
 import { createClientSchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
     ])
 
     return NextResponse.json({ success: true, data: items, items, total, page, limit }, {
-      headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' },
+      headers: { 'Cache-Control': 'no-cache' },
     })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
@@ -135,6 +136,7 @@ export async function POST(request: NextRequest) {
 
     logActivity({ userId, action: 'CREATE', entityType: 'CLIENT', entityId: client.id, metadata: { companyName } })
 
+    broadcastDataChanged('client')
     return NextResponse.json({ success: true, data: client }, { status: 201 })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { updateIncomeSchema } from '@/lib/validation'
 import { calculateVat } from '@/lib/accounting'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
@@ -50,6 +51,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const userId = request.headers.get('x-user-id')!
     const logMeta = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v instanceof Date ? v.toISOString() : v === null ? null : String(v)]))
     logActivity({ userId, action: 'UPDATE', entityType: 'INCOME', entityId: id, metadata: logMeta })
+    broadcastDataChanged('income', id)
 
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
@@ -73,6 +75,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'DELETE', entityType: 'INCOME', entityId: id, metadata: { category: existing.category, amount: String(existing.amount) } })
+    broadcastDataChanged('income', id)
 
     return NextResponse.json({ success: true })
   } catch (e) {

@@ -1,25 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requirePermission } from '@/lib/permissions'
+import { requirePortalClient, handlePortalError } from '@/lib/portal-auth'
 import { createNotification } from '@/lib/notifications'
-import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ quoteId: string }> }) {
   try {
-    const role = request.headers.get('x-user-role') as Role
-    const userId = request.headers.get('x-user-id')!
-    requirePermission(role, 'portal', 'read')
-
+    const client = await requirePortalClient(request)
     const { quoteId } = await params
-
-    // Find client linked to this portal user
-    const client = await prisma.client.findUnique({
-      where: { portalUserId: userId },
-    })
-
-    if (!client) {
-      return NextResponse.json({ error: 'No client linked to this portal user' }, { status: 404 })
-    }
 
     const quote = await prisma.quote.findFirst({
       where: { id: quoteId, clientId: client.id },
@@ -35,34 +22,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json(quote)
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
-      return NextResponse.json({ success: false, error: e.message }, { status: 403 })
-    }
-    return NextResponse.json({ error: 'Errore interno del server' }, { status: 500 })
+    return handlePortalError(e, 'portal/quotes/[quoteId]')
   }
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ quoteId: string }> }) {
   try {
-    const role = request.headers.get('x-user-role') as Role
-    const userId = request.headers.get('x-user-id')!
-    requirePermission(role, 'portal', 'read')
-
+    const client = await requirePortalClient(request)
     const { quoteId } = await params
     const body = await request.json()
     const { action } = body as { action?: string }
 
     if (action !== 'approve' && action !== 'reject') {
       return NextResponse.json({ error: 'Azione non valida. Usa "approve" o "reject"' }, { status: 400 })
-    }
-
-    // Find client linked to this portal user
-    const client = await prisma.client.findUnique({
-      where: { portalUserId: userId },
-    })
-    if (!client) {
-      return NextResponse.json({ error: 'Nessun cliente collegato a questo utente' }, { status: 404 })
     }
 
     // Verify quote belongs to this client and is in SENT status
@@ -100,9 +72,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json(updated)
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith('Permission denied')) {
-      return NextResponse.json({ error: e.message }, { status: 403 })
-    }
-    return NextResponse.json({ error: 'Errore interno del server' }, { status: 500 })
+    return handlePortalError(e, 'portal/quotes/[quoteId]')
   }
 }

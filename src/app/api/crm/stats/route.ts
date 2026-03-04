@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
       prisma.deal.findMany({
         where: { stage: 'CLOSED_WON', actualCloseDate: { gte: sixMonthsAgo } },
         select: { value: true, actualCloseDate: true },
+        take: 200,
       }),
       // Lost deals count (for conversion rate)
       prisma.deal.count({ where: { stage: 'CLOSED_LOST' } }),
@@ -114,6 +115,7 @@ export async function GET(request: NextRequest) {
         },
         include: { client: { select: { id: true, companyName: true } } },
         orderBy: { expectedCloseDate: 'asc' },
+        take: 50,
       }),
     ])
 

@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { requirePortalClient, handlePortalError } from '@/lib/portal-auth'
 import { uploadFile } from '@/lib/s3'
 import { validateFile } from '@/lib/file-validation'
-import { sseManager, sendBadgeUpdate } from '@/lib/sse'
+import { sseManager } from '@/lib/sse'
+import { sendUnreadBadgeUpdates } from '@/lib/chat-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,23 +81,8 @@ export async function POST(request: NextRequest) {
       data: message,
     })
 
-    // Badge update for other members
-    for (const memberId of memberUserIds.filter((id) => id !== client.userId)) {
-      const unreadMessages = await prisma.$queryRaw<[{ count: bigint }]>`
-        SELECT COALESCE(SUM(msg_count), 0) as count FROM (
-          SELECT COUNT(msg.id) as msg_count
-          FROM "chat_members" cm
-          JOIN "chat_channels" cc ON cc.id = cm."channelId"
-          LEFT JOIN "chat_messages" msg ON msg."channelId" = cc.id
-            AND msg."deletedAt" IS NULL
-            AND (cm."lastReadAt" IS NULL OR msg."createdAt" > cm."lastReadAt")
-          WHERE cm."userId" = ${memberId}
-            AND cc."isArchived" = false
-          GROUP BY cc.id
-        ) sub
-      `
-      sendBadgeUpdate(memberId, { chat: Number(unreadMessages[0]?.count ?? 0) })
-    }
+    // Badge update for other members (single query instead of N+1)
+    await sendUnreadBadgeUpdates(memberUserIds, client.userId)
 
     return NextResponse.json(message, { status: 201 })
   } catch (e) {

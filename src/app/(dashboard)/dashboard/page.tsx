@@ -1,7 +1,8 @@
 'use client'
 /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- handlers + dynamic styles */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { useRouter } from 'next/navigation'
 import {
   Users, FolderKanban, TrendingUp, AlertCircle,
@@ -314,7 +315,7 @@ export default function DashboardPage() {
     )
   }
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = useCallback(async () => {
     setLoading(true)
     setFetchError(null)
     try {
@@ -326,10 +327,17 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchDashboard() }, [role])
+  }, [role])
+
+  useEffect(() => { fetchDashboard() }, [fetchDashboard])
+
+  useRealtimeRefresh('client', fetchDashboard)
+  useRealtimeRefresh('expense', fetchDashboard)
+  useRealtimeRefresh('income', fetchDashboard)
+  useRealtimeRefresh('task', fetchDashboard)
+  useRealtimeRefresh('project', fetchDashboard)
+  useRealtimeRefresh('deal', fetchDashboard)
 
   const handleTaskComplete = (taskId: string) => {
     fetch(`/api/tasks/${taskId}`, {

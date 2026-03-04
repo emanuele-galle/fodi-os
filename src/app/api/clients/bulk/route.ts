@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
+import { broadcastDataChanged } from '@/lib/sse'
 import { z } from 'zod'
 import type { Role, ClientStatus } from '@/generated/prisma/client'
 
@@ -31,6 +32,7 @@ export async function PATCH(request: NextRequest) {
       requirePermission(role, 'crm', 'delete')
       await prisma.client.deleteMany({ where: { id: { in: ids } } })
       logActivity({ userId, action: 'DELETE', entityType: 'CLIENT', entityId: 'bulk', metadata: { count: ids.length } })
+      broadcastDataChanged('client')
       return NextResponse.json({ success: true, count: ids.length })
     }
 
@@ -46,6 +48,7 @@ export async function PATCH(request: NextRequest) {
         data: { status: value as ClientStatus },
       })
       logActivity({ userId, action: 'UPDATE', entityType: 'CLIENT', entityId: 'bulk', metadata: { count: ids.length, status: String(value) } })
+      broadcastDataChanged('client')
       return NextResponse.json({ success: true, count: ids.length })
     }
 
@@ -66,6 +69,7 @@ export async function PATCH(request: NextRequest) {
       )
       await Promise.all(updates)
       logActivity({ userId, action: 'UPDATE', entityType: 'CLIENT', entityId: 'bulk', metadata: { count: ids.length, tags: tagsToAdd.data.join(',') } })
+      broadcastDataChanged('client')
       return NextResponse.json({ success: true, count: ids.length })
     }
 

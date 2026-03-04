@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     ])
 
     return NextResponse.json({ success: true, data: items, items, total, page, limit }, {
-      headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' },
+      headers: { 'Cache-Control': 'no-cache' },
     })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
@@ -234,16 +234,23 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Send badge_update for assignees with fresh task count
-    for (const uid of allAssigneeIds) {
-      if (uid === userId) continue
-      const count = await prisma.task.count({
-        where: {
-          status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] },
-          OR: [{ assigneeId: uid }, { assignments: { some: { userId: uid } } }],
-        },
-      })
-      sendBadgeUpdate(uid, { tasks: count })
+    // Send badge_update for assignees with fresh task count (single query instead of N+1)
+    const otherAssigneeIds = Array.from(allAssigneeIds).filter(uid => uid !== userId)
+    if (otherAssigneeIds.length > 0) {
+      const taskCounts = await prisma.$queryRaw<{ userId: string; count: bigint }[]>`
+        SELECT u."userId", COUNT(DISTINCT t.id) as count
+        FROM (SELECT unnest(${otherAssigneeIds}::text[]) as "userId") u
+        LEFT JOIN "tasks" t ON (
+          t."assigneeId" = u."userId"
+          OR EXISTS (SELECT 1 FROM "task_assignments" ta WHERE ta."taskId" = t.id AND ta."userId" = u."userId")
+        )
+        AND t."status" IN ('TODO', 'IN_PROGRESS', 'IN_REVIEW')
+        GROUP BY u."userId"
+      `
+      const countMap = new Map(taskCounts.map(r => [r.userId, Number(r.count)]))
+      for (const uid of otherAssigneeIds) {
+        sendBadgeUpdate(uid, { tasks: countMap.get(uid) ?? 0 })
+      }
     }
 
     // Notify all connected users about data change

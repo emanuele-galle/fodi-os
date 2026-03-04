@@ -38,7 +38,7 @@ interface NavItem {
   href: string
   icon: React.ElementType
   roles?: Role[]
-  children?: { label: string; href: string; roles?: Role[] }[]
+  children?: { label: string; href: string }[]
   group: NavGroup
 }
 
@@ -152,7 +152,6 @@ const navigation: NavItem[] = [
       { label: 'Utenti', href: '/settings/users' },
       { label: 'Assistente AI', href: '/settings/ai' },
       { label: 'Sistema', href: '/settings/system' },
-      { label: 'Branding', href: '/settings/branding', roles: ['ADMIN'] },
     ],
     group: 'system',
   },
@@ -185,7 +184,164 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
     return !item.roles || item.roles.includes(userRole)
   })
 
-  /* eslint-disable react-perf/jsx-no-new-object-as-prop, react-perf/jsx-no-new-function-as-prop -- framer-motion animation objects + loop handlers */
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- UI render with many conditional branches for active/expanded/badge states
+  const renderNavItem = useCallback((item: NavItem) => {
+    const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+    const isItemExpanded = expandedItem === item.label
+    const Icon = item.icon
+
+    const badgeCount = item.label === 'Chat' ? unreadChat
+      : item.label === 'I Miei Task' ? pendingTaskCount
+      : item.label === 'Notifiche' ? unreadNotifications
+      : 0
+
+    const submenuId = item.children ? `submenu-${item.label.toLowerCase().replace(/\s+/g, '-')}` : undefined
+
+    const navContent = item.children ? (
+      <button
+        type="button"
+        onClick={() => setExpandedItem(isItemExpanded ? null : item.label)}
+        aria-expanded={isItemExpanded}
+        aria-controls={submenuId}
+        className={cn(
+          'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors duration-150 relative group',
+          isActive
+            ? 'bg-[var(--color-sidebar-active-bg)] text-sidebar-foreground font-semibold'
+            : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-[var(--color-sidebar-hover)]'
+        )}
+      >
+        {isActive && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-active" />
+        )}
+        <span className="relative flex-shrink-0">
+          <Icon
+            className={cn(
+              'h-[18px] w-[18px]',
+              isActive && 'text-sidebar-active'
+            )}
+          />
+          {!expanded && badgeCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+              {badgeCount > 99 ? '99+' : badgeCount}
+            </span>
+          )}
+        </span>
+        <AnimatePresence>
+          {expanded && (
+            <motion.span
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.15 }}
+              className="flex-1 truncate whitespace-nowrap overflow-hidden text-left"
+            >
+              {item.label}
+            </motion.span>
+          )}
+        </AnimatePresence>
+        {expanded && (
+          <ChevronRight
+            className={cn(
+              'h-4 w-4 transition-transform duration-200 flex-shrink-0',
+              isItemExpanded && 'rotate-90'
+            )}
+          />
+        )}
+      </button>
+    ) : (
+      <Link
+        href={item.href}
+        className={cn(
+          'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors duration-150 relative group',
+          isActive
+            ? 'bg-[var(--color-sidebar-active-bg)] text-sidebar-foreground font-semibold'
+            : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-[var(--color-sidebar-hover)]'
+        )}
+      >
+        {isActive && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-active" />
+        )}
+        <span className="relative flex-shrink-0">
+          <Icon
+            className={cn(
+              'h-[18px] w-[18px]',
+              isActive && 'text-sidebar-active'
+            )}
+          />
+          {!expanded && badgeCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+              {badgeCount > 99 ? '99+' : badgeCount}
+            </span>
+          )}
+        </span>
+        <AnimatePresence>
+          {expanded && (
+            <motion.span
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.15 }}
+              className="flex-1 truncate whitespace-nowrap overflow-hidden"
+            >
+              {item.label}
+            </motion.span>
+          )}
+        </AnimatePresence>
+        {expanded && badgeCount > 0 && (
+          <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-xs font-bold text-white flex-shrink-0">
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </span>
+        )}
+      </Link>
+    )
+
+    return (
+      <div key={item.label} className="mb-0.5">
+        {!expanded ? (
+          <Tooltip content={item.label} position="right">
+            {navContent}
+          </Tooltip>
+        ) : navContent}
+
+        <AnimatePresence>
+          {expanded && item.children && isItemExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+              id={submenuId}
+              role="region"
+            >
+              <div className="ml-9 mt-1 space-y-0.5 pb-1 border-l border-[var(--color-sidebar-divider)] pl-0">
+                {item.children.map((child) => (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors duration-150',
+                      pathname === child.href
+                        ? 'text-sidebar-active bg-[var(--color-sidebar-active-bg)]'
+                        : 'text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-[var(--color-sidebar-hover)]'
+                    )}
+                  >
+                    <span className={cn(
+                      'w-1 h-1 rounded-full flex-shrink-0',
+                      pathname === child.href ? 'bg-sidebar-active' : 'bg-muted'
+                    )} />
+                    {child.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    )
+  }, [pathname, expandedItem, expanded, unreadChat, pendingTaskCount, unreadNotifications])
+
+  /* eslint-disable react-perf/jsx-no-new-object-as-prop -- framer-motion animation objects */
   return (
     <motion.aside
       animate={{ width: expanded ? 260 : 64 }}
@@ -227,7 +383,7 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
       <div className="border-b border-[var(--color-sidebar-divider)] mx-3" />
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-none">
+      <nav aria-label="Navigazione principale" className="flex-1 overflow-y-auto py-3 px-2 scrollbar-none">
         {(() => {
           // Group filtered items by their group, preserving order
           const grouped = new Map<NavGroup, NavItem[]>()
@@ -253,120 +409,7 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
                     {groupLabel}
                   </div>
                 )}
-                {items.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-                  const isExpanded = expandedItem === item.label
-                  const Icon = item.icon
-
-                  const badgeCount = item.label === 'Chat' ? unreadChat
-                    : item.label === 'I Miei Task' ? pendingTaskCount
-                    : item.label === 'Notifiche' ? unreadNotifications
-                    : 0
-
-                  const navContent = (
-                    <Link
-                      href={item.children ? '#' : item.href}
-                      onClick={(e) => {
-                        if (item.children) {
-                          e.preventDefault()
-                          setExpandedItem(isExpanded ? null : item.label)
-                        }
-                      }}
-                      className={cn(
-                        'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors duration-150 relative group',
-                        isActive
-                          ? 'bg-[var(--color-sidebar-active-bg)] text-sidebar-foreground font-semibold'
-                          : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-[var(--color-sidebar-hover)]'
-                      )}
-                    >
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-active" />
-                      )}
-                      <span className="relative flex-shrink-0">
-                        <Icon
-                          className={cn(
-                            'h-[18px] w-[18px]',
-                            isActive && 'text-sidebar-active'
-                          )}
-                        />
-                        {!expanded && badgeCount > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
-                            {badgeCount > 99 ? '99+' : badgeCount}
-                          </span>
-                        )}
-                      </span>
-                      <AnimatePresence>
-                        {expanded && (
-                          <motion.span
-                            initial={{ opacity: 0, width: 0 }}
-                            animate={{ opacity: 1, width: 'auto' }}
-                            exit={{ opacity: 0, width: 0 }}
-                            transition={{ duration: 0.15 }}
-                            className="flex-1 truncate whitespace-nowrap overflow-hidden"
-                          >
-                            {item.label}
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                      {expanded && badgeCount > 0 && !item.children && (
-                        <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-xs font-bold text-white flex-shrink-0">
-                          {badgeCount > 99 ? '99+' : badgeCount}
-                        </span>
-                      )}
-                      {expanded && item.children && (
-                        <ChevronRight
-                          className={cn(
-                            'h-4 w-4 transition-transform duration-200 flex-shrink-0',
-                            isExpanded && 'rotate-90'
-                          )}
-                        />
-                      )}
-                    </Link>
-                  )
-
-                  return (
-                    <div key={item.label} className="mb-0.5">
-                      {!expanded ? (
-                        <Tooltip content={item.label} position="right">
-                          {navContent}
-                        </Tooltip>
-                      ) : navContent}
-
-                      <AnimatePresence>
-                        {expanded && item.children && isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="ml-9 mt-1 space-y-0.5 pb-1 border-l border-[var(--color-sidebar-divider)] pl-0">
-                              {item.children.filter((child) => !child.roles || child.roles.includes(userRole)).map((child) => (
-                                <Link
-                                  key={child.href}
-                                  href={child.href}
-                                  className={cn(
-                                    'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors duration-150',
-                                    pathname === child.href
-                                      ? 'text-sidebar-active bg-[var(--color-sidebar-active-bg)]'
-                                      : 'text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-[var(--color-sidebar-hover)]'
-                                  )}
-                                >
-                                  <span className={cn(
-                                    'w-1 h-1 rounded-full flex-shrink-0',
-                                    pathname === child.href ? 'bg-sidebar-active' : 'bg-muted'
-                                  )} />
-                                  {child.label}
-                                </Link>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )
-                })}
+                {items.map(renderNavItem)}
               </div>
             )
           })

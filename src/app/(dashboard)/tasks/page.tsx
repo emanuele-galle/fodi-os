@@ -90,28 +90,31 @@ export default function TasksPage() {
     if (prefsLoaded) setView(preferences.defaultView)
   }, [prefsLoaded, preferences.defaultView])
 
+  const buildTaskParams = useCallback(() => {
+    const params = new URLSearchParams({ limit: '100' })
+    if (statusFilter) params.set('status', statusFilter)
+    if (priorityFilter) params.set('priority', priorityFilter)
+    if (searchQuery) params.set('search', searchQuery)
+    if (projectFilter) params.set('projectId', projectFilter)
+    if (assigneeFilter) params.set('assigneeId', assigneeFilter)
+    if (sortBy) params.set('sort', sortBy)
+    if (sortOrder) params.set('order', sortOrder)
+
+    if (activeTab === 'mine') {
+      params.set('mine', 'true')
+      params.set('scope', 'assigned')
+    } else if (activeTab === 'delegated') {
+      params.set('mine', 'true')
+      params.set('scope', 'delegated')
+    }
+    return params
+  }, [statusFilter, priorityFilter, activeTab, searchQuery, projectFilter, assigneeFilter, sortBy, sortOrder])
+
   const fetchTasks = useCallback(async () => {
     setLoading(true)
     setFetchError(null)
     try {
-      const params = new URLSearchParams({ limit: '100' })
-      if (statusFilter) params.set('status', statusFilter)
-      if (priorityFilter) params.set('priority', priorityFilter)
-      if (searchQuery) params.set('search', searchQuery)
-      if (projectFilter) params.set('projectId', projectFilter)
-      if (assigneeFilter) params.set('assigneeId', assigneeFilter)
-      if (sortBy) params.set('sort', sortBy)
-      if (sortOrder) params.set('order', sortOrder)
-
-      if (activeTab === 'mine') {
-        params.set('mine', 'true')
-        params.set('scope', 'assigned')
-      } else if (activeTab === 'delegated') {
-        params.set('mine', 'true')
-        params.set('scope', 'delegated')
-      }
-
-      const res = await fetch(`/api/tasks?${params}`)
+      const res = await fetch(`/api/tasks?${buildTaskParams()}`)
       if (res.ok) {
         const data = await res.json()
         setTasks(data.items || [])
@@ -123,7 +126,20 @@ export default function TasksPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, priorityFilter, activeTab, searchQuery, projectFilter, assigneeFilter, sortBy, sortOrder])
+  }, [buildTaskParams])
+
+  // Refetch silenzioso per SSE — aggiorna dati senza mostrare loading
+  const silentRefetchTasks = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/tasks?${buildTaskParams()}`)
+      if (res.ok) {
+        const data = await res.json()
+        setTasks(data.items || [])
+      }
+    } catch {
+      // silent
+    }
+  }, [buildTaskParams])
 
   const fetchTabCounts = useCallback(async () => {
     try {
@@ -155,6 +171,12 @@ export default function TasksPage() {
     fetchTabCounts()
   }
 
+  // Refresh silenzioso per SSE — non mostra loading, non sovrascrive durante drag
+  const silentRefreshAll = useCallback(() => {
+    silentRefetchTasks()
+    fetchTabCounts()
+  }, [silentRefetchTasks, fetchTabCounts])
+
   const toggleSubtasks = useCallback(async (taskId: string, e?: React.MouseEvent) => {
     if (e) { e.stopPropagation(); e.preventDefault() }
     if (expandedTasks.has(taskId)) {
@@ -176,7 +198,7 @@ export default function TasksPage() {
     setExpandedTasks(prev => new Set(prev).add(taskId))
   }, [expandedTasks, subtasksCache])
 
-  useRealtimeRefresh('task', refreshAll)
+  useRealtimeRefresh('task', silentRefreshAll)
 
   const sortedTasks = useMemo(() => sortTasks(tasks), [tasks])
   const activeTasks = useMemo(() => sortedTasks.filter(t => t.status !== 'DONE' && t.status !== 'CANCELLED'), [sortedTasks])

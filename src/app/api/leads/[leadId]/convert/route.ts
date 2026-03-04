@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { convertLeadSchema } from '@/lib/validation'
 import { slugify } from '@/lib/utils'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ leadId: string }> }) {
@@ -76,6 +77,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'CONVERT', entityType: 'LEAD', entityId: leadId, metadata: { companyName: result.companyName, clientId: result.id } })
 
+    broadcastDataChanged('lead')
+    broadcastDataChanged('client')
     return NextResponse.json({ success: true, data: result }, { status: 201 })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

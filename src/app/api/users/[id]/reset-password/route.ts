@@ -54,7 +54,7 @@ export async function POST(
       entityId: id,
     })
 
-    return NextResponse.json({ success: true, data: { tempPassword }, tempPassword })
+    return NextResponse.json({ success: true, data: { tempPassword } })
   } catch (error) {
     console.error('[users/reset-password]', error)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })

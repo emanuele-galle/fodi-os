@@ -7,9 +7,22 @@ import { FODI_BRAND_PROMPT } from './brands/fodi'
 import { MUSCARI_BRAND_PROMPT } from './brands/muscari'
 import { getAllSkillPrompts } from './skills'
 
-const BRAND_PROMPTS: Record<string, string> = {
+const BRAND_PROMPTS_FALLBACK: Record<string, string> = {
   fodi: FODI_BRAND_PROMPT,
   muscari: MUSCARI_BRAND_PROMPT,
+}
+
+async function getBrandPrompt(brandSlug: string): Promise<string> {
+  try {
+    const profile = await prisma.companyProfile.findFirst({
+      where: { aiPrompt: { not: null } },
+      select: { aiPrompt: true },
+    })
+    if (profile?.aiPrompt) return profile.aiPrompt
+  } catch {
+    // DB error: fall back to static files
+  }
+  return BRAND_PROMPTS_FALLBACK[brandSlug] || ''
 }
 
 const MODULE_CAPABILITIES: Record<string, { condition: Module; description: string }[]> = {
@@ -125,7 +138,7 @@ interface BuildPromptParams {
 
 export async function buildSystemPrompt({ userName, userRole, userId, agentName, customPrompt, currentPage, customModulePermissions }: BuildPromptParams): Promise<string> {
   const brandSlug = brand.slug
-  const brandPrompt = BRAND_PROMPTS[brandSlug] || ''
+  const brandPrompt = await getBrandPrompt(brandSlug)
 
   // Current date/time in Europe/Rome timezone
   const now = new Date()

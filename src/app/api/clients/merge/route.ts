@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
+import { broadcastDataChanged } from '@/lib/sse'
 import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
 
@@ -133,6 +134,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    broadcastDataChanged('client')
     return NextResponse.json({ success: true, data: result })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

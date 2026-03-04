@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { updateInteractionSchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 type Params = { params: Promise<{ clientId: string; interactionId: string }> }
@@ -47,6 +48,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'UPDATE', entityType: 'INTERACTION', entityId: interactionId, metadata: { clientId, subject: interaction.subject } })
 
+    broadcastDataChanged('client', clientId)
     return NextResponse.json({ success: true, data: interaction })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
@@ -77,6 +79,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'DELETE', entityType: 'INTERACTION', entityId: interactionId, metadata: { clientId } })
 
+    broadcastDataChanged('client', clientId)
     return NextResponse.json({ success: true })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

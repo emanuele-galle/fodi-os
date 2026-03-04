@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { createDealSchema } from '@/lib/validation/deals'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
 
     logActivity({ userId, action: 'CREATE', entityType: 'DEAL', entityId: deal.id, metadata: { title, clientId: clientId || null, leadId: leadId || null } })
 
+    broadcastDataChanged('deal')
     return NextResponse.json({ success: true, data: deal }, { status: 201 })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

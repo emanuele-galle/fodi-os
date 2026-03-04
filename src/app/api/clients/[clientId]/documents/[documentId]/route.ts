@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { deleteWithBackup } from '@/lib/storage'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 type Params = { params: Promise<{ clientId: string; documentId: string }> }
@@ -70,6 +71,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       metadata: { documentId, fileName: document.name },
     })
 
+    broadcastDataChanged('client', clientId)
     return NextResponse.json({ success: true })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

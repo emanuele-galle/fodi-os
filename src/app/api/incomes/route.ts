@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { createIncomeSchema } from '@/lib/validation'
 import { calculateVat, generateInvoiceNumber } from '@/lib/accounting'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -94,6 +95,7 @@ export async function POST(request: NextRequest) {
 
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'CREATE', entityType: 'INCOME', entityId: income.id, metadata: { category: d.category, amount: d.amount } })
+    broadcastDataChanged('income')
 
     return NextResponse.json({ success: true, data: income }, { status: 201 })
   } catch (e) {

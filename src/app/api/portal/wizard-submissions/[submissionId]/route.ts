@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requirePortalClient, handlePortalError } from '@/lib/portal-auth'
 import { updateSubmissionSchema } from '@/lib/validation'
+import type { Role } from '@/generated/prisma/client'
 
 export async function PATCH(
   request: NextRequest,
@@ -8,7 +10,7 @@ export async function PATCH(
 ) {
   try {
     const userId = request.headers.get('x-user-id')
-    const userRole = request.headers.get('x-user-role')
+    const userRole = request.headers.get('x-user-role') as Role
     if (!userId) {
       return NextResponse.json({ error: 'Autenticazione richiesta' }, { status: 401 })
     }
@@ -26,6 +28,11 @@ export async function PATCH(
     const existing = await prisma.wizardSubmission.findUnique({ where: { id: submissionId } })
     if (!existing) {
       return NextResponse.json({ error: 'Submission non trovata' }, { status: 404 })
+    }
+
+    // For CLIENT users, verify via requirePortalClient
+    if (userRole === 'CLIENT') {
+      await requirePortalClient(request)
     }
 
     // Verify ownership: only the submitter or an ADMIN can modify
@@ -56,7 +63,6 @@ export async function PATCH(
 
     return NextResponse.json(submission)
   } catch (e) {
-    console.error('[portal/wizard-submissions/:submissionId]', e)
-    return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })
+    return handlePortalError(e, 'portal/wizard-submissions/[submissionId]')
   }
 }

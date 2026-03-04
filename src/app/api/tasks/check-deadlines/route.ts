@@ -15,18 +15,23 @@ export async function POST(req: NextRequest) {
     const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000)
     const tomorrowEnd = new Date(todayStart.getTime() + 2 * 24 * 60 * 60 * 1000)
 
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+
     const [overdueTasks, todayTasks, tomorrowTasks] = await Promise.all([
       prisma.task.findMany({
-        where: { status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] }, dueDate: { lt: todayStart } },
+        where: { status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] }, dueDate: { lt: todayStart, gte: thirtyDaysAgo } },
         include: { assignments: { select: { userId: true } } },
+        take: 200,
       }),
       prisma.task.findMany({
         where: { status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] }, dueDate: { gte: todayStart, lt: todayEnd } },
         include: { assignments: { select: { userId: true } } },
+        take: 200,
       }),
       prisma.task.findMany({
         where: { status: { in: ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] }, dueDate: { gte: todayEnd, lt: tomorrowEnd } },
         include: { assignments: { select: { userId: true } } },
+        take: 200,
       }),
     ])
 
@@ -88,7 +93,7 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     console.error('[check-deadlines]', e)
     return NextResponse.json(
-      { error: 'Errore nel controllo scadenze', details: e instanceof Error ? e.message : 'Unknown error' },
+      { error: 'Errore nel controllo scadenze' },
       { status: 500 }
     )
   }

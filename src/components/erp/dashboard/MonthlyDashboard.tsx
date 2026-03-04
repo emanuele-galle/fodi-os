@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import dynamic from 'next/dynamic'
 import { TrendingUp, TrendingDown, AlertCircle, Building2, FileWarning } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
@@ -140,6 +141,8 @@ export function MonthlyDashboard() {
   }, [month, entityId])
 
   useEffect(() => { loadData() }, [loadData])
+  useRealtimeRefresh('expense', loadData)
+  useRealtimeRefresh('income', loadData)
 
   /* Derived values */
   const vatNet = data ? data.income.totalVat - data.expense.totalVatDeductible : 0

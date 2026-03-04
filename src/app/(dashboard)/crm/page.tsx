@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Users, Plus, Search, ChevronLeft, ChevronRight, AlertCircle, Download, ChevronDown, Clock, Trash2, Tag, CheckSquare, Filter, X } from 'lucide-react'
@@ -115,6 +116,8 @@ export default function CrmPage() {
   useEffect(() => {
     fetchClients()
   }, [fetchClients])
+
+  useRealtimeRefresh('client', fetchClients)
 
   useEffect(() => {
     setPage(1)

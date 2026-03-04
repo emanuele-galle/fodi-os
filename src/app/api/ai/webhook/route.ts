@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { runAgent } from '@/lib/ai/agent'
+import crypto from 'crypto'
 import type { AiChannel } from '@/generated/prisma/client'
 
 // eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
@@ -9,8 +10,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { platform, chatId, senderPhone, senderUsername, message, audioUrl, imageUrl, webhookSecret } = body
 
-    // Verify webhook secret
-    if (webhookSecret !== process.env.AI_WEBHOOK_SECRET) {
+    // Verify webhook secret with timing-safe comparison
+    const expected = process.env.AI_WEBHOOK_SECRET
+    if (!expected || !webhookSecret || typeof webhookSecret !== 'string'
+      || !crypto.timingSafeEqual(Buffer.from(webhookSecret), Buffer.from(expected))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

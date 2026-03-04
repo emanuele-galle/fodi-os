@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { useRouter } from 'next/navigation'
 import { Receipt, Plus, Search, ChevronLeft, ChevronRight, AlertCircle, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -77,6 +78,7 @@ export default function QuotesPage() {
   }, [page, search, statusFilter, clientFilter])
 
   useEffect(() => { fetchQuotes() }, [fetchQuotes])
+  useRealtimeRefresh('quote', fetchQuotes)
   useEffect(() => { setPage(1) }, [search, statusFilter, clientFilter])
 
   useEffect(() => {

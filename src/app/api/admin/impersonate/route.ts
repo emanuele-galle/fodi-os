@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { targetUserId } = body
+    const targetUserId = typeof body?.targetUserId === 'string' ? body.targetUserId.trim() : null
 
     if (!targetUserId) {
       return NextResponse.json({ error: 'targetUserId obbligatorio' }, { status: 400 })

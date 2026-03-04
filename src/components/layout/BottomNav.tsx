@@ -249,7 +249,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
       )}
 
       {/* Bottom Nav Bar */}
-      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[var(--color-sheet)] backdrop-blur-2xl saturate-[var(--glass-saturation)] border-t border-[var(--color-sheet-border)] pb-[max(env(safe-area-inset-bottom,0px),8px)]">
+      <nav data-bottom-nav aria-label="Navigazione inferiore" className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[var(--color-sheet)] backdrop-blur-2xl saturate-[var(--glass-saturation)] border-t border-[var(--color-sheet-border)] pb-[max(env(safe-area-inset-bottom,0px),8px)]">
         <div className="flex items-center justify-around h-[50px]">
           {TAB_ITEMS.map((tab) => {
             const active = isTabActive(tab.href)

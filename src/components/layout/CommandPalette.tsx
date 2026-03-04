@@ -224,7 +224,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const hasQuery = query.length > 0
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-label="Ricerca comandi" onClick={onClose}>
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Ricerca comandi" onClick={onClose}>
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -276,12 +276,17 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               }}
               placeholder="Cerca pagine, azioni..."
               className="flex-1 h-14 bg-transparent text-foreground placeholder:text-muted/60 focus:outline-none text-[15px]"
+              role="combobox"
+              aria-expanded="true"
+              aria-controls="command-results"
+              aria-activedescendant={filtered[selectedIndex] ? `command-option-${selectedIndex}` : undefined}
+              aria-autocomplete="list"
             />
             <kbd className="text-xs text-muted/70 bg-secondary/60 px-1.5 py-0.5 rounded-md font-mono">ESC</kbd>
           </div>
 
           {/* Results */}
-          <div ref={listRef} className="max-h-[360px] overflow-y-auto py-1.5 scrollbar-none">
+          <div ref={listRef} id="command-results" role="listbox" className="max-h-[360px] overflow-y-auto py-1.5 scrollbar-none">
             {searching && (
               <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -300,6 +305,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     <motion.button
                       key={cmd.id}
                       data-index={globalIndex}
+                      id={`command-option-${globalIndex}`}
+                      role="option"
+                      aria-selected={globalIndex === selectedIndex}
                       initial={{ opacity: 0, x: -4 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: Math.min(globalIndex * 0.02, 0.2), duration: 0.15 }}
@@ -343,6 +351,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     <motion.button
                       key={cmd.id}
                       data-index={globalIndex}
+                      id={`command-option-${globalIndex}`}
+                      role="option"
+                      aria-selected={globalIndex === selectedIndex}
                       initial={{ opacity: 0, x: -4 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: globalIndex * 0.02, duration: 0.15 }}
@@ -386,6 +397,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     <motion.button
                       key={cmd.id}
                       data-index={globalIndex}
+                      id={`command-option-${globalIndex}`}
+                      role="option"
+                      aria-selected={globalIndex === selectedIndex}
                       initial={{ opacity: 0, x: -4 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: globalIndex * 0.02, duration: 0.15 }}

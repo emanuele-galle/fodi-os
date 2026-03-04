@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { useRouter } from 'next/navigation'
 import type { ClientDetail, Contact, Interaction } from './types'
 
@@ -61,6 +62,8 @@ export function useClientDetail(clientId: string) {
   useEffect(() => {
     fetchClient()
   }, [fetchClient])
+
+  useRealtimeRefresh('client', fetchClient)
 
   async function handleAddContact(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()

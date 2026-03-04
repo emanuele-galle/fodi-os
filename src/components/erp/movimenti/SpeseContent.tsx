@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { Receipt, Plus, AlertCircle, Pencil, Trash2, Eye, EyeOff, Download } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -128,6 +129,7 @@ export function SpeseContent() {
   }, [fromDate, toDate, paymentFilter, bankAccountFilter, businessEntityFilter, categoryFilter, clientFilter, projectFilter, recurringFilter])
 
   useEffect(() => { fetchExpenses() }, [fetchExpenses])
+  useRealtimeRefresh('expense', fetchExpenses)
 
   useEffect(() => {
     fetch('/api/clients?limit=200').then(r => r.json()).then(d => setClients(d.items || []))

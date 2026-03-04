@@ -24,8 +24,12 @@ export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request)
 
-    if (!rateLimit(`login:${ip}`, 5, 60000)) {
-      return NextResponse.json({ success: false, error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
+    const rl = rateLimit(`login:${ip}`, 5, 60000)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Troppi tentativi. Riprova tra un minuto.' },
+        { status: 429, headers: { 'X-RateLimit-Limit': '5', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(rl.resetAt), 'Retry-After': String(Math.max(0, rl.resetAt - Math.floor(Date.now() / 1000))) } },
+      )
     }
 
     const body = await request.json()

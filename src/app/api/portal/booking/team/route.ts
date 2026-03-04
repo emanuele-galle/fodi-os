@@ -1,19 +1,15 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getSession } from '@/lib/auth'
+import { requirePortalClient, handlePortalError } from '@/lib/portal-auth'
 
 /**
  * Returns team members who have Google Calendar connected
  * and booking enabled on their digital card.
  * Requires portal authentication.
  */
-export async function GET() {
-  const session = await getSession()
-  if (!session) {
-    return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
-  }
-
+export async function GET(request: NextRequest) {
   try {
+    await requirePortalClient(request)
     const members = await prisma.user.findMany({
       where: {
         isActive: true,
@@ -34,8 +30,7 @@ export async function GET() {
     })
 
     return NextResponse.json({ members })
-  } catch (error) {
-    console.error('GET /api/portal/booking/team error:', error)
-    return NextResponse.json({ error: 'Errore interno' }, { status: 500 })
+  } catch (e) {
+    return handlePortalError(e, 'portal/booking/team')
   }
 }

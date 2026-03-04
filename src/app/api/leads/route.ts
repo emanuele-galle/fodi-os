@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { rateLimit } from '@/lib/rate-limit'
+import { broadcastDataChanged } from '@/lib/sse'
 import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
 import { getClientIp } from '@/lib/ip'
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, data: items, items, total, page, limit, statusCounts }, {
-      headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' },
+      headers: { 'Cache-Control': 'no-cache' },
     })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request)
-    if (!rateLimit(`leads:${ip}`, 10, 60000)) {
+    if (!rateLimit(`leads:${ip}`, 10, 60000).allowed) {
       return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
     }
 
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    broadcastDataChanged('lead')
     return NextResponse.json({ success: true, data: lead }, { status: 201 })
   } catch (e) {
     console.error('[leads/POST]', e)

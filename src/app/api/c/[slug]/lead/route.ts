@@ -25,7 +25,7 @@ export async function POST(
     const ip = getClientIp(request)
 
     const rateLimitKey = `lead:${ip}`
-    const allowed = rateLimit(rateLimitKey, 5, 60000) // 1 minute
+    const { allowed } = rateLimit(rateLimitKey, 5, 60000) // 1 minute
 
     if (!allowed) {
       return NextResponse.json(

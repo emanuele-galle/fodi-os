@@ -2,7 +2,9 @@
 
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { useCallback } from 'react'
 import { useFetch } from '@/hooks/useFetch'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -149,13 +151,19 @@ function StatCardSkeleton() {
 }
 
 export default function CrmDashboardPage() {
-  const { data: statsRaw, loading } = useFetch<{ success: boolean; data: StatsData }>('/api/crm/stats')
-  const { data: tasksRaw } = useFetch<{ success: boolean; data?: TaskItem[]; items?: TaskItem[] }>(
+  const { data: statsRaw, loading, refetch: refetchStats } = useFetch<{ success: boolean; data: StatsData }>('/api/crm/stats')
+  const { data: tasksRaw, refetch: refetchTasks } = useFetch<{ success: boolean; data?: TaskItem[]; items?: TaskItem[] }>(
     '/api/tasks?mine=true&status=TODO,IN_PROGRESS&limit=5&sort=dueDate&order=asc'
   )
-  const { data: dealsRaw } = useFetch<{ success: boolean; data?: DealItem[]; items?: DealItem[] }>(
+  const { data: dealsRaw, refetch: refetchDeals } = useFetch<{ success: boolean; data?: DealItem[]; items?: DealItem[] }>(
     '/api/deals?limit=100'
   )
+
+  const refetchAll = useCallback(() => { refetchStats(); refetchTasks(); refetchDeals() }, [refetchStats, refetchTasks, refetchDeals])
+  useRealtimeRefresh('client', refetchAll)
+  useRealtimeRefresh('lead', refetchAll)
+  useRealtimeRefresh('deal', refetchAll)
+  useRealtimeRefresh('task', refetchAll)
 
   const stats = statsRaw?.success ? statsRaw.data : null
   const myTasks = tasksRaw?.success ? (tasksRaw.data || tasksRaw.items || []).slice(0, 5) : []

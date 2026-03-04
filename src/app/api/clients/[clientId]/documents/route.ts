@@ -5,6 +5,7 @@ import { logActivity } from '@/lib/activity-log'
 import { uploadWithBackup } from '@/lib/storage'
 import { validateFile } from '@/lib/file-validation'
 import { validateExternalLink } from '@/lib/link-validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 type Params = { params: Promise<{ clientId: string }> }
@@ -107,6 +108,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         metadata: { documentId: document.id, url, provider: linkResult.provider },
       })
 
+      broadcastDataChanged('client', clientId)
       return NextResponse.json({ success: true, data: document }, { status: 201 })
     }
 
@@ -185,6 +187,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       metadata: { documentId: document.id, fileName: safeFileName, category },
     })
 
+    broadcastDataChanged('client', clientId)
     return NextResponse.json({ success: true, data: document }, { status: 201 })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

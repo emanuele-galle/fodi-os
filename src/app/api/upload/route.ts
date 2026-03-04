@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 import { uploadFile } from '@/lib/s3'
 import { validateFile } from '@/lib/file-validation'
 /**
@@ -36,6 +37,17 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now()
     const random = Math.random().toString(36).slice(2, 8)
     const projectId = formData.get('projectId') as string | null
+
+    // Verify user is a member of the project
+    if (projectId) {
+      const membership = await prisma.projectMember.findFirst({
+        where: { projectId, userId },
+      })
+      if (!membership) {
+        return NextResponse.json({ error: 'Non sei membro di questo progetto' }, { status: 403 })
+      }
+    }
+
     const prefix = projectId ? `projects/${projectId}` : `uploads/${userId}`
     const key = `${prefix}/${timestamp}-${random}.${ext}`
     const fileUrl = await uploadFile(key, buffer, mimeType)

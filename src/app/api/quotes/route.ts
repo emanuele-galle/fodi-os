@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createQuoteSchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -118,6 +119,8 @@ export async function POST(request: NextRequest) {
         },
       })
     })
+
+    broadcastDataChanged('quote')
 
     return NextResponse.json({ success: true, data: quote }, { status: 201 })
   } catch (e) {

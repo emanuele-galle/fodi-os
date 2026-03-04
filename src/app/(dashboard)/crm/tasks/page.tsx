@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { CheckSquare, Plus, AlertCircle, List, LayoutGrid } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -68,6 +69,7 @@ export default function CrmTasksPage() {
   }, [page, search, statusFilter, priorityFilter, clientFilter])
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
+  useRealtimeRefresh('task', fetchTasks)
   useEffect(() => { setPage(1) }, [search, statusFilter, priorityFilter, clientFilter])
   useEffect(() => {
     fetch('/api/users').then(r => r.json()).then(data => {

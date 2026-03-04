@@ -192,6 +192,7 @@ export default function DashboardLayout({
       setUnreadChat={setUnreadChat}
       setPendingTaskCount={setPendingTaskCount}
     />
+    <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-black dark:focus:bg-gray-900 dark:focus:text-white">Salta al contenuto</a>
     <div className="h-screen flex bg-background overflow-hidden">
       {/* Sidebar: hidden on mobile, visible on md+ */}
       <div className="hidden md:block flex-shrink-0">
@@ -227,7 +228,7 @@ export default function DashboardLayout({
         <SetupBanner />
         <ActiveTimerBanner />
 
-        <main className="flex-1 overflow-auto py-4 md:py-8 pb-24 md:pb-8 [&>*]:max-w-[1400px] [&>*]:mx-auto safe-area-x">
+        <main id="main-content" className="flex-1 overflow-auto py-4 md:py-8 pb-24 md:pb-8 [&>*]:max-w-[1400px] [&>*]:mx-auto safe-area-x">
           <PullToRefresh onRefresh={handleRefresh}>
           <UserProvider user={user}>
           <Suspense fallback={

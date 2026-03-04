@@ -103,6 +103,9 @@ export function BottomSheet({
       {/* Sheet */}
       <div
         ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'bottom-sheet-title' : undefined}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -123,7 +126,7 @@ export function BottomSheet({
         {/* Title */}
         {title && (
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/20 flex-shrink-0">
-            <h3 className="text-base font-semibold">{title}</h3>
+            <h3 id="bottom-sheet-title" className="text-base font-semibold">{title}</h3>
             <button
               onClick={closeSheet}
               aria-label="Chiudi"

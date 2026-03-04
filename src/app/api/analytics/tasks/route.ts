@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@/generated/prisma/client'
+import { requirePermission } from '@/lib/permissions'
 import { computeUserStats } from '@/lib/analytics-utils'
 import type { Role } from '@/generated/prisma/client'
 
@@ -8,8 +9,6 @@ import type { Role } from '@/generated/prisma/client'
 export async function GET(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
-    // PM:read o ADMIN hanno accesso
-    const { requirePermission } = await import('@/lib/permissions')
     requirePermission(role, 'pm', 'read')
 
     const { searchParams } = request.nextUrl

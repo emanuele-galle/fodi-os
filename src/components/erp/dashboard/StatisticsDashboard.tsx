@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -51,6 +52,8 @@ export function StatisticsDashboard() {
   useEffect(() => {
     fetchStatistics() // eslint-disable-line react-hooks/set-state-in-effect -- loading state set inside fetch callback
   }, [fetchStatistics])
+  useRealtimeRefresh('expense', fetchStatistics)
+  useRealtimeRefresh('income', fetchStatistics)
 
   const years = Array.from({ length: 5 }, (_, i) => {
     const y = new Date().getFullYear() - i

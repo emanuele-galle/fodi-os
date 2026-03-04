@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { updateSubscriptionSchema } from '@/lib/validation'
+import { broadcastDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
 export async function GET(
@@ -75,6 +76,7 @@ export async function PUT(
 
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'UPDATE', entityType: 'SUBSCRIPTION', entityId: id, metadata: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v instanceof Date ? v.toISOString() : v === null ? null : String(v)])) })
+    broadcastDataChanged('expense', id)
 
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
@@ -115,6 +117,7 @@ export async function DELETE(
 
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'DELETE', entityType: 'SUBSCRIPTION', entityId: id, metadata: { permanent: permanent ? 'true' : 'false' } })
+    broadcastDataChanged('expense', id)
 
     return NextResponse.json({ success: true })
   } catch (e) {

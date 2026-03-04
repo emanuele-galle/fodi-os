@@ -11,8 +11,12 @@ import { getClientIp } from '@/lib/ip'
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request)
-    if (!rateLimit(`forgot-password:${ip}`, 5, 15 * 60 * 1000)) {
-      return NextResponse.json({ success: false, error: 'Troppi tentativi. Riprova tra 15 minuti.' }, { status: 429 })
+    const rl = rateLimit(`forgot-password:${ip}`, 5, 15 * 60 * 1000)
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Troppi tentativi. Riprova tra 15 minuti.' },
+        { status: 429, headers: { 'X-RateLimit-Limit': '5', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(rl.resetAt), 'Retry-After': String(Math.max(0, rl.resetAt - Math.floor(Date.now() / 1000))) } },
+      )
     }
 
     const body = await request.json()

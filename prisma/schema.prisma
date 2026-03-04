@@ -585,6 +585,7 @@ model TaskDependency {
   dependsOn Task @relation("DependencyTask", fields: [dependsOnId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, dependsOnId])
+  @@index([dependsOnId])
   @@map("task_dependencies")
 }
 
@@ -876,6 +877,8 @@ model Income {
   @@index([isPaid])
   @@index([category])
   @@index([bankAccountId])
+  @@index([clientId])
+  @@index([businessEntityId])
   @@map("incomes")
 }
 
@@ -893,6 +896,8 @@ model BankTransfer {
   toAccount     BankAccount  @relation("TransferTo", fields: [toAccountId], references: [id])
 
   @@index([date])
+  @@index([fromAccountId])
+  @@index([toAccountId])
   @@map("bank_transfers")
 }
 
@@ -933,6 +938,8 @@ model RecurringInvoice {
 
   @@index([isActive])
   @@index([nextDueDate])
+  @@index([bankAccountId])
+  @@index([businessEntityId])
   @@map("recurring_invoices")
 }
 
@@ -1266,6 +1273,7 @@ model CompanyProfile {
   email          String?
   logoUrl        String?
   siteUrl        String?
+  aiPrompt       String?  @db.Text
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -1378,6 +1386,7 @@ model SignatureOtp {
   request     SignatureRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   @@index([requestId])
+  @@index([expiresAt])
   @@map("signature_otps")
 }
 
@@ -1482,6 +1491,7 @@ model WizardSubmission {
   @@index([clientId])
   @@index([leadId])
   @@index([status])
+  @@index([templateId, status])
   @@index([createdAt])
   @@map("wizard_submissions")
 }
@@ -1572,6 +1582,7 @@ model LoginOtp {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, ipAddress])
+  @@index([expiresAt])
   @@map("login_otps")
 }
 
@@ -1601,6 +1612,8 @@ model WikiPage {
   @@index([authorId])
   @@index([category])
   @@index([slug])
+  @@index([parentId])
+  @@index([isPublished])
   @@map("wiki_pages")
 }
 
