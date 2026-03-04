@@ -12,8 +12,11 @@ export async function POST(request: NextRequest) {
 
     // Verify webhook secret with timing-safe comparison
     const expected = process.env.AI_WEBHOOK_SECRET
+    const secretBuf = Buffer.from(webhookSecret ?? '')
+    const expectedBuf = Buffer.from(expected ?? '')
     if (!expected || !webhookSecret || typeof webhookSecret !== 'string'
-      || !crypto.timingSafeEqual(Buffer.from(webhookSecret), Buffer.from(expected))) {
+      || secretBuf.length !== expectedBuf.length
+      || !crypto.timingSafeEqual(secretBuf, expectedBuf)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

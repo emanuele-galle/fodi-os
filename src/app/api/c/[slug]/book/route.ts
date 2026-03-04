@@ -22,7 +22,7 @@ export async function POST(
 
   // Rate limit: 3 req/IP/10min
   const ip = getClientIp(request)
-  if (!rateLimit(`book:${ip}`, 3, 600000)) {
+  if (!rateLimit(`book:${ip}`, 3, 600000).allowed) {
     return NextResponse.json({ error: 'Troppe richieste. Riprova tra qualche minuto.' }, { status: 429 })
   }
 

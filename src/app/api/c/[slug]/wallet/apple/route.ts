@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     const ip = getClientIp(request)
-    if (!rateLimit(`wallet-apple:${ip}`, 10, 60000)) {
+    if (!rateLimit(`wallet-apple:${ip}`, 10, 60000).allowed) {
       return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
     }
 

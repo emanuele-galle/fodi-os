@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIp(request)
-  if (!rateLimit(`block-slot:${ip}`, 10, 60000)) {
+  if (!rateLimit(`block-slot:${ip}`, 10, 60000).allowed) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   const ip = getClientIp(request)
-  if (!rateLimit(`portal-avail:${ip}`, 30, 60000)) {
+  if (!rateLimit(`portal-avail:${ip}`, 30, 60000).allowed) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 

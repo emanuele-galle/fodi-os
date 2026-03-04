@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorizzato' }, { status: 403 })
     }
 
-    if (!rateLimit('reminders-generate', 1, 60000)) {
+    if (!rateLimit('reminders-generate', 1, 60000).allowed) {
       return NextResponse.json({ error: 'Generazione reminder già in corso. Riprova tra un minuto.' }, { status: 429 })
     }
 

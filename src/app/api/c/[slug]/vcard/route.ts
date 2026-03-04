@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     const ip = getClientIp(request)
-    if (!rateLimit(`vcard:${ip}`, 20, 60000)) {
+    if (!rateLimit(`vcard:${ip}`, 20, 60000).allowed) {
       return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
     }
 

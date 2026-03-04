@@ -46,7 +46,6 @@ interface SearchResults {
   projects: { id: string; name: string; slug?: string }[]
   tasks: { id: string; title: string; projectId?: string }[]
   quotes: { id: string; number: string; title: string }[]
-  invoices: { id: string; number: string; title: string }[]
   tickets: { id: string; number: string; subject: string }[]
 }
 
@@ -59,7 +58,6 @@ const commands: CommandItem[] = [
   { id: 'projects', label: 'Progetti Clienti', icon: FolderKanban, href: '/projects', group: 'navigate' },
   { id: 'calendar', label: 'Calendario', icon: CalendarDays, href: '/calendar', group: 'navigate' },
   { id: 'quotes', label: 'Preventivi', icon: Receipt, href: '/erp/quotes', group: 'navigate' },
-  { id: 'invoices', label: 'Fatture', icon: Receipt, href: '/erp/invoices', group: 'navigate' },
 { id: 'support', label: 'Supporto', icon: LifeBuoy, href: '/support', group: 'navigate' },
   { id: 'settings', label: 'Impostazioni', icon: Settings, href: '/settings', group: 'navigate' },
   { id: 'new-client', label: 'Nuovo Cliente', description: 'Crea un nuovo cliente', icon: Plus, href: '/crm?action=new', group: 'action' },
@@ -128,16 +126,6 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           description: 'Preventivo',
           icon: FileText,
           href: `/erp/quotes/${quote.id}`,
-          group: 'search',
-        })
-      }
-      for (const invoice of data.invoices) {
-        items.push({
-          id: `invoice-${invoice.id}`,
-          label: `${invoice.number} - ${invoice.title}`,
-          description: 'Fattura',
-          icon: Receipt,
-          href: `/erp/invoices/${invoice.id}`,
           group: 'search',
         })
       }

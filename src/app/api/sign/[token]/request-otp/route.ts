@@ -14,7 +14,7 @@ export async function POST(
 ) {
   try {
     const ip = getClientIp(request)
-    if (!rateLimit(`otp-request:${ip}`, 5, 60000)) {
+    if (!rateLimit(`otp-request:${ip}`, 5, 60000).allowed) {
       return NextResponse.json({ error: 'Troppi tentativi. Riprova tra un minuto.' }, { status: 429 })
     }
 

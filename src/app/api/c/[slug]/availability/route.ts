@@ -13,7 +13,7 @@ export async function GET(
 
   // Rate limit: 20 req/IP/min
   const ip = getClientIp(request)
-  if (!rateLimit(`availability:${ip}`, 20, 60000)) {
+  if (!rateLimit(`availability:${ip}`, 20, 60000).allowed) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 

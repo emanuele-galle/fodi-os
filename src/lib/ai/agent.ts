@@ -194,7 +194,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
   const { conversationId, userMessage, userId, role, customModulePermissions, currentPage, attachments, onEvent } = params
 
   // Rate limit
-  if (!rateLimit(`ai:chat:${userId}`, 30, 60000)) {
+  if (!rateLimit(`ai:chat:${userId}`, 30, 60000).allowed) {
     throw new Error('Troppe richieste. Attendi un momento prima di riprovare.')
   }
 
@@ -480,7 +480,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
       } else if (!hasPermission(role, toolDef.module, toolDef.requiredPermission, customModulePermissions)) {
         result = JSON.stringify({ success: false, error: `Permesso negato per ${toolUse.name}` })
         status = 'DENIED'
-      } else if (!rateLimit(`ai:tool:${userId}`, 50, 60000)) {
+      } else if (!rateLimit(`ai:tool:${userId}`, 50, 60000).allowed) {
         result = JSON.stringify({ success: false, error: 'Rate limit tool raggiunto' })
         status = 'ERROR'
       } else {

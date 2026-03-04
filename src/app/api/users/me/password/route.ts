@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id')!
 
-    if (!rateLimit(`password:${userId}`, 10, 15 * 60 * 1000)) {
+    if (!rateLimit(`password:${userId}`, 10, 15 * 60 * 1000).allowed) {
       return NextResponse.json({ error: 'Troppi tentativi. Riprova tra 15 minuti.' }, { status: 429 })
     }
 

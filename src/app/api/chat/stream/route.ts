@@ -20,18 +20,8 @@ export async function GET(request: NextRequest) {
       // Send connected event
       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected' })}\n\n`))
 
-      // Heartbeat every 30 seconds
-      const heartbeat = setInterval(() => {
-        try {
-          controller.enqueue(encoder.encode(': heartbeat\n\n'))
-        } catch {
-          clearInterval(heartbeat)
-        }
-      }, 30000)
-
-      // Cleanup on abort
+      // Cleanup on abort (heartbeat handled by sseManager)
       request.signal.addEventListener('abort', () => {
-        clearInterval(heartbeat)
         sseManager.removeClient(userId, controller)
         // If user has no more connections, broadcast offline
         if (!sseManager.isUserConnected(userId)) {
