@@ -96,6 +96,10 @@ export function getWeekDates(year: number, month: number, day: number): Date[] {
   })
 }
 
+export function formatLocalDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function getEventColor(
   ev: CalendarEvent,
   isMultiUser: boolean,

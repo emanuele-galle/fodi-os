@@ -1,11 +1,14 @@
 'use client'
 
 /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
+import { useRef, useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Calendar, MapPin, Video } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import type { CalendarEvent, NewEventData } from './types'
 import { HOURS, SLOT_HEIGHT } from './constants'
-import { formatTime, addHour, getEventPositionStyle } from './utils'
+import { formatTime, addHour, getEventPositionStyle, formatLocalDateKey } from './utils'
+import { layoutOverlappingEvents } from './event-layout'
+import { QuickEventInput } from './QuickEventInput'
 
 interface DayViewProps {
   selectedDayKey: string
@@ -21,6 +24,7 @@ interface DayViewProps {
   setNewEvent: (ev: NewEventData) => void
   setCreateError: (err: string | null) => void
   setShowNewEvent: (show: boolean) => void
+  handleQuickCreate?: (title: string, dateStr: string, hour: number) => void
 }
 
 export function DayView({
@@ -37,26 +41,41 @@ export function DayView({
   setNewEvent,
   setCreateError,
   setShowNewEvent,
+  handleQuickCreate,
 }: DayViewProps) {
+  const [quickHour, setQuickHour] = useState<number | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const selDayEvents = eventsByDate.get(selectedDayKey) || []
   const allDayEvs = selDayEvents.filter((ev) => !!ev.start.date)
   const timedEvs = selDayEvents.filter((ev) => !!ev.start.dateTime)
   const selDate = new Date(selectedDayKey + 'T00:00:00')
   const isToday = selectedDayKey === todayKey
 
+  // Overlap layout
+  const timedLayout = layoutOverlappingEvents(timedEvs)
+
+  // Auto-scroll to current time on today
+  useEffect(() => {
+    if (isToday && scrollRef.current) {
+      const now = new Date()
+      const scrollTo = Math.max(0, ((now.getHours() * 60 + now.getMinutes()) / 60) * SLOT_HEIGHT - 100)
+      scrollRef.current.scrollTop = scrollTo
+    }
+  }, [isToday, selectedDayKey])
+
   const handleNewEvent = () => openNewEventForDate(selectedDayKey)
 
   const goPrevDay = () => {
     const d = new Date(selectedDayKey + 'T00:00:00')
     d.setDate(d.getDate() - 1)
-    setSelectedDayKey(d.toISOString().split('T')[0])
+    setSelectedDayKey(formatLocalDateKey(d))
     setYear(d.getFullYear())
     setMonth(d.getMonth())
   }
   const goNextDay = () => {
     const d = new Date(selectedDayKey + 'T00:00:00')
     d.setDate(d.getDate() + 1)
-    setSelectedDayKey(d.toISOString().split('T')[0])
+    setSelectedDayKey(formatLocalDateKey(d))
     setYear(d.getFullYear())
     setMonth(d.getMonth())
   }
@@ -98,10 +117,8 @@ export function DayView({
               return (
                 <button
                   key={ev.id}
-                   
                   onClick={() => setSelectedEvent(ev)}
                   className="w-full text-left rounded-md px-2.5 py-1.5 text-xs border-l-2 font-medium"
-                   
                   style={{ borderLeftColor: color, backgroundColor: color + '15', color }}
                 >
                   {ev.summary}
@@ -112,59 +129,82 @@ export function DayView({
           </div>
         )}
         {/* Time grid */}
-        <div className="overflow-y-auto max-h-[calc(100vh-280px)] md:max-h-[650px]">
-          { }
+        <div ref={scrollRef} className="overflow-y-auto max-h-[calc(100vh-280px)] md:max-h-[650px]">
           <div className="relative" style={{ height: HOURS.length * SLOT_HEIGHT }}>
             {/* Hour lines + labels */}
             {HOURS.map((hour) => (
               <div
                 key={hour}
                 className="absolute left-0 right-0 border-t border-border/30 flex items-start hover:bg-secondary/15 transition-colors cursor-pointer group"
-                 
                 style={{ top: hour * SLOT_HEIGHT, height: SLOT_HEIGHT }}
-                 
                 onClick={() => {
-                  const timeStr = `${String(hour).padStart(2, '0')}:00`
-                  setNewEvent({
-                    summary: '', description: '', location: '',
-                    startDate: selectedDayKey, startTime: timeStr,
-                    endDate: selectedDayKey, endTime: addHour(timeStr),
-                    withMeet: false,
-                  })
-                  setCreateError(null)
-                  setShowNewEvent(true)
+                  if (handleQuickCreate) {
+                    setQuickHour(hour)
+                  } else {
+                    const timeStr = `${String(hour).padStart(2, '0')}:00`
+                    setNewEvent({
+                      summary: '', description: '', location: '',
+                      startDate: selectedDayKey, startTime: timeStr,
+                      endDate: selectedDayKey, endTime: addHour(timeStr),
+                      withMeet: false,
+                    })
+                    setCreateError(null)
+                    setShowNewEvent(true)
+                  }
                 }}
               >
                 <span className="text-xs text-muted w-14 text-right pr-3 pt-1 flex-shrink-0 select-none">
                   {`${String(hour).padStart(2, '0')}:00`}
                 </span>
-                <div className="flex-1 border-l border-border/20 h-full" />
+                <div className="flex-1 border-l border-border/20 h-full relative">
+                  {quickHour === hour && handleQuickCreate && (
+                    <QuickEventInput
+                      hour={hour}
+                      onSubmit={(title) => {
+                        handleQuickCreate(title, selectedDayKey, hour)
+                        setQuickHour(null)
+                      }}
+                      onExpand={() => {
+                        setQuickHour(null)
+                        const timeStr = `${String(hour).padStart(2, '0')}:00`
+                        setNewEvent({
+                          summary: '', description: '', location: '',
+                          startDate: selectedDayKey, startTime: timeStr,
+                          endDate: selectedDayKey, endTime: addHour(timeStr),
+                          withMeet: false,
+                        })
+                        setCreateError(null)
+                        setShowNewEvent(true)
+                      }}
+                      onCancel={() => setQuickHour(null)}
+                    />
+                  )}
+                </div>
               </div>
             ))}
-            {/* Events - absolute positioned */}
-            {timedEvs.map((ev) => {
+            {/* Events - absolute positioned with overlap columns */}
+            {timedLayout.map(({ event: ev, column, totalColumns }) => {
               const pos = getEventPositionStyle(ev, SLOT_HEIGHT)
               if (!pos) return null
               const color = getEventColor(ev)
               const durationMins = (new Date(ev.end.dateTime!).getTime() - new Date(ev.start.dateTime!).getTime()) / 60000
+              const columnWidth = (100 - 10) / totalColumns // 10% reserved for time labels area via left offset
+              const leftPercent = 10 + column * columnWidth // 10% = 60px-ish for time labels
               return (
                 <button
                   key={ev.id}
-                   
                   onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev) }}
                   className="absolute rounded-lg text-left px-2.5 py-1.5 border-l-[3px] overflow-hidden hover:shadow-lg transition-all hover:z-20 hover:scale-[1.01]"
-                   
                   style={{
                     top: pos.top + 1,
                     height: Math.max(pos.height - 2, 24),
-                    left: 60,
-                    right: 8,
+                    left: `calc(${leftPercent}% + 2px)`,
+                    width: `calc(${columnWidth}% - 4px)`,
                     borderLeftColor: color,
                     backgroundColor: color + '20',
-                    zIndex: 5,
+                    zIndex: 5 + column,
                   }}
                 >
-                  { }
                   <div className="font-semibold text-xs truncate" style={{ color }}>
                     {formatTime(ev.start.dateTime)} — {formatTime(ev.end.dateTime)}
                     {ev.conferenceData?.entryPoints?.find(ep => ep.entryPointType === 'video') && (
@@ -195,7 +235,6 @@ export function DayView({
               return (
                 <div
                   className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
-                   
                   style={{ top: nowTop }}
                 >
                   <div className="w-14 pr-1 text-right">

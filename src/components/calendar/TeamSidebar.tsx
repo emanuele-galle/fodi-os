@@ -15,6 +15,7 @@ interface TeamSidebarProps {
   calendars: CalendarInfo[]
   selectedCalendars: Set<string>
   setSelectedCalendars: React.Dispatch<React.SetStateAction<Set<string>>>
+  miniCalendar?: React.ReactNode
 }
 
 function TeamMemberList({
@@ -204,6 +205,7 @@ export function TeamSidebarDesktop({
   calendars,
   selectedCalendars,
   setSelectedCalendars,
+  miniCalendar,
 }: TeamSidebarProps) {
   return (
     <div className="hidden md:block w-52 flex-shrink-0">
@@ -223,6 +225,7 @@ export function TeamSidebarDesktop({
             setSelectedCalendars={setSelectedCalendars}
             size="sm"
           />
+          {miniCalendar}
         </CardContent>
       </Card>
     </div>

@@ -267,6 +267,9 @@ export async function POST(request: NextRequest) {
   }
   const { summary, description, start, end, location, attendees, calendarId, withMeet, recurrence } = parsed.data
 
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } })
+  const timezone = user?.timezone || 'Europe/Rome'
+
   try {
     const calendar = getCalendarService(auth)
     const res = await withRetry(() => calendar.events.insert({
@@ -277,8 +280,8 @@ export async function POST(request: NextRequest) {
         summary,
         description,
         location,
-        start: { dateTime: start, timeZone: 'Europe/Rome' },
-        end: { dateTime: end, timeZone: 'Europe/Rome' },
+        start: { dateTime: start, timeZone: timezone },
+        end: { dateTime: end, timeZone: timezone },
         ...(recurrence && recurrence.length > 0 && { recurrence }),
         ...(attendees && {
           attendees: attendees.map((email: string) => ({ email })),

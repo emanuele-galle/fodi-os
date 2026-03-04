@@ -1,5 +1,11 @@
 import { getAuthenticatedClient, getCalendarService, withRetry } from '@/lib/google'
+import { prisma } from '@/lib/prisma'
 import type { AiToolDefinition, AiToolInput, AiToolContext } from '../types'
+
+async function getUserTimezone(userId: string): Promise<string> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } })
+  return user?.timezone || 'Europe/Rome'
+}
 
 export const calendarTools: AiToolDefinition[] = [
   {
@@ -76,6 +82,7 @@ export const calendarTools: AiToolDefinition[] = [
       if (!client) return { success: false, error: 'Google Calendar non collegato. L\'utente deve collegare il proprio account Google dalle Impostazioni.' }
 
       const calendar = getCalendarService(client)
+      const timezone = await getUserTimezone(context.userId)
 
       const event = await withRetry(() =>
         calendar.events.insert({
@@ -84,8 +91,8 @@ export const calendarTools: AiToolDefinition[] = [
             summary: input.summary as string,
             description: (input.description as string) || undefined,
             location: (input.location as string) || undefined,
-            start: { dateTime: input.startDateTime as string, timeZone: 'Europe/Rome' },
-            end: { dateTime: input.endDateTime as string, timeZone: 'Europe/Rome' },
+            start: { dateTime: input.startDateTime as string, timeZone: timezone },
+            end: { dateTime: input.endDateTime as string, timeZone: timezone },
             attendees: (input.attendees as string[] || []).map((email) => ({ email })),
           },
         })
@@ -129,9 +136,26 @@ export const calendarTools: AiToolDefinition[] = [
       const duration = Number(input.durationMinutes) || 60
       const startHour = Number(input.startHour) || 9
       const endHour = Number(input.endHour) || 18
+      const timezone = await getUserTimezone(context.userId)
 
-      const dayStart = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:00:00+01:00`)
-      const dayEnd = new Date(`${dateStr}T${String(endHour).padStart(2, '0')}:00:00+01:00`)
+      // Build timezone-aware dates using Intl to get the correct UTC offset
+      const getOffsetForDate = (date: string, tz: string): string => {
+        const d = new Date(`${date}T12:00:00Z`)
+        const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' })
+        const parts = formatter.formatToParts(d)
+        const offsetPart = parts.find(p => p.type === 'timeZoneName')?.value || '+01:00'
+        // Convert "GMT+1" → "+01:00"
+        const match = offsetPart.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/)
+        if (!match) return '+01:00'
+        const sign = match[1]
+        const hours = match[2].padStart(2, '0')
+        const mins = (match[3] || '00').padStart(2, '0')
+        return `${sign}${hours}:${mins}`
+      }
+      const offset = getOffsetForDate(dateStr, timezone)
+
+      const dayStart = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:00:00${offset}`)
+      const dayEnd = new Date(`${dateStr}T${String(endHour).padStart(2, '0')}:00:00${offset}`)
 
       const res = await withRetry(() =>
         calendar.events.list({
@@ -198,12 +222,13 @@ export const calendarTools: AiToolDefinition[] = [
       if (!client) return { success: false, error: 'Google Calendar non collegato.' }
 
       const calendar = getCalendarService(client)
+      const timezone = await getUserTimezone(context.userId)
       const requestBody: Record<string, unknown> = {}
       if (input.summary) requestBody.summary = input.summary
       if (input.description !== undefined) requestBody.description = input.description
       if (input.location !== undefined) requestBody.location = input.location
-      if (input.startDateTime) requestBody.start = { dateTime: input.startDateTime as string, timeZone: 'Europe/Rome' }
-      if (input.endDateTime) requestBody.end = { dateTime: input.endDateTime as string, timeZone: 'Europe/Rome' }
+      if (input.startDateTime) requestBody.start = { dateTime: input.startDateTime as string, timeZone: timezone }
+      if (input.endDateTime) requestBody.end = { dateTime: input.endDateTime as string, timeZone: timezone }
 
       const event = await withRetry(() =>
         calendar.events.patch({

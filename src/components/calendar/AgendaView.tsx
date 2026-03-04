@@ -14,6 +14,7 @@ interface AgendaViewProps {
   setSelectedEvent: (ev: CalendarEvent) => void
   setSelectedDayKey: (key: string) => void
   setMobileView: (view: 'calendar' | 'agenda' | 'day') => void
+  isDesktop?: boolean
 }
 
 export function AgendaView({
@@ -24,12 +25,15 @@ export function AgendaView({
   setSelectedEvent,
   setSelectedDayKey,
   setMobileView,
+  isDesktop = false,
 }: AgendaViewProps) {
   const sortedDates = Array.from(eventsByDate.keys()).sort()
 
+  const containerClass = isDesktop ? 'space-y-2' : 'md:hidden space-y-2'
+
   if (sortedDates.length === 0) {
     return (
-      <div className="md:hidden space-y-2">
+      <div className={containerClass}>
         <EmptyState
           icon={Calendar}
           title="Nessun evento"
@@ -40,7 +44,7 @@ export function AgendaView({
   }
 
   return (
-    <div className="md:hidden space-y-2">
+    <div className={containerClass}>
       {sortedDates.map((dateKey) => {
         const dayEvents = eventsByDate.get(dateKey) || []
         const d = new Date(dateKey + 'T00:00:00')

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Settings, Bell, Lock, User, Palette, Shield, CreditCard, ArrowRight } from 'lucide-react'
+import { Settings, Bell, Lock, User, Palette, Shield, CreditCard, ArrowRight, LogOut } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/utils'
 import { ProfileSection } from '@/components/settings/ProfileSection'

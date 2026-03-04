@@ -21,6 +21,7 @@ import {
   Bell,
   Library,
   BookOpen,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { haptic } from '@/lib/haptic'
@@ -119,6 +120,13 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
     return pathname.startsWith(href)
   }
 
+  const handleLogout = useCallback(async () => {
+    haptic('selection')
+    closeMenu()
+    await fetch('/api/auth/logout', { method: 'POST' })
+    window.location.href = '/login'
+  }, [closeMenu])
+
   function handleTabClick(href: string) {
     haptic('selection')
     if (href === '#menu') {
@@ -179,7 +187,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             className={cn(
-              'mobile-bottom-sheet absolute bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 bg-[var(--color-sheet)] border-t border-[var(--color-sheet-border)] rounded-t-xl max-h-[70vh] overflow-y-auto z-50 shadow-[var(--shadow-xl)]',
+              'mobile-bottom-sheet absolute bottom-[calc(50px+max(env(safe-area-inset-bottom,0px),8px))] left-0 right-0 bg-[var(--color-sheet)] border-t border-[var(--color-sheet-border)] rounded-t-xl max-h-[70vh] overflow-y-auto z-50 shadow-[var(--shadow-xl)]',
               closing ? 'animate-menu-slide-down' : 'animate-menu-slide-up'
             )}
           >
@@ -226,12 +234,22 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
                 )
               })}
             </nav>
+
+            <div className="px-4 pb-4 pt-2 border-t border-[var(--color-sheet-border)]">
+              <button
+                onClick={handleLogout}
+                className="ios-press flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-destructive hover:bg-destructive/10 active:bg-destructive/15 transition-colors touch-manipulation"
+              >
+                <LogOut className="h-[18px] w-[18px]" />
+                <span className="text-sm font-medium">Esci</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Bottom Nav Bar */}
-      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[var(--color-sheet)] backdrop-blur-2xl saturate-[var(--glass-saturation)] border-t border-[var(--color-sheet-border)] pb-[env(safe-area-inset-bottom,0px)]">
+      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[var(--color-sheet)] backdrop-blur-2xl saturate-[var(--glass-saturation)] border-t border-[var(--color-sheet-border)] pb-[max(env(safe-area-inset-bottom,0px),8px)]">
         <div className="flex items-center justify-around h-[50px]">
           {TAB_ITEMS.map((tab) => {
             const active = isTabActive(tab.href)

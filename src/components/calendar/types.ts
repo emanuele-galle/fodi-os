@@ -37,7 +37,7 @@ export interface TeamMember {
 
 export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'custom'
 export type RecurrenceEndType = 'never' | 'date' | 'count'
-export type DesktopView = 'month' | 'week' | 'day'
+export type DesktopView = 'month' | 'week' | 'day' | 'agenda'
 export type MobileView = 'calendar' | 'agenda' | 'day'
 
 export interface NewEventData {

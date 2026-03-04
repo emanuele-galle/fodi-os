@@ -12,7 +12,8 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { formatMonthYear } from './utils'
-import type { DesktopView } from './types'
+import { EventSearch } from './EventSearch'
+import type { DesktopView, CalendarEvent } from './types'
 
 interface CalendarHeaderProps {
   today: Date
@@ -27,6 +28,9 @@ interface CalendarHeaderProps {
   prevMonth: () => void
   nextMonth: () => void
   openNewEventForDate: (dateStr: string) => void
+  eventsByDate?: Map<string, CalendarEvent[]>
+  getEventColor?: (ev: CalendarEvent) => string
+  setSelectedEvent?: (ev: CalendarEvent) => void
 }
 
 export function CalendarHeader({
@@ -42,10 +46,14 @@ export function CalendarHeader({
   prevMonth,
   nextMonth,
   openNewEventForDate,
+  eventsByDate,
+  getEventColor,
+  setSelectedEvent,
 }: CalendarHeaderProps) {
   const handleMonthView = () => setDesktopView('month')
   const handleWeekView = () => setDesktopView('week')
   const handleDayView = () => { setDesktopView('day'); setSelectedDayKey(todayKey) }
+  const handleAgendaView = () => setDesktopView('agenda')
   const handleNewEvent = () => openNewEventForDate(todayKey)
 
   return (
@@ -109,7 +117,23 @@ export function CalendarHeader({
           >
             Giorno
           </button>
+          <button
+            onClick={handleAgendaView}
+            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+              desktopView === 'agenda' ? 'bg-card shadow-sm text-foreground' : 'text-muted hover:text-foreground'
+            }`}
+          >
+            Agenda
+          </button>
         </div>
+
+        {eventsByDate && getEventColor && setSelectedEvent && (
+          <EventSearch
+            eventsByDate={eventsByDate}
+            getEventColor={getEventColor}
+            setSelectedEvent={setSelectedEvent}
+          />
+        )}
 
         <Link href="/calendar/availability">
           <Button variant="outline" size="sm">

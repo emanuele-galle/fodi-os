@@ -1,9 +1,11 @@
 'use client'
 
+import { useRef, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
-import type { CalendarEvent, NewEventData } from './types'
+import type { CalendarEvent, DesktopView, NewEventData } from './types'
 import { DAYS, HOURS, SLOT_HEIGHT } from './constants'
-import { formatTime, addHour, getEventPositionStyle } from './utils'
+import { formatTime, addHour, getEventPositionStyle, formatLocalDateKey } from './utils'
+import { layoutOverlappingEvents } from './event-layout'
 
 interface WeekViewProps {
   weekDates: Date[]
@@ -12,14 +14,10 @@ interface WeekViewProps {
   getEventColor: (ev: CalendarEvent) => string
   setSelectedEvent: (ev: CalendarEvent) => void
   setSelectedDayKey: (key: string) => void
-  setDesktopView: (view: 'month' | 'week' | 'day') => void
+  setDesktopView: (view: DesktopView) => void
   setNewEvent: (ev: NewEventData) => void
   setCreateError: (err: string | null) => void
   setShowNewEvent: (show: boolean) => void
-}
-
-function dateKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 export function WeekView({
@@ -34,8 +32,20 @@ export function WeekView({
   setCreateError,
   setShowNewEvent,
 }: WeekViewProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const hasToday = weekDates.some((d) => formatLocalDateKey(d) === todayKey)
+
+  // Auto-scroll to current time when viewing current week
+  useEffect(() => {
+    if (hasToday && scrollRef.current) {
+      const now = new Date()
+      const scrollTo = Math.max(0, ((now.getHours() * 60 + now.getMinutes()) / 60) * SLOT_HEIGHT - 100)
+      scrollRef.current.scrollTop = scrollTo
+    }
+  }, [hasToday])
+
   const hasAllDayEvents = weekDates.some((d) => {
-    const dk = dateKey(d)
+    const dk = formatLocalDateKey(d)
     return (eventsByDate.get(dk) || []).some((ev) => !!ev.start.date)
   })
 
@@ -47,7 +57,7 @@ export function WeekView({
           <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-secondary/10">
             <div className="text-xs text-muted px-2 py-1 text-right pt-2">tutto giorno</div>
             {weekDates.map((d, i) => {
-              const dk = dateKey(d)
+              const dk = formatLocalDateKey(d)
               const allDayEvs = (eventsByDate.get(dk) || []).filter((ev) => !!ev.start.date)
               return (
                 <div key={i} className="border-l border-border/50 px-0.5 py-1 min-h-[28px]">
@@ -75,7 +85,7 @@ export function WeekView({
         <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border">
           <div className="py-2" />
           {weekDates.map((d, i) => {
-            const dk = dateKey(d)
+            const dk = formatLocalDateKey(d)
             const isToday = dk === todayKey
             return (
               <button
@@ -96,7 +106,7 @@ export function WeekView({
         </div>
         {/* Time grid */}
         {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- static style */}
-        <div className="max-h-[600px] overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
+        <div ref={scrollRef} className="max-h-[600px] overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
           {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- computed height */}
           <div className="grid grid-cols-[60px_repeat(7,1fr)]" style={{ height: HOURS.length * SLOT_HEIGHT }}>
             {/* Time labels column */}
@@ -114,9 +124,10 @@ export function WeekView({
             </div>
             {/* Day columns */}
             {weekDates.map((d, i) => {
-              const dk = dateKey(d)
+              const dk = formatLocalDateKey(d)
               const isToday = dk === todayKey
               const timedEvents = (eventsByDate.get(dk) || []).filter((ev) => !!ev.start.dateTime)
+              const timedLayout = layoutOverlappingEvents(timedEvents)
               return (
                 <div
                   key={i}
@@ -145,25 +156,29 @@ export function WeekView({
                       }}
                     />
                   ))}
-                  {/* Events */}
-                  {timedEvents.map((ev) => {
+                  {/* Events with overlap layout */}
+                  {timedLayout.map(({ event: ev, column, totalColumns }) => {
                     const pos = getEventPositionStyle(ev, SLOT_HEIGHT)
                     if (!pos) return null
                     const color = getEventColor(ev)
+                    const colWidth = 100 / totalColumns
+                    const leftPct = column * colWidth
                     return (
                       <button
                         key={ev.id}
                         // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
                         onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev) }}
-                        className="absolute left-0.5 right-0.5 rounded text-[10px] px-1.5 py-0.5 text-left border-l-2 overflow-hidden hover:z-10 transition-all hover:shadow-md"
+                        className="absolute rounded text-[10px] px-1.5 py-0.5 text-left border-l-2 overflow-hidden hover:z-10 transition-all hover:shadow-md"
                         // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic position + color
                         style={{
                           top: pos.top,
                           height: pos.height,
+                          left: `${leftPct}%`,
+                          width: `${colWidth}%`,
                           borderLeftColor: color,
                           backgroundColor: color + '25',
                           color: color,
-                          zIndex: 1,
+                          zIndex: 1 + column,
                         }}
                         title={`${formatTime(ev.start.dateTime)} - ${formatTime(ev.end.dateTime)}: ${ev.summary}`}
                       >

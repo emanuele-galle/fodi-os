@@ -108,14 +108,17 @@ export async function PATCH(
 
   const { summary, description, start, end, location, calendarId, attendees, recurrence } = parsed.data
 
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } })
+  const timezone = user?.timezone || 'Europe/Rome'
+
   try {
     const calendar = getCalendarService(auth)
     const requestBody: Record<string, unknown> = {}
     if (summary !== undefined) requestBody.summary = summary
     if (description !== undefined) requestBody.description = description
     if (location !== undefined) requestBody.location = location
-    if (start !== undefined) requestBody.start = { dateTime: start, timeZone: 'Europe/Rome' }
-    if (end !== undefined) requestBody.end = { dateTime: end, timeZone: 'Europe/Rome' }
+    if (start !== undefined) requestBody.start = { dateTime: start, timeZone: timezone }
+    if (end !== undefined) requestBody.end = { dateTime: end, timeZone: timezone }
     if (attendees !== undefined) requestBody.attendees = attendees.map((email) => ({ email }))
     if (recurrence !== undefined) requestBody.recurrence = recurrence
 
