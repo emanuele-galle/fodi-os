@@ -39,14 +39,6 @@ export function useUserPreferences() {
     setPreferences((prev) => {
       const updated = { ...prev, [key]: value }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
-
-      // Fire and forget API sync
-      fetch('/api/auth/preferences', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [key]: value }),
-      }).catch(() => {})
-
       return updated
     })
   }, [])

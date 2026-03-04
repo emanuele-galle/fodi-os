@@ -255,12 +255,12 @@ export default function TasksPage() {
         body: JSON.stringify({ status: newStatus }),
       })
       if (!res.ok) {
-        fetchTasks()
+        silentRefetchTasks()
       } else {
         fetchTabCounts()
       }
     } catch {
-      fetchTasks()
+      silentRefetchTasks()
     }
   }
 
