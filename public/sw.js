@@ -1,4 +1,4 @@
-const CACHE_NAME = 'os-v6'
+const CACHE_NAME = 'os-v7'
 const API_CACHE_NAME = 'os-api-v3'
 const STATIC_ASSETS = [
   '/manifest.json',
