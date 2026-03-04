@@ -43,14 +43,14 @@ export function TaskFilters({
           value={statusFilter}
           // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- form handler
           onChange={(e) => onStatusFilterChange(e.target.value)}
-          className="w-44"
+          className="w-full sm:w-44"
         />
         <Select
           options={PRIORITY_OPTIONS}
           value={priorityFilter}
           // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- form handler
           onChange={(e) => onPriorityFilterChange(e.target.value)}
-          className="w-44"
+          className="w-full sm:w-44"
         />
         <Select
           // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- computed from clients prop
@@ -61,7 +61,7 @@ export function TaskFilters({
           value={clientFilter}
           // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- form handler
           onChange={(e) => onClientFilterChange(e.target.value)}
-          className="w-48"
+          className="w-full sm:w-48"
         />
         <span className="text-sm text-muted whitespace-nowrap">{total} totali</span>
       </div>

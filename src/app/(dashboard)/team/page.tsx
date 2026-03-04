@@ -47,7 +47,7 @@ function TeamPageContent() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 mb-6 border-b border-border overflow-x-auto scrollbar-none">
+      <div className="flex gap-1 mb-6 border-b border-border overflow-x-auto scrollbar-none snap-x snap-mandatory">
         {TABS.map((tab) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
@@ -56,7 +56,7 @@ function TeamPageContent() {
               key={tab.id}
               // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- handler depends on loop item
               onClick={() => setTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap touch-manipulation min-h-[44px] ${
+              className={`flex items-center gap-2 px-3 md:px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap touch-manipulation min-h-[44px] snap-center ${
                 isActive
                   ? 'border-primary text-primary'
                   : 'border-transparent text-muted hover:text-foreground'

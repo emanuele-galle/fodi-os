@@ -122,7 +122,7 @@ export default function SettingsPage() {
                   // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- handler depends on loop item
                   onClick={() => section.href ? router.push(section.href) : setActiveSection(section.id)}
                   className={cn(
-                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap touch-manipulation min-h-[44px] snap-center lg:snap-align-none',
+                    'flex items-center gap-3 px-3 md:px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap touch-manipulation min-h-[44px] snap-center lg:snap-align-none',
                     activeSection === section.id && !section.href
                       ? 'bg-primary/10 text-primary border-l-2 border-primary lg:border-l-2'
                       : 'text-muted hover:text-foreground hover:bg-secondary/60'

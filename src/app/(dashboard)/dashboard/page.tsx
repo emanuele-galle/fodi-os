@@ -380,7 +380,7 @@ export default function DashboardPage() {
   const showDesktopCharts = w.revenue || w.cashFlow
 
   // Pre-compute adaptive grid classes
-  const row1Grid = w.deadline && w.operative ? 'grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
+  const row1Grid = w.deadline && w.operative ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
   const chartsGrid = w.revenue && w.cashFlow ? 'hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6' : 'hidden md:grid grid-cols-1 gap-4 mb-6'
   const row3Grid = w.financial && w.pipeline && w.pipelineFunnel ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
   const row4Grid = w.activityTrend && w.teamActivity ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
