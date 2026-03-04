@@ -1803,11 +1803,24 @@ model AiUserPreference {
 
 model BrandSettings {
   id               String   @id @default("singleton")
+  // Colori
   colorPrimary     String?
   colorPrimaryDark String?
   gradientStart    String?
   gradientMid      String?
   gradientEnd      String?
+  // Identita
+  brandName        String?
+  loginHeading     String?
+  loginSubtext     String?
+  copyrightText    String?
+  // Logo custom (URL MinIO/R2)
+  logoDarkUrl      String?
+  logoLightUrl     String?
+  faviconUrl       String?
+  // Stile UI
+  borderRadius     String?  @default("xl")
+  // Meta
   updatedAt        DateTime @updatedAt
 
   @@map("brand_settings")

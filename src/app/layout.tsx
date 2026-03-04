@@ -1,6 +1,6 @@
 /* eslint-disable react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { brand } from '@/lib/branding'
-import { getBrandColors } from '@/lib/brand-colors'
+import { getBrandSettings } from '@/lib/brand-settings-server'
 import type { Metadata } from 'next'
 import './globals.css'
 
@@ -53,12 +53,16 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const colors = await getBrandColors()
+  const settings = await getBrandSettings()
+  const radiusMap: Record<string, string> = {
+    none: '0', sm: '0.25rem', md: '0.5rem', lg: '0.75rem', xl: '1rem', '2xl': '1.5rem', full: '9999px',
+  }
   return (
     <html lang="it" style={{
-        '--brand-gradient': `linear-gradient(135deg, ${colors.gradientStart} 0%, ${colors.gradientMid} 50%, ${colors.gradientEnd} 100%)`,
-        '--brand-primary': colors.primary,
-        '--brand-primary-dark': colors.primaryDark,
+        '--brand-gradient': `linear-gradient(135deg, ${settings.gradientStart} 0%, ${settings.gradientMid} 50%, ${settings.gradientEnd} 100%)`,
+        '--brand-primary': settings.primary,
+        '--brand-primary-dark': settings.primaryDark,
+        '--brand-radius': radiusMap[settings.borderRadius] || '1rem',
       } as React.CSSProperties}>
       <head>
         <meta name="theme-color" content="#F2F2F7" id="theme-color-meta" />

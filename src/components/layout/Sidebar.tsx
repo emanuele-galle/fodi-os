@@ -38,7 +38,7 @@ interface NavItem {
   href: string
   icon: React.ElementType
   roles?: Role[]
-  children?: { label: string; href: string }[]
+  children?: { label: string; href: string; roles?: Role[] }[]
   group: NavGroup
 }
 
@@ -152,6 +152,7 @@ const navigation: NavItem[] = [
       { label: 'Utenti', href: '/settings/users' },
       { label: 'Assistente AI', href: '/settings/ai' },
       { label: 'Sistema', href: '/settings/system' },
+      { label: 'Branding', href: '/settings/branding', roles: ['ADMIN'] },
     ],
     group: 'system',
   },
@@ -341,7 +342,7 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
                             className="overflow-hidden"
                           >
                             <div className="ml-9 mt-1 space-y-0.5 pb-1 border-l border-[var(--color-sidebar-divider)] pl-0">
-                              {item.children.map((child) => (
+                              {item.children.filter((child) => !child.roles || child.roles.includes(userRole)).map((child) => (
                                 <Link
                                   key={child.href}
                                   href={child.href}

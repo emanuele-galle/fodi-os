@@ -5,12 +5,22 @@ import { z } from 'zod'
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Colore hex non valido')
 
+const borderRadiusValues = ['none', 'sm', 'md', 'lg', 'xl', '2xl', 'full'] as const
+
 const brandSchema = z.object({
   colorPrimary: hexColor.optional(),
   colorPrimaryDark: hexColor.optional(),
   gradientStart: hexColor.optional(),
   gradientMid: hexColor.optional(),
   gradientEnd: hexColor.optional(),
+  brandName: z.string().max(100).optional().nullable(),
+  loginHeading: z.string().max(200).optional().nullable(),
+  loginSubtext: z.string().max(500).optional().nullable(),
+  copyrightText: z.string().max(200).optional().nullable(),
+  logoDarkUrl: z.string().url().optional().nullable(),
+  logoLightUrl: z.string().url().optional().nullable(),
+  faviconUrl: z.string().url().optional().nullable(),
+  borderRadius: z.enum(borderRadiusValues).optional(),
 })
 
 export async function GET() {
