@@ -509,8 +509,8 @@ export function SpeseContent() {
                     {new Date(exp.date).toLocaleDateString('it-IT')}
                   </p>
                   <div className="flex gap-1">
-                    <button onClick={() => openEdit(exp)} className="p-1 rounded hover:bg-secondary/20"><Pencil className="h-3.5 w-3.5 text-muted" /></button>
-                    <button onClick={() => setDeleteConfirm(exp)} className="p-1 rounded hover:bg-secondary/20"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
+                    <button onClick={() => openEdit(exp)} className="p-2 rounded hover:bg-secondary/20"><Pencil className="h-4 w-4 text-muted" /></button>
+                    <button onClick={() => setDeleteConfirm(exp)} className="p-2 rounded hover:bg-secondary/20"><Trash2 className="h-4 w-4 text-destructive" /></button>
                   </div>
                 </div>
               </div>

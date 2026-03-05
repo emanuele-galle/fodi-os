@@ -35,17 +35,17 @@ export function MiniCalendar({ todayKey, selectedDayKey, eventsByDate, onSelectD
   return (
     <div className="mt-3 pt-3 border-t border-border/50">
       <div className="flex items-center justify-between mb-1.5">
-        <button onClick={prevMonth} className="p-0.5 rounded hover:bg-secondary/50 transition-colors">
+        <button onClick={prevMonth} className="p-1.5 rounded hover:bg-secondary/50 transition-colors">
           <ChevronLeft className="h-3 w-3 text-muted" />
         </button>
         <span className="text-xs font-medium capitalize">{monthLabel}</span>
-        <button onClick={nextMonth} className="p-0.5 rounded hover:bg-secondary/50 transition-colors">
+        <button onClick={nextMonth} className="p-1.5 rounded hover:bg-secondary/50 transition-colors">
           <ChevronRight className="h-3 w-3 text-muted" />
         </button>
       </div>
       <div className="grid grid-cols-7 gap-0">
         {DAYS.map((day) => (
-          <div key={day} className="text-center text-[9px] text-muted py-0.5">{day[0]}</div>
+          <div key={day} className="text-center text-[11px] text-muted py-0.5">{day[0]}</div>
         ))}
         {Array.from({ length: totalCells }).map((_, i) => {
           const dayNum = i - firstDay + 1
@@ -61,7 +61,7 @@ export function MiniCalendar({ todayKey, selectedDayKey, eventsByDate, onSelectD
             <button
               key={i}
               onClick={() => onSelectDay(dateKey)}
-              className={`w-5 h-5 mx-auto text-[10px] rounded-full flex items-center justify-center transition-colors relative ${
+              className={`w-7 h-7 mx-auto text-xs rounded-full flex items-center justify-center transition-colors relative ${
                 isSelected ? 'bg-primary text-primary-foreground' :
                 isToday ? 'bg-primary/20 text-primary font-bold' :
                 'hover:bg-secondary/50'

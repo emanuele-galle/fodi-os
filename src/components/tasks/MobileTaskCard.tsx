@@ -114,7 +114,7 @@ export function MobileTaskCard({ task, activeTab, userId, onClick, expanded, sub
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium truncate">{sub.title}</span>
-                    <Badge status={sub.status} className="text-[9px] px-1 py-0">
+                    <Badge status={sub.status} className="text-[11px] px-1 py-0">
                       {STATUS_LABELS[sub.status] || sub.status}
                     </Badge>
                   </div>

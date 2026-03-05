@@ -267,12 +267,12 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
                 <div className="relative">
                   <Icon className={cn('h-[22px] w-[22px]', active && 'stroke-[2.2]')} />
                   {tab.href === '/chat' && unreadChat > 0 && (
-                    <span className="absolute -top-1 -right-2.5 h-[16px] min-w-[16px] px-1 flex items-center justify-center text-[9px] font-bold bg-destructive text-white rounded-full">
+                    <span className="absolute -top-1 -right-2.5 h-[16px] min-w-[16px] px-1 flex items-center justify-center text-[11px] font-bold bg-destructive text-white rounded-full">
                       {unreadChat > 9 ? '9+' : unreadChat}
                     </span>
                   )}
                 </div>
-                <span className={cn('text-[10px] leading-tight', active ? 'font-semibold' : 'font-medium')}>
+                <span className={cn('text-[11px] leading-tight', active ? 'font-semibold' : 'font-medium')}>
                   {tab.label}
                 </span>
               </button>

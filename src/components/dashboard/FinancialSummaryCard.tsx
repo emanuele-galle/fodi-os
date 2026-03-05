@@ -40,7 +40,7 @@ export function FinancialSummaryCard({
           {onViewDetails && (
             <button
               onClick={onViewDetails}
-              className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-1.5 rounded-lg bg-primary/5 hover:bg-primary/10 transition-all"
+              className="text-xs font-medium text-primary hover:text-primary/80 px-3 py-2 rounded-lg bg-primary/5 hover:bg-primary/10 transition-all"
             >
               Dettagli
             </button>

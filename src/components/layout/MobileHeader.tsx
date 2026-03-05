@@ -77,7 +77,7 @@ export function MobileHeader({ user, unreadCount, onOpenSearch, onOpenNotificati
         >
           <Bell className="h-[18px] w-[18px] text-primary" />
           {unreadCount > 0 && (
-            <span className="absolute top-0.5 right-0.5 h-[16px] min-w-[16px] px-1 flex items-center justify-center text-[9px] font-bold bg-destructive text-white rounded-full">
+            <span className="absolute top-0.5 right-0.5 h-[16px] min-w-[16px] px-1 flex items-center justify-center text-[11px] font-bold bg-destructive text-white rounded-full">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}

@@ -96,15 +96,15 @@ export function StickyNotesCard() {
                 <div className="absolute top-1.5 right-1.5 flex gap-0.5">
                   <button
                     onClick={() => setEditingNote(editingNote === note.id ? null : note.id)}
-                    className="p-1 rounded hover:bg-black/5 text-foreground/50 hover:text-foreground/80"
+                    className="p-1.5 rounded hover:bg-black/5 text-foreground/50 hover:text-foreground/80"
                   >
-                    <Pencil className="h-3 w-3" />
+                    <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => deleteNote(note.id)}
-                    className="p-1 rounded hover:bg-black/5 text-foreground/50 hover:text-red-500"
+                    className="p-1.5 rounded hover:bg-black/5 text-foreground/50 hover:text-red-500"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
                 {editingNote === note.id ? (

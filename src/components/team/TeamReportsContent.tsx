@@ -170,7 +170,7 @@ export function TeamReportsContent() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">{item.user.firstName} {item.user.lastName}</span>
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-[11px]">
                         {ROLE_LABELS[item.user.role] || item.user.role}
                       </Badge>
                     </div>
