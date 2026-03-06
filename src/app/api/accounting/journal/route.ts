@@ -35,9 +35,9 @@ export async function GET(request: NextRequest) {
 
     const entries: JournalEntry[] = []
 
-    // Fetch incomes
-    if (!type || type === 'income') {
-      const incomes = await prisma.income.findMany({
+    // Fetch incomes, expenses, and transfers in parallel
+    const [incomes, expenses, transfers] = await Promise.all([
+      (!type || type === 'income') ? prisma.income.findMany({
         where: {
           ...(dateFilter && { date: dateFilter }),
           ...(accountId && { bankAccountId: accountId }),
@@ -54,26 +54,8 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { date: 'desc' },
         take: limit,
-      })
-
-      for (const i of incomes) {
-        entries.push({
-          id: `income-${i.id}`,
-          date: i.date.toISOString(),
-          type: 'income',
-          invoiceNumber: i.invoiceNumber,
-          description: `${i.clientName} - ${i.category}`,
-          debit: 0,
-          credit: Number(i.amount),
-          account: i.bankAccount?.name || null,
-          category: i.category,
-        })
-      }
-    }
-
-    // Fetch expenses
-    if (!type || type === 'expense') {
-      const expenses = await prisma.expense.findMany({
+      }) : Promise.resolve([]),
+      (!type || type === 'expense') ? prisma.expense.findMany({
         where: {
           ...(dateFilter && { date: dateFilter }),
           ...(accountId && { bankAccountId: accountId }),
@@ -91,59 +73,67 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { date: 'desc' },
         take: limit,
-      })
-
-      for (const e of expenses) {
-        entries.push({
-          id: `expense-${e.id}`,
-          date: e.date.toISOString(),
-          type: 'expense',
-          invoiceNumber: e.invoiceNumber,
-          description: `${e.supplierName || ''} ${e.description}`.trim(),
-          debit: Number(e.amount),
-          credit: 0,
-          account: e.bankAccount?.name || null,
-          category: e.category,
-        })
-      }
-    }
-
-    // Fetch transfers
-    if (!type || type === 'transfer') {
-      const transferWhere = {
-        ...(dateFilter && { date: dateFilter }),
-        ...(accountId && { OR: [{ fromAccountId: accountId }, { toAccountId: accountId }] }),
-        ...(search && {
-          OR: [
-            { operation: { contains: search, mode: 'insensitive' as const } },
-            { notes: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }),
-      }
-
-      const transfers = await prisma.bankTransfer.findMany({
-        where: transferWhere,
+      }) : Promise.resolve([]),
+      (!type || type === 'transfer') ? prisma.bankTransfer.findMany({
+        where: {
+          ...(dateFilter && { date: dateFilter }),
+          ...(accountId && { OR: [{ fromAccountId: accountId }, { toAccountId: accountId }] }),
+          ...(search && {
+            OR: [
+              { operation: { contains: search, mode: 'insensitive' as const } },
+              { notes: { contains: search, mode: 'insensitive' as const } },
+            ],
+          }),
+        },
         include: {
           fromAccount: { select: { name: true } },
           toAccount: { select: { name: true } },
         },
         orderBy: { date: 'desc' },
         take: limit,
-      })
+      }) : Promise.resolve([]),
+    ])
 
-      for (const t of transfers) {
-        entries.push({
-          id: `transfer-${t.id}`,
-          date: t.date.toISOString(),
-          type: 'transfer',
-          invoiceNumber: null,
-          description: `${t.operation}: ${t.fromAccount.name} → ${t.toAccount.name}`,
-          debit: Number(t.amount),
-          credit: Number(t.amount),
-          account: `${t.fromAccount.name} → ${t.toAccount.name}`,
-          category: 'Giroconto',
-        })
-      }
+    for (const i of incomes) {
+      entries.push({
+        id: `income-${i.id}`,
+        date: i.date.toISOString(),
+        type: 'income',
+        invoiceNumber: i.invoiceNumber,
+        description: `${i.clientName} - ${i.category}`,
+        debit: 0,
+        credit: Number(i.amount),
+        account: i.bankAccount?.name || null,
+        category: i.category,
+      })
+    }
+
+    for (const e of expenses) {
+      entries.push({
+        id: `expense-${e.id}`,
+        date: e.date.toISOString(),
+        type: 'expense',
+        invoiceNumber: e.invoiceNumber,
+        description: `${e.supplierName || ''} ${e.description}`.trim(),
+        debit: Number(e.amount),
+        credit: 0,
+        account: e.bankAccount?.name || null,
+        category: e.category,
+      })
+    }
+
+    for (const t of transfers) {
+      entries.push({
+        id: `transfer-${t.id}`,
+        date: t.date.toISOString(),
+        type: 'transfer',
+        invoiceNumber: null,
+        description: `${t.operation}: ${t.fromAccount.name} → ${t.toAccount.name}`,
+        debit: Number(t.amount),
+        credit: Number(t.amount),
+        account: `${t.fromAccount.name} → ${t.toAccount.name}`,
+        category: 'Giroconto',
+      })
     }
 
     // Sort by date descending

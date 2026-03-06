@@ -196,6 +196,8 @@ export async function GET(request: NextRequest) {
         overdueTasksCount,
         dealsClosingSoon,
       },
+    }, {
+      headers: { 'Cache-Control': 'private, max-age=60' },
     })
   } catch (e) {
     if (e instanceof Error && e.message.startsWith('Permission denied')) {

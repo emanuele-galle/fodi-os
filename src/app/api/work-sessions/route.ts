@@ -22,14 +22,16 @@ export async function GET(request: NextRequest) {
     const staleSessions = await prisma.workSession.findMany({
       where: { clockOut: null, lastHeartbeat: { lt: staleThreshold } },
     })
-    for (const s of staleSessions) {
-      const durationMins = Math.round(
-        (new Date(s.lastHeartbeat).getTime() - new Date(s.clockIn).getTime()) / 60000
-      )
-      await prisma.workSession.update({
-        where: { id: s.id },
-        data: { clockOut: s.lastHeartbeat, durationMins },
-      })
+    if (staleSessions.length > 0) {
+      await Promise.all(staleSessions.map((s) => {
+        const durationMins = Math.round(
+          (new Date(s.lastHeartbeat).getTime() - new Date(s.clockIn).getTime()) / 60000
+        )
+        return prisma.workSession.update({
+          where: { id: s.id },
+          data: { clockOut: s.lastHeartbeat, durationMins },
+        })
+      }))
     }
 
     const where = {

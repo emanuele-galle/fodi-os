@@ -10,20 +10,23 @@ export async function GET(request: NextRequest) {
     const unread = searchParams.get('unread')
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
 
-    const notifications = await prisma.notification.findMany({
-      where: {
-        userId,
-        ...(unread === 'true' && { isRead: false }),
-      },
-      orderBy: { updatedAt: 'desc' },
-      take: limit,
-    })
+    const [notifications, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where: {
+          userId,
+          ...(unread === 'true' && { isRead: false }),
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: limit,
+      }),
+      prisma.notification.count({
+        where: { userId, isRead: false },
+      }),
+    ])
 
-    const unreadCount = await prisma.notification.count({
-      where: { userId, isRead: false },
+    return NextResponse.json({ items: notifications, unreadCount }, {
+      headers: { 'Cache-Control': 'private, max-age=10' },
     })
-
-    return NextResponse.json({ items: notifications, unreadCount })
   } catch (e) {
     console.error('[notifications]', e)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })

@@ -1,6 +1,14 @@
+import crypto from 'crypto'
+import { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/utils'
 import type { AiToolDefinition, AiToolInput, AiToolContext } from '../types'
+
+function parseDate(value: unknown): Date | null {
+  if (!value || typeof value !== 'string') return null
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? null : d
+}
 
 export const crmTools: AiToolDefinition[] = [
   {
@@ -163,7 +171,11 @@ export const crmTools: AiToolDefinition[] = [
       if (input.stage) data.stage = input.stage
       if (input.value !== undefined) data.value = input.value
       if (input.probability !== undefined) data.probability = input.probability
-      if (input.expectedCloseDate) data.expectedCloseDate = new Date(input.expectedCloseDate as string)
+      if (input.expectedCloseDate) {
+        const parsedDate = parseDate(input.expectedCloseDate)
+        if (!parsedDate) return { success: false, error: 'Data non valida' }
+        data.expectedCloseDate = parsedDate
+      }
       if (input.stage === 'CLOSED_WON' || input.stage === 'CLOSED_LOST') {
         data.actualCloseDate = new Date()
       }
@@ -318,7 +330,7 @@ export const crmTools: AiToolDefinition[] = [
           probability: input.probability !== undefined ? Number(input.probability) : 50,
           clientId: (input.clientId as string) || null,
           contactId: (input.contactId as string) || null,
-          expectedCloseDate: input.expectedCloseDate ? new Date(input.expectedCloseDate as string) : null,
+          expectedCloseDate: input.expectedCloseDate ? (parseDate(input.expectedCloseDate) ?? null) : null,
           ownerId: context.userId,
         },
         select: { id: true, title: true, stage: true, value: true },
@@ -649,24 +661,33 @@ export const crmTools: AiToolDefinition[] = [
 
       const companyName = (input.companyName as string) || lead.company || lead.name
       const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-      const client = await prisma.client.create({
-        data: {
-          companyName,
-          slug: `${slug}-${Date.now()}`,
-          source: lead.source,
-          status: 'ACTIVE',
-          contacts: {
-            create: {
-              firstName: lead.name.split(' ')[0] || lead.name,
-              lastName: lead.name.split(' ').slice(1).join(' ') || '',
-              email: lead.email,
-              phone: lead.phone || undefined,
-              isPrimary: true,
+
+      let client: { id: string; companyName: string }
+      try {
+        client = await prisma.client.create({
+          data: {
+            companyName,
+            slug: `${slug}-${crypto.randomUUID().slice(0, 8)}`,
+            source: lead.source,
+            status: 'ACTIVE',
+            contacts: {
+              create: {
+                firstName: lead.name.split(' ')[0] || lead.name,
+                lastName: lead.name.split(' ').slice(1).join(' ') || '',
+                email: lead.email,
+                phone: lead.phone || undefined,
+                isPrimary: true,
+              },
             },
           },
-        },
-        select: { id: true, companyName: true },
-      })
+          select: { id: true, companyName: true },
+        })
+      } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+          return { success: false, error: 'Slug duplicato, riprovare' }
+        }
+        throw e
+      }
 
       await prisma.lead.update({
         where: { id: lead.id },

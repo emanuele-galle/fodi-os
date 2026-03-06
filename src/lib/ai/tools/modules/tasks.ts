@@ -4,6 +4,62 @@ import { prisma } from '@/lib/prisma'
 import { getTaskParticipants, dispatchNotification } from '@/lib/notifications'
 import type { AiToolDefinition, AiToolInput, AiToolContext } from '../types'
 
+function parseDate(value: unknown): Date | null {
+  if (!value || typeof value !== 'string') return null
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? null : d
+}
+
+function buildTaskUpdateData(input: AiToolInput): Record<string, unknown> | { success: false; error: string } {
+  if (input.dueDate) {
+    const parsed = parseDate(input.dueDate)
+    if (!parsed) return { success: false, error: 'Data non valida' }
+  }
+  const data: Record<string, unknown> = {}
+  if (input.status) data.status = input.status
+  if (input.priority) data.priority = input.priority
+  if (input.assigneeId) data.assigneeId = input.assigneeId
+  if (input.dueDate) data.dueDate = parseDate(input.dueDate)
+  if (input.title) data.title = input.title
+  if (input.description !== undefined) data.description = input.description
+  if (input.folderId !== undefined) data.folderId = input.folderId || null
+  if (input.status === 'DONE') data.completedAt = new Date()
+  return data
+}
+
+async function notifyTaskUpdate(
+  taskId: string,
+  input: AiToolInput,
+  task: { title: string; projectId: string | null },
+  context: AiToolContext,
+) {
+  const changes: string[] = []
+  if (input.status) changes.push(`stato → ${input.status}`)
+  if (input.priority) changes.push(`priorità → ${input.priority}`)
+  if (input.assigneeId) changes.push('riassegnato')
+  if (input.folderId !== undefined) changes.push('spostato in cartella')
+  if (changes.length === 0) return
+
+  const recipients = await getTaskParticipants(taskId)
+  const actor = await prisma.user.findUnique({
+    where: { id: context.userId },
+    select: { firstName: true, lastName: true },
+  })
+  const actorName = actor ? `${actor.firstName} ${actor.lastName}` : 'Assistente AI'
+
+  await dispatchNotification({
+    type: 'task_updated',
+    title: 'Task aggiornato',
+    message: `${actorName} ha aggiornato "${task.title}": ${changes.join(', ')}`,
+    link: `/tasks?taskId=${taskId}`,
+    projectId: task.projectId ?? undefined,
+    groupKey: `task_update:${taskId}`,
+    actorName,
+    recipientIds: recipients,
+    excludeUserId: context.userId,
+  })
+}
+
 export const taskTools: AiToolDefinition[] = [
   {
     name: 'list_tasks',
@@ -94,7 +150,7 @@ export const taskTools: AiToolDefinition[] = [
           creatorId: context.userId,
           projectId: (input.projectId as string) || null,
           folderId: (input.folderId as string) || null,
-          dueDate: input.dueDate ? new Date(input.dueDate as string) : null,
+          dueDate: input.dueDate ? (parseDate(input.dueDate) ?? null) : null,
           isPersonal: !input.projectId,
         },
       })
@@ -153,15 +209,8 @@ export const taskTools: AiToolDefinition[] = [
     requiredPermission: 'write',
     execute: async (input: AiToolInput, context: AiToolContext) => {
       const taskId = input.taskId as string
-      const data: Record<string, unknown> = {}
-      if (input.status) data.status = input.status
-      if (input.priority) data.priority = input.priority
-      if (input.assigneeId) data.assigneeId = input.assigneeId
-      if (input.dueDate) data.dueDate = new Date(input.dueDate as string)
-      if (input.title) data.title = input.title
-      if (input.description !== undefined) data.description = input.description
-      if (input.folderId !== undefined) data.folderId = input.folderId || null
-      if (input.status === 'DONE') data.completedAt = new Date()
+      const data = buildTaskUpdateData(input)
+      if ('error' in data) return data as { success: false; error: string }
 
       const task = await prisma.task.update({
         where: { id: taskId },
@@ -169,33 +218,7 @@ export const taskTools: AiToolDefinition[] = [
         select: { id: true, title: true, status: true, priority: true, projectId: true },
       })
 
-      // Notify participants about task updates
-      const recipients = await getTaskParticipants(taskId)
-      const actor = await prisma.user.findUnique({
-        where: { id: context.userId },
-        select: { firstName: true, lastName: true },
-      })
-      const actorName = actor ? `${actor.firstName} ${actor.lastName}` : 'Assistente AI'
-
-      const changes: string[] = []
-      if (input.status) changes.push(`stato → ${input.status}`)
-      if (input.priority) changes.push(`priorità → ${input.priority}`)
-      if (input.assigneeId) changes.push('riassegnato')
-      if (input.folderId !== undefined) changes.push('spostato in cartella')
-
-      if (changes.length > 0) {
-        await dispatchNotification({
-          type: 'task_updated',
-          title: 'Task aggiornato',
-          message: `${actorName} ha aggiornato "${task.title}": ${changes.join(', ')}`,
-          link: `/tasks?taskId=${taskId}`,
-          projectId: task.projectId ?? undefined,
-          groupKey: `task_update:${taskId}`,
-          actorName,
-          recipientIds: recipients,
-          excludeUserId: context.userId,
-        })
-      }
+      await notifyTaskUpdate(taskId, input, task, context)
 
       return { success: true, data: { id: task.id, title: task.title, status: task.status, priority: task.priority } }
     },
@@ -462,7 +485,7 @@ export const taskTools: AiToolDefinition[] = [
           creatorId: context.userId,
           assigneeId: (input.assigneeId as string) || undefined,
           priority: ((input.priority as string) || 'MEDIUM') as Priority,
-          dueDate: input.dueDate ? new Date(input.dueDate as string) : null,
+          dueDate: input.dueDate ? (parseDate(input.dueDate) ?? null) : null,
           status: 'TODO',
         },
         select: { id: true, title: true, status: true, priority: true, assigneeId: true, parentId: true },
@@ -580,7 +603,7 @@ export const taskTools: AiToolDefinition[] = [
           hours,
           description: (input.description as string) || null,
           billable: input.billable !== false,
-          date: input.date ? new Date(input.date as string) : new Date(),
+          date: input.date ? (parseDate(input.date) ?? new Date()) : new Date(),
         },
         select: { id: true, hours: true, billable: true, date: true },
       })
@@ -618,43 +641,47 @@ export const taskTools: AiToolDefinition[] = [
       const prefix = (input.titlePrefix as string) || ''
       const targetProjectId = (input.projectId as string) || original.projectId
 
-      const newTask = await prisma.task.create({
-        data: {
-          title: prefix ? `${prefix} ${original.title}` : original.title,
-          description: original.description,
-          priority: original.priority,
-          status: 'TODO',
-          projectId: targetProjectId,
-          folderId: (input.folderId as string) || original.folderId,
-          creatorId: context.userId,
-          assigneeId: original.assigneeId,
-          dueDate: original.dueDate,
-          estimatedHours: original.estimatedHours,
-        },
-        select: { id: true, title: true },
+      const result = await prisma.$transaction(async (tx) => {
+        const newTask = await tx.task.create({
+          data: {
+            title: prefix ? `${prefix} ${original.title}` : original.title,
+            description: original.description,
+            priority: original.priority,
+            status: 'TODO',
+            projectId: targetProjectId,
+            folderId: (input.folderId as string) || original.folderId,
+            creatorId: context.userId,
+            assigneeId: original.assigneeId,
+            dueDate: original.dueDate,
+            estimatedHours: original.estimatedHours,
+          },
+          select: { id: true, title: true },
+        })
+
+        let subtaskCount = 0
+        if (input.includeSubtasks !== false && original.subtasks.length > 0) {
+          for (const sub of original.subtasks) {
+            await tx.task.create({
+              data: {
+                title: sub.title,
+                description: sub.description,
+                priority: sub.priority,
+                status: 'TODO',
+                projectId: targetProjectId,
+                parentId: newTask.id,
+                creatorId: context.userId,
+                assigneeId: sub.assigneeId,
+                dueDate: sub.dueDate,
+              },
+            })
+            subtaskCount++
+          }
+        }
+
+        return { id: newTask.id, title: newTask.title, subtasksDuplicated: subtaskCount }
       })
 
-      let subtaskCount = 0
-      if (input.includeSubtasks !== false && original.subtasks.length > 0) {
-        for (const sub of original.subtasks) {
-          await prisma.task.create({
-            data: {
-              title: sub.title,
-              description: sub.description,
-              priority: sub.priority,
-              status: 'TODO',
-              projectId: targetProjectId,
-              parentId: newTask.id,
-              creatorId: context.userId,
-              assigneeId: sub.assigneeId,
-              dueDate: sub.dueDate,
-            },
-          })
-          subtaskCount++
-        }
-      }
-
-      return { success: true, data: { id: newTask.id, title: newTask.title, subtasksDuplicated: subtaskCount } }
+      return { success: true, data: result }
     },
   },
 ]

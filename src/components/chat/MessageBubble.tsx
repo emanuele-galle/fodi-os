@@ -235,6 +235,13 @@ export function MessageBubble({ message, isOwn, currentUserId, userRole, readRec
     return () => document.removeEventListener('mousedown', handleClick)
   }, [menuOpen, showReactions, mobileActionsOpen])
 
+  // Cleanup long-press timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current)
+    }
+  }, [])
+
   // Long-press for mobile
   function handleTouchStart() {
     longPressTimer.current = setTimeout(() => {

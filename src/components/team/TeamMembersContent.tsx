@@ -190,14 +190,14 @@ export function TeamMembersContent() {
     return () => clearTimeout(timer)
   }, [taskSearch, assignModalMember])
 
-  const filtered = members.filter((m) => {
+  const filtered = useMemo(() => members.filter((m) => {
     const matchesSearch =
       !search ||
       `${m.firstName} ${m.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
       m.email?.toLowerCase().includes(search.toLowerCase())
     const matchesRole = !roleFilter || m.role === roleFilter
     return matchesSearch && matchesRole
-  })
+  }), [members, search, roleFilter])
 
   async function handleMeetWithMember(member: TeamMember) {
     if (meetingMemberId) return
@@ -232,11 +232,7 @@ export function TeamMembersContent() {
       if (res.ok) {
         setAssignModalMember(null)
         setTaskSearch('')
-        const teamRes = await fetch(`/api/team?${workspaceFilter ? `workspace=${workspaceFilter}` : ''}`)
-        if (teamRes.ok) {
-          const data = await teamRes.json()
-          setMembers(data.items || [])
-        }
+        await loadTeam(false)
       }
     } finally {
       setAssigning(false)
@@ -260,11 +256,7 @@ export function TeamMembersContent() {
         setAssignModalMember(null)
         setNewTaskTitle('')
         setTaskSearch('')
-        const teamRes = await fetch(`/api/team?${workspaceFilter ? `workspace=${workspaceFilter}` : ''}`)
-        if (teamRes.ok) {
-          const data = await teamRes.json()
-          setMembers(data.items || [])
-        }
+        await loadTeam(false)
       }
     } finally {
       setAssigning(false)

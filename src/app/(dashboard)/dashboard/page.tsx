@@ -16,7 +16,10 @@ import { formatCurrency } from '@/lib/utils'
 import { getDueUrgency } from '@/lib/task-utils'
 import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCard'
 import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard'
-import { TeamActivityPanel } from '@/components/dashboard/TeamActivityPanel'
+const TeamActivityPanel = dynamic(() => import('@/components/dashboard/TeamActivityPanel').then(m => ({ default: m.TeamActivityPanel })), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[200px] md:h-64 w-full rounded-lg" />,
+})
 import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
 import { MobileChartTabs } from '@/components/dashboard/MobileChartTabs'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
@@ -288,7 +291,7 @@ export default function DashboardPage() {
     [profileConfig.quickActions]
   )
 
-  function applyDashboardData(data: Record<string, unknown>) {
+  const applyDashboardData = useCallback((data: Record<string, unknown>) => {
     const d = processDashboardResponse(data)
     setTasks(d.tasks)
     setActivities(d.activities)
@@ -314,7 +317,7 @@ export default function DashboardPage() {
         }
       })
     )
-  }
+  }, [profileConfig])
 
   const fetchDashboard = useCallback(async () => {
     setLoading(true)
@@ -328,8 +331,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role])
+  }, [role, applyDashboardData])
 
   useEffect(() => { fetchDashboard() }, [fetchDashboard])
 

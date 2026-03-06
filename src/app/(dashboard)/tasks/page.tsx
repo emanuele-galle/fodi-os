@@ -14,7 +14,7 @@ import { TaskFocusPanel } from '@/components/tasks/TaskFocusPanel'
 import { TaskTabBar, TaskFilters } from '@/components/tasks/TaskFilters'
 import { TaskListView } from '@/components/tasks/TaskListView'
 import { MobileTaskCard } from '@/components/tasks/MobileTaskCard'
-import { TaskKanbanView } from '@/components/tasks/TaskKanbanView'
+const TaskKanbanView = dynamic(() => import('@/components/tasks/TaskKanbanView').then(m => ({ default: m.TaskKanbanView })), { ssr: false })
 import { sortTasks, STATUS_LABELS, PRIORITY_LABELS, type Task, type TabKey, type ViewMode, type TabDef } from '@/components/tasks/types'
 import dynamic from 'next/dynamic'
 

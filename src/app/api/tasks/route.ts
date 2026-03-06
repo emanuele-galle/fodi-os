@@ -153,7 +153,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- complex business logic
 export async function POST(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
@@ -196,6 +195,9 @@ export async function POST(request: NextRequest) {
         tags,
         isPersonal: isPersonal ?? !projectId,
       },
+      include: {
+        project: { select: { id: true, name: true } },
+      },
     })
 
     // Collect all user IDs for assignments (include creator as default if no one specified)
@@ -214,19 +216,13 @@ export async function POST(request: NextRequest) {
         skipDuplicates: true,
       })
 
-      let projectName: string | undefined
-      if (task.projectId) {
-        const proj = await prisma.project.findUnique({ where: { id: task.projectId }, select: { name: true } })
-        projectName = proj?.name ?? undefined
-      }
-
       // Notify assignees about task assignment (no more task_created to entire project)
       await dispatchNotification({
         type: 'task_assigned',
         title: 'Task assegnato',
         message: `Ti è stato assegnato il task "${title}"`,
         link: `/tasks?taskId=${task.id}`,
-        metadata: { projectName, priority: priority || 'MEDIUM' },
+        metadata: { projectName: task.project?.name ?? undefined, priority: priority || 'MEDIUM' },
         projectId: task.projectId ?? undefined,
         groupKey: `task_assigned:${task.id}`,
         recipientIds: Array.from(allAssigneeIds),
@@ -256,7 +252,10 @@ export async function POST(request: NextRequest) {
     // Notify all connected users about data change
     sendDataChanged([...allAssigneeIds, userId], 'task', task.id)
 
-    // Re-fetch with full includes
+    // Sync to Microsoft To Do (fire-and-forget)
+    pushTaskToMicrosoftTodo(task.id, 'create').catch(() => {})
+
+    // Re-read task to pick up the assignments created above
     const fullTask = await prisma.task.findUnique({
       where: { id: task.id },
       include: {
@@ -274,9 +273,6 @@ export async function POST(request: NextRequest) {
         },
       },
     })
-
-    // Sync to Microsoft To Do (fire-and-forget)
-    pushTaskToMicrosoftTodo(task.id, 'create').catch(() => {})
 
     return NextResponse.json({ success: true, data: fullTask }, { status: 201 })
   } catch (e) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 
 export interface AiToolCall {
   id: string
@@ -44,10 +44,16 @@ export function useAiChat(): UseAiChatReturn {
   const [messages, setMessages] = useState<AiChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const conversationIdRef = useRef<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [suggestedFollowups, setSuggestedFollowups] = useState<string[]>([])
   const [activeToolName, setActiveToolName] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    conversationIdRef.current = conversationId
+  }, [conversationId])
 
   const handleStream = useCallback(async (
     res: Response,
@@ -89,6 +95,7 @@ export function useAiChat(): UseAiChatReturn {
           } else if (event.type === 'text_delta') {
             if (event.data.conversationId && !currentConversationId) {
               setConversationId(event.data.conversationId)
+              conversationIdRef.current = event.data.conversationId
               currentConversationId = event.data.conversationId
             }
             if (event.data.text) {
@@ -160,7 +167,7 @@ export function useAiChat(): UseAiChatReturn {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, conversationId, currentPage }),
+        body: JSON.stringify({ message: text, conversationId: conversationIdRef.current, currentPage }),
         signal: abortRef.current.signal,
       })
 
@@ -169,7 +176,7 @@ export function useAiChat(): UseAiChatReturn {
         throw new Error(errData.error || `Errore ${res.status}`)
       }
 
-      await handleStream(res, assistantId, conversationId)
+      await handleStream(res, assistantId, conversationIdRef.current)
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         setError((err as Error).message)
@@ -179,7 +186,7 @@ export function useAiChat(): UseAiChatReturn {
       setIsLoading(false)
       abortRef.current = null
     }
-  }, [isLoading, conversationId, handleStream])
+  }, [isLoading, handleStream])
 
   const sendMessageWithFiles = useCallback(async (text: string, files: File[], currentPage?: string) => {
     if ((!text.trim() && files.length === 0) || isLoading) return
@@ -228,7 +235,7 @@ export function useAiChat(): UseAiChatReturn {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
-          conversationId,
+          conversationId: conversationIdRef.current,
           currentPage,
           attachments: uploadedFiles,
         }),
@@ -240,7 +247,7 @@ export function useAiChat(): UseAiChatReturn {
         throw new Error(errData.error || `Errore ${res.status}`)
       }
 
-      await handleStream(res, assistantId, conversationId)
+      await handleStream(res, assistantId, conversationIdRef.current)
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         setError((err as Error).message)
@@ -249,7 +256,7 @@ export function useAiChat(): UseAiChatReturn {
       setIsLoading(false)
       abortRef.current = null
     }
-  }, [isLoading, conversationId, handleStream])
+  }, [isLoading, handleStream])
 
   const loadConversation = useCallback(async (id: string) => {
     try {
@@ -279,6 +286,7 @@ export function useAiChat(): UseAiChatReturn {
   const clearMessages = useCallback(() => {
     setMessages([])
     setConversationId(null)
+    conversationIdRef.current = null
     setError(null)
     setSuggestedFollowups([])
     abortRef.current?.abort()

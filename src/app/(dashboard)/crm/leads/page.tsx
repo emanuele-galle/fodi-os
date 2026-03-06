@@ -260,10 +260,10 @@ export default function LeadsPage() {
   const convertLead = convertLeadId ? leads.find((l) => l.id === convertLeadId) : null
 
   const handleOpenNewModal = () => { setModalOpen(true); setFormError(null) }
-  const handleCloseNewModal = () => setModalOpen(false)
-  const handleCloseEditModal = () => setEditLeadId(null)
-  const handleCloseConvertModal = () => setConvertLeadId(null)
-  const handleCloseDeleteModal = () => setDeleteLeadId(null)
+  const handleCloseNewModal = () => { setModalOpen(false); setFormError(null) }
+  const handleCloseEditModal = () => { setEditLeadId(null); setFormError(null) }
+  const handleCloseConvertModal = () => { setConvertLeadId(null); setFormError(null) }
+  const handleCloseDeleteModal = () => { setDeleteLeadId(null); setFormError(null) }
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)
   const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => setAssigneeFilter(e.target.value)

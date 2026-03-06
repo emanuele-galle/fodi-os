@@ -305,45 +305,129 @@ export async function POST(req: NextRequest) {
 
   const sel = {
     id: true, title: true, priority: true, status: true,
-    dueDate: true, project: { select: { name: true } },
+    dueDate: true, assigneeId: true, project: { select: { name: true } },
   } as const
+  const commentSel = {
+    content: true, createdAt: true,
+    author: { select: { firstName: true, lastName: true } },
+    task: { select: { id: true, title: true, assigneeId: true, creatorId: true, assignments: { select: { userId: true } } } },
+  } as const
+
+  const userIds = users.map(u => u.id)
+  const activeStatuses = ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] as const
+  const userOr = [
+    { assigneeId: { in: userIds } },
+    { assignments: { some: { userId: { in: userIds } } } },
+  ] as const
+
+  // Batch all queries upfront (5 queries total instead of 5 * N)
+  const [allOverdue, allDueToday, allDueTomorrow, allCompletedYesterday, allRecentComments] = await Promise.all([
+    prisma.task.findMany({
+      where: { status: { in: [...activeStatuses] }, dueDate: { lt: todayStart }, OR: [...userOr] },
+      select: sel, orderBy: { dueDate: 'asc' },
+    }),
+    prisma.task.findMany({
+      where: { status: { in: [...activeStatuses] }, dueDate: { gte: todayStart, lt: todayEnd }, OR: [...userOr] },
+      select: sel, orderBy: { priority: 'asc' },
+    }),
+    prisma.task.findMany({
+      where: { status: { in: [...activeStatuses] }, dueDate: { gte: todayEnd, lt: tomorrowEnd }, OR: [...userOr] },
+      select: sel, orderBy: { priority: 'asc' },
+    }),
+    prisma.task.findMany({
+      where: { completedAt: { gte: yesterdayStart, lt: todayStart }, OR: [...userOr] },
+      select: sel, orderBy: { completedAt: 'desc' },
+    }),
+    prisma.comment.findMany({
+      where: {
+        createdAt: { gte: last24h },
+        task: { OR: [
+          { assigneeId: { in: userIds } },
+          { creatorId: { in: userIds } },
+          { assignments: { some: { userId: { in: userIds } } } },
+        ] },
+      },
+      select: commentSel,
+      orderBy: { createdAt: 'desc' },
+    }),
+  ])
+
+  // Build lookup: fetch task assignments for grouping
+  const allTaskIds = new Set([
+    ...allOverdue.map(t => t.id), ...allDueToday.map(t => t.id),
+    ...allDueTomorrow.map(t => t.id), ...allCompletedYesterday.map(t => t.id),
+  ])
+  const taskAssignments = allTaskIds.size > 0
+    ? await prisma.taskAssignment.findMany({
+        where: { taskId: { in: [...allTaskIds] } },
+        select: { taskId: true, userId: true },
+      })
+    : []
+  const taskToUsers = new Map<string, Set<string>>()
+  for (const ta of taskAssignments) {
+    if (!taskToUsers.has(ta.taskId)) taskToUsers.set(ta.taskId, new Set())
+    taskToUsers.get(ta.taskId)!.add(ta.userId)
+  }
+
+  // Helper: check if a task belongs to a user
+  function taskBelongsToUser(task: { id: string; assigneeId: string | null }, userId: string): boolean {
+    if (task.assigneeId === userId) return true
+    return taskToUsers.get(task.id)?.has(userId) ?? false
+  }
+
+  // Group tasks by user in memory
+  function groupTasksByUser(tasks: typeof allOverdue, maxPerUser?: number) {
+    const map = new Map<string, typeof tasks>()
+    for (const uid of userIds) map.set(uid, [])
+    for (const t of tasks) {
+      for (const uid of userIds) {
+        if (taskBelongsToUser(t, uid)) {
+          const arr = map.get(uid)!
+          if (!maxPerUser || arr.length < maxPerUser) arr.push(t)
+        }
+      }
+    }
+    return map
+  }
+
+  const overdueByUser = groupTasksByUser(allOverdue, 5)
+  const dueTodayByUser = groupTasksByUser(allDueToday)
+  const dueTomorrowByUser = groupTasksByUser(allDueTomorrow)
+  const completedByUser = groupTasksByUser(allCompletedYesterday, 10)
+
+  // Group comments by user (comments on tasks the user owns, excluding own comments)
+  const commentsByUser = new Map<string, Comment[]>()
+  for (const uid of userIds) commentsByUser.set(uid, [])
+  for (const c of allRecentComments) {
+    if (!c.task) continue
+    const taskOwnerIds = new Set<string>()
+    if (c.task.assigneeId) taskOwnerIds.add(c.task.assigneeId)
+    if (c.task.creatorId) taskOwnerIds.add(c.task.creatorId)
+    for (const a of c.task.assignments) taskOwnerIds.add(a.userId)
+    for (const uid of userIds) {
+      if (taskOwnerIds.has(uid) && c.author && uid !== (c as unknown as { authorId?: string }).authorId) {
+        const arr = commentsByUser.get(uid)!
+        if (arr.length < 10) {
+          arr.push({
+            content: c.content,
+            createdAt: c.createdAt,
+            author: c.author,
+            task: { id: c.task.id, title: c.task.title },
+          })
+        }
+      }
+    }
+  }
 
   let sent = 0, skipped = 0, errors = 0
 
   for (const u of users) {
     try {
-      const userOr = [
-        { assigneeId: u.id },
-        { assignments: { some: { userId: u.id } } },
-      ] as const
-      const activeStatuses = ['TODO', 'IN_PROGRESS', 'IN_REVIEW'] as const
-
-      const [overdue, dueToday, dueTomorrow, completedYesterday, recentComments] = await Promise.all([
-        prisma.task.findMany({
-          where: { status: { in: [...activeStatuses] }, dueDate: { lt: todayStart }, OR: [...userOr] },
-          select: sel, orderBy: { dueDate: 'asc' }, take: 5,
-        }),
-        prisma.task.findMany({
-          where: { status: { in: [...activeStatuses] }, dueDate: { gte: todayStart, lt: todayEnd }, OR: [...userOr] },
-          select: sel, orderBy: { priority: 'asc' },
-        }),
-        prisma.task.findMany({
-          where: { status: { in: [...activeStatuses] }, dueDate: { gte: todayEnd, lt: tomorrowEnd }, OR: [...userOr] },
-          select: sel, orderBy: { priority: 'asc' },
-        }),
-        prisma.task.findMany({
-          where: { completedAt: { gte: yesterdayStart, lt: todayStart }, OR: [...userOr] },
-          select: sel, orderBy: { completedAt: 'desc' }, take: 10,
-        }),
-        prisma.comment.findMany({
-          where: {
-            createdAt: { gte: last24h }, authorId: { not: u.id },
-            task: { OR: [{ assigneeId: u.id }, { creatorId: u.id }, { assignments: { some: { userId: u.id } } }] },
-          },
-          select: { content: true, createdAt: true, author: { select: { firstName: true, lastName: true } }, task: { select: { id: true, title: true } } },
-          orderBy: { createdAt: 'desc' }, take: 10,
-        }),
-      ])
+      const overdue = overdueByUser.get(u.id) || []
+      const dueToday = dueTodayByUser.get(u.id) || []
+      const dueTomorrow = dueTomorrowByUser.get(u.id) || []
+      const completedYesterday = completedByUser.get(u.id) || []
+      const recentComments = commentsByUser.get(u.id) || []
 
       if (!overdue.length && !dueToday.length && !dueTomorrow.length && !completedYesterday.length && !recentComments.length) { skipped++; continue }
 

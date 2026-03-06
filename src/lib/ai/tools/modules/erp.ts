@@ -1,5 +1,14 @@
+import { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import type { AiToolDefinition, AiToolInput, AiToolContext } from '../types'
+
+const INVALID_DATE_ERROR = { success: false, error: 'Data non valida' } as const
+
+function parseDate(value: unknown): Date | null {
+  if (!value || typeof value !== 'string') return null
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? null : d
+}
 
 export const erpTools: AiToolDefinition[] = [
   {
@@ -148,8 +157,16 @@ export const erpTools: AiToolDefinition[] = [
       if (input.category) where.category = input.category
       if (input.startDate || input.endDate) {
         const dateFilter: Record<string, Date> = {}
-        if (input.startDate) dateFilter.gte = new Date(input.startDate as string)
-        if (input.endDate) dateFilter.lte = new Date(input.endDate as string)
+        if (input.startDate) {
+          const d = parseDate(input.startDate)
+          if (!d) return { success: false, error: 'Data inizio non valida' }
+          dateFilter.gte = d
+        }
+        if (input.endDate) {
+          const d = parseDate(input.endDate)
+          if (!d) return { success: false, error: 'Data fine non valida' }
+          dateFilter.lte = d
+        }
         where.date = dateFilter
       }
 
@@ -197,8 +214,16 @@ export const erpTools: AiToolDefinition[] = [
       if (input.isPaid !== undefined) where.isPaid = input.isPaid
       if (input.startDate || input.endDate) {
         const dateFilter: Record<string, Date> = {}
-        if (input.startDate) dateFilter.gte = new Date(input.startDate as string)
-        if (input.endDate) dateFilter.lte = new Date(input.endDate as string)
+        if (input.startDate) {
+          const d = parseDate(input.startDate)
+          if (!d) return { success: false, error: 'Data inizio non valida' }
+          dateFilter.gte = d
+        }
+        if (input.endDate) {
+          const d = parseDate(input.endDate)
+          if (!d) return { success: false, error: 'Data fine non valida' }
+          dateFilter.lte = d
+        }
         where.date = dateFilter
       }
 
@@ -404,13 +429,8 @@ export const erpTools: AiToolDefinition[] = [
       const items = input.items as Array<{ description: string; quantity: number; unitPrice: number }>
       if (!items || items.length === 0) return { success: false, error: 'Almeno una riga è obbligatoria' }
 
-      const year = new Date().getFullYear()
-      const count = await prisma.quote.count({
-        where: {
-          number: { startsWith: `QT-${year}-` },
-        },
-      })
-      const number = `QT-${year}-${String(count + 1).padStart(3, '0')}`
+      const parsedValidUntil = input.validUntil ? parseDate(input.validUntil) : null
+      if (input.validUntil && !parsedValidUntil) return INVALID_DATE_ERROR
 
       const lineItems = items.map((item, idx) => ({
         description: item.description,
@@ -424,45 +444,59 @@ export const erpTools: AiToolDefinition[] = [
       const taxAmount = subtotal * 0.22
       const total = subtotal + taxAmount
 
-      const quote = await prisma.$transaction(async (tx) => {
-        const created = await tx.quote.create({
-          data: {
-            clientId: input.clientId as string,
-            creatorId: context.userId,
-            number,
-            title: input.title as string,
-            subtotal,
-            taxRate: 22,
-            taxAmount,
-            total,
-            discount: 0,
-            notes: (input.notes as string) || null,
-            validUntil: input.validUntil ? new Date(input.validUntil as string) : null,
-            lineItems: {
-              create: lineItems,
-            },
-          },
-          include: {
-            lineItems: true,
-            client: { select: { id: true, companyName: true } },
-          },
-        })
-        return created
-      })
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const quote = await prisma.$transaction(async (tx) => {
+            const year = new Date().getFullYear()
+            const count = await tx.quote.count({
+              where: { number: { startsWith: `QT-${year}-` } },
+            })
+            const number = `QT-${year}-${String(count + 1).padStart(3, '0')}`
 
-      return {
-        success: true,
-        data: {
-          id: quote.id,
-          number: quote.number,
-          title: quote.title,
-          client: quote.client,
-          subtotal: quote.subtotal.toString(),
-          taxAmount: quote.taxAmount.toString(),
-          total: quote.total.toString(),
-          itemsCount: quote.lineItems.length,
-        },
+            const created = await tx.quote.create({
+              data: {
+                clientId: input.clientId as string,
+                creatorId: context.userId,
+                number,
+                title: input.title as string,
+                subtotal,
+                taxRate: 22,
+                taxAmount,
+                total,
+                discount: 0,
+                notes: (input.notes as string) || null,
+                validUntil: parsedValidUntil,
+                lineItems: {
+                  create: lineItems,
+                },
+              },
+              include: {
+                lineItems: true,
+                client: { select: { id: true, companyName: true } },
+              },
+            })
+            return created
+          })
+
+          return {
+            success: true,
+            data: {
+              id: quote.id,
+              number: quote.number,
+              title: quote.title,
+              client: quote.client,
+              subtotal: quote.subtotal.toString(),
+              taxAmount: quote.taxAmount.toString(),
+              total: quote.total.toString(),
+              itemsCount: quote.lineItems.length,
+            },
+          }
+        } catch (e) {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002' && attempt < 2) continue
+          throw e
+        }
       }
+      return { success: false, error: 'Impossibile generare numero preventivo univoco' }
     },
   },
 
@@ -515,12 +549,15 @@ export const erpTools: AiToolDefinition[] = [
     module: 'erp',
     requiredPermission: 'write',
     execute: async (input: AiToolInput) => {
+      const parsedDate = parseDate(input.date)
+      if (!parsedDate) return INVALID_DATE_ERROR
+
       const expense = await prisma.expense.create({
         data: {
           category: input.category as string,
           description: input.description as string,
           amount: input.amount as number,
-          date: new Date(input.date as string),
+          date: parsedDate,
           clientId: (input.clientId as string) || null,
           projectId: (input.projectId as string) || null,
         },
@@ -558,12 +595,15 @@ export const erpTools: AiToolDefinition[] = [
     module: 'erp',
     requiredPermission: 'write',
     execute: async (input: AiToolInput) => {
+      const parsedDate = parseDate(input.date)
+      if (!parsedDate) return INVALID_DATE_ERROR
+
       const income = await prisma.income.create({
         data: {
           clientName: input.clientName as string,
           category: input.category as string,
           amount: input.amount as number,
-          date: new Date(input.date as string),
+          date: parsedDate,
           invoiceNumber: (input.invoiceNumber as string) || null,
           clientId: (input.clientId as string) || null,
           notes: (input.notes as string) || null,
@@ -603,6 +643,9 @@ export const erpTools: AiToolDefinition[] = [
     module: 'erp',
     requiredPermission: 'write',
     execute: async (input: AiToolInput) => {
+      const parsedFirstDate = parseDate(input.firstDate)
+      if (!parsedFirstDate) return INVALID_DATE_ERROR
+
       const invoice = await prisma.recurringInvoice.create({
         data: {
           description: input.description as string,
@@ -610,8 +653,8 @@ export const erpTools: AiToolDefinition[] = [
           supplierName: (input.supplierName as string) || null,
           amount: input.amount as number,
           frequency: input.frequency as string,
-          firstDate: new Date(input.firstDate as string),
-          nextDueDate: new Date(input.firstDate as string),
+          firstDate: parsedFirstDate,
+          nextDueDate: parsedFirstDate,
           bankAccountId: (input.bankAccountId as string) || null,
           notes: (input.notes as string) || null,
         },
@@ -720,7 +763,7 @@ export const erpTools: AiToolDefinition[] = [
           toAccountId: input.toAccountId as string,
           amount: input.amount as number,
           operation: input.operation as string,
-          date: input.date ? new Date(input.date as string) : new Date(),
+          date: input.date ? (parseDate(input.date) ?? new Date()) : new Date(),
           notes: (input.notes as string) || null,
         },
         include: {
@@ -816,7 +859,11 @@ export const erpTools: AiToolDefinition[] = [
       if (input.category) data.category = input.category
       if (input.description) data.description = input.description
       if (input.amount !== undefined) data.amount = input.amount
-      if (input.date) data.date = new Date(input.date as string)
+      if (input.date) {
+        const parsedDate = parseDate(input.date)
+        if (!parsedDate) return INVALID_DATE_ERROR
+        data.date = parsedDate
+      }
       if (input.isPaid !== undefined) data.isPaid = input.isPaid
       if (input.supplierName !== undefined) data.supplierName = input.supplierName || null
       if (input.notes !== undefined) data.notes = input.notes || null
@@ -856,7 +903,11 @@ export const erpTools: AiToolDefinition[] = [
       if (input.clientName) data.clientName = input.clientName
       if (input.category) data.category = input.category
       if (input.amount !== undefined) data.amount = input.amount
-      if (input.date) data.date = new Date(input.date as string)
+      if (input.date) {
+        const parsedDate = parseDate(input.date)
+        if (!parsedDate) return INVALID_DATE_ERROR
+        data.date = parsedDate
+      }
       if (input.isPaid !== undefined) data.isPaid = input.isPaid
       if (input.invoiceNumber !== undefined) data.invoiceNumber = input.invoiceNumber || null
       if (input.notes !== undefined) data.notes = input.notes || null
@@ -931,9 +982,6 @@ export const erpTools: AiToolDefinition[] = [
       })
       if (!template) return { success: false, error: 'Template non trovato' }
 
-      const count = await prisma.quote.count()
-      const number = `${template.numberPrefix}-${new Date().getFullYear()}-${String(count + 1).padStart(3, '0')}`
-
       const lineItems = template.lineItems.map((li) => ({
         description: li.description,
         quantity: li.quantity,
@@ -946,25 +994,42 @@ export const erpTools: AiToolDefinition[] = [
       const taxAmount = (subtotal - discount) * (taxRate / 100)
       const total = subtotal - discount + taxAmount
 
-      const quote = await prisma.quote.create({
-        data: {
-          clientId: input.clientId as string,
-          creatorId: context.userId,
-          templateId: template.id,
-          number,
-          title: (input.title as string) || `Preventivo ${template.name}`,
-          content: lineItems,
-          subtotal,
-          taxRate,
-          taxAmount,
-          total,
-          discount,
-          notes: (input.notes as string) || template.defaultNotes || undefined,
-          validUntil: new Date(Date.now() + template.defaultValidDays * 24 * 60 * 60 * 1000),
-        },
-        select: { id: true, number: true, title: true, total: true, status: true },
-      })
-      return { success: true, data: { ...quote, total: quote.total.toString() } }
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const quote = await prisma.$transaction(async (tx) => {
+            const year = new Date().getFullYear()
+            const prefix = template.numberPrefix
+            const count = await tx.quote.count({
+              where: { number: { startsWith: `${prefix}-${year}-` } },
+            })
+            const number = `${prefix}-${year}-${String(count + 1).padStart(3, '0')}`
+
+            return tx.quote.create({
+              data: {
+                clientId: input.clientId as string,
+                creatorId: context.userId,
+                templateId: template.id,
+                number,
+                title: (input.title as string) || `Preventivo ${template.name}`,
+                content: lineItems,
+                subtotal,
+                taxRate,
+                taxAmount,
+                total,
+                discount,
+                notes: (input.notes as string) || template.defaultNotes || undefined,
+                validUntil: new Date(Date.now() + template.defaultValidDays * 24 * 60 * 60 * 1000),
+              },
+              select: { id: true, number: true, title: true, total: true, status: true },
+            })
+          })
+          return { success: true, data: { ...quote, total: quote.total.toString() } }
+        } catch (e) {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002' && attempt < 2) continue
+          throw e
+        }
+      }
+      return { success: false, error: 'Impossibile generare numero preventivo univoco' }
     },
   },
 
@@ -1122,7 +1187,11 @@ export const erpTools: AiToolDefinition[] = [
       if (input.title) data.title = input.title
       if (input.notes !== undefined) data.notes = input.notes || null
       if (input.discount !== undefined) data.discount = input.discount
-      if (input.validUntil) data.validUntil = new Date(input.validUntil as string)
+      if (input.validUntil) {
+        const parsedDate = parseDate(input.validUntil)
+        if (!parsedDate) return INVALID_DATE_ERROR
+        data.validUntil = parsedDate
+      }
       if (input.status) data.status = input.status
 
       const quote = await prisma.quote.update({

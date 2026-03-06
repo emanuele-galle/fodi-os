@@ -61,6 +61,7 @@ export function useChat() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [replyTo, setReplyTo] = useState<ReplyTo | null>(null)
   const [typingUsers, setTypingUsers] = useState<Map<string, { name: string; timeout: ReturnType<typeof setTimeout> }>>(new Map())
+  const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -211,23 +212,37 @@ export function useChat() {
       const { userId, userName } = event.data as { userId: string; userName: string }
       const channelId = (event as { channelId?: string }).channelId
       if (channelId === selectedIdRef.current) {
+        // Clear previous timeout from ref
+        const prevTimeout = typingTimeoutsRef.current.get(userId)
+        if (prevTimeout) clearTimeout(prevTimeout)
+
+        const timeout = setTimeout(() => {
+          typingTimeoutsRef.current.delete(userId)
+          setTypingUsers((p) => {
+            const updated = new Map(p)
+            updated.delete(userId)
+            return updated
+          })
+        }, 3000)
+
+        typingTimeoutsRef.current.set(userId, timeout)
         setTypingUsers((prev) => {
           const newMap = new Map(prev)
-          const existing = newMap.get(userId)
-          if (existing) clearTimeout(existing.timeout)
-          const timeout = setTimeout(() => {
-            setTypingUsers((p) => {
-              const updated = new Map(p)
-              updated.delete(userId)
-              return updated
-            })
-          }, 3000)
           newMap.set(userId, { name: userName, timeout })
           return newMap
         })
       }
     }
   }, [fetchChannels]))
+
+  // Cleanup typing timeouts on unmount
+  useEffect(() => {
+    const timeouts = typingTimeoutsRef.current
+    return () => {
+      timeouts.forEach((timeout) => clearTimeout(timeout))
+      timeouts.clear()
+    }
+  }, [])
 
   // Select channel
   function handleSelectChannel(id: string) {
@@ -386,9 +401,13 @@ export function useChat() {
   async function handleBulkDelete() {
     if (!selectedId || selectedMessages.size === 0) return
     const ids = Array.from(selectedMessages)
-    await Promise.all(ids.map(id =>
+    const results = await Promise.all(ids.map(id =>
       fetch(`/api/chat/channels/${selectedId}/messages/${id}`, { method: 'DELETE' })
     ))
+    const failed = results.filter(r => !r.ok).length
+    if (failed > 0) {
+      setSendError(`${failed} messaggi non eliminati`)
+    }
     setSelectedMessages(new Set())
     setSelectionMode(false)
   }

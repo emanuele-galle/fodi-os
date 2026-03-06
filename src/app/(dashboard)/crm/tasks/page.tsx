@@ -8,7 +8,9 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { TaskFilters } from '@/components/crm/tasks/TaskFilters'
 import { TaskCreateModal, TaskEditModal, TaskDeleteModal } from '@/components/crm/tasks/TaskModals'
-import { TaskKanbanView } from '@/components/crm/tasks/TaskKanbanView'
+import dynamic from 'next/dynamic'
+
+const TaskKanbanView = dynamic(() => import('@/components/crm/tasks/TaskKanbanView').then(m => ({ default: m.TaskKanbanView })), { ssr: false })
 import { TaskListView } from '@/components/crm/tasks/TaskListView'
 import {
   type CrmTask, type StaffUser, type Client,

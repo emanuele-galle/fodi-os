@@ -377,32 +377,47 @@ export default function ProjectDetailPage() {
   }
 
   async function handleColumnChange(taskId: string, newColumn: string) {
-    setProject((prev) => {
-      if (!prev) return prev
-      const tasks = prev.tasks.map((t) =>
+    const prev = project
+    setProject((p) => {
+      if (!p) return p
+      const tasks = p.tasks.map((t) =>
         t.id === taskId ? { ...t, boardColumn: newColumn, status: COLUMN_STATUS_MAP[newColumn] || t.status } : t
       )
-      return { ...prev, tasks }
+      return { ...p, tasks }
     })
-    await fetch(`/api/tasks/${taskId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardColumn: newColumn, status: COLUMN_STATUS_MAP[newColumn] || undefined }),
-    })
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ boardColumn: newColumn, status: COLUMN_STATUS_MAP[newColumn] || undefined }),
+      })
+      if (!res.ok) setProject(prev)
+    } catch {
+      setProject(prev)
+    }
   }
 
   async function handleTaskFolderChange(taskId: string, folderId: string | null) {
-    setProject((prev) => {
-      if (!prev) return prev
-      const tasks = prev.tasks.map((t) => t.id === taskId ? { ...t, folderId } : t)
-      return { ...prev, tasks }
+    const prev = project
+    setProject((p) => {
+      if (!p) return p
+      const tasks = p.tasks.map((t) => t.id === taskId ? { ...t, folderId } : t)
+      return { ...p, tasks }
     })
-    await fetch(`/api/tasks/${taskId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folderId }),
-    })
-    fetchFolders()
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderId }),
+      })
+      if (!res.ok) {
+        setProject(prev)
+      } else {
+        fetchFolders()
+      }
+    } catch {
+      setProject(prev)
+    }
   }
 
   function handleUnifiedDragStart(event: DragStartEvent) {

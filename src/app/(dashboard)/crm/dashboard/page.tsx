@@ -116,6 +116,15 @@ const STATUS_BAR_COLORS: Record<string, string> = {
 
 const STATUS_ORDER = ['LEAD', 'PROSPECT', 'ACTIVE', 'INACTIVE', 'CHURNED']
 
+const LEAD_STATUS_COLORS: Record<string, string> = {
+  NEW: 'bg-blue-500/15 text-blue-500',
+  CONTACTED: 'bg-amber-500/15 text-amber-500',
+  QUALIFIED: 'bg-emerald-500/15 text-emerald-500',
+  PROPOSAL_SENT: 'bg-blue-500/15 text-blue-500',
+  CONVERTED: 'bg-green-500/15 text-green-500',
+  LOST: 'bg-red-500/15 text-red-500',
+}
+
 function TrendIndicator({ current, previous }: { current: number; previous: number }) {
   if (previous === 0 && current === 0) return <span className="text-xs text-muted">--</span>
   if (previous === 0) return (
@@ -401,18 +410,10 @@ export default function CrmDashboardPage() {
                 {Object.entries(LEAD_STATUS_LABELS).map(([status, label]) => {
                   const count = stats.leadsByStatus[status] || 0
                   if (count === 0) return null
-                  const colors: Record<string, string> = {
-                    NEW: 'bg-blue-500/15 text-blue-500',
-                    CONTACTED: 'bg-amber-500/15 text-amber-500',
-                    QUALIFIED: 'bg-emerald-500/15 text-emerald-500',
-                    PROPOSAL_SENT: 'bg-blue-500/15 text-blue-500',
-                    CONVERTED: 'bg-green-500/15 text-green-500',
-                    LOST: 'bg-red-500/15 text-red-500',
-                  }
                   return (
                     <div key={status} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-muted/10">
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${colors[status] || 'bg-zinc-500/15 text-zinc-400'}`}>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${LEAD_STATUS_COLORS[status] || 'bg-zinc-500/15 text-zinc-400'}`}>
                           {label}
                         </span>
                       </div>

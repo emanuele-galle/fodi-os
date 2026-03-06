@@ -181,45 +181,45 @@ export function SpeseContent() {
     return computeVat(amount, vatRate) * (deductibility / 100)
   }
 
-  const bankAccountOptions = [
+  const bankAccountOptions = useMemo(() => [
     { value: '', label: 'Tutti i conti' },
     ...bankAccounts.map(b => ({ value: b.id, label: b.name })),
-  ]
+  ], [bankAccounts])
 
-  const businessEntityOptions = [
+  const businessEntityOptions = useMemo(() => [
     { value: '', label: 'Tutte le attività' },
     ...businessEntities.map(b => ({ value: b.id, label: b.name })),
-  ]
+  ], [businessEntities])
 
-  const categoryOptions = [
+  const categoryOptions = useMemo(() => [
     { value: '', label: 'Tutte le categorie' },
     ...categories.map(c => ({ value: c.name, label: c.name })),
-  ]
+  ], [categories])
 
-  const formBankAccountOptions = [
+  const formBankAccountOptions = useMemo(() => [
     { value: '', label: 'Seleziona conto' },
     ...bankAccounts.map(b => ({ value: b.id, label: b.name })),
-  ]
+  ], [bankAccounts])
 
-  const formBusinessEntityOptions = [
+  const formBusinessEntityOptions = useMemo(() => [
     { value: '', label: 'Seleziona attività' },
     ...businessEntities.map(b => ({ value: b.id, label: b.name })),
-  ]
+  ], [businessEntities])
 
-  const formCategoryOptions = [
+  const formCategoryOptions = useMemo(() => [
     { value: '', label: 'Seleziona categoria' },
     ...categories.map(c => ({ value: c.name, label: c.name })),
-  ]
+  ], [categories])
 
-  const formClientOptions = [
+  const formClientOptions = useMemo(() => [
     { value: '', label: 'Nessun cliente' },
     ...clients.map(c => ({ value: c.id, label: c.companyName })),
-  ]
+  ], [clients])
 
-  const formProjectOptions = [
+  const formProjectOptions = useMemo(() => [
     { value: '', label: 'Nessun progetto' },
     ...projects.map(p => ({ value: p.id, label: p.name })),
-  ]
+  ], [projects])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -288,9 +288,12 @@ export function SpeseContent() {
       if (res.ok) {
         setDeleteConfirm(null)
         fetchExpenses()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setFormError(data.error || 'Errore nella cancellazione')
       }
     } catch {
-      // silently fail
+      setFormError('Errore di rete nella cancellazione')
     } finally {
       setSubmitting(false)
     }
