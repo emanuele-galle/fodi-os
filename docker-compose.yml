@@ -24,6 +24,9 @@ services:
     restart: unless-stopped
     env_file:
       - .env.docker
+    extra_hosts:
+      - "storage.muscarivps.cloud:193.203.190.63"
+      - "files.muscarivps.cloud:193.203.190.63"
     volumes:
       - ./certs:/app/certs:ro
       - nextcache:/app/.next/cache
