@@ -10,7 +10,7 @@ export const updateLeadSchema = z.object({
   source: z.string().max(100).optional(),
   status: z.enum(['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'CONVERTED', 'LOST']).optional(),
   notes: z.string().optional().nullable(),
-  assigneeId: z.string().cuid().optional().nullable(),
+  assigneeId: z.string().min(1).optional().nullable(),
 })
 
 export const convertLeadSchema = z.object({

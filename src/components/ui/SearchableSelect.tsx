@@ -39,11 +39,16 @@ export function SearchableSelect({
 
   const selectedLabel = options.find((o) => o.value === value)?.label || ''
 
+  const MAX_VISIBLE = 50
+
   const filtered = search
     ? options.filter((o) =>
         o.label.toLowerCase().includes(search.toLowerCase())
       )
     : options
+
+  const visible = filtered.slice(0, MAX_VISIBLE)
+  const hasMore = filtered.length > MAX_VISIBLE
 
   const handleSelect = useCallback(
     (val: string) => {
@@ -174,22 +179,29 @@ export function SearchableSelect({
                   Nessun risultato
                 </li>
               ) : (
-                filtered.map((opt) => (
-                  <li
-                    key={opt.value}
-                    role="option"
-                    aria-selected={opt.value === value}
-                    onClick={() => handleSelect(opt.value)}
-                    className={cn(
-                      'px-3 py-2 text-sm cursor-pointer transition-colors',
-                      opt.value === value
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'hover:bg-secondary/50'
-                    )}
-                  >
-                    {opt.label}
-                  </li>
-                ))
+                <>
+                  {visible.map((opt) => (
+                    <li
+                      key={opt.value}
+                      role="option"
+                      aria-selected={opt.value === value}
+                      onClick={() => handleSelect(opt.value)}
+                      className={cn(
+                        'px-3 py-2 text-sm cursor-pointer transition-colors',
+                        opt.value === value
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'hover:bg-secondary/50'
+                      )}
+                    >
+                      {opt.label}
+                    </li>
+                  ))}
+                  {hasMore && (
+                    <li className="px-3 py-2 text-xs text-muted text-center border-t border-border/30">
+                      +{filtered.length - MAX_VISIBLE} altri — digita per filtrare
+                    </li>
+                  )}
+                </>
               )}
             </ul>
           </div>
