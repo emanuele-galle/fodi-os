@@ -3,7 +3,7 @@ import { logger } from '@/lib/logger'
 
 // ---------------------------------------------------------------------------
 // MinIO — Local VPS storage (always configured)
-//   Accessible by Claude Code and local tools via s3.fodivps1.cloud / mc CLI.
+//   Accessible by Claude Code and local tools via s3.muscarivps.cloud / mc CLI.
 //   Acts as primary when R2 is not configured, local backup when R2 is active.
 // ---------------------------------------------------------------------------
 const minio = new S3Client({

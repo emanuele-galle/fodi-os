@@ -116,11 +116,11 @@ async function main() {
   const clientsData = [
     // VPS 1
     { companyName: 'Confial / FAILMS', slug: 'confial-failms', website: 'https://failms.org', industry: 'Sindacato/Formazione', source: 'Diretto', status: 'ACTIVE' as const, tags: ['formazione', 'sindacato', 'vps1'] },
-    { companyName: 'Dolciaria Farina', slug: 'dolciaria-farina', website: 'https://farina.fodivps1.cloud', industry: 'Food & Beverage', source: 'Referral', status: 'ACTIVE' as const, tags: ['ecommerce', 'food', 'vps1'] },
-    { companyName: 'Eccellenze Italiane TV', slug: 'eccellenze-tv', website: 'https://eccellenze-tv.fodivps1.cloud', industry: 'Media/Intrattenimento', source: 'Networking', status: 'ACTIVE' as const, tags: ['streaming', 'media', 'vps1'] },
+    { companyName: 'Dolciaria Farina', slug: 'dolciaria-farina', website: 'https://farina.muscarivps.cloud', industry: 'Food & Beverage', source: 'Referral', status: 'ACTIVE' as const, tags: ['ecommerce', 'food', 'vps1'] },
+    { companyName: 'Eccellenze Italiane TV', slug: 'eccellenze-tv', website: 'https://eccellenze-tv.muscarivps.cloud', industry: 'Media/Intrattenimento', source: 'Networking', status: 'ACTIVE' as const, tags: ['streaming', 'media', 'vps1'] },
     { companyName: 'Gruppo Cestari', slug: 'gruppo-cestari', website: 'https://gruppocestari.com', industry: 'Multiservizi', source: 'Diretto', status: 'ACTIVE' as const, tags: ['corporate', 'vps1'] },
     { companyName: 'Italafrica Centrale', slug: 'italafrica-centrale', website: 'https://italafricacentrale.com', industry: 'Relazioni Internazionali', source: 'Referral', status: 'ACTIVE' as const, tags: ['corporate', 'multilingua', 'vps1'] },
-    { companyName: 'UNSIC', slug: 'unsic', website: 'https://unsic.fodivps1.cloud', industry: 'Sindacato', source: 'Diretto', status: 'ACTIVE' as const, tags: ['sindacato', 'portale', 'vps1'] },
+    { companyName: 'UNSIC', slug: 'unsic', website: 'https://unsic.muscarivps.cloud', industry: 'Sindacato', source: 'Diretto', status: 'ACTIVE' as const, tags: ['sindacato', 'portale', 'vps1'] },
     // VPS 2
     { companyName: 'Barber99', slug: 'barber99', website: 'https://barber99.it', industry: 'Beauty/Grooming', source: 'Google', status: 'ACTIVE' as const, tags: ['beauty', 'barbershop', 'vps2'] },
     { companyName: 'Ecolive SRL', slug: 'ecolive', website: 'https://ecolive.srl', industry: 'Edilizia/Green Building', source: 'Fiera', status: 'ACTIVE' as const, tags: ['edilizia', 'green', 'vps2'] },
@@ -128,7 +128,7 @@ async function main() {
     { companyName: 'KineLab', slug: 'kinelab', website: 'https://kinelab.fodivps2.cloud', industry: 'Salute/Fisioterapia', source: 'Passaparola', status: 'ACTIVE' as const, tags: ['salute', 'fisioterapia', 'vps2'] },
     { companyName: 'OZ Extrait', slug: 'oz-extrait', website: 'https://oz.fodivps2.cloud', industry: 'Luxury/Profumeria', source: 'Referral', status: 'ACTIVE' as const, tags: ['luxury', 'ecommerce', 'vps2'] },
     { companyName: 'Spektrum Tattoo', slug: 'spektrum-tattoo', website: 'https://spektrum-tattoo.fodivps2.cloud', industry: 'Arte/Tattoo', source: 'Instagram', status: 'ACTIVE' as const, tags: ['tattoo', 'booking', 'vps2'] },
-    { companyName: 'SaaS Generali', slug: 'saas-generali', website: 'https://saas-generali.fodivps1.cloud', industry: 'Software/SaaS', source: 'Interno', status: 'PROSPECT' as const, tags: ['saas', 'interno', 'vps1'] },
+    { companyName: 'SaaS Generali', slug: 'saas-generali', website: 'https://saas-generali.muscarivps.cloud', industry: 'Software/SaaS', source: 'Interno', status: 'PROSPECT' as const, tags: ['saas', 'interno', 'vps1'] },
   ]
 
   for (const cd of clientsData) {

@@ -53,7 +53,7 @@ export const brand = {
   s3Bucket: process.env.S3_BUCKET || 'muscari-os-assets',
 
   // Storage URL for tutorials/guides
-  storageUrl: process.env.NEXT_PUBLIC_BRAND_STORAGE_URL || process.env.BRAND_STORAGE_URL || 'https://s3.fodivps1.cloud/muscari-os-assets/tutorials',
+  storageUrl: process.env.NEXT_PUBLIC_BRAND_STORAGE_URL || process.env.BRAND_STORAGE_URL || 'https://s3.muscarivps.cloud/muscari-os-assets/tutorials',
 
   // Website (external company website, not the OS)
   websiteUrl: process.env.BRAND_WEBSITE_URL || 'https://pieromuscari.it',

@@ -164,7 +164,7 @@ export async function POST(
             ContentType: 'application/pdf',
           }))
 
-          signedPdfUrl = `${process.env.S3_PUBLIC_URL || 'https://storage.fodivps1.cloud'}/${bucket}/${key}`
+          signedPdfUrl = `${process.env.S3_PUBLIC_URL || 'https://storage.muscarivps.cloud'}/${bucket}/${key}`
         } catch (uploadErr) {
           console.error('[SIGNATURE] Errore upload PDF firmato:', uploadErr)
           // Keep fallback URL

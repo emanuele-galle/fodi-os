@@ -52,4 +52,4 @@ jobs:
       - name: Notify deployment
         if: always()
         run: |
-          curl -s -X POST "https://n8n.fodivps1.cloud/webhook/deploy-notify"             -H "Content-Type: application/json"             -d "{\"project\": \"${{ env.PROJECT_SLUG }}\", \"status\": \"${{ job.status }}\", \"commit\": \"${{ github.sha }}\", \"actor\": \"${{ github.actor }}\"}"             || echo "Notification webhook failed (non-critical)"
+          curl -s -X POST "https://n8n.muscarivps.cloud/webhook/deploy-notify"             -H "Content-Type: application/json"             -d "{\"project\": \"${{ env.PROJECT_SLUG }}\", \"status\": \"${{ job.status }}\", \"commit\": \"${{ github.sha }}\", \"actor\": \"${{ github.actor }}\"}"             || echo "Notification webhook failed (non-critical)"
