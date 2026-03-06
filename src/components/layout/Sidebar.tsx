@@ -23,7 +23,7 @@ import {
   PanelLeftClose,
   PanelLeft,
 } from 'lucide-react'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import type { Role } from '@/generated/prisma/client'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -51,6 +51,20 @@ const GROUP_LABELS: Record<NavGroup, string | null> = {
 }
 
 const GROUP_ORDER: NavGroup[] = ['main', 'work', 'admin', 'team', 'system']
+
+// Hoisted motion animation objects (react-perf/jsx-no-new-object-as-prop)
+const MOTION_SPAN_INITIAL = { opacity: 0, width: 0 }
+const MOTION_SPAN_ANIMATE = { opacity: 1, width: 'auto' }
+const MOTION_SPAN_EXIT = { opacity: 0, width: 0 }
+const MOTION_SPAN_TRANSITION = { duration: 0.15 }
+const MOTION_SUBMENU_INITIAL = { height: 0, opacity: 0 }
+const MOTION_SUBMENU_ANIMATE = { height: 'auto', opacity: 1 }
+const MOTION_SUBMENU_EXIT = { height: 0, opacity: 0 }
+const MOTION_SUBMENU_TRANSITION = { duration: 0.2 }
+const MOTION_SIDEBAR_TRANSITION = { type: 'spring' as const, stiffness: 300, damping: 30 }
+const MOTION_LOGO_INITIAL = { opacity: 0, x: -8 }
+const MOTION_LOGO_ANIMATE = { opacity: 1, x: 0 }
+const MOTION_LOGO_TRANSITION = { duration: 0.15 }
 
 const navigation: NavItem[] = [
   // Principale
@@ -172,6 +186,10 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
   const expanded = loaded ? !preferences.sidebarCollapsed : true
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
 
+  const toggleExpandedItem = useCallback((label: string) => {
+    setExpandedItem((prev) => (prev === label ? null : label))
+  }, [])
+
   const toggleSidebar = useCallback(() => {
     updatePreference('sidebarCollapsed', !preferences.sidebarCollapsed)
     if (!preferences.sidebarCollapsed) setExpandedItem(null)
@@ -200,7 +218,8 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
     const navContent = item.children ? (
       <button
         type="button"
-        onClick={() => setExpandedItem(isItemExpanded ? null : item.label)}
+        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- item.label is dynamic from map iteration
+        onClick={() => toggleExpandedItem(item.label)}
         aria-expanded={isItemExpanded}
         aria-controls={submenuId}
         className={cn(
@@ -229,10 +248,10 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
         <AnimatePresence>
           {expanded && (
             <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.15 }}
+              initial={MOTION_SPAN_INITIAL}
+              animate={MOTION_SPAN_ANIMATE}
+              exit={MOTION_SPAN_EXIT}
+              transition={MOTION_SPAN_TRANSITION}
               className="flex-1 truncate whitespace-nowrap overflow-hidden text-left"
             >
               {item.label}
@@ -277,10 +296,10 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
         <AnimatePresence>
           {expanded && (
             <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.15 }}
+              initial={MOTION_SPAN_INITIAL}
+              animate={MOTION_SPAN_ANIMATE}
+              exit={MOTION_SPAN_EXIT}
+              transition={MOTION_SPAN_TRANSITION}
               className="flex-1 truncate whitespace-nowrap overflow-hidden"
             >
               {item.label}
@@ -306,10 +325,10 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
         <AnimatePresence>
           {expanded && item.children && isItemExpanded && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              initial={MOTION_SUBMENU_INITIAL}
+              animate={MOTION_SUBMENU_ANIMATE}
+              exit={MOTION_SUBMENU_EXIT}
+              transition={MOTION_SUBMENU_TRANSITION}
               className="overflow-hidden"
               id={submenuId}
               role="region"
@@ -339,13 +358,14 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
         </AnimatePresence>
       </div>
     )
-  }, [pathname, expandedItem, expanded, unreadChat, pendingTaskCount, unreadNotifications])
+  }, [pathname, expandedItem, expanded, unreadChat, pendingTaskCount, unreadNotifications, toggleExpandedItem])
 
-  /* eslint-disable react-perf/jsx-no-new-object-as-prop -- framer-motion animation objects */
+  const sidebarAnimate = useMemo(() => ({ width: expanded ? 260 : 64 }), [expanded])
+
   return (
     <motion.aside
-      animate={{ width: expanded ? 260 : 64 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      animate={sidebarAnimate}
+      transition={MOTION_SIDEBAR_TRANSITION}
       className="flex flex-col h-screen glass-sidebar text-sidebar-foreground border-r border-[var(--color-sidebar-border)] overflow-hidden"
     >
       {/* Logo + Toggle */}
@@ -360,9 +380,9 @@ export function Sidebar({ userRole, sectionAccess, customRoleSectionAccess, unre
           </button>
         ) : (
           <motion.div
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.15 }}
+            initial={MOTION_LOGO_INITIAL}
+            animate={MOTION_LOGO_ANIMATE}
+            transition={MOTION_LOGO_TRANSITION}
             className="flex items-center justify-between flex-1 min-w-0"
           >
             <Link href="/dashboard" className="flex items-center">

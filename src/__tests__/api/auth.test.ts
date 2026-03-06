@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { rateLimit, type RateLimitResult } from '@/lib/rate-limit'
+import { describe, it, expect } from 'vitest'
+import { rateLimit } from '@/lib/rate-limit'
 
 describe('Rate Limiter', () => {
   const uniqueKey = () => `test:${crypto.randomUUID()}`

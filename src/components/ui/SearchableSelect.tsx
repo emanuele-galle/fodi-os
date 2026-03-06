@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, useId } from 'react'
+import { useState, useRef, useEffect, useMemo, useId } from 'react'
 import { cn } from '@/lib/utils'
 import { Search, ChevronDown, X } from 'lucide-react'
 
@@ -41,32 +41,58 @@ export function SearchableSelect({
 
   const MAX_VISIBLE = 50
 
-  const filtered = search
-    ? options.filter((o) =>
-        o.label.toLowerCase().includes(search.toLowerCase())
-      )
-    : options
+  const filtered = useMemo(
+    () =>
+      search
+        ? options.filter((o) =>
+            o.label.toLowerCase().includes(search.toLowerCase())
+          )
+        : options,
+    [search, options]
+  )
 
   const visible = filtered.slice(0, MAX_VISIBLE)
   const hasMore = filtered.length > MAX_VISIBLE
 
-  const handleSelect = useCallback(
-    (val: string) => {
-      onChange(val)
+  function handleSelect(val: string) {
+    onChange(val)
+    setOpen(false)
+    setSearch('')
+  }
+
+  function handleClear(e: React.MouseEvent) {
+    e.stopPropagation()
+    onChange('')
+    setSearch('')
+  }
+
+  function handleToggleOpen() {
+    if (!disabled) setOpen(!open)
+  }
+
+  function handleClearKeyDown() {
+    // intentional no-op for a11y
+  }
+
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearch(e.target.value)
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Escape') {
       setOpen(false)
       setSearch('')
-    },
-    [onChange]
-  )
+    } else if (e.key === 'Enter' && filtered.length > 0) {
+      e.preventDefault()
+      handleSelect(filtered[0].value)
+    }
+  }
 
-  const handleClear = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      onChange('')
-      setSearch('')
-    },
-    [onChange]
-  )
+  function handleOptionClick(val: string) {
+    return function () {
+      handleSelect(val)
+    }
+  }
 
   // Close on click outside
   useEffect(() => {
@@ -89,20 +115,6 @@ export function SearchableSelect({
     }
   }, [open])
 
-  // Keyboard navigation
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setOpen(false)
-        setSearch('')
-      } else if (e.key === 'Enter' && filtered.length > 0) {
-        e.preventDefault()
-        handleSelect(filtered[0].value)
-      }
-    },
-    [filtered, handleSelect]
-  )
-
   const errorId = `${generatedId}-error`
 
   return (
@@ -116,11 +128,8 @@ export function SearchableSelect({
       <div className="relative">
         <button
           type="button"
-          onClick={() => {
-            if (!disabled) setOpen(!open)
-          }}
+          onClick={handleToggleOpen}
           disabled={disabled}
-          aria-invalid={!!error}
           aria-describedby={error ? errorId : undefined}
           className={cn(
             'flex h-11 md:h-10 w-full items-center justify-between rounded-[10px] border bg-card px-3 py-2 text-base md:text-sm transition-all shadow-[var(--shadow-sm)]',
@@ -137,7 +146,7 @@ export function SearchableSelect({
                 role="button"
                 tabIndex={-1}
                 onClick={handleClear}
-                onKeyDown={() => {}}
+                onKeyDown={handleClearKeyDown}
                 className="p-0.5 rounded hover:bg-secondary/50 text-muted hover:text-foreground"
               >
                 <X className="h-3.5 w-3.5" />
@@ -160,7 +169,7 @@ export function SearchableSelect({
                 ref={inputRef}
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={handleSearchChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Cerca..."
                 className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
@@ -185,7 +194,7 @@ export function SearchableSelect({
                       key={opt.value}
                       role="option"
                       aria-selected={opt.value === value}
-                      onClick={() => handleSelect(opt.value)}
+                      onClick={handleOptionClick(opt.value)}
                       className={cn(
                         'px-3 py-2 text-sm cursor-pointer transition-colors',
                         opt.value === value

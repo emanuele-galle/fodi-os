@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Search, X, MapPin } from 'lucide-react'
 import type { CalendarEvent } from './types'
 import { formatTime } from './utils'
@@ -14,6 +14,10 @@ interface EventSearchProps {
 export function EventSearch({ eventsByDate, getEventColor, setSelectedEvent }: EventSearchProps) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
+
+  const handleOpen = useCallback(() => setOpen(true), [])
+  const handleQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value), [])
+  const handleClose = useCallback(() => { setQuery(''); setOpen(false) }, [])
 
   const results = useMemo(() => {
     if (!query || query.length < 2) return []
@@ -42,10 +46,16 @@ export function EventSearch({ eventsByDate, getEventColor, setSelectedEvent }: E
     }).slice(0, 10)
   }, [query, eventsByDate])
 
+  const handleResultClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const id = e.currentTarget.dataset.eventId
+    const match = results.find(r => r.event.id === id)
+    if (match) { setSelectedEvent(match.event); setQuery(''); setOpen(false) }
+  }, [results, setSelectedEvent])
+
   if (!open) {
     return (
       <button
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         className="p-2 rounded-lg hover:bg-secondary/50 transition-colors"
         title="Cerca eventi"
       >
@@ -61,12 +71,12 @@ export function EventSearch({ eventsByDate, getEventColor, setSelectedEvent }: E
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={handleQueryChange}
           placeholder="Cerca eventi..."
           className="text-sm bg-transparent border-none outline-none w-32 sm:w-48"
           autoFocus
         />
-        <button onClick={() => { setQuery(''); setOpen(false) }} className="p-0.5">
+        <button onClick={handleClose} className="p-0.5">
           <X className="h-3.5 w-3.5 text-muted" />
         </button>
       </div>
@@ -78,7 +88,8 @@ export function EventSearch({ eventsByDate, getEventColor, setSelectedEvent }: E
             return (
               <button
                 key={event.id}
-                onClick={() => { setSelectedEvent(event); setQuery(''); setOpen(false) }}
+                data-event-id={event.id}
+                onClick={handleResultClick}
                 className="w-full text-left px-3 py-2 hover:bg-secondary/30 transition-colors border-b border-border/30 last:border-b-0"
               >
                 <div className="flex items-center gap-2">

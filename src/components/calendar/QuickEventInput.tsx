@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { addHour } from './utils'
 
 interface QuickEventInputProps {
@@ -18,7 +18,9 @@ export function QuickEventInput({ hour, onSubmit, onExpand, onCancel }: QuickEve
     inputRef.current?.focus()
   }, [])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value), [])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && title.trim()) {
       e.preventDefault()
       onSubmit(title.trim())
@@ -28,7 +30,7 @@ export function QuickEventInput({ hour, onSubmit, onExpand, onCancel }: QuickEve
     } else if (e.key === 'Escape') {
       onCancel()
     }
-  }
+  }, [title, onSubmit, onExpand, onCancel])
 
   const timeStr = `${String(hour).padStart(2, '0')}:00`
 
@@ -38,7 +40,7 @@ export function QuickEventInput({ hour, onSubmit, onExpand, onCancel }: QuickEve
         ref={inputRef}
         type="text"
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={handleTitleChange}
         onKeyDown={handleKeyDown}
         onBlur={onCancel}
         placeholder="Titolo evento (Enter per creare, Tab per dettagli)"

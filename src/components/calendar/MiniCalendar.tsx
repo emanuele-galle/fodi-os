@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { getDaysInMonth, getFirstDayOfMonth } from './utils'
 import { DAYS } from './constants'
 import type { CalendarEvent } from './types'
@@ -21,14 +21,23 @@ export function MiniCalendar({ todayKey, selectedDayKey, eventsByDate, onSelectD
   const firstDay = getFirstDayOfMonth(viewYear, viewMonth)
   const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7
 
-  const prevMonth = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
-    else setViewMonth(m => m - 1)
-  }
-  const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
-    else setViewMonth(m => m + 1)
-  }
+  const prevMonth = useCallback(() => {
+    setViewMonth(m => {
+      if (m === 0) { setViewYear(y => y - 1); return 11 }
+      return m - 1
+    })
+  }, [])
+  const nextMonth = useCallback(() => {
+    setViewMonth(m => {
+      if (m === 11) { setViewYear(y => y + 1); return 0 }
+      return m + 1
+    })
+  }, [])
+
+  const handleDayClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const key = e.currentTarget.dataset.dateKey
+    if (key) onSelectDay(key)
+  }, [onSelectDay])
 
   const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString('it-IT', { month: 'short', year: 'numeric' })
 
@@ -60,7 +69,8 @@ export function MiniCalendar({ todayKey, selectedDayKey, eventsByDate, onSelectD
           return (
             <button
               key={i}
-              onClick={() => onSelectDay(dateKey)}
+              data-date-key={dateKey}
+              onClick={handleDayClick}
               className={`w-7 h-7 mx-auto text-xs rounded-full flex items-center justify-center transition-colors relative ${
                 isSelected ? 'bg-primary text-primary-foreground' :
                 isToday ? 'bg-primary/20 text-primary font-bold' :

@@ -118,7 +118,6 @@ export default function PipelinePage() {
     if (activeTab === 'clients' && Object.keys(clientsByStatus).length === 0) {
       loadClients()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, clientsByStatus, loadClients])
   useRealtimeRefresh('client', loadClients)
 

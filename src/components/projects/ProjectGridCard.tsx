@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -45,13 +46,14 @@ interface ProjectGridCardProps {
 export function ProjectGridCard({ project: p, onClick, actionMenu }: ProjectGridCardProps) {
   const totalTasks = p._count?.tasks ?? 0
   const doneTasks = p.completedTasks ?? 0
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }, [onClick])
   return (
     <Card
       className="cursor-pointer overflow-hidden shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-lg)] hover:scale-[1.01] transition-all duration-200 touch-manipulation active:scale-[0.98] relative group"
       role="button"
       tabIndex={0}
       onClick={onClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      onKeyDown={handleKeyDown}
       // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
       style={{ borderTop: `3px solid ${p.color || STATUS_COLORS[p.status] || 'var(--color-primary)'}` }}
     >

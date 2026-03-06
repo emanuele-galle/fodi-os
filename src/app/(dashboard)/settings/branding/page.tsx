@@ -1,12 +1,13 @@
 'use client'
 
-/* eslint-disable react-perf/jsx-no-new-function-as-prop -- component handlers depend on dynamic state */
-import { useState, useEffect, useCallback, useRef } from 'react'
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- form handlers depend on dynamic field keys and file upload state */
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardTitle, CardContent } from '@/components/ui/Card'
 import { Tabs } from '@/components/ui/Tabs'
+import NextImage from 'next/image'
 import {
-  Paintbrush, RotateCcw, Save, Loader2, Upload, X, Image,
+  Paintbrush, RotateCcw, Save, Loader2, Upload, X, Image as ImageIcon,
 } from 'lucide-react'
 
 // ── Types ──
@@ -102,9 +103,9 @@ function LogoUpload({ label, value, type, onUploaded }: {
       <div className="flex items-center gap-3">
         <div className="h-16 w-16 rounded-lg border border-border/30 bg-secondary/30 flex items-center justify-center overflow-hidden flex-shrink-0">
           {value ? (
-            <img src={value} alt={label} className="h-full w-full object-contain" />
+            <NextImage src={value} alt={label} width={64} height={64} className="h-full w-full object-contain" unoptimized />
           ) : (
-            <Image className="h-6 w-6 text-muted" />
+            <ImageIcon className="h-6 w-6 text-muted" />
           )}
         </div>
         <div className="flex-1 space-y-1.5">
@@ -185,13 +186,17 @@ function LoginPreview({ settings }: { settings: BrandSettingsData }) {
   const gradient = `linear-gradient(135deg, ${settings.gradientStart} 0%, ${settings.gradientMid} 50%, ${settings.gradientEnd} 100%)`
   const radiusPx = RADIUS_OPTIONS.find((r) => r.value === settings.borderRadius)?.preview || '1rem'
 
+  const gradientStyle = useMemo(() => ({ background: gradient }), [gradient])
+  const radiusStyle = useMemo(() => ({ borderRadius: radiusPx }), [radiusPx])
+  const buttonStyle = useMemo(() => ({ backgroundColor: settings.colorPrimary, borderRadius: radiusPx }), [settings.colorPrimary, radiusPx])
+
   return (
     <div className="rounded-xl border border-border/30 overflow-hidden shadow-[var(--shadow-md)]">
       <div className="flex h-48 md:h-56">
         {/* Left panel - gradient */}
-        <div className="w-1/2 flex flex-col items-center justify-center p-4 text-white relative" style={{ background: gradient }}>
+        <div className="w-1/2 flex flex-col items-center justify-center p-4 text-white relative" style={gradientStyle}>
           {settings.logoDarkUrl ? (
-            <img src={settings.logoDarkUrl} alt="Logo" className="h-8 mb-3 object-contain" />
+            <NextImage src={settings.logoDarkUrl} alt="Logo" width={80} height={32} className="h-8 mb-3 object-contain" unoptimized />
           ) : (
             <div className="h-8 w-20 rounded bg-white/20 mb-3" />
           )}
@@ -205,11 +210,11 @@ function LoginPreview({ settings }: { settings: BrandSettingsData }) {
             {settings.loginHeading || 'Bentornato'}
           </p>
           <div className="w-full max-w-[120px] space-y-2">
-            <div className="h-5 rounded bg-secondary/60 w-full" style={{ borderRadius: radiusPx }} />
-            <div className="h-5 rounded bg-secondary/60 w-full" style={{ borderRadius: radiusPx }} />
+            <div className="h-5 rounded bg-secondary/60 w-full" style={radiusStyle} />
+            <div className="h-5 rounded bg-secondary/60 w-full" style={radiusStyle} />
             <div
               className="h-5 w-full text-[8px] font-medium text-white flex items-center justify-center"
-              style={{ backgroundColor: settings.colorPrimary, borderRadius: radiusPx }}
+              style={buttonStyle}
             >
               Accedi
             </div>
@@ -332,15 +337,23 @@ export default function BrandingPage() {
     }
   }, [])
 
-  if (!loaded || !isAdmin) {
-    return (
-      <div className="animate-fade-in flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted" />
-      </div>
-    )
-  }
+  // Memoize style objects for color/gradient previews
+  const gradientPreviewStyle = useMemo(() => ({
+    background: `linear-gradient(135deg, ${settings.gradientStart} 0%, ${settings.gradientMid} 50%, ${settings.gradientEnd} 100%)`,
+  }), [settings.gradientStart, settings.gradientMid, settings.gradientEnd])
+  const primaryColorStyle = useMemo(() => ({ backgroundColor: settings.colorPrimary }), [settings.colorPrimary])
+  const primaryDarkColorStyle = useMemo(() => ({ backgroundColor: settings.colorPrimaryDark }), [settings.colorPrimaryDark])
 
-  const tabs = [
+  // Pre-compute borderRadius styles for RADIUS_OPTIONS (static, never changes)
+  const radiusPreviewStyles = useMemo(() => {
+    const map: Record<string, React.CSSProperties> = {}
+    for (const opt of RADIUS_OPTIONS) {
+      map[opt.value] = { borderRadius: opt.preview }
+    }
+    return map
+  }, [])
+
+  const tabs = useMemo(() => [
     {
       id: 'identity',
       label: 'Identità',
@@ -417,16 +430,16 @@ export default function BrandingPage() {
               <div className="space-y-4 mt-3">
                 <div
                   className="h-24 rounded-xl"
-                  style={{ background: `linear-gradient(135deg, ${settings.gradientStart} 0%, ${settings.gradientMid} 50%, ${settings.gradientEnd} 100%)` }}
+                  style={gradientPreviewStyle}
                 />
                 <div className="flex gap-3">
                   <div>
                     <p className="text-xs text-muted mb-2">Primario</p>
-                    <div className="h-12 w-20 rounded-lg" style={{ backgroundColor: settings.colorPrimary }} />
+                    <div className="h-12 w-20 rounded-lg" style={primaryColorStyle} />
                   </div>
                   <div>
                     <p className="text-xs text-muted mb-2">Primario Scuro</p>
-                    <div className="h-12 w-20 rounded-lg" style={{ backgroundColor: settings.colorPrimaryDark }} />
+                    <div className="h-12 w-20 rounded-lg" style={primaryDarkColorStyle} />
                   </div>
                 </div>
               </div>
@@ -505,7 +518,7 @@ export default function BrandingPage() {
                   >
                     <div
                       className="h-10 w-10 bg-primary/20 border border-primary/40"
-                      style={{ borderRadius: opt.preview }}
+                      style={radiusPreviewStyles[opt.value]}
                     />
                     <span className="text-[11px] font-medium">{opt.label}</span>
                   </button>
@@ -551,7 +564,7 @@ export default function BrandingPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-muted">Colore primario</span>
                   <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded" style={{ backgroundColor: settings.colorPrimary }} />
+                    <div className="h-4 w-4 rounded" style={primaryColorStyle} />
                     <span className="font-mono text-xs">{settings.colorPrimary}</span>
                   </div>
                 </div>
@@ -573,7 +586,15 @@ export default function BrandingPage() {
         </div>
       ),
     },
-  ]
+  ], [settings, updateField, gradientPreviewStyle, primaryColorStyle, primaryDarkColorStyle, radiusPreviewStyles])
+
+  if (!loaded || !isAdmin) {
+    return (
+      <div className="animate-fade-in flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted" />
+      </div>
+    )
+  }
 
   return (
     <div className="animate-fade-in max-w-2xl space-y-6">
