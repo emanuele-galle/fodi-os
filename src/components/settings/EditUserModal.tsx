@@ -112,13 +112,24 @@ export function EditUserModal({ user, customRoles, onClose, onUserUpdated, onUse
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          firstName: editForm.firstName, lastName: editForm.lastName, username: editForm.username,
-          email: editForm.email, phone: editForm.phone || null, role: editForm.role,
+          firstName: editForm.firstName || undefined, lastName: editForm.lastName || undefined,
+          username: editForm.username || undefined, email: editForm.email || undefined,
+          phone: editForm.phone || null, role: editForm.role,
           customRoleId: editForm.customRoleId || null, avatarUrl: editForm.avatarUrl || null,
         }),
       })
       const data = await res.json()
-      if (!res.ok) { setEditError(data.error || 'Errore durante il salvataggio'); return }
+      if (!res.ok) {
+        if (data.details) {
+          const fields = Object.entries(data.details as Record<string, string[]>)
+            .map(([k, v]) => `${k}: ${v.join(', ')}`)
+            .join('; ')
+          setEditError(fields)
+        } else {
+          setEditError(data.error || 'Errore durante il salvataggio')
+        }
+        return
+      }
       onUserUpdated(user.id, data.data)
     } catch {
       setEditError(CONNECTION_ERROR)
