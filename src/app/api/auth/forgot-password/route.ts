@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         .sign(secret)
 
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || brand.siteUrl
-      const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`
+      const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
 
       const html = buildPasswordResetEmail({ firstName: user.firstName, resetUrl })
       await sendViaSMTP(email, `Reset password - ${brand.name}`, html)
