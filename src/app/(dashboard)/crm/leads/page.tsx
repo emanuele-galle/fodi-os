@@ -180,7 +180,18 @@ export default function LeadsPage() {
     setSubmitting(true)
     setFormError(null)
     try {
-      const payload = { ...editForm, assigneeId: editForm.assigneeId || null }
+      const payload = {
+        name: editForm.name || undefined,
+        email: editForm.email || undefined,
+        message: editForm.message || undefined,
+        source: editForm.source || undefined,
+        status: editForm.status || undefined,
+        company: editForm.company || null,
+        phone: editForm.phone || null,
+        service: editForm.service || null,
+        notes: editForm.notes || null,
+        assigneeId: editForm.assigneeId || null,
+      }
       const res = await fetch(`/api/leads/${editLeadId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -191,7 +202,14 @@ export default function LeadsPage() {
         fetchLeads()
       } else {
         const data = await res.json()
-        setFormError(data.error || 'Errore nel salvataggio')
+        if (data.details) {
+          const fields = Object.entries(data.details as Record<string, string[]>)
+            .map(([k, v]) => `${k}: ${v.join(', ')}`)
+            .join('; ')
+          setFormError(fields)
+        } else {
+          setFormError(data.error || 'Errore nel salvataggio')
+        }
       }
     } catch {
       setFormError('Errore di rete')
