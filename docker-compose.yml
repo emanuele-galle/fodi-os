@@ -26,6 +26,7 @@ services:
       - .env.docker
     volumes:
       - ./certs:/app/certs:ro
+      - nextcache:/app/.next/cache
     networks:
       - traefik-public
       - panel-internal
@@ -54,6 +55,9 @@ services:
       resources:
         limits:
           memory: 1024M
+
+volumes:
+  nextcache:
 
 networks:
   traefik-public:
