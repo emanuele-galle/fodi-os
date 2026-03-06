@@ -62,9 +62,9 @@ export function AvatarUpload({ name, currentUrl, onUploaded }: AvatarUploadProps
         throw new Error(data.error || 'Errore upload')
       }
 
-      const user = await res.json()
+      const { data } = await res.json()
       setPreview(null)
-      onUploaded(user.avatarUrl)
+      onUploaded(data.avatarUrl)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Errore upload')
       setPreview(null)
