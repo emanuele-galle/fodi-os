@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { AlertCircle } from 'lucide-react'
 
 interface CreateDealModalProps {
@@ -66,12 +67,12 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
   // Load clients and leads
   useEffect(() => {
     if (open) {
-      fetch('/api/clients?limit=100')
+      fetch('/api/clients?limit=500')
         .then((res) => res.json())
         .then((data) => setClients(data.items || []))
         .catch(() => setError('Errore nel caricamento dei clienti'))
 
-      fetch('/api/leads?limit=100')
+      fetch('/api/leads?limit=500')
         .then((res) => res.ok ? res.json() : { items: [] })
         .then((data) => setLeads(data.items || []))
         .catch(() => {})
@@ -289,59 +290,37 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
               {sourceType === 'client' ? (
                 <>
                   <div>
-                    <label className="block text-sm font-medium mb-1.5">
-                      Cliente <span className="text-destructive">*</span>
-                    </label>
-                    <select
+                    <SearchableSelect
+                      label="Cliente"
+                      required
+                      options={clients.map((c) => ({ value: c.id, label: c.companyName }))}
                       value={formData.clientId}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, clientId: e.target.value }))}
-                      className={selectClass}
-                    >
-                      <option value="">Seleziona cliente</option>
-                      {clients.map((client) => (
-                        <option key={client.id} value={client.id}>
-                          {client.companyName}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormData((prev) => ({ ...prev, clientId: val }))}
+                      placeholder="Cerca cliente..."
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1.5">Contatto</label>
-                    <select
+                    <SearchableSelect
+                      label="Contatto"
+                      options={contacts.map((c) => ({ value: c.id, label: `${c.firstName} ${c.lastName}` }))}
                       value={formData.contactId}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, contactId: e.target.value }))}
+                      onChange={(val) => setFormData((prev) => ({ ...prev, contactId: val }))}
+                      placeholder={loadingContacts ? 'Caricamento...' : 'Seleziona contatto'}
                       disabled={!formData.clientId || loadingContacts}
-                      className={`${selectClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      <option value="">
-                        {loadingContacts ? 'Caricamento...' : 'Seleziona contatto'}
-                      </option>
-                      {contacts.map((contact) => (
-                        <option key={contact.id} value={contact.id}>
-                          {contact.firstName} {contact.lastName}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </>
               ) : (
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1.5">
-                    Lead <span className="text-destructive">*</span>
-                  </label>
-                  <select
+                  <SearchableSelect
+                    label="Lead"
+                    required
+                    options={leads.map((l) => ({ value: l.id, label: `${l.name}${l.company ? ` — ${l.company}` : ''}` }))}
                     value={formData.leadId}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, leadId: e.target.value }))}
-                    className={selectClass}
-                  >
-                    <option value="">Seleziona lead</option>
-                    {leads.map((lead) => (
-                      <option key={lead.id} value={lead.id}>
-                        {lead.name}{lead.company ? ` — ${lead.company}` : ''}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData((prev) => ({ ...prev, leadId: val }))}
+                    placeholder="Cerca lead..."
+                  />
                 </div>
               )}
             </div>

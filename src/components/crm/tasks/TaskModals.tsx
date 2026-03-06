@@ -4,6 +4,7 @@ import { AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { Modal } from '@/components/ui/Modal'
 import {
   TASK_TYPE_OPTIONS, TASK_STATUS_OPTIONS, PRIORITY_OPTIONS,
@@ -39,15 +40,13 @@ export function TaskCreateModal({
           <div className="sm:col-span-2">
             <Input label="Titolo *" value={form.title} onChange={(e) => onFormChange({ ...form, title: e.target.value })} placeholder="Descrizione breve attività" />
           </div>
-          <Select
-            label="Cliente *"
-            // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- computed from clients prop
-            options={[
-              { value: '', label: 'Seleziona cliente' },
-              ...clients.map(c => ({ value: c.id, label: c.companyName }))
-            ]}
+          <SearchableSelect
+            label="Cliente"
+            required
+            options={clients.map(c => ({ value: c.id, label: c.companyName }))}
             value={form.clientId}
-            onChange={(e) => onFormChange({ ...form, clientId: e.target.value })}
+            onChange={(val) => onFormChange({ ...form, clientId: val })}
+            placeholder="Cerca cliente..."
           />
           <Select
             label="Assegnato a"
@@ -131,15 +130,12 @@ export function TaskEditModal({
           <div className="sm:col-span-2">
             <Input label="Titolo" value={form.title} onChange={(e) => onFormChange({ ...form, title: e.target.value })} />
           </div>
-          <Select
+          <SearchableSelect
             label="Cliente"
-            // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop -- computed from clients prop
-            options={[
-              { value: '', label: 'Nessun cliente' },
-              ...clients.map(c => ({ value: c.id, label: c.companyName }))
-            ]}
+            options={clients.map(c => ({ value: c.id, label: c.companyName }))}
             value={form.clientId}
-            onChange={(e) => onFormChange({ ...form, clientId: e.target.value })}
+            onChange={(val) => onFormChange({ ...form, clientId: val })}
+            placeholder="Cerca cliente..."
           />
           <Select
             label="Assegnato a"

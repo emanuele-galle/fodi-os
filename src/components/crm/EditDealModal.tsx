@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useConfirm } from '@/hooks/useConfirm'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { AlertCircle, Trash2 } from 'lucide-react'
 
 interface Deal {
@@ -84,7 +85,7 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
   // Load clients
   useEffect(() => {
     if (open) {
-      fetch('/api/clients?limit=100')
+      fetch('/api/clients?limit=500')
         .then((res) => res.json())
         .then((data) => setClients(data.items || []))
         .catch(() => setError('Errore nel caricamento dei clienti'))
@@ -302,41 +303,25 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
               )}
 
               <div>
-                <label className="block text-sm font-medium mb-1.5">
-                  Cliente <span className="text-destructive">*</span>
-                </label>
-                <select
-                  value={formData.clientId}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, clientId: e.target.value }))}
+                <SearchableSelect
+                  label="Cliente"
                   required
-                  className="flex h-11 md:h-10 w-full rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-base md:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40"
-                >
-                  <option value="">Seleziona cliente</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.companyName}
-                    </option>
-                  ))}
-                </select>
+                  options={clients.map((c) => ({ value: c.id, label: c.companyName }))}
+                  value={formData.clientId}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, clientId: val }))}
+                  placeholder="Cerca cliente..."
+                />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1.5">Contatto</label>
-                <select
+                <SearchableSelect
+                  label="Contatto"
+                  options={contacts.map((c) => ({ value: c.id, label: `${c.firstName} ${c.lastName}` }))}
                   value={formData.contactId}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, contactId: e.target.value }))}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, contactId: val }))}
+                  placeholder={loadingContacts ? 'Caricamento...' : 'Seleziona contatto'}
                   disabled={!formData.clientId || loadingContacts}
-                  className="flex h-11 md:h-10 w-full rounded-lg border border-border/50 bg-card/50 px-3 py-2 text-base md:text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option value="">
-                    {loadingContacts ? 'Caricamento...' : 'Seleziona contatto'}
-                  </option>
-                  {contacts.map((contact) => (
-                    <option key={contact.id} value={contact.id}>
-                      {contact.firstName} {contact.lastName}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
         {/* eslint-enable react-perf/jsx-no-new-function-as-prop */}

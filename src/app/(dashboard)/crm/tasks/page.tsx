@@ -80,7 +80,7 @@ export default function CrmTasksPage() {
     }).catch(() => {})
   }, [])
   useEffect(() => {
-    fetch('/api/clients?limit=100').then(r => r.json()).then(data => {
+    fetch('/api/clients?limit=500').then(r => r.json()).then(data => {
       setClients(data.items || [])
     }).catch(() => {})
   }, [])
