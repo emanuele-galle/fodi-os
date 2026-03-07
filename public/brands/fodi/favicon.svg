@@ -1,18 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="gold-main" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#E2D07A"/>
+      <stop offset="50%" stop-color="#D4C06A"/>
+      <stop offset="100%" stop-color="#C4A052"/>
+    </linearGradient>
+    <linearGradient id="gold-shadow" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#B8943E"/>
+      <stop offset="100%" stop-color="#8A6E2A"/>
+    </linearGradient>
+    <linearGradient id="gold-line" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#D4C06A"/>
       <stop offset="100%" stop-color="#C4A052"/>
     </linearGradient>
-    <linearGradient id="gold-dark" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#B8943E"/>
-      <stop offset="100%" stop-color="#9A7B30"/>
-    </linearGradient>
   </defs>
-  <!-- Left side of A -->
-  <polygon points="16,2 2,30 10,30 16,14" fill="url(#gold)"/>
-  <!-- Right side of A -->
-  <polygon points="16,2 30,30 22,30 16,14" fill="url(#gold)"/>
-  <!-- Inner shadow/depth -->
-  <polygon points="16,14 12,24 16,8" fill="url(#gold-dark)"/>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#18181B"/>
+  <!-- Subtle border -->
+  <rect x="3" y="3" width="506" height="506" rx="93" fill="none" stroke="#C4A052" stroke-opacity="0.12" stroke-width="3"/>
+  <!-- Left leg of A -->
+  <polygon points="200,80 56,400 120,400 200,200" fill="#D4C06A"/>
+  <!-- Right leg of A -->
+  <polygon points="200,80 344,400 280,400 200,200" fill="#D4C06A"/>
+  <!-- Inner shadow for depth -->
+  <polygon points="200,200 160,310 200,140" fill="#A0843A" opacity="0.7"/>
+  <!-- Underline extending right -->
+  <rect x="56" y="400" width="400" height="28" rx="4" fill="#C4A052"/>
 </svg>
