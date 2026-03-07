@@ -38,6 +38,7 @@ interface TaskDetailModalProps {
 }
 
 export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onUpdated, userRole }: TaskDetailModalProps) {
+  const isCreateMode = !taskId
   const [task, setTask] = useState<TaskDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -49,10 +50,12 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
   const [subtasks, setSubtasks] = useState<Subtask[]>([])
   const [subtaskDetailId, setSubtaskDetailId] = useState<string | null>(null)
   const [subtaskDetailOpen, setSubtaskDetailOpen] = useState(false)
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([])
+  const [selectedProjectId, setSelectedProjectId] = useState('')
 
   const isAdmin = userRole === 'ADMIN'
 
-  const editForm = useFormPersist(`task-edit:${taskId || 'none'}`, {
+  const editForm = useFormPersist(`task-edit:${taskId || 'new'}`, {
     title: '',
     description: '',
     status: 'TODO',
@@ -146,7 +149,15 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
       fetchSubtasks()
       setConfirmDelete(false)
     }
-  }, [open, taskId, fetchTask, fetchAttachments, fetchActivity, fetchSubtasks])
+    if (open && isCreateMode) {
+      setTask(null)
+      setAssigneeIds([])
+      setSelectedProjectId('')
+      if (!editForm.hasPersistedData) {
+        editForm.setValues({ title: '', description: '', status: 'TODO', priority: 'MEDIUM', dueDate: '' })
+      }
+    }
+  }, [open, taskId, isCreateMode, fetchTask, fetchAttachments, fetchActivity, fetchSubtasks])
 
   useEffect(() => {
     if (!highlightCommentId || !open || loading || !task) return
@@ -168,6 +179,11 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
         if (d?.users) setTeamMembers(d.users)
         else if (d?.items) setTeamMembers(d.items)
         else if (Array.isArray(d)) setTeamMembers(d)
+      })
+    fetch('/api/projects?limit=200')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.items) setProjects(d.items)
       })
   }, [])
 
@@ -192,6 +208,36 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     const prevDueDate = current.dueDate ? current.dueDate.slice(0, 10) : ''
     if (dueDate !== prevDueDate) body.dueDate = dueDate ? new Date(dueDate).toISOString() : null
     return body
+  }
+
+  async function handleCreate() {
+    if (saving || !title.trim()) return
+    setSaving(true)
+    try {
+      const body: Record<string, unknown> = {
+        title: title.trim(),
+        priority,
+        boardColumn: status === 'TODO' ? 'todo' : status.toLowerCase(),
+      }
+      if (description.trim()) body.description = description.trim()
+      if (dueDate) body.dueDate = new Date(dueDate).toISOString()
+      if (selectedProjectId) body.projectId = selectedProjectId
+      if (assigneeIds.length > 0) body.assigneeIds = assigneeIds
+      body.isPersonal = !selectedProjectId
+
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) {
+        editForm.reset()
+        onUpdated()
+        onClose()
+      }
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleSave() {
@@ -233,9 +279,12 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     }
   }
 
+  /* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter */
+  const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => setSelectedProjectId(e.target.value)
+
   return (
-    <Modal open={open} onClose={onClose} title="Dettaglio Task" size="xl" preventAccidentalClose={editForm.isDirty}>
-      {loading || !task ? (
+    <Modal open={open} onClose={onClose} title={isCreateMode ? 'Nuova Task' : 'Dettaglio Task'} size="xl" preventAccidentalClose={editForm.isDirty}>
+      {!isCreateMode && (loading || !task) ? (
         <div className="flex items-center justify-center py-12">
           <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
@@ -288,7 +337,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             placeholder="Seleziona assegnatari..."
           />
 
-          {task.assignments && task.assignments.some((a: TaskAssignment) => a.assignedByUser) && (
+          {!isCreateMode && task?.assignments && task.assignments.some((a: TaskAssignment) => a.assignedByUser) && (
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted flex items-center gap-1.5">
                 <UserCheck className="h-3.5 w-3.5" />
@@ -325,109 +374,128 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             onChange={handleDueDateChange}
           />
 
-          {task.project && (
-            <div className="flex items-center gap-2 text-sm text-muted">
-              <span>Progetto:</span>
-              <Badge variant="default">{task.project.name}</Badge>
-            </div>
-          )}
-          {!task.project && task.isPersonal && (
-            <div className="flex items-center gap-2 text-sm text-muted">
-              <span>Tipo:</span>
-              <Badge status={priority}>Personale</Badge>
-            </div>
-          )}
-
-          {isAdmin && (
-            <TaskMovePanel
-              taskId={task.id}
-              currentProjectId={task.project?.id}
-              currentFolderId={task.folderId}
-              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
-              onMoved={() => { fetchTask(); onUpdated() }}
-            />
-          )}
-
-          <div className="flex items-center justify-between border-t border-border pt-4">
-            <div className="flex items-center gap-2 text-sm text-muted">
-              <span>Timer</span>
-            </div>
-            <TaskTimer
-              taskId={task.id}
-              timerStartedAt={task.timerStartedAt}
-              timerUserId={task.timerUserId}
-              onTimerChange={fetchTask}
-            />
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <TaskDependencies taskId={task.id} />
-          </div>
-
-          <TaskSubtasks
-            taskId={task.id}
-            subtasks={subtasks}
-            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
-            onSubtasksChange={() => { fetchSubtasks(); fetchTask() }}
-            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
-            onSubtaskClick={(id) => { setSubtaskDetailId(id); setSubtaskDetailOpen(true) }}
-          />
-
-          {subtaskDetailId && (
-            <TaskDetailModal
-              taskId={subtaskDetailId}
-              open={subtaskDetailOpen}
-              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
-              onClose={() => { setSubtaskDetailOpen(false); setSubtaskDetailId(null) }}
-              // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
-              onUpdated={() => { fetchSubtasks(); fetchTask(); onUpdated() }}
-              userRole={userRole}
-            />
+          {isCreateMode ? (
+            projects.length > 0 && (
+              <Select
+                label="Progetto"
+                options={[{ value: '', label: 'Personale (nessun progetto)' }, ...projects.map(p => ({ value: p.id, label: p.name }))]}
+                value={selectedProjectId}
+                onChange={handleProjectChange}
+              />
+            )
+          ) : (
+            <>
+              {task!.project && (
+                <div className="flex items-center gap-2 text-sm text-muted">
+                  <span>Progetto:</span>
+                  <Badge variant="default">{task!.project.name}</Badge>
+                </div>
+              )}
+              {!task!.project && task!.isPersonal && (
+                <div className="flex items-center gap-2 text-sm text-muted">
+                  <span>Tipo:</span>
+                  <Badge status={priority}>Personale</Badge>
+                </div>
+              )}
+            </>
           )}
 
-          <TaskComments
-            taskId={task.id}
-            comments={task.comments}
-            highlightCommentId={highlightCommentId}
-            onCommentAdded={fetchTask}
-          />
+          {!isCreateMode && task && (
+            <>
+              {isAdmin && (
+                <TaskMovePanel
+                  taskId={task.id}
+                  currentProjectId={task.project?.id}
+                  currentFolderId={task.folderId}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
+                  onMoved={() => { fetchTask(); onUpdated() }}
+                />
+              )}
 
-          <TaskAttachments
-            taskId={task.id}
-            projectId={task.project?.id}
-            attachments={attachments}
-            onAttachmentsChange={fetchAttachments}
-          />
+              <div className="flex items-center justify-between border-t border-border pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted">
+                  <span>Timer</span>
+                </div>
+                <TaskTimer
+                  taskId={task.id}
+                  timerStartedAt={task.timerStartedAt}
+                  timerUserId={task.timerUserId}
+                  onTimerChange={fetchTask}
+                />
+              </div>
 
-          <TaskActivityLog activityLog={activityLog} />
+              <div className="border-t border-border pt-4">
+                <TaskDependencies taskId={task.id} />
+              </div>
+
+              <TaskSubtasks
+                taskId={task.id}
+                subtasks={subtasks}
+                // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
+                onSubtasksChange={() => { fetchSubtasks(); fetchTask() }}
+                // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
+                onSubtaskClick={(id) => { setSubtaskDetailId(id); setSubtaskDetailOpen(true) }}
+              />
+
+              {subtaskDetailId && (
+                <TaskDetailModal
+                  taskId={subtaskDetailId}
+                  open={subtaskDetailOpen}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
+                  onClose={() => { setSubtaskDetailOpen(false); setSubtaskDetailId(null) }}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- multi-step callback
+                  onUpdated={() => { fetchSubtasks(); fetchTask(); onUpdated() }}
+                  userRole={userRole}
+                />
+              )}
+
+              <TaskComments
+                taskId={task.id}
+                comments={task.comments}
+                highlightCommentId={highlightCommentId}
+                onCommentAdded={fetchTask}
+              />
+
+              <TaskAttachments
+                taskId={task.id}
+                projectId={task.project?.id}
+                attachments={attachments}
+                onAttachmentsChange={fetchAttachments}
+              />
+
+              <TaskActivityLog activityLog={activityLog} />
+            </>
+          )}
 
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between pt-2 border-t border-border gap-3 md:gap-0">
             <div className="flex items-center gap-3 order-2 md:order-none">
               <Button variant="outline" onClick={onClose} className="flex-1 md:flex-none">
                 Annulla
               </Button>
-              <Button onClick={handleSave} disabled={saving || !title.trim()} className="flex-1 md:flex-none">
-                {saving ? 'Salvataggio...' : 'Salva'}
+              <Button onClick={isCreateMode ? handleCreate : handleSave} disabled={saving || !title.trim()} className="flex-1 md:flex-none">
+                {saving ? 'Salvataggio...' : isCreateMode ? 'Crea Task' : 'Salva'}
               </Button>
             </div>
-            <div className="order-1 md:order-none">
-              {confirmDelete ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-destructive">Confermi?</span>
-                  <Button size="sm" variant="destructive" onClick={handleDelete} disabled={deleting}>
-                    {deleting ? 'Eliminazione...' : 'Si, elimina'}
+            {!isCreateMode && (
+              <div className="order-1 md:order-none">
+                {confirmDelete ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-destructive">Confermi?</span>
+                    <Button size="sm" variant="destructive" onClick={handleDelete} disabled={deleting}>
+                      {deleting ? 'Eliminazione...' : 'Si, elimina'}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleConfirmDeleteCancel}>
+                      No
+                    </Button>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="ghost" onClick={handleConfirmDeleteShow}>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Elimina
                   </Button>
-                  <Button size="sm" variant="outline" onClick={handleConfirmDeleteCancel}>
-                    No
-                  </Button>
-                </div>
-              ) : (
-                <Button size="sm" variant="ghost" onClick={handleConfirmDeleteShow}>
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Elimina
-                </Button>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
