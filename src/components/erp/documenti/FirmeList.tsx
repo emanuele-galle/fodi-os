@@ -238,7 +238,7 @@ export function FirmeList() {
 
           {/* Desktop Table View */}
           {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- table sort handlers and loop row handlers */}
-          <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
+          <div className="hidden lg:block overflow-x-auto rounded-lg border border-border/80">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted bg-secondary/30">

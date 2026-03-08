@@ -295,8 +295,8 @@ export default function SupportPage() {
         />
       ) : (
         <>
-          {/* Mobile card view */}
-          <div className="md:hidden space-y-3">
+          {/* Mobile + tablet card view */}
+          <div className="lg:hidden space-y-3">
             {tickets.map((ticket) => (
               <div
                 key={ticket.id}
@@ -328,7 +328,7 @@ export default function SupportPage() {
           </div>
 
           {/* Desktop table view */}
-          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
+          <div className="hidden lg:block rounded-xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30">

@@ -455,7 +455,7 @@ export function EntrateContent() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
+          <div className="hidden lg:block rounded-xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30">

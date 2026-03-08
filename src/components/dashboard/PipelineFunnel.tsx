@@ -56,7 +56,7 @@ export function PipelineFunnel() {
   if (loading) return <Skeleton className="h-48 w-full" />
 
   return (
-    <div className="h-[200px] md:h-[240px]">
+    <div className="h-[200px] md:h-[220px] lg:h-[240px]">
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 5, bottom: 5 }} barCategoryGap="25%">
         <CartesianGrid strokeDasharray="3 6" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.3} />

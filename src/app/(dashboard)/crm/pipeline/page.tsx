@@ -269,7 +269,7 @@ export default function PipelinePage() {
 
       {/* Stats bar for deals */}
       {activeTab === 'deals' && !dealsLoading && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <div className="bg-card border border-border/40 rounded-lg p-3">
             <p className="text-xs text-muted mb-1">Totale Deal</p>
             <p className="text-lg font-bold">{totalDeals}</p>

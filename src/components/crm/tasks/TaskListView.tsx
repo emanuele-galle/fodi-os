@@ -26,8 +26,8 @@ export function TaskListView({
 }: TaskListViewProps) {
   return (
     <>
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-3">
+      {/* Mobile/Tablet Card View */}
+      <div className="lg:hidden space-y-3">
         {tasks.map((task) => (
           <div
             key={task.id}
@@ -95,7 +95,7 @@ export function TaskListView({
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block rounded-xl border border-border/30 overflow-hidden bg-card">
+      <div className="hidden lg:block rounded-xl border border-border/30 overflow-hidden bg-card">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/30 bg-secondary/30">

@@ -49,8 +49,8 @@ export function TeamProductivityTable({ data, loading }: TeamProductivityTablePr
 
   return (
     <>
-      {/* Mobile: card layout */}
-      <div className="md:hidden space-y-3">
+      {/* Mobile + Tablet: card layout */}
+      <div className="lg:hidden space-y-3">
         {sortedData.map((user) => {
           const completionPct = user.assigned > 0 ? Math.round((user.completed / user.assigned) * 100) : 0
           return (
@@ -88,7 +88,7 @@ export function TeamProductivityTable({ data, loading }: TeamProductivityTablePr
         })}
       </div>
       {/* Desktop: table layout */}
-      <div className="hidden md:block overflow-x-auto">
+      <div className="hidden lg:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/30">

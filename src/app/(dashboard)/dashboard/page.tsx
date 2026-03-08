@@ -18,7 +18,7 @@ import { FinancialSummaryCard } from '@/components/dashboard/FinancialSummaryCar
 import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard'
 const TeamActivityPanel = dynamic(() => import('@/components/dashboard/TeamActivityPanel').then(m => ({ default: m.TeamActivityPanel })), {
   ssr: false,
-  loading: () => <Skeleton className="h-[200px] md:h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[200px] md:h-56 lg:h-64 w-full rounded-lg" />,
 })
 import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline'
 import { MobileChartTabs } from '@/components/dashboard/MobileChartTabs'
@@ -38,19 +38,19 @@ import {
 
 const RevenueChart = dynamic(() => import('@/components/dashboard/RevenueChart').then(m => ({ default: m.RevenueChart })), {
   ssr: false,
-  loading: () => <Skeleton className="h-[200px] md:h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[200px] md:h-56 lg:h-64 w-full rounded-lg" />,
 })
 const CashFlowChart = dynamic(() => import('@/components/dashboard/CashFlowChart').then(m => ({ default: m.CashFlowChart })), {
   ssr: false,
-  loading: () => <Skeleton className="h-[200px] md:h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[200px] md:h-56 lg:h-64 w-full rounded-lg" />,
 })
 const PipelineFunnel = dynamic(() => import('@/components/dashboard/PipelineFunnel').then(m => ({ default: m.PipelineFunnel })), {
   ssr: false,
-  loading: () => <Skeleton className="h-[200px] md:h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[200px] md:h-56 lg:h-64 w-full rounded-lg" />,
 })
 const ActivityTrendChart = dynamic(() => import('@/components/dashboard/ActivityTrendChart').then(m => ({ default: m.ActivityTrendChart })), {
   ssr: false,
-  loading: () => <Skeleton className="h-[200px] md:h-64 w-full rounded-lg" />,
+  loading: () => <Skeleton className="h-[200px] md:h-56 lg:h-64 w-full rounded-lg" />,
 })
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
@@ -208,7 +208,7 @@ function mapActivitiesToTimeline(activities: ActivityItem[]) {
 
 function DashboardHeader({ userName, subtitle }: { userName: string; subtitle: string }) {
   return (
-    <div className="mb-5 md:mb-8">
+    <div className="mb-5 md:mb-6 lg:mb-8">
       <h1 className="text-[22px] md:text-[28px] font-bold tracking-tight leading-tight">
         {getGreeting()}{userName && <>, {userName}</>}
       </h1>

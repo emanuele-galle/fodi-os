@@ -209,7 +209,7 @@ export function TeamPerformanceTable({ data }: { data: TeamMember[] }) {
           ))}
         </div>
         {/* Desktop: table layout */}
-        <div className="hidden md:block overflow-x-auto -mx-4 md:-mx-6 -webkit-overflow-scrolling-touch">
+        <div className="hidden lg:block overflow-x-auto -mx-4 md:-mx-5 lg:-mx-6 -webkit-overflow-scrolling-touch">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/40">

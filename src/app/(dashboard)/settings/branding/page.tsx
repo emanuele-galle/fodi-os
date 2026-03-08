@@ -192,7 +192,7 @@ function LoginPreview({ settings }: { settings: BrandSettingsData }) {
 
   return (
     <div className="rounded-xl border border-border/30 overflow-hidden shadow-[var(--shadow-md)]">
-      <div className="flex h-48 md:h-56">
+      <div className="flex h-48 md:h-52 lg:h-56">
         {/* Left panel - gradient */}
         <div className="w-1/2 flex flex-col items-center justify-center p-4 text-white relative" style={gradientStyle}>
           {settings.logoDarkUrl ? (
@@ -504,7 +504,7 @@ export default function BrandingPage() {
           <CardTitle>Border Radius Globale</CardTitle>
           <CardContent>
             <div className="mt-4">
-              <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+              <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-2">
                 {RADIUS_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}

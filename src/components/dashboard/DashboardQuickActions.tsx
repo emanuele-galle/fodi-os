@@ -14,7 +14,7 @@ export function DashboardQuickActions({ actions }: DashboardQuickActionsProps) {
   if (!actions || actions.length === 0) return null
 
   return (
-    <div className="mb-6 md:mb-8">
+    <div className="mb-6 md:mb-7 lg:mb-8">
       {/* Mobile: iOS-style quick actions */}
       <div className="md:hidden flex justify-around px-1 mb-0">
         {actions.slice(0, 4).map((action) => {
@@ -36,7 +36,7 @@ export function DashboardQuickActions({ actions }: DashboardQuickActionsProps) {
         })}
       </div>
       {/* Desktop: full grid */}
-      <div className={`hidden md:grid gap-3 ${actions.length <= 3 ? 'sm:grid-cols-3' : actions.length === 4 ? 'sm:grid-cols-4' : 'sm:grid-cols-3 lg:grid-cols-5'}`}>
+      <div className={`hidden md:grid gap-3 ${actions.length <= 3 ? 'md:grid-cols-3' : actions.length === 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3 lg:grid-cols-5'}`}>
         {actions.map((action) => {
           const Icon = action.icon
           return (

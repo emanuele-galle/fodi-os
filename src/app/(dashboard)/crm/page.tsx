@@ -475,8 +475,8 @@ export default function CrmPage() {
         />
       ) : (
         <>
-          {/* Mobile Card View */}
-          <div className="md:hidden space-y-3">
+          {/* Mobile/Tablet Card View */}
+          <div className="lg:hidden space-y-3">
             {clients.map((client) => {
               const lastInteraction = client.interactions?.[0]
               return (
@@ -525,7 +525,7 @@ export default function CrmPage() {
 
           {/* Bulk Actions Bar */}
           {selectedIds.size > 0 && (
-            <div className="hidden md:flex items-center gap-3 mb-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5">
+            <div className="hidden lg:flex items-center gap-3 mb-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5">
               <CheckSquare className="h-4 w-4 text-primary flex-shrink-0" />
               <span className="text-sm font-medium">{selectedIds.size} selezionat{selectedIds.size === 1 ? 'o' : 'i'}</span>
               <div className="flex items-center gap-2 ml-auto">
@@ -586,7 +586,7 @@ export default function CrmPage() {
           )}
 
           {/* Desktop Table View */}
-          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
+          <div className="hidden lg:block rounded-xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30">

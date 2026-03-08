@@ -192,7 +192,7 @@ export function TemplateEditor({ initialData, clients, onSubmit, submitLabel, su
       <Card>
         <CardContent>
           <CardTitle className="mb-4">Numerazione e Valori Predefiniti</CardTitle>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Input
               label="Prefisso Numero"
               value={form.numberPrefix}

@@ -37,7 +37,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
 
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 animate-stagger">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mb-4 animate-stagger">
         {stats.map((s) => (
           <Card key={s.label} className="shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all duration-200">
             <CardContent className="flex items-center gap-2 md:gap-3 py-2 md:py-3">

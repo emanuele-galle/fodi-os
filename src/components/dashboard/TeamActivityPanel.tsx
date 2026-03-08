@@ -170,7 +170,7 @@ export function TeamActivityPanel() {
         <p className="text-[11px] text-muted mb-3">{PERIOD_SUBTITLE[period]}</p>
 
         {/* Chart */}
-        <div className="h-[180px] md:h-[220px] mb-6">
+        <div className="h-[180px] md:h-[200px] lg:h-[220px] mb-6">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data.trend} margin={{ top: 8, right: 8, left: -10, bottom: 5 }}>
               <defs>

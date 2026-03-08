@@ -104,7 +104,7 @@ export function RevenueChart() {
   }
 
   return (
-    <div className="h-[200px] md:h-[280px]">
+    <div className="h-[200px] md:h-[240px] lg:h-[280px]">
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 5 }} barCategoryGap="20%">
         <defs>

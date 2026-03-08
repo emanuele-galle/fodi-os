@@ -358,7 +358,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-6">
+      <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-6">
         {['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'CONVERTED', 'LOST'].map(s => {
           const count = statusCounts[s] || 0
           return (
@@ -424,8 +424,8 @@ export default function LeadsPage() {
         />
       ) : (
         <>
-          {/* Mobile Card View */}
-          <div className="md:hidden space-y-3">
+          {/* Mobile/Tablet Card View */}
+          <div className="lg:hidden space-y-3">
             {leads.map((lead) => (
               <div
                 key={lead.id}
@@ -480,7 +480,7 @@ export default function LeadsPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block rounded-xl border border-border/30 overflow-hidden bg-card">
+          <div className="hidden lg:block rounded-xl border border-border/30 overflow-hidden bg-card">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30 bg-secondary/30">

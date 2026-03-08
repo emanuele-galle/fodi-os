@@ -813,6 +813,11 @@ body {
 }
 @media (min-width: 768px) {
   :root {
+    --content-px: 1.5rem; /* 24px on tablet */
+  }
+}
+@media (min-width: 1024px) {
+  :root {
     --content-px: 2rem; /* 32px on desktop */
   }
 }

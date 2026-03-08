@@ -10,6 +10,8 @@ interface Column<T> {
   render: (item: T) => React.ReactNode
   /** Hide this column on mobile card view */
   hideOnMobile?: boolean
+  /** Hide this column on tablet compact table */
+  hideOnTablet?: boolean
   /** Show as primary field in mobile card (first line, bold) */
   primary?: boolean
   /** Show as secondary field in mobile card (subtitle) */
@@ -46,11 +48,12 @@ export function ResponsiveTable<T>({
   const primaryCol = columns.find(c => c.primary)
   const secondaryCol = columns.find(c => c.secondary)
   const detailCols = columns.filter(c => !c.primary && !c.secondary && !c.hideOnMobile)
+  const tabletColumns = columns.filter(c => !c.hideOnTablet)
 
   return (
     <div className={className}>
-      {/* Desktop: Table */}
-      <div className="hidden md:block overflow-x-auto">
+      {/* Desktop: Full table (≥1024px) */}
+      <div className="hidden lg:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/30">
@@ -88,7 +91,46 @@ export function ResponsiveTable<T>({
         </table>
       </div>
 
-      {/* Mobile: iOS grouped list */}
+      {/* Tablet: Compact table (768-1023px) */}
+      <div className="hidden md:block lg:hidden overflow-x-auto">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-border/30">
+              {tabletColumns.map(col => (
+                <th
+                  key={col.key}
+                  className={cn(
+                    'text-left text-[11px] font-semibold text-muted uppercase tracking-wider px-2 py-2',
+                    col.headerClassName
+                  )}
+                >
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map(item => (
+              <tr
+                key={keyExtractor(item)}
+                onClick={() => onRowClick?.(item)}
+                className={cn(
+                  'border-b border-border/20 transition-colors',
+                  onRowClick && 'cursor-pointer hover:bg-secondary/50'
+                )}
+              >
+                {tabletColumns.map(col => (
+                  <td key={col.key} className={cn('px-2 py-2', col.cellClassName)}>
+                    {col.render(item)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile: iOS grouped list (<768px) */}
       <div className="md:hidden ios-grouped-section">
         {data.map((item, idx) => (
           <div

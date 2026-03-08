@@ -149,7 +149,7 @@ export function PrimaNota() {
       {/* Filters */}
       {showFilters && (
         <div className="mb-4 rounded-xl border border-border/20 bg-card p-4 space-y-3 animate-fade-in">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <Input label="Da" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
             <Input label="A" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
             <Select label="Tipo" options={TYPE_OPTIONS} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} />
@@ -237,7 +237,7 @@ export function PrimaNota() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
+          <div className="hidden lg:block rounded-xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30">

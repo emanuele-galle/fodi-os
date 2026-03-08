@@ -371,7 +371,7 @@ export default function TasksPage() {
         <>
           {activeTasks.length > 0 && (
             <>
-              <div className="md:hidden space-y-3">
+              <div className="lg:hidden space-y-3">
                 {activeTasks.map((task) => (
                   <MobileTaskCard
                     key={task.id}
@@ -387,7 +387,7 @@ export default function TasksPage() {
                   />
                 ))}
               </div>
-              <div className="hidden md:block">
+              <div className="hidden lg:block">
                 <TaskListView tasks={activeTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} expandedTasks={expandedTasks} subtasksCache={subtasksCache} loadingSubtasks={loadingSubtasks} onToggleSubtasks={toggleSubtasks} />
               </div>
             </>
@@ -404,7 +404,7 @@ export default function TasksPage() {
               </button>
               {showCompleted && (
                 <div className="opacity-60">
-                  <div className="md:hidden space-y-3">
+                  <div className="lg:hidden space-y-3">
                     {completedTasks.map((task) => (
                       <MobileTaskCard
                         key={task.id}
@@ -420,7 +420,7 @@ export default function TasksPage() {
                       />
                     ))}
                   </div>
-                  <div className="hidden md:block">
+                  <div className="hidden lg:block">
                     <TaskListView tasks={completedTasks} activeTab={activeTab} userId={userId} onTaskClick={openTask} expandedTasks={expandedTasks} subtasksCache={subtasksCache} loadingSubtasks={loadingSubtasks} onToggleSubtasks={toggleSubtasks} />
                   </div>
                 </div>

@@ -60,7 +60,7 @@ export function ActivityTrendChart({ color = 'var(--color-primary)' }: ActivityT
   if (loading) return <Skeleton className="h-[220px] w-full" />
 
   return (
-    <div className="h-[200px] md:h-[260px]">
+    <div className="h-[200px] md:h-[230px] lg:h-[260px]">
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 5 }}>
         <defs>

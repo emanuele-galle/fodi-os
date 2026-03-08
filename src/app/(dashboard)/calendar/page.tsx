@@ -176,7 +176,7 @@ export default function CalendarPage() {
               )}
 
               {state.desktopView === 'agenda' && (
-                <div className="hidden md:block">
+                <div className="hidden lg:block">
                   <AgendaView
                     eventsByDate={eventsData.eventsByDate}
                     todayKey={state.todayKey}
@@ -226,7 +226,7 @@ export default function CalendarPage() {
                 </div>
               )}
               {state.desktopView === 'day' && (
-                <div className="hidden md:block">
+                <div className="hidden lg:block">
                   <DayView
                     selectedDayKey={state.selectedDayKey}
                     setSelectedDayKey={state.setSelectedDayKey}

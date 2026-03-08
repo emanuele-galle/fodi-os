@@ -58,7 +58,7 @@ export function TemplateLineItemsEditor({ items, onChange }: TemplateLineItemsEd
       ) : (
         <div className="space-y-2">
           {/* Desktop header */}
-          <div className="hidden md:flex items-center gap-3 px-2 text-xs text-muted font-medium">
+          <div className="hidden lg:flex items-center gap-3 px-2 text-xs text-muted font-medium">
             <div className="w-6" />
             <div className="flex-1">Descrizione</div>
             <div className="w-20 text-center">Qty</div>
@@ -69,9 +69,9 @@ export function TemplateLineItemsEditor({ items, onChange }: TemplateLineItemsEd
 
           {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- loop index capture required for each item's handlers */}
           {items.map((item, index) => (
-            <div key={index} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 p-3 md:p-2 rounded-lg border border-border/40 bg-card/50">
+            <div key={index} className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 p-3 lg:p-2 rounded-lg border border-border/40 bg-card/50">
               {/* Reorder buttons */}
-              <div className="hidden md:flex flex-col gap-0.5">
+              <div className="hidden lg:flex flex-col gap-0.5">
                 <button
                   type="button"
                   onClick={() => moveItem(index, index - 1)}
@@ -117,7 +117,7 @@ export function TemplateLineItemsEditor({ items, onChange }: TemplateLineItemsEd
               </div>
 
               {/* Desktop layout */}
-              <div className="hidden md:flex md:items-center md:gap-3 md:flex-1">
+              <div className="hidden lg:flex lg:items-center lg:gap-3 lg:flex-1">
                 <div className="flex-1">
                   <Input
                     placeholder="Descrizione *"

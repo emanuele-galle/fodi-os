@@ -33,9 +33,9 @@ export default function ChatPage() {
   /* eslint-enable react-perf/jsx-no-new-function-as-prop */
 
   return (
-    <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-4rem)] h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-4rem)] -mx-5 -mt-4 -mb-24 md:-mx-8 md:-mt-8 md:-mb-8 relative overflow-hidden">
+    <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-5rem)] lg:h-[calc(100vh-4rem)] h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-5rem)] lg:h-[calc(100dvh-4rem)] -mx-5 -mt-4 -mb-24 md:-mx-6 lg:-mx-8 md:-mt-6 lg:-mt-8 md:-mb-6 lg:-mb-8 relative overflow-hidden">
       {/* Left panel - Channel list */}
-      <div className={`w-full md:w-[320px] lg:w-[340px] border-r border-border/50 flex-shrink-0 bg-card/95 backdrop-blur-sm ${chat.selectedId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
+      <div className={`w-full md:w-[320px] lg:w-[340px] border-r border-border/50 flex-shrink-0 bg-card/95 backdrop-blur-sm ${chat.selectedId ? 'hidden lg:flex lg:flex-col' : 'flex flex-col'}`}>
         {chat.channelError && (
           <div className="mx-3 mt-3 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">
             <p className="text-xs text-destructive">{chat.channelError}</p>
@@ -54,14 +54,14 @@ export default function ChatPage() {
       </div>
 
       {/* Right panel - Messages */}
-      <div className={`flex-1 flex flex-col min-w-0 bg-background ${!chat.selectedId ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 bg-background ${!chat.selectedId ? 'hidden lg:flex' : 'flex'}`}>
         {chat.selectedId ? (
           <>
             {/* Channel header */}
-            <div className="border-b border-border/50 px-4 md:px-6 py-2.5 flex items-center gap-3 bg-card/80 backdrop-blur-sm">
+            <div className="border-b border-border/50 px-4 md:px-4 lg:px-6 py-2.5 flex items-center gap-3 bg-card/80 backdrop-blur-sm">
               <button
                 onClick={chat.handleBack}
-                className="md:hidden p-1.5 rounded-lg hover:bg-secondary/80 mr-1 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+                className="lg:hidden p-1.5 rounded-lg hover:bg-secondary/80 mr-1 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -97,11 +97,11 @@ export default function ChatPage() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
+              <div className="flex items-center gap-0.5 lg:gap-1 flex-shrink-0">
                 <button
                   onClick={handleToggleSelection}
                   className={cn(
-                    'h-10 w-10 md:h-8 md:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
+                    'h-10 w-10 md:h-9 md:w-9 lg:h-8 lg:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
                     chat.selectionMode ? 'bg-destructive/10 text-destructive' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
                   )}
                   title={chat.selectionMode ? 'Esci dalla selezione' : 'Seleziona messaggi'}
@@ -111,7 +111,7 @@ export default function ChatPage() {
                 <button
                   onClick={handleToggleSearch}
                   className={cn(
-                    'h-10 w-10 md:h-8 md:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
+                    'h-10 w-10 md:h-9 md:w-9 lg:h-8 lg:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
                     chat.searchOpen ? 'bg-primary/10 text-primary' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
                   )}
                   title="Cerca messaggi"
@@ -121,7 +121,7 @@ export default function ChatPage() {
                 <button
                   onClick={handleToggleInfoPanel}
                   className={cn(
-                    'h-10 w-10 md:h-8 md:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
+                    'h-10 w-10 md:h-9 md:w-9 lg:h-8 lg:w-8 rounded-lg flex items-center justify-center transition-all duration-150 touch-manipulation',
                     chat.showInfoPanel ? 'bg-primary/10 text-primary' : 'text-foreground/60 hover:bg-secondary/80 hover:text-foreground'
                   )}
                   title="Info canale"
@@ -131,7 +131,7 @@ export default function ChatPage() {
                 <button
                   onClick={chat.handleQuickMeet}
                   disabled={chat.creatingMeet}
-                  className="inline-flex items-center gap-1.5 h-10 md:h-8 px-3 rounded-lg text-xs font-medium bg-secondary/80 hover:bg-secondary text-foreground/80 hover:text-foreground transition-all duration-150 disabled:opacity-50 touch-manipulation"
+                  className="inline-flex items-center gap-1.5 h-10 md:h-9 lg:h-8 px-3 rounded-lg text-xs font-medium bg-secondary/80 hover:bg-secondary text-foreground/80 hover:text-foreground transition-all duration-150 disabled:opacity-50 touch-manipulation"
                 >
                   <Video className="h-4 w-4 md:h-3.5 md:w-3.5" />
                   <span className="hidden sm:inline">{chat.creatingMeet ? 'Avvio...' : 'Meet'}</span>
@@ -141,7 +141,7 @@ export default function ChatPage() {
 
             {/* Search bar */}
             {chat.searchOpen && (
-              <div className="border-b border-border/30 px-4 md:px-6 py-2 bg-secondary/20">
+              <div className="border-b border-border/30 px-4 md:px-4 lg:px-6 py-2 bg-secondary/20">
                 <div className="flex items-center gap-2 max-w-2xl">
                   <Search className="h-4 w-4 text-muted-foreground/50 flex-shrink-0" />
                   <input
@@ -203,20 +203,20 @@ export default function ChatPage() {
             />
             {/* Floating selection bar */}
             {chat.selectionMode && chat.selectedMessages.size > 0 && (
-              <div className="px-4 py-2.5 md:py-2 bg-card border-t border-border flex items-center justify-between">
+              <div className="px-4 py-2.5 lg:py-2 bg-card border-t border-border flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
                   {chat.selectedMessages.size} messaggi selezionati
                 </span>
                 <div className="flex gap-2">
                   <button
                     onClick={chat.exitSelectionMode}
-                    className="px-4 py-2 md:px-3 md:py-1.5 text-sm rounded-lg bg-secondary hover:bg-secondary/80 transition-colors min-h-[44px] md:min-h-0 touch-manipulation"
+                    className="px-4 py-2 lg:px-3 lg:py-1.5 text-sm rounded-lg bg-secondary hover:bg-secondary/80 transition-colors min-h-[44px] lg:min-h-0 touch-manipulation"
                   >
                     Annulla
                   </button>
                   <button
                     onClick={chat.handleBulkDelete}
-                    className="px-4 py-2 md:px-3 md:py-1.5 text-sm rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors min-h-[44px] md:min-h-0 touch-manipulation"
+                    className="px-4 py-2 lg:px-3 lg:py-1.5 text-sm rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors min-h-[44px] lg:min-h-0 touch-manipulation"
                   >
                     Elimina ({chat.selectedMessages.size})
                   </button>
@@ -256,8 +256,8 @@ export default function ChatPage() {
       {/* Info panel */}
       {chat.showInfoPanel && chat.selectedId && (
         <>
-          <div className="md:hidden fixed inset-0 z-40 bg-foreground/50" onClick={handleCloseInfoOverlay} />
-          <div className="fixed md:relative inset-y-0 right-0 z-50 md:z-auto">
+          <div className="lg:hidden fixed inset-0 z-40 bg-foreground/50" onClick={handleCloseInfoOverlay} />
+          <div className="fixed lg:relative inset-y-0 right-0 z-50 lg:z-auto">
             <ChannelInfoPanel
               channelId={chat.selectedId}
               currentUserId={chat.currentUserId}

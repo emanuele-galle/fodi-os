@@ -58,8 +58,8 @@ export function ProjectTableView({
 }: ProjectTableViewProps) {
   return (
     <>
-      {/* Mobile: card layout */}
-      <div className="md:hidden space-y-3">
+      {/* Mobile + tablet: card layout */}
+      <div className="lg:hidden space-y-3">
         {projects.map((p) => {
           const totalTasks = p._count?.tasks ?? 0
           const doneTasks = p.completedTasks ?? 0
@@ -106,7 +106,7 @@ export function ProjectTableView({
         })}
       </div>
       {/* Desktop: table layout */}
-      <div className="hidden md:block overflow-x-auto rounded-xl border border-border/40 bg-card">
+      <div className="hidden lg:block overflow-x-auto rounded-xl border border-border/40 bg-card">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border/30 text-left">

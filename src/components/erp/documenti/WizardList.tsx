@@ -191,7 +191,7 @@ export function WizardList() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div className="rounded-lg border border-border bg-card p-4 flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10 text-primary flex-shrink-0">
             <Wand2 className="h-4 w-4" />
@@ -253,7 +253,7 @@ export function WizardList() {
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="w-full sm:w-48"
         />
-        <div className="hidden md:flex items-center border border-border rounded-lg overflow-hidden flex-shrink-0">
+        <div className="hidden lg:flex items-center border border-border rounded-lg overflow-hidden flex-shrink-0">
           <button
             onClick={() => setViewMode('grid')}
             className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground hover:bg-secondary/50'}`}
@@ -352,7 +352,7 @@ export function WizardList() {
 
           {/* Desktop Grid View */}
           {viewMode === 'grid' && (
-            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
               {filteredWizards.map((w) => (
                 <div
                   key={w.id}
@@ -432,7 +432,7 @@ export function WizardList() {
 
           {/* Desktop List/Table View */}
           {viewMode === 'list' && (
-            <div className="hidden md:block overflow-x-auto rounded-lg border border-border/80">
+            <div className="hidden lg:block overflow-x-auto rounded-lg border border-border/80">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-muted bg-secondary/30">

@@ -391,7 +391,7 @@ export default function NewQuotePage() {
                     </div>
                   </div>
                   {/* Desktop: flex row */}
-                  <div className="hidden md:flex items-start gap-3">
+                  <div className="hidden lg:flex items-start gap-3">
                     <div className="flex-1">
                       <Input
                         placeholder="Descrizione *"
@@ -472,7 +472,7 @@ export default function NewQuotePage() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-3 sticky bottom-0 bg-background/95 backdrop-blur-sm py-4 -mx-5 px-5 md:static md:bg-transparent md:backdrop-blur-none md:py-0 md:mx-0 md:px-0 border-t border-border/50 md:border-0">
+        <div className="flex justify-end gap-3 sticky bottom-0 bg-background/95 backdrop-blur-sm py-4 -mx-5 px-5 lg:static lg:bg-transparent lg:backdrop-blur-none lg:py-0 lg:mx-0 lg:px-0 border-t border-border/50 lg:border-0">
           <Button type="button" variant="outline" onClick={() => router.push('/erp/quotes')}>
             Annulla
           </Button>

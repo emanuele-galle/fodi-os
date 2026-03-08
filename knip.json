@@ -6,6 +6,7 @@
     "src/app/**/route.{ts,tsx}",
     "src/app/**/loading.{ts,tsx}",
     "src/components/ui/ResponsiveTable.tsx",
+    "src/hooks/useBreakpoint.ts",
     "next.config.{js,mjs,ts}",
     "prisma/seed.{ts,js}"
   ],

@@ -223,7 +223,7 @@ export default function TagManagementPage() {
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3">
         <div className="bg-card border border-border/40 rounded-lg p-3">
           <p className="text-xs text-muted mb-1">Tag Totali</p>
           <p className="text-lg font-bold">{totalTags}</p>
@@ -232,7 +232,7 @@ export default function TagManagementPage() {
           <p className="text-xs text-muted mb-1">Utilizzi Totali</p>
           <p className="text-lg font-bold">{totalUsage}</p>
         </div>
-        <div className="bg-card border border-border/40 rounded-lg p-3 hidden md:block">
+        <div className="bg-card border border-border/40 rounded-lg p-3 hidden lg:block">
           <p className="text-xs text-muted mb-1">Media per Tag</p>
           <p className="text-lg font-bold">{totalTags > 0 ? (totalUsage / totalTags).toFixed(1) : '0'}</p>
         </div>

@@ -467,17 +467,17 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             </>
           )}
 
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between pt-2 border-t border-border gap-3 md:gap-0">
-            <div className="flex items-center gap-3 order-2 md:order-none">
-              <Button variant="outline" onClick={onClose} className="flex-1 md:flex-none">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between pt-2 border-t border-border gap-3 lg:gap-0">
+            <div className="flex items-center gap-3 order-2 lg:order-none">
+              <Button variant="outline" onClick={onClose} className="flex-1 lg:flex-none">
                 Annulla
               </Button>
-              <Button onClick={isCreateMode ? handleCreate : handleSave} disabled={saving || !title.trim()} className="flex-1 md:flex-none">
+              <Button onClick={isCreateMode ? handleCreate : handleSave} disabled={saving || !title.trim()} className="flex-1 lg:flex-none">
                 {saving ? 'Salvataggio...' : isCreateMode ? 'Crea Task' : 'Salva'}
               </Button>
             </div>
             {!isCreateMode && (
-              <div className="order-1 md:order-none">
+              <div className="order-1 lg:order-none">
                 {confirmDelete ? (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-destructive">Confermi?</span>

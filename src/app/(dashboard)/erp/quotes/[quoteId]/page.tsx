@@ -348,7 +348,7 @@ export default function QuoteDetailPage() {
       <Card className="mb-6">
         <CardContent>
           <CardTitle className="mb-3">Dati Cliente</CardTitle>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
             <div>
               <span className="text-muted">Ragione Sociale:</span>
               <span className="ml-2 font-medium">{quote.client.companyName}</span>

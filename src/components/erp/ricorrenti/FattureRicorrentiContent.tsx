@@ -259,7 +259,7 @@ export function FattureRicorrentiContent() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6">
         <Card>
           <CardContent className="!p-3 md:!p-4">
             <p className="text-xs text-muted mb-1">Da pagare questo mese</p>
@@ -365,7 +365,7 @@ export function FattureRicorrentiContent() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden md:block rounded-xl border border-border/20 overflow-hidden">
+          <div className="hidden lg:block rounded-xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30">

@@ -2,6 +2,7 @@
 
 /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- component handlers and dynamic props */
 import { Sidebar } from '@/components/layout/Sidebar'
+import { TabletSidebar } from '@/components/layout/TabletSidebar'
 import { Topbar } from '@/components/layout/Topbar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { MobileHeader } from '@/components/layout/MobileHeader'
@@ -194,9 +195,14 @@ export default function DashboardLayout({
     />
     <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-black dark:focus:bg-gray-900 dark:focus:text-white">Salta al contenuto</a>
     <div className="h-screen flex bg-background overflow-hidden">
-      {/* Sidebar: hidden on mobile, visible on md+ */}
-      <div className="hidden md:block flex-shrink-0">
+      {/* Sidebar desktop: visible only on lg+ (≥1024px) */}
+      <div className="hidden lg:block flex-shrink-0">
         <Sidebar userRole={user.role} sectionAccess={user.sectionAccess} customRoleSectionAccess={user.customRole?.sectionAccess as SectionAccessMap | null | undefined} unreadChat={unreadChat} pendingTaskCount={pendingTaskCount} unreadNotifications={unreadNotifications} />
+      </div>
+
+      {/* TabletSidebar: visible only on md-lg (768-1023px) */}
+      <div className="hidden md:block lg:hidden flex-shrink-0">
+        <TabletSidebar userRole={user.role} sectionAccess={user.sectionAccess} customRoleSectionAccess={user.customRole?.sectionAccess as SectionAccessMap | null | undefined} unreadChat={unreadChat} pendingTaskCount={pendingTaskCount} unreadNotifications={unreadNotifications} />
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-x-hidden">
@@ -228,7 +234,7 @@ export default function DashboardLayout({
         <SetupBanner />
         <ActiveTimerBanner />
 
-        <main id="main-content" className="flex-1 overflow-auto py-4 md:py-8 pb-24 md:pb-8 [&>*]:max-w-[1400px] [&>*]:mx-auto safe-area-x">
+        <main id="main-content" className="flex-1 overflow-auto py-4 md:py-6 lg:py-8 pb-24 md:pb-6 lg:pb-8 [&>*]:max-w-[1400px] [&>*]:mx-auto safe-area-x">
           <PullToRefresh onRefresh={handleRefresh}>
           <UserProvider user={user}>
           <Suspense fallback={

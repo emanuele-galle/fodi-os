@@ -22,12 +22,12 @@ export function StatCarousel({ stats, loading }: StatCarouselProps) {
 
   const count = stats.length
   // Adapt grid columns to stat count: 2→2, 3→3, 4→4, 5→5, 6→6
-  const desktopGridCols = count <= 2 ? 'md:grid-cols-2' : count === 3 ? 'md:grid-cols-3' : count === 4 ? 'md:grid-cols-4' : count === 5 ? 'md:grid-cols-5' : 'md:grid-cols-3 lg:grid-cols-6'
+  const desktopGridCols = count <= 2 ? 'md:grid-cols-2' : count === 3 ? 'md:grid-cols-2 lg:grid-cols-3' : count === 4 ? 'md:grid-cols-2 lg:grid-cols-4' : count === 5 ? 'md:grid-cols-3 lg:grid-cols-5' : 'md:grid-cols-3 lg:grid-cols-6'
 
   if (loading) {
     return (
-      <div className={`grid grid-cols-2 ${desktopGridCols} gap-3 md:gap-4 mb-6`}>
-        {Array.from({ length: count || 6 }).map((_, i) => <Skeleton key={i} className="h-[88px] md:h-[100px] rounded-xl" />)}
+      <div className={`grid grid-cols-2 ${desktopGridCols} gap-3 md:gap-3.5 lg:gap-4 mb-6`}>
+        {Array.from({ length: count || 6 }).map((_, i) => <Skeleton key={i} className="h-[88px] md:h-[94px] lg:h-[100px] rounded-xl" />)}
       </div>
     )
   }

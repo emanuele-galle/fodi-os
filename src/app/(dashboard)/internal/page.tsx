@@ -454,7 +454,7 @@ export default function InternalPage() {
           </div>
           <CardTitle>Accesso Rapido</CardTitle>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 animate-stagger">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 animate-stagger">
           {QUICK_LINKS.map((link) => (
             <button
               key={link.label}

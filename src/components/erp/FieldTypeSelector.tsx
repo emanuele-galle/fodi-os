@@ -30,7 +30,7 @@ interface FieldTypeSelectorProps {
 
 export function FieldTypeSelector({ value, onChange }: FieldTypeSelectorProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2">
       {FIELD_TYPES.map(({ type, label, icon: Icon }) => (
         <button
           key={type}

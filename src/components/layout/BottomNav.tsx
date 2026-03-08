@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable react-perf/jsx-no-new-function-as-prop -- loop handlers with dynamic keys */
+
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -9,24 +11,14 @@ import {
   MessageCircle,
   Menu,
   X,
-  Users,
-  FolderKanban,
-  CalendarDays,
-  Euro,
-  LifeBuoy,
-  UsersRound,
-  Building2,
-  Settings,
-  Bot,
-  Bell,
-  Library,
-  BookOpen,
+  ChevronRight,
   LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { haptic } from '@/lib/haptic'
 import type { Role } from '@/generated/prisma/client'
 import { getEffectiveSectionAccess, HREF_TO_SECTION, type SectionAccessMap } from '@/lib/section-access'
+import { navigation, GROUP_ORDER, GROUP_LABELS, type NavItem, type NavGroup } from '@/lib/navigation'
 
 const TAB_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -34,40 +26,6 @@ const TAB_ITEMS = [
   { label: 'Chat', href: '/chat', icon: MessageCircle },
   { label: 'Menu', href: '#menu', icon: Menu },
 ]
-
-type CategoryColor = 'indigo' | 'emerald' | 'amber' | 'violet' | 'rose' | 'slate'
-
-interface MenuItem {
-  label: string
-  href: string
-  icon: typeof Users
-  roles?: Role[]
-  category: CategoryColor
-}
-
-const MENU_ITEMS: MenuItem[] = [
-  { label: 'Assistente AI', href: '/ai', icon: Bot, category: 'violet' },
-  { label: 'Notifiche', href: '/notifications', icon: Bell, category: 'rose' },
-  { label: 'Calendario', href: '/calendar', icon: CalendarDays, category: 'violet' },
-  { label: 'CRM', href: '/crm', icon: Users, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'SUPPORT'] as Role[], category: 'indigo' },
-  { label: 'Progetti', href: '/projects', icon: FolderKanban, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT'] as Role[], category: 'emerald' },
-  { label: 'Contabilità', href: '/erp', icon: Euro, roles: ['ADMIN', 'DIR_COMMERCIALE', 'COMMERCIALE'] as Role[], category: 'amber' },
-  { label: 'Supporto', href: '/support', icon: LifeBuoy, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM', 'DEVELOPER', 'SUPPORT'] as Role[], category: 'rose' },
-  { label: 'Team', href: '/team', icon: UsersRound, category: 'indigo' },
-  { label: 'Knowledge Base', href: '/kb', icon: Library, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'] as Role[], category: 'emerald' },
-  { label: 'Azienda', href: '/internal', icon: Building2, roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'] as Role[], category: 'amber' },
-  { label: 'Guida', href: '/guide', icon: BookOpen, category: 'slate' },
-  { label: 'Impostazioni', href: '/settings', icon: Settings, category: 'slate' },
-]
-
-const CATEGORY_STYLES: Record<CategoryColor, string> = {
-  indigo: 'bg-indigo-400/20 text-indigo-400',
-  emerald: 'bg-emerald-400/20 text-emerald-400',
-  amber: 'bg-amber-400/20 text-amber-400',
-  violet: 'bg-blue-400/20 text-blue-400',
-  rose: 'bg-rose-400/20 text-rose-400',
-  slate: 'bg-slate-400/20 text-slate-400',
-}
 
 interface BottomNavProps {
   userRole: Role
@@ -81,6 +39,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [closing, setClosing] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const sheetRef = useRef<HTMLDivElement>(null)
   const dragStartY = useRef(0)
   const currentTranslateY = useRef(0)
@@ -104,21 +63,47 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
     setTimeout(() => {
       setMenuOpen(false)
       setClosing(false)
+      setExpandedItems(new Set())
     }, 250)
   }, [])
 
   const effective = getEffectiveSectionAccess(userRole, sectionAccess, customRoleSectionAccess)
-  const filteredMenu = MENU_ITEMS.filter((item) => {
+
+  // Filter navigation items, excluding those already in TAB_ITEMS (Dashboard, Tasks, Chat)
+  const tabHrefs = new Set(TAB_ITEMS.filter(t => t.href !== '#menu').map(t => t.href))
+  const filteredNav = navigation.filter((item) => {
+    if (tabHrefs.has(item.href)) return false
     const section = HREF_TO_SECTION[item.href]
     if (section) return effective[section]?.view
     return !item.roles || item.roles.includes(userRole)
   })
+
+  // Group items
+  const grouped = new Map<NavGroup, NavItem[]>()
+  for (const item of filteredNav) {
+    const list = grouped.get(item.group) || []
+    list.push(item)
+    grouped.set(item.group, list)
+  }
 
   function isTabActive(href: string): boolean {
     if (href === '#menu') return menuOpen
     if (href === '/dashboard') return pathname === '/dashboard'
     return pathname.startsWith(href)
   }
+
+  const toggleExpanded = useCallback((label: string) => {
+    haptic('selection')
+    setExpandedItems(prev => {
+      const next = new Set(prev)
+      if (next.has(label)) {
+        next.delete(label)
+      } else {
+        next.add(label)
+      }
+      return next
+    })
+  }, [])
 
   const handleLogout = useCallback(async () => {
     haptic('selection')
@@ -206,31 +191,89 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
               </button>
             </div>
 
-            <nav className="p-4 grid grid-cols-4 gap-x-2 gap-y-4">
-              {filteredMenu.map((item) => {
-                const isActive = pathname.startsWith(item.href)
-                const Icon = item.icon
+            {/* Grouped accordion navigation */}
+            <nav className="py-2">
+              {GROUP_ORDER.filter((g) => grouped.has(g)).map((group, groupIndex) => {
+                const items = grouped.get(group)!
+                const groupLabel = GROUP_LABELS[group]
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler
-                    onClick={() => { haptic('selection'); closeMenu() }}
-                    className="ios-press flex flex-col items-center gap-1.5 touch-manipulation"
-                  >
-                    <div className={cn(
-                      'w-[52px] h-[52px] rounded-[14px] flex items-center justify-center transition-colors',
-                      isActive ? 'bg-primary text-white' : CATEGORY_STYLES[item.category]
-                    )}>
-                      <Icon className="h-[22px] w-[22px]" />
-                    </div>
-                    <span className={cn(
-                      'text-xs font-medium text-center leading-tight max-w-[64px]',
-                      isActive ? 'text-primary' : 'text-[var(--color-sheet-foreground)]/80'
-                    )}>
-                      {item.label}
-                    </span>
-                  </Link>
+                  <div key={group}>
+                    {groupIndex > 0 && (
+                      <div className="h-px bg-[var(--color-sheet-border)] mx-4 my-1.5" />
+                    )}
+                    {groupLabel && (
+                      <div className="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-sheet-muted)]">
+                        {groupLabel}
+                      </div>
+                    )}
+                    {items.map((item) => {
+                      const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                      const Icon = item.icon
+                      const isExpanded = expandedItems.has(item.label)
+
+                      return (
+                        <div key={item.label}>
+                          {item.children ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => toggleExpanded(item.label)}
+                                className={cn(
+                                  'w-full flex items-center gap-3 px-4 py-2.5 transition-colors touch-manipulation active:bg-[var(--color-sheet-border)]',
+                                  isActive ? 'text-primary' : 'text-[var(--color-sheet-foreground)]'
+                                )}
+                              >
+                                <Icon className="h-[20px] w-[20px] flex-shrink-0" />
+                                <span className="flex-1 text-left text-[15px] font-medium">{item.label}</span>
+                                <ChevronRight className={cn(
+                                  'h-4 w-4 text-[var(--color-sheet-muted)] transition-transform duration-200',
+                                  isExpanded && 'rotate-90'
+                                )} />
+                              </button>
+                              {isExpanded && (
+                                <div className="ml-11 mr-4 mb-1">
+                                  {item.children.map((child) => {
+                                    const childActive = pathname === child.href
+                                    return (
+                                      <Link
+                                        key={child.href}
+                                        href={child.href}
+                                        onClick={() => { haptic('selection'); closeMenu() }}
+                                        className={cn(
+                                          'flex items-center gap-2 px-3 py-2 rounded-lg text-[14px] transition-colors touch-manipulation active:bg-[var(--color-sheet-border)]',
+                                          childActive
+                                            ? 'text-primary font-medium bg-primary/8'
+                                            : 'text-[var(--color-sheet-foreground)]/70'
+                                        )}
+                                      >
+                                        <span className={cn(
+                                          'w-1.5 h-1.5 rounded-full flex-shrink-0',
+                                          childActive ? 'bg-primary' : 'bg-[var(--color-sheet-muted)]/40'
+                                        )} />
+                                        {child.label}
+                                      </Link>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <Link
+                              href={item.href}
+                              onClick={() => { haptic('selection'); closeMenu() }}
+                              className={cn(
+                                'flex items-center gap-3 px-4 py-2.5 transition-colors touch-manipulation active:bg-[var(--color-sheet-border)]',
+                                isActive ? 'text-primary' : 'text-[var(--color-sheet-foreground)]'
+                              )}
+                            >
+                              <Icon className="h-[20px] w-[20px] flex-shrink-0" />
+                              <span className="text-[15px] font-medium">{item.label}</span>
+                            </Link>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 )
               })}
             </nav>
@@ -257,7 +300,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
             return (
               <button
                 key={tab.href}
-                onClick={() => handleTabClick(tab.href)} // eslint-disable-line react-perf/jsx-no-new-function-as-prop -- loop handler
+                onClick={() => handleTabClick(tab.href)}
                 aria-label={tab.label}
                 className={cn(
                   'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[44px] transition-colors duration-150 touch-manipulation active:opacity-60',

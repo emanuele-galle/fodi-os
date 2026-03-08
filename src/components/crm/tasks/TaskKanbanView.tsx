@@ -15,7 +15,7 @@ interface TaskKanbanViewProps {
 
 export function TaskKanbanView({ tasks, isOverdue, onStatusChange }: TaskKanbanViewProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {KANBAN_COLUMNS.map(status => {
         const statusTasks = tasks.filter(t => t.status === status)
         return (

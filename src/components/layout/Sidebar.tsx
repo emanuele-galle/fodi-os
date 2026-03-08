@@ -4,21 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
-  LayoutDashboard,
-  CheckSquare,
-  MessageCircle,
-  Bell,
-  Building2,
-  Users,
-  FolderKanban,
-  CalendarDays,
-  Euro,
-  LifeBuoy,
-  UsersRound,
-  BookOpen,
-  Library,
-  Settings,
-  Bot,
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
@@ -30,27 +15,7 @@ import { Tooltip } from '@/components/ui/Tooltip'
 import { Logo } from '@/components/ui/Logo'
 import { useUserPreferences } from '@/hooks/useUserPreferences'
 import { getEffectiveSectionAccess, HREF_TO_SECTION, type SectionAccessMap } from '@/lib/section-access'
-
-type NavGroup = 'main' | 'work' | 'admin' | 'team' | 'system'
-
-interface NavItem {
-  label: string
-  href: string
-  icon: React.ElementType
-  roles?: Role[]
-  children?: { label: string; href: string }[]
-  group: NavGroup
-}
-
-const GROUP_LABELS: Record<NavGroup, string | null> = {
-  main: 'Principale',
-  work: 'Lavoro',
-  admin: 'Gestione',
-  team: 'Team & Risorse',
-  system: null,
-}
-
-const GROUP_ORDER: NavGroup[] = ['main', 'work', 'admin', 'team', 'system']
+import { navigation, GROUP_ORDER, GROUP_LABELS, type NavItem, type NavGroup } from '@/lib/navigation'
 
 // Hoisted motion animation objects (react-perf/jsx-no-new-object-as-prop)
 const MOTION_SPAN_INITIAL = { opacity: 0, width: 0 }
@@ -65,111 +30,6 @@ const MOTION_SIDEBAR_TRANSITION = { type: 'spring' as const, stiffness: 300, dam
 const MOTION_LOGO_INITIAL = { opacity: 0, x: -8 }
 const MOTION_LOGO_ANIMATE = { opacity: 1, x: 0 }
 const MOTION_LOGO_TRANSITION = { duration: 0.15 }
-
-const navigation: NavItem[] = [
-  // Principale
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, group: 'main' },
-  { label: 'I Miei Task', href: '/tasks', icon: CheckSquare, group: 'main' },
-  {
-    label: 'Calendario',
-    href: '/calendar',
-    icon: CalendarDays,
-    children: [
-      { label: 'Eventi', href: '/calendar' },
-      { label: 'Disponibilità', href: '/calendar/availability' },
-    ],
-    group: 'main',
-  },
-  { label: 'Chat', href: '/chat', icon: MessageCircle, group: 'main' },
-  { label: 'Assistente AI', href: '/ai', icon: Bot, group: 'main' },
-  { label: 'Notifiche', href: '/notifications', icon: Bell, group: 'main' },
-  // Lavoro
-  {
-    label: 'Progetti Clienti',
-    href: '/projects',
-    icon: FolderKanban,
-    roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT'],
-    children: [
-      { label: 'Lista', href: '/projects' },
-      { label: 'Analytics', href: '/projects/analytics' },
-    ],
-    group: 'work',
-  },
-  {
-    label: 'Supporto',
-    href: '/support',
-    icon: LifeBuoy,
-    roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'PM', 'DEVELOPER', 'SUPPORT'],
-    group: 'work',
-  },
-  // Gestione
-  {
-    label: 'Contabilita',
-    href: '/erp',
-    icon: Euro,
-    roles: ['ADMIN', 'DIR_COMMERCIALE', 'COMMERCIALE'],
-    children: [
-      { label: 'Panoramica', href: '/erp/panoramica' },
-      { label: 'Movimenti', href: '/erp/movimenti' },
-      { label: 'Conti', href: '/erp/accounts' },
-      { label: 'Preventivi', href: '/erp/quotes' },
-      { label: 'Documenti', href: '/erp/documenti' },
-      { label: 'Impostazioni', href: '/erp/settings' },
-    ],
-    group: 'admin',
-  },
-  {
-    label: 'CRM',
-    href: '/crm',
-    icon: Users,
-    roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'SUPPORT'],
-    children: [
-      { label: 'Dashboard', href: '/crm/dashboard' },
-      { label: 'Clienti', href: '/crm' },
-      { label: 'Pipeline', href: '/crm/pipeline' },
-      { label: 'Attività', href: '/crm/tasks' },
-      { label: 'Leads', href: '/crm/leads' },
-      { label: 'Gestione Tag', href: '/crm/settings/tags' },
-    ],
-    group: 'admin',
-  },
-  {
-    label: 'Azienda',
-    href: '/internal',
-    icon: Building2,
-    roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
-    group: 'admin',
-  },
-  // Team & Risorse
-  {
-    label: 'Team',
-    href: '/team',
-    icon: UsersRound,
-    group: 'team',
-  },
-  {
-    label: 'Knowledge Base',
-    href: '/kb',
-    icon: Library,
-    roles: ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT', 'COMMERCIALE', 'PM', 'DEVELOPER', 'CONTENT', 'SUPPORT'],
-    group: 'team',
-  },
-  // System (no title)
-  { label: 'Guida', href: '/guide', icon: BookOpen, group: 'system' },
-  {
-    label: 'Impostazioni',
-    href: '/settings',
-    icon: Settings,
-    children: [
-      { label: 'Profilo', href: '/settings' },
-      { label: 'Fatturazione', href: '/settings/billing' },
-      { label: 'Utenti', href: '/settings/users' },
-      { label: 'Assistente AI', href: '/settings/ai' },
-      { label: 'Sistema', href: '/settings/system' },
-    ],
-    group: 'system',
-  },
-]
 
 interface SidebarProps {
   userRole: Role

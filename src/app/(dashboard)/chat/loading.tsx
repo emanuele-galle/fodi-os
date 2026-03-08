@@ -4,7 +4,7 @@ export default function ChatLoading() {
   return (
     <div className="animate-fade-in flex h-[calc(100vh-8rem)] gap-0 rounded-xl border border-border/40 overflow-hidden">
       {/* Channel list sidebar */}
-      <div className="w-72 border-r border-border/40 p-3 space-y-2 hidden md:block">
+      <div className="w-72 border-r border-border/40 p-3 space-y-2 hidden lg:block">
         <Skeleton className="h-10 w-full rounded-lg" />
         <div className="space-y-1 mt-3">
           {Array.from({ length: 8 }).map((_, i) => (
