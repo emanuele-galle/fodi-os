@@ -40,7 +40,7 @@ export function MonthlyTrendChart({ data }: { data: TrendPoint[] }) {
     <Card>
       <CardContent>
         <CardTitle className="mb-4 text-base md:text-lg">Trend Mensile Task</CardTitle>
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height={250} minWidth={0} minHeight={0}>
           <LineChart data={data} margin={{ left: -10, right: 10, top: 5 }}>
             <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
             <XAxis dataKey="month" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
@@ -71,7 +71,7 @@ export function HoursPerProjectChart({ data }: { data: HoursProjectPoint[] }) {
     <Card>
       <CardContent>
         <CardTitle className="mb-4 text-base md:text-lg">Ore per Progetto</CardTitle>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
           <BarChart data={data} layout="vertical" margin={{ left: 0, right: 10 }}>
             <CartesianGrid strokeDasharray="4 8" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.5} />
             <XAxis type="number" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />
@@ -102,7 +102,7 @@ export function ExpensePieChart({ data }: { data: ExpenseDataPoint[] }) {
     <Card>
       <CardContent>
         <CardTitle className="mb-4 text-base md:text-lg">Spese per Categoria</CardTitle>
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height={250} minWidth={0} minHeight={0}>
           <PieChart>
             {/* eslint-disable react-perf/jsx-no-new-function-as-prop -- recharts callbacks */}
             <Pie data={data} dataKey="amount" nameKey="category" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={2} label={({ name, percent }) => `${name} ${((percent as number) * 100).toFixed(0)}%`}>
@@ -133,7 +133,7 @@ export function DealsPipelineChart({ data }: { data: PipelinePoint[] }) {
     <Card>
       <CardContent>
         <CardTitle className="mb-4 text-base md:text-lg">Pipeline Deals</CardTitle>
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height={250} minWidth={0} minHeight={0}>
           <BarChart data={chartData} margin={{ left: -10, right: 10 }}>
             <CartesianGrid strokeDasharray="4 8" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
             <XAxis dataKey="stage" tick={{ fontSize: 13, fill: 'var(--color-muted)' }} stroke="transparent" />

@@ -91,7 +91,7 @@ export function MarginChart() {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
       <BarChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
         <defs>
           <linearGradient id="gradRicavo" x1="0" y1="0" x2="0" y2="1">

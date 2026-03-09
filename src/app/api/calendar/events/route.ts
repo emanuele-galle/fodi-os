@@ -267,6 +267,19 @@ export async function POST(request: NextRequest) {
   }
   const { summary, description, start, end, location, attendees, calendarId, withMeet, recurrence } = parsed.data
 
+  // Validate time range before calling Google Calendar API
+  const startDate = new Date(start)
+  const endDate = new Date(end)
+  if (isNaN(startDate.getTime())) {
+    return NextResponse.json({ error: 'Data inizio non valida. Formato ISO 8601 richiesto.' }, { status: 400 })
+  }
+  if (isNaN(endDate.getTime())) {
+    return NextResponse.json({ error: 'Data fine non valida. Formato ISO 8601 richiesto.' }, { status: 400 })
+  }
+  if (endDate.getTime() <= startDate.getTime()) {
+    return NextResponse.json({ error: 'La data di fine deve essere successiva alla data di inizio.' }, { status: 400 })
+  }
+
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } })
   const timezone = user?.timezone || 'Europe/Rome'
 

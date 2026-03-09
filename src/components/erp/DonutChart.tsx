@@ -16,7 +16,7 @@ export function DonutChart({ data, total, label, height = 200 }: DonutChartProps
   return (
     // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
     <div className="relative" style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <PieChart>
           <Pie
             data={data}

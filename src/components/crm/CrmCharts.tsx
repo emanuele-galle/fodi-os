@@ -69,7 +69,7 @@ export function DealsFunnelChart({ data }: { data: DealsByStageData[] }) {
     <Card>
       <CardContent>
         <CardTitle className="mb-4 text-base">Pipeline Deals</CardTitle>
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={200} minWidth={0} minHeight={0}>
           <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
             <defs>
               <linearGradient id="gradDeals" x1="0" y1="0" x2="1" y2="0">
@@ -101,7 +101,7 @@ export function WonDealsChart({ data }: { data: WonDealsData[] }) {
     <Card>
       <CardContent>
         <CardTitle className="mb-4 text-base">Deals Vinti (6 mesi)</CardTitle>
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={200} minWidth={0} minHeight={0}>
           <LineChart data={data} margin={{ left: -10, right: 5 }}>
             <defs>
               <linearGradient id="gradWon" x1="0" y1="0" x2="0" y2="1">
@@ -133,7 +133,7 @@ export function InteractionsByTypeChart({ data }: { data: InteractionsByTypeData
       <CardContent>
         <CardTitle className="mb-4 text-base">Interazioni per Tipo</CardTitle>
         <div className="flex items-center gap-4">
-          <ResponsiveContainer width="50%" height={180}>
+          <ResponsiveContainer width="50%" height={180} minWidth={0} minHeight={0}>
             <PieChart>
               <Pie
                 data={chartData}
