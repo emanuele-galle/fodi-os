@@ -52,6 +52,7 @@ const ActivityTrendChart = dynamic(() => import('@/components/dashboard/Activity
   ssr: false,
   loading: () => <Skeleton className="h-[200px] md:h-56 lg:h-64 w-full rounded-lg" />,
 })
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
 
@@ -270,6 +271,7 @@ export default function DashboardPage() {
   const role = currentUser?.role ?? 'DEVELOPER'
   const profileConfig = useMemo(() => getProfileConfig(role), [role])
   const profileGreeting = useMemo(() => getProfileGreeting(role), [role])
+  const breakpoint = useBreakpoint()
 
   const [stats, setStats] = useState<StatCard[]>([])
   const [tasks, setTasks] = useState<TaskItem[]>([])
@@ -383,7 +385,7 @@ export default function DashboardPage() {
 
   // Pre-compute adaptive grid classes
   const row1Grid = w.deadline && w.operative ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
-  const chartsGrid = w.revenue && w.cashFlow ? 'hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6' : 'hidden md:grid grid-cols-1 gap-4 mb-6'
+  const chartsGrid = w.revenue && w.cashFlow ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6' : 'grid grid-cols-1 gap-4 mb-6'
   const row3Grid = w.financial && w.pipeline && w.pipelineFunnel ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
   const row4Grid = w.activityTrend && w.teamActivity ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
   const row5Grid = w.timeline && w.notes ? 'grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mb-5 md:mb-6' : 'grid grid-cols-1 gap-3 md:gap-4 mb-5 md:mb-6'
@@ -453,8 +455,8 @@ export default function DashboardPage() {
       )}
 
       {/* ROW 2: CHARTS - Tabbed on mobile, grid on desktop */}
-      {mobileChartTabs.length > 0 && (
-        <div className="md:hidden mb-5">
+      {mobileChartTabs.length > 0 && breakpoint === "mobile" && (
+        <div className="mb-5">
           <Card className="overflow-hidden">
             <CardContent>
               <MobileChartTabs tabs={mobileChartTabs} />
@@ -463,7 +465,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {showDesktopCharts && (
+      {showDesktopCharts && breakpoint !== "mobile" && (
         <div className={chartsGrid}>
           {w.revenue && (
             <Card className="overflow-hidden">
