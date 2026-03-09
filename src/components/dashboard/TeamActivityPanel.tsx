@@ -171,7 +171,7 @@ export function TeamActivityPanel() {
 
         {/* Chart */}
         <div className="h-[180px] md:h-[200px] lg:h-[220px] mb-6">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart data={data.trend} margin={{ top: 8, right: 8, left: -10, bottom: 5 }}>
               <defs>
                 <linearGradient id="teamTrendGradient" x1="0" y1="0" x2="0" y2="1">

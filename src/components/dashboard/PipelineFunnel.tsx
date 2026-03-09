@@ -57,7 +57,7 @@ export function PipelineFunnel() {
 
   return (
     <div className="h-[200px] md:h-[220px] lg:h-[240px]">
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
       <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 5, bottom: 5 }} barCategoryGap="25%">
         <CartesianGrid strokeDasharray="3 6" horizontal={false} stroke="var(--color-border)" strokeOpacity={0.3} />
         <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} allowDecimals={false} />

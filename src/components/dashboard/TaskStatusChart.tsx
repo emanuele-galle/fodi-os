@@ -53,7 +53,7 @@ export function TaskStatusChart({ data, loading }: TaskStatusChartProps) {
   return (
     <div className="flex items-center gap-6">
       <div className="flex-1">
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={0}>
           <PieChart>
             <Pie
               data={data}
