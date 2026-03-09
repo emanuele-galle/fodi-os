@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type CSSProperties } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  Search, Plus, MessageSquare, Trash2, ChevronLeft,
+  Search, Plus, MessageSquare, Trash2, ChevronLeft, History,
   CheckSquare, Users, Calendar, Receipt,
   Loader2, Send, Paperclip, X,
   FileText,
@@ -105,11 +105,115 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
     } catch {}
   }
 
+  const handleSelectConversation = useCallback((id: string) => {
+    setSelectedId(id)
+    setSidebarOpen(false)
+  }, [])
+
+  /* eslint-disable react-perf/jsx-no-new-object-as-prop -- framer-motion animation objects */
+  const sidebarContent = (
+    <>
+      {/* Sidebar header */}
+      <div className="px-3 py-3 border-b border-white/[0.06] flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
+          <input
+            type="text"
+            placeholder="Cerca conversazioni..."
+            value={search}
+            // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple input handler
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.03] border border-white/[0.06] focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all placeholder:text-muted-foreground/40"
+          />
+        </div>
+        <button
+          onClick={handleNewConversation}
+          className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+          title="Nuova conversazione"
+        >
+          <Plus className="h-4 w-4 text-muted-foreground" />
+        </button>
+        {/* Close button — mobile only */}
+        <button
+          onClick={toggleSidebar}
+          className="md:hidden p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+          aria-label="Chiudi cronologia"
+        >
+          <X className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Conversation list */}
+      <div className="flex-1 overflow-y-auto ai-scrollbar">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-blue-400/50" />
+          </div>
+        ) : grouped.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <MessageSquare className="h-8 w-8 text-muted-foreground/20" />
+            <p className="text-xs text-muted-foreground/50">
+              {search ? 'Nessun risultato' : 'Nessuna conversazione'}
+            </p>
+          </div>
+        ) : (
+          grouped.map((group) => (
+            <div key={group.label}>
+              <div className="px-3 py-2 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-widest">
+                {group.label}
+              </div>
+              {group.items.map((conv) => (
+                <button
+                  key={conv.id}
+                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler needs closure over conv.id
+                  onClick={() => handleSelectConversation(conv.id)}
+                  className={cn(
+                    'w-full text-left px-3 py-2.5 flex items-center gap-2.5 transition-all group relative',
+                    selectedId === conv.id
+                      ? 'bg-blue-500/10 border-l-2 border-blue-500'
+                      : 'border-l-2 border-transparent hover:bg-white/[0.03]',
+                  )}
+                >
+                  <div className={cn(
+                    'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0',
+                    selectedId === conv.id ? 'bg-blue-500/20' : 'bg-white/[0.04]',
+                  )}>
+                    <MessageSquare className={cn(
+                      'h-3.5 w-3.5',
+                      selectedId === conv.id ? 'text-blue-400' : 'text-muted-foreground/50',
+                    )} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={cn(
+                      'text-xs font-medium truncate',
+                      selectedId === conv.id ? 'text-blue-200' : 'text-foreground/80',
+                    )}>
+                      {conv.title || 'Senza titolo'}
+                    </p>
+                    <p className="text-xs text-muted-foreground/60">
+                      {conv._count.messages} msg
+                    </p>
+                  </div>
+                  <button
+                    // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler needs closure over conv.id
+                    onClick={(e) => handleDeleteConversation(conv.id, e)}
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-all"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </button>
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  )
+
   return (
-    <div className="flex h-full ai-mesh-bg">
-      {/* Sidebar — hidden on mobile, visible on md+ */}
+    <div className="flex h-full ai-mesh-bg relative">
+      {/* Desktop sidebar — inline */}
       <AnimatePresence>
-        {/* eslint-disable react-perf/jsx-no-new-object-as-prop -- framer-motion animation objects */}
         {sidebarOpen && (
           <motion.div
             initial={{ width: 0, opacity: 0 }}
@@ -118,97 +222,36 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
             transition={{ duration: 0.2 }}
             className="hidden md:flex flex-shrink-0 border-r border-white/[0.06] flex-col bg-background/60 backdrop-blur-xl overflow-hidden"
           >
-            {/* Sidebar header */}
-            <div className="px-3 py-3 border-b border-white/[0.06] flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
-                <input
-                  type="text"
-                  placeholder="Cerca conversazioni..."
-                  value={search}
-                  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple input handler
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.03] border border-white/[0.06] focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all placeholder:text-muted-foreground/40"
-                />
-              </div>
-              <button
-                onClick={handleNewConversation}
-                className="p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
-                title="Nuova conversazione"
-              >
-                <Plus className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
-
-            {/* Conversation list */}
-            <div className="flex-1 overflow-y-auto ai-scrollbar">
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-blue-400/50" />
-                </div>
-              ) : grouped.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-2">
-                  <MessageSquare className="h-8 w-8 text-muted-foreground/20" />
-                  <p className="text-xs text-muted-foreground/50">
-                    {search ? 'Nessun risultato' : 'Nessuna conversazione'}
-                  </p>
-                </div>
-              ) : (
-                grouped.map((group) => (
-                  <div key={group.label}>
-                    <div className="px-3 py-2 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-widest">
-                      {group.label}
-                    </div>
-                    {group.items.map((conv) => (
-                      <button
-                        key={conv.id}
-                        // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler needs closure over conv.id
-                        onClick={() => setSelectedId(conv.id)}
-                        className={cn(
-                          'w-full text-left px-3 py-2.5 flex items-center gap-2.5 transition-all group relative',
-                          selectedId === conv.id
-                            ? 'bg-blue-500/10 border-l-2 border-blue-500'
-                            : 'border-l-2 border-transparent hover:bg-white/[0.03]',
-                        )}
-                      >
-                        <div className={cn(
-                          'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0',
-                          selectedId === conv.id ? 'bg-blue-500/20' : 'bg-white/[0.04]',
-                        )}>
-                          <MessageSquare className={cn(
-                            'h-3.5 w-3.5',
-                            selectedId === conv.id ? 'text-blue-400' : 'text-muted-foreground/50',
-                          )} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(
-                            'text-xs font-medium truncate',
-                            selectedId === conv.id ? 'text-blue-200' : 'text-foreground/80',
-                          )}>
-                            {conv.title || 'Senza titolo'}
-                          </p>
-                          <p className="text-xs text-muted-foreground/60">
-                            {conv._count.messages} msg
-                          </p>
-                        </div>
-                        <button
-                          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- loop handler needs closure over conv.id
-                          onClick={(e) => handleDeleteConversation(conv.id, e)}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-all"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </button>
-                    ))}
-                  </div>
-                ))
-              )}
-            </div>
+            {sidebarContent}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Toggle sidebar button — hidden on mobile */}
+      {/* Mobile sidebar — fullscreen overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30"
+              onClick={toggleSidebar}
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              className="md:hidden fixed inset-y-0 left-0 w-[85%] max-w-[320px] z-40 flex flex-col bg-background/95 backdrop-blur-xl border-r border-white/[0.06] shadow-2xl"
+            >
+              {sidebarContent}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Toggle sidebar button — desktop */}
       <button
         onClick={toggleSidebar}
         className="hidden md:flex absolute top-3 left-2 z-10 p-1 rounded-lg hover:bg-muted transition-colors items-center justify-center"
@@ -225,7 +268,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
             initialMessage={pendingMessage || undefined}
           />
         ) : (
-          <WelcomeScreen userName={userName} onAction={handleWelcomeAction} />
+          <WelcomeScreen userName={userName} onAction={handleWelcomeAction} onOpenHistory={toggleSidebar} />
         )}
       </div>
     </div>
@@ -253,7 +296,7 @@ const PARTICLE_STYLES: CSSProperties[] = Array.from({ length: 6 }).map((_, i) =>
 } as CSSProperties))
 
 /* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- event handlers + framer-motion in welcome screen */
-function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (msg: string) => void }) {
+function WelcomeScreen({ userName, onAction, onOpenHistory }: { userName?: string; onAction: (msg: string) => void; onOpenHistory: () => void }) {
   const [input, setInput] = useState('')
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [isDragOver, setIsDragOver] = useState(false)
@@ -474,6 +517,22 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
               <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{pill.label}</span>
             </button>
           ))}
+        </motion.div>
+
+        {/* History button — mobile only */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="flex md:hidden justify-center"
+        >
+          <button
+            onClick={onOpenHistory}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-border/40 bg-card/50 hover:bg-card hover:border-blue-500/30 hover:shadow-md transition-all duration-200"
+          >
+            <History className="h-4 w-4 text-blue-400/70" />
+            <span className="text-xs font-medium text-muted-foreground">Cronologia conversazioni</span>
+          </button>
         </motion.div>
 
         {/* Developer badge */}
