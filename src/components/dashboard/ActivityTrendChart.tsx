@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 
 interface TrendDataPoint {
   label: string
@@ -60,7 +61,7 @@ export function ActivityTrendChart({ color = 'var(--color-primary)' }: ActivityT
   if (loading) return <Skeleton className="h-[220px] w-full" />
 
   return (
-    <div className="h-[200px] md:h-[230px] lg:h-[260px]">
+    <ChartContainer className="h-[200px] md:h-[230px] lg:h-[260px]">
     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
       <AreaChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 5 }}>
         <defs>
@@ -85,6 +86,6 @@ export function ActivityTrendChart({ color = 'var(--color-primary)' }: ActivityT
         />
       </AreaChart>
     </ResponsiveContainer>
-    </div>
+    </ChartContainer>
   )
 }

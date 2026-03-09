@@ -2,6 +2,7 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 
 interface DonutChartProps {
   data: { name: string; value: number; color?: string }[]
@@ -15,7 +16,7 @@ const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#007AFF', '#EC4899'
 export function DonutChart({ data, total, label, height = 200 }: DonutChartProps) {
   return (
     // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- dynamic runtime value
-    <div className="relative" style={{ height }}>
+    <ChartContainer className="relative" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <PieChart>
           <Pie
@@ -37,7 +38,7 @@ export function DonutChart({ data, total, label, height = 200 }: DonutChartProps
         <span className="text-lg font-bold">{formatCurrency(total)}</span>
         {label && <span className="text-sm text-muted">{label}</span>}
       </div>
-    </div>
+    </ChartContainer>
   )
 }
 

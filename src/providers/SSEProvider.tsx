@@ -30,6 +30,7 @@ export function SSEProvider({ children }: { children: React.ReactNode }) {
     let es: EventSource | null = null
     let mounted = true
     let retryTimer: ReturnType<typeof setTimeout> | null = null
+    let consecutiveErrors = 0
 
     function attempt() {
       if (!mounted) return
@@ -39,6 +40,7 @@ export function SSEProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
           setConnected(true)
           retryDelay = 1000
+          consecutiveErrors = 0
         }
       }
 
@@ -57,14 +59,24 @@ export function SSEProvider({ children }: { children: React.ReactNode }) {
         if (!mounted) return
         setConnected(false)
         es?.close()
-        // Refresh auth token before reconnecting — handles 401 from expired access token
-        refreshAccessToken().finally(() => {
+        consecutiveErrors++
+
+        // Only refresh auth token every 3rd error to avoid hammering refresh endpoint
+        // on proxy/network issues (most SSE drops are not auth-related)
+        const shouldRefresh = consecutiveErrors % 3 === 1
+        const reconnect = () => {
           if (!mounted) return
           retryTimer = setTimeout(() => {
             if (mounted) attempt()
           }, retryDelay)
           retryDelay = Math.min(retryDelay * 2, 30000)
-        })
+        }
+
+        if (shouldRefresh) {
+          refreshAccessToken().finally(reconnect)
+        } else {
+          reconnect()
+        }
       }
     }
 

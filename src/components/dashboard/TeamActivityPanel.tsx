@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Activity, Users, ArrowRight } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Card, CardContent, CardTitle } from '@/components/ui/Card'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 import { Avatar } from '@/components/ui/Avatar'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh'
@@ -170,7 +171,7 @@ export function TeamActivityPanel() {
         <p className="text-[11px] text-muted mb-3">{PERIOD_SUBTITLE[period]}</p>
 
         {/* Chart */}
-        <div className="h-[180px] md:h-[200px] lg:h-[220px] mb-6">
+        <ChartContainer className="h-[180px] md:h-[200px] lg:h-[220px] mb-6">
           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart data={data.trend} margin={{ top: 8, right: 8, left: -10, bottom: 5 }}>
               <defs>
@@ -202,7 +203,7 @@ export function TeamActivityPanel() {
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </ChartContainer>
 
         {/* Members section */}
         <div className="border-t border-border/30 pt-4">

@@ -7,6 +7,7 @@ import {
 } from 'recharts'
 import { TrendingUp } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 import { formatCurrency } from '@/lib/utils'
 
 interface MonthCashFlow {
@@ -101,7 +102,7 @@ export function CashFlowChart() {
   }
 
   return (
-    <div className="h-[200px] md:h-[240px] lg:h-[280px]">
+    <ChartContainer className="h-[200px] md:h-[240px] lg:h-[280px]">
     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
       <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 5 }}>
         <defs>
@@ -149,6 +150,6 @@ export function CashFlowChart() {
         />
       </AreaChart>
     </ResponsiveContainer>
-    </div>
+    </ChartContainer>
   )
 }

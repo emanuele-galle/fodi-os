@@ -24,7 +24,7 @@ class SSEManager {
       } catch {
         // Client disconnected, will be cleaned up
       }
-    }, 30000)
+    }, 15000)
     this.heartbeats.set(controller, intervalId)
   }
 

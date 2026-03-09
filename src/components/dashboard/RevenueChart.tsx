@@ -6,6 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { ChartContainer } from '@/components/ui/ChartContainer'
 import { formatCurrency } from '@/lib/utils'
 
 interface IncomeItem {
@@ -104,7 +105,7 @@ export function RevenueChart() {
   }
 
   return (
-    <div className="h-[200px] md:h-[240px] lg:h-[280px]">
+    <ChartContainer className="h-[200px] md:h-[240px] lg:h-[280px]">
     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 5 }} barCategoryGap="20%">
         <defs>
@@ -137,6 +138,6 @@ export function RevenueChart() {
         <Bar dataKey="overdue" stackId="a" fill="url(#gradOverdue)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
-    </div>
+    </ChartContainer>
   )
 }
