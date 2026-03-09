@@ -2,6 +2,22 @@
 
 Tutte le modifiche significative al progetto sono documentate in questo file.
 
+## [0.8.1] - 2026-03-09
+
+### Bug Fix
+- **TaskDetailModal**: risolto loop infinito (flash/strobe) causato da `editForm` nelle dipendenze useEffect
+- **TaskDetailModal**: ridotta cognitive complexity (da 18 a <15), estratte funzioni helper
+- **TaskDetailModal**: corretto inline array in JSX (estratto in useMemo)
+- **Prisma client**: rigenerato per allineare campo `aiPrompt` su CompanyProfile
+- **Build**: rimossa cache stale `.next/types` (riferimento a route eliminata)
+
+### Test
+- **432 unit test** aggiunti (da 208 a 432) coprendo security, business logic, validazione, auth
+- **32 E2E test** con Playwright (login, responsive, performance, security headers, SEO)
+- **Playwright config** aggiunta con baseURL os.pieromuscari.it
+
+---
+
 ## [0.8.0] - 2026-02-27
 
 ### Nuove Funzionalità

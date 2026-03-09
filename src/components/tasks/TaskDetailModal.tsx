@@ -105,7 +105,8 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     } finally {
       setLoading(false)
     }
-  }, [taskId, editForm])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId])
 
   const fetchActivity = useCallback(async () => {
     if (!taskId) return
@@ -156,7 +157,8 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
         editForm.setValues({ title: '', description: '', status: 'TODO', priority: 'MEDIUM', dueDate: '' })
       }
     }
-  }, [open, taskId, isCreateMode, fetchTask, fetchAttachments, fetchActivity, fetchSubtasks, editForm])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, taskId, isCreateMode, fetchTask, fetchAttachments, fetchActivity, fetchSubtasks])
 
   useEffect(() => {
     if (!highlightCommentId || !open || loading || !task) return
