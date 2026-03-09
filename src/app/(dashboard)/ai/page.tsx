@@ -16,7 +16,7 @@ export default function AiPage() {
   }, [])
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] relative">
+    <div className="h-[calc(100dvh-2.75rem-58px)] md:h-[calc(100dvh-3.5rem)] relative">
       <AiFullscreenLayout userName={userName} />
     </div>
   )

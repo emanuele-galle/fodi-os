@@ -72,20 +72,21 @@ export function AiChatSidebar({ open, onClose }: AiChatSidebarProps) {
             style={{ width: `${width}px` }}
             className="fixed top-0 right-0 h-full sm:w-auto w-full backdrop-blur-xl bg-background/95 border-l border-border z-50 flex flex-col shadow-2xl shadow-black/20"
           >
-            {/* Resize handle */}
+            {/* Resize handle — desktop only */}
             <div
               onMouseDown={handleMouseDown}
-              className="absolute left-0 top-0 bottom-0 w-3 cursor-col-resize z-10 group hidden sm:flex items-center justify-center hover:bg-blue-500/10 transition-colors"
+              className="absolute left-0 top-0 bottom-0 w-3 cursor-col-resize z-10 group hidden md:flex items-center justify-center hover:bg-blue-500/10 transition-colors"
             >
               <GripVertical className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground/70 transition-colors" />
             </div>
 
-            {/* Close button */}
+            {/* Close button — offset below MobileHeader on mobile */}
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 z-10 p-1.5 rounded-lg hover:bg-muted transition-colors"
+              aria-label="Chiudi assistente"
+              className="absolute top-[calc(env(safe-area-inset-top,0px)+0.5rem)] md:top-3 right-3 z-20 h-11 w-11 md:h-auto md:w-auto md:p-1.5 rounded-full md:rounded-lg flex items-center justify-center bg-secondary/80 md:bg-transparent hover:bg-muted transition-colors"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5 md:h-4 md:w-4" />
             </button>
 
             {/* Content */}

@@ -107,7 +107,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
 
   return (
     <div className="flex h-full ai-mesh-bg">
-      {/* Sidebar */}
+      {/* Sidebar — hidden on mobile, visible on md+ */}
       <AnimatePresence>
         {/* eslint-disable react-perf/jsx-no-new-object-as-prop -- framer-motion animation objects */}
         {sidebarOpen && (
@@ -116,7 +116,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
             animate={{ width: 280, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex-shrink-0 border-r border-white/[0.06] flex flex-col bg-background/60 backdrop-blur-xl overflow-hidden"
+            className="hidden md:flex flex-shrink-0 border-r border-white/[0.06] flex-col bg-background/60 backdrop-blur-xl overflow-hidden"
           >
             {/* Sidebar header */}
             <div className="px-3 py-3 border-b border-white/[0.06] flex items-center gap-2">
@@ -208,10 +208,10 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
         )}
       </AnimatePresence>
 
-      {/* Toggle sidebar button */}
+      {/* Toggle sidebar button — hidden on mobile */}
       <button
         onClick={toggleSidebar}
-        className="absolute top-3 left-2 z-10 p-1 rounded-lg hover:bg-muted transition-colors"
+        className="hidden md:flex absolute top-3 left-2 z-10 p-1 rounded-lg hover:bg-muted transition-colors items-center justify-center"
       >
         <ChevronLeft className={cn('h-4 w-4 transition-transform', !sidebarOpen && 'rotate-180')} />
       </button>
@@ -300,7 +300,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
 
   return (
     <div
-      className="flex-1 flex items-center justify-center p-6 relative overflow-hidden"
+      className="flex-1 flex items-center justify-center p-4 md:p-6 relative overflow-hidden"
       onDragOver={(e) => { e.preventDefault(); setIsDragOver(true) }}
       onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false) }}
       onDrop={(e) => { e.preventDefault(); setIsDragOver(false); handleFileSelect(e.dataTransfer.files) }}
@@ -337,7 +337,7 @@ function WelcomeScreen({ userName, onAction }: { userName?: string; onAction: (m
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <h1 className="text-3xl font-light tracking-tight text-foreground/90 mb-2">
+          <h1 className="text-2xl md:text-3xl font-light tracking-tight text-foreground/90 mb-2">
             {getGreeting()}
             {userName && (
               <span className="relative inline-block ml-1">

@@ -208,8 +208,11 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
         </div>
       )}
 
-      {/* Header */}
-      <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/[0.06] overflow-hidden">
+      {/* Header — extra top padding on mobile when inside sidebar (close button overlaps) */}
+      <div className={cn(
+        "relative flex items-center justify-between px-4 py-3 border-b border-white/[0.06] overflow-hidden",
+        compact && "pt-14 md:pt-3"
+      )}>
         {/* Header gradient background with shimmer */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.07] via-blue-500/[0.05] to-blue-400/[0.03]" />
         <div className="absolute inset-0 ai-header-shimmer" />
