@@ -44,9 +44,9 @@ const CSP_SCRIPT_SRC = process.env.NODE_ENV === 'production'
 
 const CSP_CONNECT = [
   "'self'",
-  'https://os.fodisrl.it', 'wss://os.fodisrl.it',
-  'https://api.fodivps2.cloud', 'wss://api.fodivps2.cloud',
-  'https://storage.fodivps2.cloud', 'wss://fodivps2.cloud',
+  'https://os.pieromuscari.it', 'wss://os.pieromuscari.it',
+  'https://api.muscarivps.cloud', 'wss://api.muscarivps.cloud',
+  'https://storage.muscarivps.cloud', 'https://s3.muscarivps.cloud', 'https://files.muscarivps.cloud', 'wss://muscarivps.cloud',
   'https://challenges.cloudflare.com',
   'https://apis.google.com', 'https://accounts.google.com',
   'https://*.googleusercontent.com', 'https://*.googleapis.com',
@@ -54,7 +54,7 @@ const CSP_CONNECT = [
   'https://www.googletagmanager.com',
 ].join(' ')
 
-const CSP_HEADER = `default-src 'self'; script-src ${CSP_SCRIPT_SRC} https://challenges.cloudflare.com https://www.googletagmanager.com; script-src-elem ${CSP_SCRIPT_SRC} https://challenges.cloudflare.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src ${CSP_CONNECT}; frame-src 'self' https://meet.google.com https://accounts.google.com https://drive.google.com https://challenges.cloudflare.com; media-src 'self' blob: https://storage.fodivps2.cloud; worker-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`
+const CSP_HEADER = `default-src 'self'; script-src ${CSP_SCRIPT_SRC} https://challenges.cloudflare.com https://www.googletagmanager.com; script-src-elem ${CSP_SCRIPT_SRC} https://challenges.cloudflare.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src ${CSP_CONNECT}; frame-src 'self' https://meet.google.com https://accounts.google.com https://drive.google.com https://challenges.cloudflare.com; media-src 'self' blob: https://storage.muscarivps.cloud; worker-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`
 
 function setSecurityHeaders(response: NextResponse, isHtmlPage = false): NextResponse {
   response.headers.set('X-Content-Type-Options', 'nosniff')
