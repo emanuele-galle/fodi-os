@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
+import { refreshAccessToken } from '@/hooks/useAuthRefresh'
 
 export interface SSEMessage {
   type: string
@@ -56,10 +57,14 @@ export function SSEProvider({ children }: { children: React.ReactNode }) {
         if (!mounted) return
         setConnected(false)
         es?.close()
-        retryTimer = setTimeout(() => {
-          if (mounted) attempt()
-        }, retryDelay)
-        retryDelay = Math.min(retryDelay * 2, 30000)
+        // Refresh auth token before reconnecting — handles 401 from expired access token
+        refreshAccessToken().finally(() => {
+          if (!mounted) return
+          retryTimer = setTimeout(() => {
+            if (mounted) attempt()
+          }, retryDelay)
+          retryDelay = Math.min(retryDelay * 2, 30000)
+        })
       }
     }
 

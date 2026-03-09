@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Square, Clock, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { fetchWithAuth } from '@/lib/fetch-with-auth'
 
 interface ActiveTimer {
   active: boolean
@@ -30,7 +31,7 @@ export function ActiveTimerBanner() {
 
   const fetchActiveTimer = useCallback(async () => {
     try {
-      const res = await fetch('/api/tasks/active-timer')
+      const res = await fetchWithAuth('/api/tasks/active-timer')
       if (res.ok) {
         const data = await res.json()
         setTimer(data)
