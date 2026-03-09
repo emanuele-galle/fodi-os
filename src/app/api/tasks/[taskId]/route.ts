@@ -63,6 +63,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         _count: {
           select: { subtasks: true },
         },
+        recurrenceRule: true,
       },
     })
 

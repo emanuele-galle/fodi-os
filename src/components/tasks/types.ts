@@ -30,6 +30,8 @@ export interface Task {
   timerStartedAt: string | null
   timerUserId: string | null
   _count?: { comments: number; subtasks: number }
+  recurrenceTemplateId?: string | null
+  isRecurringTemplate?: boolean
 }
 
 export const STATUS_OPTIONS = [

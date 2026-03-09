@@ -2,6 +2,32 @@
 
 Tutte le modifiche significative al progetto sono documentate in questo file.
 
+## [0.9.0] - 2026-03-09
+
+### Nuove Funzionalità
+
+#### Task Ricorrenti
+- **Ricorrenza configurabile** — Qualsiasi task può diventare ricorrente con frequenza giornaliera, settimanale, mensile o personalizzata
+- **Selezione giorni** — Per frequenza settimanale, selezione interattiva dei giorni (L M M G V S D)
+- **Generazione automatica** — Cron job giornaliero (06:00) genera istanze task in base alle regole attive
+- **Istanze indipendenti** — Ogni task generata è autonoma (modificabile/completabile senza impattare il template)
+- **Pausa/Riprendi** — Possibilità di mettere in pausa e riprendere la ricorrenza
+- **Limiti opzionali** — Data fine e/o numero massimo di occorrenze
+- **Badge visivi** — Icona ricorrenza nella lista task (template e istanze generate)
+- **Link al template** — Nelle istanze generate, link diretto al task template originale
+- **Idempotenza cron** — Protezione contro generazione duplicata nello stesso giorno
+
+### Modifiche Tecniche
+- Nuovo modello Prisma `RecurrenceRule` con relazione 1:1 su Task
+- Campo `recurrenceTemplateId` su Task per collegare istanze al template
+- API CRUD `/api/tasks/:taskId/recurrence` (GET, POST, PATCH, DELETE)
+- Endpoint cron `/api/tasks/generate-recurring` con transazioni atomiche
+- Utility pure `computeNextRunAt()`, `isRuleExhausted()`, `describeRecurrence()`
+- Componente `TaskRecurrence` auto-contenuto nel modale task
+- 22 unit test per logica di calcolo date ricorrenza
+
+---
+
 ## [0.8.1] - 2026-03-09
 
 ### Bug Fix

@@ -12,6 +12,7 @@ const SCHEDULES = {
   checkDeadlines: process.env.CRON_CHECK_DEADLINES || '0 8,14 * * 1-5', // Mon-Fri 08:00, 14:00
   reminders:      process.env.CRON_REMINDERS       || '0 9,15 * * 1-5', // Mon-Fri 09:00, 15:00
   reports:        process.env.CRON_REPORTS         || '0 21 * * 1-5',  // Mon-Fri 21:00
+  recurringTasks: process.env.CRON_RECURRING_TASKS || '0 6 * * *',     // Daily 06:00
 }
 
 async function callEndpoint(path: string, label: string) {
@@ -50,6 +51,7 @@ export function startScheduler() {
     checkDeadlines: SCHEDULES.checkDeadlines,
     reminders: SCHEDULES.reminders,
     reports: SCHEDULES.reports,
+    recurringTasks: SCHEDULES.recurringTasks,
   })
 
   jobs.push(
@@ -64,6 +66,9 @@ export function startScheduler() {
     }),
     new Cron(SCHEDULES.reports, { timezone: 'Europe/Rome' }, () => {
       callEndpoint('/api/team/reports/generate', 'reports')
+    }),
+    new Cron(SCHEDULES.recurringTasks, { timezone: 'Europe/Rome' }, () => {
+      callEndpoint('/api/tasks/generate-recurring', 'recurring-tasks')
     }),
   )
 

@@ -12,6 +12,7 @@ import { MultiUserSelect } from '@/components/ui/MultiUserSelect'
 import { Trash2, UserCheck } from 'lucide-react'
 import { TaskTimer } from '@/components/tasks/TaskTimer'
 import { TaskDependencies } from '@/components/tasks/TaskDependencies'
+import { TaskRecurrence } from '@/components/tasks/TaskRecurrence'
 import { TaskComments } from '@/components/tasks/TaskComments'
 import { TaskAttachments } from '@/components/tasks/TaskAttachments'
 import { TaskSubtasks } from '@/components/tasks/TaskSubtasks'
@@ -444,6 +445,12 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
               <div className="border-t border-border pt-4">
                 <TaskDependencies taskId={task.id} />
               </div>
+
+              <TaskRecurrence
+                taskId={task.id}
+                isTemplate={!task.recurrenceTemplateId}
+                recurrenceTemplateId={task.recurrenceTemplateId ?? null}
+              />
 
               <TaskSubtasks
                 taskId={task.id}

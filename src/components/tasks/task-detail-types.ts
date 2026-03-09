@@ -63,6 +63,17 @@ export interface TaskDetail {
   timerUserId: string | null
   subtasks?: Subtask[]
   _count?: { subtasks: number }
+  recurrenceTemplateId?: string | null
+  recurrenceRule?: {
+    id: string
+    frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM'
+    interval: number
+    weekDays: number[]
+    monthDay: number | null
+    isActive: boolean
+    occurrenceCount: number
+    nextRunAt: string
+  } | null
 }
 
 export interface TeamMember {

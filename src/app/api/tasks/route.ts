@@ -136,12 +136,19 @@ export async function GET(request: NextRequest) {
           _count: {
             select: { comments: true, subtasks: true },
           },
+          recurrenceRule: { select: { id: true } },
         },
       }),
       prisma.task.count({ where }),
     ])
 
-    return NextResponse.json({ success: true, data: items, items, total, page, limit }, {
+    const mappedItems = items.map((t) => ({
+      ...t,
+      isRecurringTemplate: !!t.recurrenceRule,
+      recurrenceRule: undefined,
+    }))
+
+    return NextResponse.json({ success: true, data: mappedItems, items: mappedItems, total, page, limit }, {
       headers: { 'Cache-Control': 'no-cache' },
     })
   } catch (e) {

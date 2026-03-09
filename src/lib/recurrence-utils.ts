@@ -11,68 +11,61 @@ export interface RecurrenceConfig {
   occurrenceCount: number
 }
 
+function computeWeeklyNext(after: Date, weekDays: number[], interval: number): Date | null {
+  if (weekDays.length === 0) return null
+  const sorted = [...weekDays].sort((a, b) => a - b)
+
+  for (let offset = 1; offset <= 7 * interval; offset++) {
+    const candidate = new Date(after)
+    candidate.setDate(candidate.getDate() + offset)
+    candidate.setHours(0, 0, 0, 0)
+    if (!sorted.includes(candidate.getDay())) continue
+
+    if (interval === 1 || offset <= 7) return candidate
+    const weeksAhead = Math.ceil(offset / 7)
+    if (weeksAhead % interval === 0 || weeksAhead === interval) return candidate
+  }
+
+  // Fallback: jump to first day of next eligible week
+  const fallback = new Date(after)
+  fallback.setDate(after.getDate() + 7 * interval - after.getDay() + sorted[0])
+  fallback.setHours(0, 0, 0, 0)
+  return fallback
+}
+
+function computeMonthlyNext(after: Date, monthDay: number | null, interval: number): Date {
+  const day = monthDay ?? 1
+  const next = new Date(after)
+  next.setHours(0, 0, 0, 0)
+  next.setMonth(next.getMonth() + interval)
+  const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()
+  next.setDate(Math.min(day, lastDay))
+  return next
+}
+
 export function computeNextRunAt(config: RecurrenceConfig, after: Date): Date | null {
   if (isRuleExhausted(config)) return null
 
-  const next = new Date(after)
-  next.setHours(0, 0, 0, 0)
+  let next: Date | null
 
   switch (config.frequency) {
     case 'DAILY':
-    case 'CUSTOM':
+    case 'CUSTOM': {
+      next = new Date(after)
+      next.setHours(0, 0, 0, 0)
       next.setDate(next.getDate() + config.interval)
       break
-
-    case 'WEEKLY': {
-      if (config.weekDays.length === 0) return null
-      const sorted = [...config.weekDays].sort((a, b) => a - b)
-
-      // Find next matching day in current or following weeks
-      let found = false
-      for (let offset = 1; offset <= 7 * config.interval; offset++) {
-        const candidate = new Date(after)
-        candidate.setDate(candidate.getDate() + offset)
-        candidate.setHours(0, 0, 0, 0)
-        const candidateDay = candidate.getDay()
-
-        if (sorted.includes(candidateDay)) {
-          // For interval > 1, only accept days in the correct week
-          if (config.interval === 1 || offset <= 7) {
-            next.setTime(candidate.getTime())
-            found = true
-            break
-          }
-          // For interval > 1, skip to the right week
-          const weeksAhead = Math.ceil(offset / 7)
-          if (weeksAhead % config.interval === 0 || weeksAhead === config.interval) {
-            next.setTime(candidate.getTime())
-            found = true
-            break
-          }
-        }
-      }
-
-      if (!found) {
-        // Jump to first day of next eligible week
-        const daysUntilNextWeek = 7 * config.interval - after.getDay() + sorted[0]
-        next.setDate(after.getDate() + daysUntilNextWeek)
-      }
-      break
     }
-
-    case 'MONTHLY': {
-      const day = config.monthDay ?? 1
-      next.setMonth(next.getMonth() + config.interval)
-      // Clamp to last day of month if needed
-      const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()
-      next.setDate(Math.min(day, lastDay))
+    case 'WEEKLY':
+      next = computeWeeklyNext(after, config.weekDays, config.interval)
       break
-    }
+    case 'MONTHLY':
+      next = computeMonthlyNext(after, config.monthDay, config.interval)
+      break
   }
 
-  // Check if next run is past endDate
+  if (!next) return null
   if (config.endDate && next > config.endDate) return null
-
   return next
 }
 

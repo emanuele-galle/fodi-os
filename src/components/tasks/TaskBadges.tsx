@@ -1,4 +1,4 @@
-import { Clock, ListTodo, MessageSquare } from 'lucide-react'
+import { Clock, ListTodo, MessageSquare, RotateCcw, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { URGENCY_STYLES, type DueUrgency } from '@/lib/task-utils'
 import { Badge } from '@/components/ui/Badge'
@@ -32,6 +32,16 @@ export function TaskBadges({ task, activeTab, userId }: { task: Task; activeTab:
         <span className="inline-flex items-center gap-0.5 text-xs text-muted">
           <ListTodo className="h-3 w-3" />
           {task._count.subtasks}
+        </span>
+      )}
+      {task.isRecurringTemplate && (
+        <span className="inline-flex items-center gap-0.5 text-xs text-primary" title="Task ricorrente">
+          <RotateCcw className="h-3 w-3" />
+        </span>
+      )}
+      {task.recurrenceTemplateId && (
+        <span className="inline-flex items-center gap-0.5 text-xs text-muted" title="Generata da ricorrenza">
+          <RefreshCw className="h-3 w-3" />
         </span>
       )}
     </>
