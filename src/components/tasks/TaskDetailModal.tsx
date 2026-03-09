@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useFormPersist } from '@/hooks/useFormPersist'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
@@ -105,8 +105,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     } finally {
       setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId])
+  }, [taskId, editForm])
 
   const fetchActivity = useCallback(async () => {
     if (!taskId) return
@@ -157,7 +156,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
         editForm.setValues({ title: '', description: '', status: 'TODO', priority: 'MEDIUM', dueDate: '' })
       }
     }
-  }, [open, taskId, isCreateMode, fetchTask, fetchAttachments, fetchActivity, fetchSubtasks])
+  }, [open, taskId, isCreateMode, fetchTask, fetchAttachments, fetchActivity, fetchSubtasks, editForm])
 
   useEffect(() => {
     if (!highlightCommentId || !open || loading || !task) return
@@ -279,7 +278,75 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
     }
   }
 
-  /* eslint-disable-next-line react-perf/jsx-no-new-function-as-prop -- simple state setter */
+  function renderAssignedBy() {
+    if (isCreateMode || !task?.assignments) return null
+    const assignedEntries = task.assignments.filter((a: TaskAssignment) => a.assignedByUser)
+    if (assignedEntries.length === 0) return null
+    return (
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted flex items-center gap-1.5">
+          <UserCheck className="h-3.5 w-3.5" />
+          Assegnato da
+        </label>
+        <div className="space-y-1">
+          {assignedEntries.map((a: TaskAssignment) => (
+            <div key={a.id} className="flex items-center gap-2 text-xs text-muted">
+              <Avatar
+                name={`${a.assignedByUser!.firstName} ${a.assignedByUser!.lastName}`}
+                src={a.assignedByUser!.avatarUrl || undefined}
+                size="xs"
+              />
+              <span>
+                <span className="font-medium text-foreground">{a.assignedByUser!.firstName} {a.assignedByUser!.lastName}</span>
+                {' → '}
+                {a.user.firstName} {a.user.lastName}
+              </span>
+              <span className="text-foreground/50">
+                {new Date(a.assignedAt).toLocaleDateString('it-IT')}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  function renderProjectSection() {
+    if (isCreateMode) {
+      if (projects.length === 0) return null
+      return (
+        <Select
+          label="Progetto"
+          options={projectSelectOptions}
+          value={selectedProjectId}
+          onChange={handleProjectChange}
+        />
+      )
+    }
+    if (task!.project) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-muted">
+          <span>Progetto:</span>
+          <Badge variant="default">{task!.project.name}</Badge>
+        </div>
+      )
+    }
+    if (task!.isPersonal) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-muted">
+          <span>Tipo:</span>
+          <Badge status={priority}>Personale</Badge>
+        </div>
+      )
+    }
+    return null
+  }
+
+  const projectSelectOptions = useMemo(
+    () => [{ value: '', label: 'Personale (nessun progetto)' }, ...projects.map(p => ({ value: p.id, label: p.name }))],
+    [projects]
+  )
+
   const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => setSelectedProjectId(e.target.value)
 
   return (
@@ -337,35 +404,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             placeholder="Seleziona assegnatari..."
           />
 
-          {!isCreateMode && task?.assignments && task.assignments.some((a: TaskAssignment) => a.assignedByUser) && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted flex items-center gap-1.5">
-                <UserCheck className="h-3.5 w-3.5" />
-                Assegnato da
-              </label>
-              <div className="space-y-1">
-                {task.assignments
-                  .filter((a: TaskAssignment) => a.assignedByUser)
-                  .map((a: TaskAssignment) => (
-                    <div key={a.id} className="flex items-center gap-2 text-xs text-muted">
-                      <Avatar
-                        name={`${a.assignedByUser!.firstName} ${a.assignedByUser!.lastName}`}
-                        src={a.assignedByUser!.avatarUrl || undefined}
-                        size="xs"
-                      />
-                      <span>
-                        <span className="font-medium text-foreground">{a.assignedByUser!.firstName} {a.assignedByUser!.lastName}</span>
-                        {' → '}
-                        {a.user.firstName} {a.user.lastName}
-                      </span>
-                      <span className="text-foreground/50">
-                        {new Date(a.assignedAt).toLocaleDateString('it-IT')}
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
+          {renderAssignedBy()}
 
           <Input
             label="Scadenza"
@@ -374,31 +413,7 @@ export function TaskDetailModal({ taskId, highlightCommentId, open, onClose, onU
             onChange={handleDueDateChange}
           />
 
-          {isCreateMode ? (
-            projects.length > 0 && (
-              <Select
-                label="Progetto"
-                options={[{ value: '', label: 'Personale (nessun progetto)' }, ...projects.map(p => ({ value: p.id, label: p.name }))]}
-                value={selectedProjectId}
-                onChange={handleProjectChange}
-              />
-            )
-          ) : (
-            <>
-              {task!.project && (
-                <div className="flex items-center gap-2 text-sm text-muted">
-                  <span>Progetto:</span>
-                  <Badge variant="default">{task!.project.name}</Badge>
-                </div>
-              )}
-              {!task!.project && task!.isPersonal && (
-                <div className="flex items-center gap-2 text-sm text-muted">
-                  <span>Tipo:</span>
-                  <Badge status={priority}>Personale</Badge>
-                </div>
-              )}
-            </>
-          )}
+          {renderProjectSection()}
 
           {!isCreateMode && task && (
             <>
