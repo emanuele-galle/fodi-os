@@ -57,3 +57,19 @@ export const updateTimeEntrySchema = z.object({
   taskId: z.string().uuid('Task ID non valido').optional().nullable(),
   projectId: z.string().uuid('Project ID non valido').optional().nullable(),
 })
+
+export const recurrenceRuleSchema = z.object({
+  frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'CUSTOM']),
+  interval: z.number().int().min(1).max(365).default(1),
+  weekDays: z.array(z.number().int().min(0).max(6)).default([]),
+  monthDay: z.number().int().min(1).max(31).optional().nullable(),
+  startDate: z.string().refine((s) => !isNaN(Date.parse(s)), 'Data non valida'),
+  endDate: z.string().refine((s) => !isNaN(Date.parse(s)), 'Data non valida').optional().nullable(),
+  maxOccurrences: z.number().int().min(1).optional().nullable(),
+  isActive: z.boolean().optional(),
+}).refine(
+  (v) => v.frequency !== 'WEEKLY' || v.weekDays.length > 0,
+  { message: 'Seleziona almeno un giorno della settimana', path: ['weekDays'] }
+)
+
+export type RecurrenceRuleInput = z.infer<typeof recurrenceRuleSchema>

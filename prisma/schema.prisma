@@ -457,6 +457,13 @@ enum Priority {
   URGENT
 }
 
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  CUSTOM
+}
+
 model Milestone {
   id        String    @id @default(uuid())
   projectId String
@@ -517,6 +524,10 @@ model Task {
   dependsOn      TaskDependency[] @relation("DependentTask")
   dependedOnBy   TaskDependency[] @relation("DependencyTask")
   attachments    TaskAttachment[]
+  recurrenceTemplateId  String?
+  recurrenceRule        RecurrenceRule? @relation("TaskRecurrenceRule")
+  recurrenceInstances   Task[]         @relation("RecurrenceInstances")
+  recurrenceTemplate    Task?          @relation("RecurrenceInstances", fields: [recurrenceTemplateId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([assigneeId])
@@ -537,7 +548,32 @@ model Task {
   @@index([updatedAt])
   @@index([status, assigneeId])
   @@index([microsoftTodoId])
+  @@index([recurrenceTemplateId])
   @@map("tasks")
+}
+
+model RecurrenceRule {
+  id              String              @id @default(uuid())
+  taskId          String              @unique
+  frequency       RecurrenceFrequency
+  interval        Int                 @default(1)
+  weekDays        Int[]               @default([])
+  monthDay        Int?
+  startDate       DateTime
+  endDate         DateTime?
+  maxOccurrences  Int?
+  occurrenceCount Int                 @default(0)
+  isActive        Boolean             @default(true)
+  lastGeneratedAt DateTime?
+  nextRunAt       DateTime
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  task            Task                @relation("TaskRecurrenceRule", fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([nextRunAt, isActive])
+  @@index([taskId])
+  @@map("recurrence_rules")
 }
 
 model TaskAssignment {
