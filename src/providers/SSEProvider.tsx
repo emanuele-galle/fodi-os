@@ -32,8 +32,19 @@ export function SSEProvider({ children }: { children: React.ReactNode }) {
     let retryTimer: ReturnType<typeof setTimeout> | null = null
     let consecutiveErrors = 0
 
+    function close() {
+      es?.close()
+      es = null
+      if (retryTimer) {
+        clearTimeout(retryTimer)
+        retryTimer = null
+      }
+      if (mounted) setConnected(false)
+    }
+
     function attempt() {
-      if (!mounted) return
+      if (!mounted || document.hidden) return
+      close()
       es = new EventSource('/api/chat/stream')
 
       es.onopen = () => {
@@ -65,7 +76,7 @@ export function SSEProvider({ children }: { children: React.ReactNode }) {
         // on proxy/network issues (most SSE drops are not auth-related)
         const shouldRefresh = consecutiveErrors % 3 === 1
         const reconnect = () => {
-          if (!mounted) return
+          if (!mounted || document.hidden) return
           retryTimer = setTimeout(() => {
             if (mounted) attempt()
           }, retryDelay)
@@ -80,11 +91,23 @@ export function SSEProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Pause SSE when tab hidden, resume when visible
+    function onVisibilityChange() {
+      if (document.hidden) {
+        close()
+      } else {
+        retryDelay = 1000
+        consecutiveErrors = 0
+        attempt()
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
     attempt()
     return () => {
       mounted = false
-      es?.close()
-      if (retryTimer) clearTimeout(retryTimer)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      close()
     }
   }, [])
 

@@ -39,10 +39,12 @@ export function ActiveTimerBanner() {
     } catch { /* ignore */ }
   }, [])
 
-  // Poll every 30s for active timer changes
+  // Poll every 30s for active timer changes, pause when tab hidden
   useEffect(() => {
     fetchActiveTimer()
-    const interval = setInterval(fetchActiveTimer, 30000)
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchActiveTimer()
+    }, 30000)
     return () => clearInterval(interval)
   }, [fetchActiveTimer])
 
