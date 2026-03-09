@@ -99,6 +99,9 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url)
 
+  // Skip cross-origin requests (Cloudflare Turnstile, analytics, etc.)
+  if (url.origin !== self.location.origin) return
+
   // Stale-while-revalidate for cacheable API endpoints (with TTL)
   if (url.pathname.startsWith('/api/') && CACHEABLE_APIS.some(api => url.pathname.startsWith(api))) {
     event.respondWith(
