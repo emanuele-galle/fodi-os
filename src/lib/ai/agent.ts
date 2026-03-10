@@ -354,10 +354,19 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
   })
 
   // Merge consecutive messages with the same role (API requires strict alternation)
+  // Special handling: consecutive tool_result user messages must be merged into one
   for (const msg of mappedHistory) {
     const last = messages[messages.length - 1]
-    if (last && last.role === msg.role && typeof last.content === 'string' && typeof msg.content === 'string') {
-      last.content = `${last.content}\n\n${msg.content}`
+    if (last && last.role === msg.role) {
+      if (typeof last.content === 'string' && typeof msg.content === 'string') {
+        // Merge consecutive text messages
+        last.content = `${last.content}\n\n${msg.content}`
+      } else if (Array.isArray(last.content) && Array.isArray(msg.content)) {
+        // Merge consecutive array messages (e.g. multiple tool_results into one user message)
+        last.content = [...last.content, ...msg.content]
+      } else {
+        messages.push(msg)
+      }
     } else {
       messages.push(msg)
     }
@@ -531,7 +540,9 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
       ],
     })
 
-    // Execute each tool
+    // Execute each tool and collect results into a single user message
+    const toolResultBlocks: { type: 'tool_result'; tool_use_id: string; content: string }[] = []
+
     for (const toolUse of toolUses) {
       const toolDef = findTool(toolUse.name)
       let result: string
@@ -584,7 +595,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
 
       onEvent?.({ type: 'tool_result', data: { id: toolUse.id, name: toolUse.name, status, result: JSON.parse(result) } })
 
-      // Save tool result message
+      // Save tool result message to DB (separate records for persistence)
       await prisma.aiMessage.create({
         data: {
           conversationId,
@@ -594,12 +605,15 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
         },
       })
 
-      // Add to messages for next round
-      messages.push({
-        role: 'user',
-        content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: result }],
-      })
+      toolResultBlocks.push({ type: 'tool_result', tool_use_id: toolUse.id, content: result })
     }
+
+    // Add ALL tool results as a single user message (API requires all tool_results
+    // for a given assistant tool_use message to be in the immediately next user message)
+    messages.push({
+      role: 'user',
+      content: toolResultBlocks,
+    })
   }
 
   // Generate follow-up suggestions based on tools used
