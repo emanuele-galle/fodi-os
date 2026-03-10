@@ -12,7 +12,7 @@ import type { AiStreamEvent } from './stream'
 import { THINKING_BUDGETS } from './stream'
 import type { AiToolContext } from './tools/types'
 
-const MAX_TOOL_ROUNDS = 10
+const MAX_TOOL_ROUNDS = 15
 
 // Tool names that suggest specific follow-up questions
 const TOOL_FOLLOWUPS: Record<string, string[]> = {
@@ -149,6 +149,8 @@ const TOOL_FOLLOWUPS: Record<string, string[]> = {
   delete_milestone: ['Lista milestone', 'Crea milestone', 'Stato progetto'],
   duplicate_project: ['Vedi dettagli progetto', 'Aggiungi task', 'Modifica membri'],
   search_users: ['Aggiungi a progetto', 'Assegna task', 'Invia messaggio'],
+  batch_add_member_to_projects: ['Lista membri progetto', 'Assegna task', 'Stato progetti'],
+  bulk_update_tasks: ['Lista task aggiornati', 'Stato progetto', 'Verifica spostamento'],
   // Signature
   list_signature_requests: ['Crea richiesta firma', 'Dettagli firma', 'Filtra per stato'],
   create_signature_request: ['Lista firme', 'Stato richiesta', 'Invia sollecito'],
@@ -240,12 +242,12 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
 
   let history
   if (conversation?.summary && msgCount > 30) {
-    // Use summary + last 20 messages
+    // Use summary + last 30 messages for better context retention
     history = await prisma.aiMessage.findMany({
       where: { conversationId },
       orderBy: { createdAt: 'asc' },
-      skip: Math.max(0, msgCount - 20),
-      take: 20,
+      skip: Math.max(0, msgCount - 30),
+      take: 30,
       select: { role: true, content: true, toolCalls: true },
     })
   } else {
@@ -630,17 +632,25 @@ async function summarizeConversation(conversationId: string) {
     select: { summary: true },
   })
 
-  // Only summarize once (or re-summarize if very old)
-  if (conversation?.summary) return
+  const msgCount = await prisma.aiMessage.count({
+    where: { conversationId, role: { in: ['USER', 'ASSISTANT'] } },
+  })
 
+  // Summarize at 30+ messages, re-summarize at every 30 messages after that
+  if (msgCount < 10) return
+  if (conversation?.summary && msgCount < 60) return
+
+  // Load recent user/assistant messages for summarization
   const messages = await prisma.aiMessage.findMany({
     where: { conversationId, role: { in: ['USER', 'ASSISTANT'] } },
-    orderBy: { createdAt: 'asc' },
-    take: 20,
+    orderBy: { createdAt: 'desc' },
+    take: 30,
     select: { role: true, content: true },
   })
 
-  if (messages.length < 10) return
+  messages.reverse()
+
+  const previousSummary = conversation?.summary ? `Riepilogo precedente: ${conversation.summary}\n\n` : ''
 
   const summaryText = messages
     .map(m => `${m.role === 'USER' ? 'Utente' : 'Assistente'}: ${m.content.slice(0, 200)}`)
@@ -649,10 +659,10 @@ async function summarizeConversation(conversationId: string) {
   try {
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 300,
+      max_tokens: 500,
       messages: [{
         role: 'user',
-        content: `Riassumi in 2-3 frasi concise questa conversazione tra utente e assistente AI. Focus sui topic principali e azioni compiute:\n\n${summaryText}`,
+        content: `Riassumi in 3-5 frasi concise questa conversazione tra utente e assistente AI. Focus sui topic principali, azioni compiute e richieste pendenti (non ancora completate). Includi ID di progetti/task/utenti menzionati se rilevanti.\n\n${previousSummary}Messaggi recenti:\n${summaryText}`,
       }],
     })
 

@@ -568,6 +568,69 @@ export const taskTools: AiToolDefinition[] = [
     },
   },
 
+  // --- bulk_update_tasks ---
+  {
+    name: 'bulk_update_tasks',
+    description: 'Aggiorna più task contemporaneamente con le stesse modifiche (stato, priorità, assegnatario, cartella). Molto più efficiente di chiamare update_task ripetutamente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array di ID dei task da aggiornare (obbligatorio)',
+        },
+        status: { type: 'string', description: 'Nuovo stato per tutti: TODO, IN_PROGRESS, IN_REVIEW, DONE, CANCELLED' },
+        priority: { type: 'string', description: 'Nuova priorità per tutti: LOW, MEDIUM, HIGH, URGENT' },
+        assigneeId: { type: 'string', description: 'Nuovo assegnatario per tutti (ID utente)' },
+        folderId: { type: 'string', description: 'Cartella di destinazione per tutti (null per rimuovere)' },
+      },
+      required: ['taskIds'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const taskIds = input.taskIds as string[]
+      if (!taskIds.length) return { success: false, error: 'Nessun task specificato' }
+      if (taskIds.length > 100) return { success: false, error: 'Massimo 100 task per operazione' }
+
+      const data: Record<string, unknown> = {}
+      if (input.status) data.status = input.status
+      if (input.priority) data.priority = input.priority
+      if (input.assigneeId) data.assigneeId = input.assigneeId
+      if (input.folderId !== undefined) data.folderId = input.folderId || null
+      if (input.status === 'DONE') data.completedAt = new Date()
+
+      if (Object.keys(data).length === 0) return { success: false, error: 'Nessuna modifica specificata' }
+
+      const result = await prisma.task.updateMany({
+        where: { id: { in: taskIds } },
+        data,
+      })
+
+      // Verify the update
+      const updated = await prisma.task.findMany({
+        where: { id: { in: taskIds } },
+        select: { id: true, title: true, status: true, priority: true, folderId: true, folder: { select: { name: true } } },
+      })
+
+      return {
+        success: true,
+        data: {
+          updatedCount: result.count,
+          tasks: updated.map((t) => ({
+            id: t.id,
+            title: t.title,
+            status: t.status,
+            priority: t.priority,
+            folderId: t.folderId,
+            folderName: t.folder?.name || null,
+          })),
+        },
+      }
+    },
+  },
+
   // --- log_task_time ---
   {
     name: 'log_task_time',

@@ -386,18 +386,108 @@ export const projectTools: AiToolDefinition[] = [
     module: 'pm',
     requiredPermission: 'write',
     execute: async (input: AiToolInput) => {
+      const userId = input.userId as string
+      const projectId = input.projectId as string
+
+      // Validate user exists
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, firstName: true, lastName: true, isActive: true },
+      })
+      if (!user) return { success: false, error: `Utente con ID "${userId}" non trovato. Usa search_users per trovare l'ID corretto.` }
+      if (!user.isActive) return { success: false, error: `L'utente ${user.firstName} ${user.lastName} non è attivo.` }
+
+      // Validate project exists
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        select: { id: true, name: true },
+      })
+      if (!project) return { success: false, error: `Progetto con ID "${projectId}" non trovato.` }
+
+      // Check if already a member
+      const existing = await prisma.projectMember.findUnique({
+        where: { projectId_userId: { projectId, userId } },
+      })
+      if (existing) return { success: true, data: { id: existing.id, user: `${user.firstName} ${user.lastName}`, role: existing.role, alreadyMember: true } }
+
       const member = await prisma.projectMember.create({
         data: {
-          projectId: input.projectId as string,
-          userId: input.userId as string,
+          projectId,
+          userId,
           role: (input.role as string) || 'MEMBER',
-        },
-        include: {
-          user: { select: { firstName: true, lastName: true } },
         },
       })
 
-      return { success: true, data: { id: member.id, user: `${member.user.firstName} ${member.user.lastName}`, role: member.role } }
+      return { success: true, data: { id: member.id, user: `${user.firstName} ${user.lastName}`, role: member.role } }
+    },
+  },
+
+  // --- batch_add_member_to_projects ---
+  {
+    name: 'batch_add_member_to_projects',
+    description: 'Aggiunge un utente a più progetti in un\'unica operazione. Valida l\'utente prima di procedere e salta i progetti in cui è già membro.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', description: 'ID dell\'utente da aggiungere (obbligatorio)' },
+        projectIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Lista di ID progetti (obbligatorio). Usa list_projects per ottenere gli ID.',
+        },
+        role: { type: 'string', description: 'Ruolo: OWNER, MANAGER, MEMBER, VIEWER (default: MEMBER)' },
+      },
+      required: ['userId', 'projectIds'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput) => {
+      const userId = input.userId as string
+      const projectIds = input.projectIds as string[]
+      const role = (input.role as string) || 'MEMBER'
+
+      // Validate user exists first
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, firstName: true, lastName: true, isActive: true },
+      })
+      if (!user) return { success: false, error: `Utente con ID "${userId}" non trovato. Usa search_users per trovare l'ID corretto.` }
+      if (!user.isActive) return { success: false, error: `L'utente ${user.firstName} ${user.lastName} non è attivo.` }
+
+      // Check existing memberships
+      const existingMemberships = await prisma.projectMember.findMany({
+        where: { userId, projectId: { in: projectIds } },
+        select: { projectId: true },
+      })
+      const alreadyMemberOf = new Set(existingMemberships.map((m) => m.projectId))
+
+      // Add to projects where not already a member
+      const toAdd = projectIds.filter((id) => !alreadyMemberOf.has(id))
+      if (toAdd.length > 0) {
+        await prisma.projectMember.createMany({
+          data: toAdd.map((projectId) => ({ projectId, userId, role })),
+          skipDuplicates: true,
+        })
+      }
+
+      // Load project names for confirmation
+      const projects = await prisma.project.findMany({
+        where: { id: { in: projectIds } },
+        select: { id: true, name: true },
+      })
+      const projectMap = new Map(projects.map((p) => [p.id, p.name]))
+
+      return {
+        success: true,
+        data: {
+          user: `${user.firstName} ${user.lastName}`,
+          role,
+          added: toAdd.map((id) => ({ projectId: id, projectName: projectMap.get(id) || id })),
+          alreadyMember: [...alreadyMemberOf].map((id) => ({ projectId: id, projectName: projectMap.get(id) || id })),
+          totalAdded: toAdd.length,
+          totalSkipped: alreadyMemberOf.size,
+        },
+      }
     },
   },
 

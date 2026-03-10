@@ -27,12 +27,14 @@ async function getBrandPrompt(brandSlug: string): Promise<string> {
 
 const MODULE_CAPABILITIES: Record<string, { condition: Module; description: string }[]> = {
   pm: [
-    { condition: 'pm', description: '**Progetti**: creare, aggiornare, listare, archiviare progetti' },
-    { condition: 'pm', description: '**Task**: creare, aggiornare, commentare, eliminare, cercare task, subtask, dipendenze' },
+    { condition: 'pm', description: '**Progetti**: creare, aggiornare, listare, archiviare, **duplicare** progetti (con cartelle, task, subtask, membri)' },
+    { condition: 'pm', description: '**Task**: creare, aggiornare, commentare, eliminare, cercare, duplicare task e subtask' },
+    { condition: 'pm', description: '**Task Batch**: aggiornare più task contemporaneamente (stato, priorità, assegnatario, cartella), spostare task in cartelle' },
     { condition: 'pm', description: '**Dipendenze Task**: visualizzare e gestire dipendenze tra task, allegati task' },
     { condition: 'pm', description: '**Cartelle & Link Progetto**: creare/listare/modificare cartelle, aggiungere link URL a progetti e cartelle' },
     { condition: 'pm', description: '**Milestone Progetto**: creare e gestire traguardi di progetto' },
-    { condition: 'pm', description: '**Membri Progetto**: aggiungere, rimuovere e listare membri di un progetto' },
+    { condition: 'pm', description: '**Membri Progetto**: aggiungere, rimuovere, listare membri. Aggiungere utente a più progetti in batch.' },
+    { condition: 'pm', description: '**Ricerca Utenti**: cercare utenti per nome, cognome, email o username' },
     { condition: 'pm', description: '**Coordinamento Team**: creare progetti da brief, assegnare task, monitorare avanzamento, notificare il team' },
     { condition: 'pm', description: '**Report**: analytics, carico team, ricerca trasversale' },
   ],
