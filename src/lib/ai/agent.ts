@@ -259,6 +259,55 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
     })
   }
 
+  // Sanitize history: ensure tool_result messages have matching tool_use in previous assistant message
+  // Drop orphaned TOOL_RESULT at the start (when truncation cuts between tool_use and tool_result)
+  while (history.length > 0 && history[0].role === 'TOOL_RESULT') {
+    history.shift()
+  }
+
+  // Collect valid tool_use IDs from ASSISTANT messages, then filter out orphaned TOOL_RESULTs
+  const validToolUseIds = new Set<string>()
+  const sanitizedHistory = history.filter((m) => {
+    if (m.role === 'ASSISTANT' && m.toolCalls) {
+      const tc = m.toolCalls as { id: string; name: string; input: unknown }[]
+      for (const t of tc) validToolUseIds.add(t.id)
+    }
+    if (m.role === 'TOOL_RESULT') {
+      const toolUseId = (m.toolCalls as { toolUseId: string })?.toolUseId
+      if (!toolUseId || !validToolUseIds.has(toolUseId)) return false
+    }
+    return true
+  })
+
+  // Drop leading ASSISTANT messages (API requires first message to be 'user')
+  while (sanitizedHistory.length > 0 && sanitizedHistory[0].role === 'ASSISTANT') {
+    sanitizedHistory.shift()
+  }
+
+  // Also remove trailing ASSISTANT tool_use messages whose TOOL_RESULTs were truncated
+  // (this happens when history ends with ASSISTANT+tool_use but TOOL_RESULT was beyond the limit)
+  const toolUseIdsWithResults = new Set<string>()
+  for (const m of sanitizedHistory) {
+    if (m.role === 'TOOL_RESULT') {
+      const toolUseId = (m.toolCalls as { toolUseId: string })?.toolUseId
+      if (toolUseId) toolUseIdsWithResults.add(toolUseId)
+    }
+  }
+
+  // For the last ASSISTANT message with tool_uses, check all tool_results exist
+  const lastAssistantIdx = sanitizedHistory.findLastIndex(
+    (m) => m.role === 'ASSISTANT' && m.toolCalls
+  )
+  if (lastAssistantIdx >= 0) {
+    const lastAssistant = sanitizedHistory[lastAssistantIdx]
+    const tc = lastAssistant.toolCalls as { id: string }[]
+    const allResolved = tc.every((t) => toolUseIdsWithResults.has(t.id))
+    if (!allResolved) {
+      // Remove this incomplete tool exchange (assistant + any partial results)
+      sanitizedHistory.splice(lastAssistantIdx)
+    }
+  }
+
   // Build messages array
   type MessageParam = { role: 'user' | 'assistant'; content: string | ContentBlock[] }
   type ContentBlock =
@@ -281,7 +330,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
     })
   }
 
-  messages.push(...history.map((m) => {
+  const mappedHistory = sanitizedHistory.map((m) => {
     if (m.role === 'TOOL_RESULT') {
       return {
         role: 'user' as const,
@@ -302,7 +351,17 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
       role: m.role === 'USER' ? 'user' as const : 'assistant' as const,
       content: m.content,
     }
-  }))
+  })
+
+  // Merge consecutive messages with the same role (API requires strict alternation)
+  for (const msg of mappedHistory) {
+    const last = messages[messages.length - 1]
+    if (last && last.role === msg.role && typeof last.content === 'string' && typeof msg.content === 'string') {
+      last.content = `${last.content}\n\n${msg.content}`
+    } else {
+      messages.push(msg)
+    }
+  }
 
   // Add current user message (with multimodal content if attachments)
   if (attachments && attachments.length > 0) {
