@@ -147,6 +147,8 @@ const TOOL_FOLLOWUPS: Record<string, string[]> = {
   // Project extras
   list_project_attachments: ['Dettagli progetto', 'Aggiungi link', 'Lista cartelle'],
   delete_milestone: ['Lista milestone', 'Crea milestone', 'Stato progetto'],
+  duplicate_project: ['Vedi dettagli progetto', 'Aggiungi task', 'Modifica membri'],
+  search_users: ['Aggiungi a progetto', 'Assegna task', 'Invia messaggio'],
   // Signature
   list_signature_requests: ['Crea richiesta firma', 'Dettagli firma', 'Filtra per stato'],
   create_signature_request: ['Lista firme', 'Stato richiesta', 'Invia sollecito'],
@@ -480,7 +482,7 @@ export async function runAgent(params: AgentParams): Promise<AgentResult> {
       } else if (!hasPermission(role, toolDef.module, toolDef.requiredPermission, customModulePermissions)) {
         result = JSON.stringify({ success: false, error: `Permesso negato per ${toolUse.name}` })
         status = 'DENIED'
-      } else if (!rateLimit(`ai:tool:${userId}`, 50, 60000).allowed) {
+      } else if (!rateLimit(`ai:tool:${userId}`, 150, 60000).allowed) {
         result = JSON.stringify({ success: false, error: 'Rate limit tool raggiunto' })
         status = 'ERROR'
       } else {

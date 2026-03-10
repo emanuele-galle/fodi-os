@@ -73,13 +73,13 @@ export const taskTools: AiToolDefinition[] = [
         projectId: { type: 'string', description: 'Filtra per ID progetto' },
         folderId: { type: 'string', description: 'Filtra per ID cartella' },
         mine: { type: 'boolean', description: 'Se true, mostra solo i task dell\'utente corrente' },
-        limit: { type: 'number', description: 'Numero massimo di risultati (default: 20, max: 50)' },
+        limit: { type: 'number', description: 'Numero massimo di risultati (default: 50, max: 100)' },
       },
     },
     module: 'pm',
     requiredPermission: 'read',
     execute: async (input: AiToolInput, context: AiToolContext) => {
-      const limit = Math.min(Number(input.limit) || 20, 50)
+      const limit = Math.min(Number(input.limit) || 50, 100)
       const where: Record<string, unknown> = { parentId: null }
 
       if (input.status) where.status = input.status
@@ -215,12 +215,12 @@ export const taskTools: AiToolDefinition[] = [
       const task = await prisma.task.update({
         where: { id: taskId },
         data,
-        select: { id: true, title: true, status: true, priority: true, projectId: true },
+        select: { id: true, title: true, status: true, priority: true, projectId: true, folderId: true, folder: { select: { name: true } } },
       })
 
       await notifyTaskUpdate(taskId, input, task, context)
 
-      return { success: true, data: { id: task.id, title: task.title, status: task.status, priority: task.priority } }
+      return { success: true, data: { id: task.id, title: task.title, status: task.status, priority: task.priority, folderId: task.folderId, folderName: task.folder?.name || null } }
     },
   },
 

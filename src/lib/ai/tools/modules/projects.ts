@@ -477,4 +477,216 @@ export const projectTools: AiToolDefinition[] = [
       return { success: true, data: { deleted: true } }
     },
   },
+
+  // --- duplicate_project ---
+  {
+    name: 'duplicate_project',
+    description: 'Duplica un progetto esistente con TUTTE le sue cartelle, task, subtask e membri. Supporta sostituzione nomi (es. da "Bodini" a "Zucco" in tutti i titoli). Ideale per creare progetti simili per clienti diversi.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'ID del progetto sorgente da duplicare (obbligatorio)' },
+        name: { type: 'string', description: 'Nome del nuovo progetto (obbligatorio)' },
+        clientId: { type: 'string', description: 'ID del cliente da associare al nuovo progetto' },
+        replaceText: { type: 'string', description: 'Testo da cercare nei titoli dei task (es. "Bodini")' },
+        replaceWith: { type: 'string', description: 'Testo sostitutivo (es. "Zucco"). Richiede replaceText.' },
+      },
+      required: ['projectId', 'name'],
+    },
+    module: 'pm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput, context: AiToolContext) => {
+      const sourceProjectId = input.projectId as string
+      const newName = input.name as string
+      const replaceText = input.replaceText as string | undefined
+      const replaceWith = input.replaceWith as string | undefined
+
+      // Load source project with all related data
+      const source = await prisma.project.findUnique({
+        where: { id: sourceProjectId },
+        include: {
+          members: { select: { userId: true, role: true } },
+        },
+      })
+      if (!source) return { success: false, error: 'Progetto sorgente non trovato' }
+
+      // Load folders, tasks, subtasks separately for better control
+      const sourceFolders = await prisma.folder.findMany({
+        where: { projectId: sourceProjectId },
+        orderBy: { sortOrder: 'asc' },
+      })
+      const sourceTasks = await prisma.task.findMany({
+        where: { projectId: sourceProjectId, parentId: null },
+        include: {
+          subtasks: { select: { title: true, description: true, priority: true, assigneeId: true, dueDate: true, folderId: true } },
+        },
+      })
+
+      const newSlug = slugify(newName) + '-' + Date.now().toString(36)
+
+      const applyReplace = (text: string): string => {
+        if (!replaceText || !replaceWith) return text
+        return text.replace(new RegExp(replaceText, 'gi'), replaceWith)
+      }
+
+      const result = await prisma.$transaction(async (tx) => {
+        // 1. Create project
+        const newProject = await tx.project.create({
+          data: {
+            name: newName,
+            slug: newSlug,
+            workspaceId: source.workspaceId,
+            description: source.description ? applyReplace(source.description) : null,
+            priority: source.priority,
+            status: 'PLANNING',
+            color: source.color,
+            isInternal: source.isInternal,
+            clientId: (input.clientId as string) || source.clientId,
+            budgetAmount: source.budgetAmount,
+            budgetHours: source.budgetHours,
+          },
+          select: { id: true, name: true, slug: true },
+        })
+
+        // 2. Add members
+        if (source.members.length > 0) {
+          await tx.projectMember.createMany({
+            data: source.members.map((m) => ({
+              projectId: newProject.id,
+              userId: m.userId,
+              role: m.role,
+            })),
+          })
+        }
+
+        // 3. Duplicate folders (preserving hierarchy)
+        const folderIdMap = new Map<string, string>() // old ID → new ID
+        // First pass: root folders
+        for (const folder of sourceFolders.filter((f) => !f.parentId)) {
+          const newFolder = await tx.folder.create({
+            data: {
+              projectId: newProject.id,
+              name: applyReplace(folder.name),
+              description: folder.description ? applyReplace(folder.description) : null,
+              color: folder.color,
+              sortOrder: folder.sortOrder,
+              parentId: null,
+            },
+          })
+          folderIdMap.set(folder.id, newFolder.id)
+        }
+        // Second pass: child folders (supports 1 level of nesting for common case)
+        for (const folder of sourceFolders.filter((f) => f.parentId)) {
+          const newParentId = folderIdMap.get(folder.parentId!)
+          const newFolder = await tx.folder.create({
+            data: {
+              projectId: newProject.id,
+              name: applyReplace(folder.name),
+              description: folder.description ? applyReplace(folder.description) : null,
+              color: folder.color,
+              sortOrder: folder.sortOrder,
+              parentId: newParentId || null,
+            },
+          })
+          folderIdMap.set(folder.id, newFolder.id)
+        }
+
+        // 4. Duplicate tasks + subtasks
+        let taskCount = 0
+        let subtaskCount = 0
+        for (const task of sourceTasks) {
+          const newFolderId = task.folderId ? (folderIdMap.get(task.folderId) || null) : null
+          const newTask = await tx.task.create({
+            data: {
+              title: applyReplace(task.title),
+              description: task.description ? applyReplace(task.description) : null,
+              priority: task.priority,
+              status: 'TODO',
+              projectId: newProject.id,
+              folderId: newFolderId,
+              creatorId: context.userId,
+              assigneeId: task.assigneeId,
+              dueDate: task.dueDate,
+              estimatedHours: task.estimatedHours,
+              sortOrder: task.sortOrder,
+            },
+          })
+          taskCount++
+
+          // Duplicate subtasks
+          for (const sub of task.subtasks) {
+            const subFolderId = sub.folderId ? (folderIdMap.get(sub.folderId) || null) : null
+            await tx.task.create({
+              data: {
+                title: applyReplace(sub.title),
+                description: sub.description ? applyReplace(sub.description) : null,
+                priority: sub.priority,
+                status: 'TODO',
+                projectId: newProject.id,
+                parentId: newTask.id,
+                folderId: subFolderId,
+                creatorId: context.userId,
+                assigneeId: sub.assigneeId,
+                dueDate: sub.dueDate,
+              },
+            })
+            subtaskCount++
+          }
+        }
+
+        return {
+          project: newProject,
+          membersAdded: source.members.length,
+          foldersCreated: folderIdMap.size,
+          tasksCreated: taskCount,
+          subtasksCreated: subtaskCount,
+        }
+      })
+
+      return { success: true, data: result }
+    },
+  },
+
+  // --- search_users ---
+  {
+    name: 'search_users',
+    description: 'Cerca utenti nel sistema per nome, cognome, email o username. Utile per trovare l\'ID utente prima di operazioni come add_project_member.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Termine di ricerca (nome, cognome, email o username)' },
+      },
+      required: ['query'],
+    },
+    module: 'pm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const query = (input.query as string).trim()
+      if (query.length < 2) return { success: false, error: 'Query troppo corta (min 2 caratteri)' }
+
+      const users = await prisma.user.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { firstName: { contains: query, mode: 'insensitive' } },
+            { lastName: { contains: query, mode: 'insensitive' } },
+            { email: { contains: query, mode: 'insensitive' } },
+            { username: { contains: query, mode: 'insensitive' } },
+          ],
+        },
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
+          jobTitle: true,
+        },
+        take: 10,
+      })
+
+      return { success: true, data: { users, total: users.length } }
+    },
+  },
 ]

@@ -74,8 +74,22 @@ export async function POST(request: NextRequest) {
       onEvent: enqueue,
     })
       .then(() => close())
-      .catch((err) => {
-        enqueue({ type: 'error', data: { message: (err as Error).message } })
+      .catch(async (err) => {
+        const errorMsg = (err as Error).message || 'Errore interno'
+        // Save error as ASSISTANT message so the conversation doesn't appear unanswered
+        try {
+          await prisma.aiMessage.create({
+            data: {
+              conversationId: convId,
+              role: 'ASSISTANT',
+              content: `⚠️ Si è verificato un errore: ${errorMsg}. Riprova tra qualche istante.`,
+              model: 'error',
+            },
+          })
+        } catch {
+          // Best-effort: don't let DB error prevent stream close
+        }
+        enqueue({ type: 'error', data: { message: errorMsg } })
         close()
       })
 
