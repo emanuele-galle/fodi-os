@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       try {
         const brandLogoPath = brand.logo.dark
         const pngFallback = brandLogoPath.endsWith('.svg')
-          ? join(process.cwd(), 'public', 'logo-dark.png')  // SVG not supported by pdf-lib
+          ? join(process.cwd(), 'public', 'brands', brand.slug, 'logo-dark.png')
           : join(process.cwd(), 'public', brandLogoPath)
         const buf = await readFile(pngFallback)
         logoBytes = new Uint8Array(buf)

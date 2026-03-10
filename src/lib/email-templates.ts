@@ -1,7 +1,7 @@
 import { brand } from '@/lib/branding'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || brand.siteUrl
-const LOGO_URL = `${SITE_URL}/logo-light.png`
+const LOGO_URL = `${SITE_URL}${brand.logo.light}`
 
 // ─── Escape HTML ────────────────────────────────────────────
 
