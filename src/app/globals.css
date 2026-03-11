@@ -509,7 +509,7 @@ html {
 }
 
 .ai-fab-glow {
-  position: relative;
+  /* position: fixed is set by Tailwind — do NOT override here */
 }
 
 .ai-fab-glow::before {
