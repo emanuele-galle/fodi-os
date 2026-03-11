@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/Textarea'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useConfirm } from '@/hooks/useConfirm'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
-import { AlertCircle, Trash2 } from 'lucide-react'
+import { AlertCircle, Trash2, FileText, Loader2 } from 'lucide-react'
+import { DealAiSummary } from '@/components/crm/DealAiSummary'
 
 interface Deal {
   id: string
@@ -57,6 +58,8 @@ const DEAL_STAGES = [
 export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealModalProps) {
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [generatingQuote, setGeneratingQuote] = useState(false)
+  const [quoteResult, setQuoteResult] = useState<{ number: string; id: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { confirm, confirmProps } = useConfirm()
   const [clients, setClients] = useState<Client[]>([])
@@ -175,6 +178,25 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
     }
   }
 
+  async function handleGenerateQuote() {
+    setGeneratingQuote(true)
+    setError(null)
+    setQuoteResult(null)
+    try {
+      const res = await fetch(`/api/deals/${deal.id}/generate-quote`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setQuoteResult({ number: data.data.number, id: data.data.id })
+      } else {
+        setError(data.error || 'Errore nella generazione del preventivo')
+      }
+    } catch {
+      setError('Errore di rete')
+    } finally {
+      setGeneratingQuote(false)
+    }
+  }
+
   async function handleDelete() {
     const ok = await confirm({ message: 'Sei sicuro di voler eliminare questa opportunità?', variant: 'danger' })
     if (!ok) return
@@ -209,6 +231,32 @@ export function EditDealModal({ deal, open, onOpenChange, onSuccess }: EditDealM
           <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">
             <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
             <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <DealAiSummary dealId={deal.id} />
+          {deal.clientId && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleGenerateQuote}
+              disabled={generatingQuote}
+              className="gap-1.5 text-xs"
+            >
+              {generatingQuote ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+              {generatingQuote ? 'Generazione...' : 'Genera Preventivo AI'}
+            </Button>
+          )}
+        </div>
+
+        {quoteResult && (
+          <div className="rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2 text-sm">
+            Preventivo <strong>{quoteResult.number}</strong> creato come bozza.{' '}
+            <a href={`/erp/quotes?quoteId=${quoteResult.id}`} className="text-primary underline">
+              Visualizza
+            </a>
           </div>
         )}
 

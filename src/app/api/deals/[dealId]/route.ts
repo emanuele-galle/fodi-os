@@ -4,6 +4,7 @@ import { requirePermission } from '@/lib/permissions'
 import { logActivity } from '@/lib/activity-log'
 import { updateDealSchema } from '@/lib/validation/deals'
 import { broadcastDataChanged } from '@/lib/sse'
+import { createStageTransitionTasks } from '@/lib/crm/deal-stage-tasks'
 import type { Role } from '@/generated/prisma/client'
 
 type Params = { params: Promise<{ dealId: string }> }
@@ -53,7 +54,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       )
     }
 
-    const existing = await prisma.deal.findUnique({ where: { id: dealId }, select: { id: true } })
+    const existing = await prisma.deal.findUnique({
+      where: { id: dealId },
+      select: { id: true, stage: true, title: true, ownerId: true, clientId: true },
+    })
     if (!existing) {
       return NextResponse.json({ success: false, error: 'Opportunità non trovata' }, { status: 404 })
     }
@@ -81,6 +85,18 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     const userId = request.headers.get('x-user-id')!
     logActivity({ userId, action: 'UPDATE', entityType: 'DEAL', entityId: dealId, metadata: { title: deal.title } })
+
+    // Auto-create tasks on stage transition (fire-and-forget)
+    if (stage && stage !== existing.stage) {
+      createStageTransitionTasks({
+        dealId,
+        dealTitle: deal.title,
+        oldStage: existing.stage,
+        newStage: stage,
+        ownerId: existing.ownerId,
+        clientId: existing.clientId,
+      }).catch((err) => console.error('[deals/PATCH] auto-task error:', err))
+    }
 
     broadcastDataChanged('deal', dealId)
     return NextResponse.json({ success: true, data: deal })
