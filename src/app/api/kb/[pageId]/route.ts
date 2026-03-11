@@ -19,8 +19,9 @@ export async function GET(
       where: { id: pageId },
       include: {
         author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        parent: { select: { id: true, title: true } },
         children: {
-          select: { id: true, title: true, slug: true },
+          select: { id: true, title: true, slug: true, excerpt: true, category: true },
           orderBy: { sortOrder: 'asc' },
         },
       },

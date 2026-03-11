@@ -1130,3 +1130,58 @@ body,
 [data-theme="dark"] .hljs-selector-id { color: #7dcfff; }
 [data-theme="dark"] .hljs-meta { color: #565f89; }
 [data-theme="dark"] .hljs-regexp { color: #b4f9f8; }
+
+/* === KB Markdown Prose === */
+.kb-prose { font-size: 0.9375rem; line-height: 1.75; color: var(--color-foreground); }
+.kb-prose h1 { font-size: 1.5rem; font-weight: 800; margin: 2rem 0 1rem; letter-spacing: -0.025em; }
+.kb-prose h2 { font-size: 1.25rem; font-weight: 700; margin: 1.75rem 0 0.75rem; letter-spacing: -0.02em; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; }
+.kb-prose h3 { font-size: 1.0625rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+.kb-prose p { margin: 0.75rem 0; }
+.kb-prose ul, .kb-prose ol { margin: 0.75rem 0; padding-left: 1.5rem; }
+.kb-prose ul { list-style-type: disc; }
+.kb-prose ol { list-style-type: decimal; }
+.kb-prose li { margin: 0.25rem 0; }
+.kb-prose li > ul, .kb-prose li > ol { margin: 0.25rem 0; }
+.kb-prose strong { font-weight: 600; }
+.kb-prose a { color: var(--color-primary); text-decoration: underline; text-underline-offset: 2px; }
+.kb-prose hr { border: none; border-top: 1px solid var(--color-border); margin: 1.5rem 0; }
+.kb-prose blockquote { border-left: 3px solid var(--color-primary); padding-left: 1rem; margin: 1rem 0; color: var(--color-muted); font-style: italic; }
+.kb-prose code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8125rem; background: var(--color-secondary); padding: 0.15rem 0.4rem; border-radius: 0.375rem; }
+.kb-prose pre { margin: 1rem 0; border-radius: 0.75rem; overflow-x: auto; }
+.kb-prose pre code { background: none; padding: 0; font-size: 0.8125rem; }
+.kb-prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.8125rem; }
+.kb-prose thead th { text-align: left; font-weight: 600; padding: 0.625rem 0.75rem; border-bottom: 2px solid var(--color-border); }
+.kb-prose tbody td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-border); }
+.kb-prose tbody tr:last-child td { border-bottom: none; }
+.kb-prose > *:first-child { margin-top: 0; }
+
+/* === Print styles for KB PDF download === */
+@media print {
+  /* Hide sidebars, navs, floating elements */
+  .print\:hidden,
+  nav, aside, header, footer { display: none !important; }
+
+  /* Layout: remove sidebar flex, show only main content full-width */
+  .h-screen { height: auto !important; overflow: visible !important; }
+  .overflow-hidden, .overflow-auto { overflow: visible !important; }
+  .flex-shrink-0 { display: none !important; }
+  main { padding: 0 !important; }
+  main > * { max-width: 100% !important; }
+
+  /* Body */
+  body { background: white !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* KB article formatting */
+  .kb-prose { font-size: 11pt; line-height: 1.6; color: #111; }
+  .kb-prose h1 { font-size: 22pt; margin-top: 0; }
+  .kb-prose h2 { font-size: 16pt; page-break-after: avoid; }
+  .kb-prose h3 { font-size: 13pt; page-break-after: avoid; }
+  .kb-prose table { font-size: 9pt; }
+  .kb-prose pre { white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ddd; padding: 0.5rem; }
+  .kb-prose code { background: #f5f5f5 !important; }
+  .kb-prose a { color: #007AFF; text-decoration: none; }
+  .kb-prose blockquote { border-left-color: #333; }
+
+  /* Avoid page breaks inside these */
+  .kb-prose table, .kb-prose pre, .kb-prose blockquote { page-break-inside: avoid; }
+}

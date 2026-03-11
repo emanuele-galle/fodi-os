@@ -1,19 +1,13 @@
 'use client'
-/* eslint-disable react-perf/jsx-no-new-function-as-prop -- event handlers */
+/* eslint-disable react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop -- event handlers and dynamic styles */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Library, Plus, Search, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
-import { Skeleton } from '@/components/ui/Skeleton'
-import { EmptyState } from '@/components/ui/EmptyState'
-import { Avatar } from '@/components/ui/Avatar'
+import { motion } from 'motion/react'
+import { Library, Plus, Search, FileText } from 'lucide-react'
+import { KB_CATEGORIES, getCategoryMeta } from '@/lib/kb-config'
 
-interface WikiPage {
+interface KbArticle {
   id: string
   title: string
   slug: string
@@ -21,29 +15,21 @@ interface WikiPage {
   category: string
   tags: string[]
   isPublished: boolean
+  sortOrder: number
+  parentId: string | null
   updatedAt: string
   author: { id: string; firstName: string; lastName: string; avatarUrl: string | null }
+  _count?: { children: number }
+  children?: { id: string; title: string; slug: string }[]
 }
-
-const CATEGORY_OPTIONS = [
-  { value: '', label: 'Tutte le categorie' },
-  { value: 'general', label: 'Generale' },
-  { value: 'procedure', label: 'Procedure' },
-  { value: 'technical', label: 'Tecnico' },
-  { value: 'onboarding', label: 'Onboarding' },
-  { value: 'faq', label: 'FAQ' },
-]
 
 export default function KbPage() {
   const router = useRouter()
-  const [pages, setPages] = useState<WikiPage[]>([])
+  const [articles, setArticles] = useState<KbArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
-  const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
   const [userRole, setUserRole] = useState('')
-  const limit = 20
 
   useEffect(() => {
     fetch('/api/auth/session')
@@ -52,160 +38,188 @@ export default function KbPage() {
       .catch(() => {})
   }, [])
 
-  const fetchPages = useCallback(async () => {
+  const fetchArticles = useCallback(async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+      const params = new URLSearchParams({ page: '1', limit: '100' })
       if (search) params.set('search', search)
       if (category) params.set('category', category)
       const res = await fetch(`/api/kb?${params}`)
       if (res.ok) {
         const data = await res.json()
-        setPages(data.items || [])
-        setTotal(data.total || 0)
+        setArticles(data.items || [])
       }
     } catch {
       // ignore
     } finally {
       setLoading(false)
     }
-  }, [page, search, category])
+  }, [search, category])
 
-  useEffect(() => { fetchPages() }, [fetchPages])
-  useEffect(() => { setPage(1) }, [search, category])
+  useEffect(() => { fetchArticles() }, [fetchArticles])
 
-  const totalPages = Math.ceil(total / limit)
   const canWrite = ['ADMIN', 'DIR_COMMERCIALE', 'DIR_TECNICO', 'DIR_SUPPORT'].includes(userRole)
 
+  // Show only parent articles (no parentId) on the main page
+  const parentArticles = articles.filter(a => !a.parentId)
+  // Group children by parentId
+  const childrenMap = new Map<string, KbArticle[]>()
+  for (const a of articles) {
+    if (a.parentId) {
+      const arr = childrenMap.get(a.parentId) ?? []
+      arr.push(a)
+      childrenMap.set(a.parentId, arr)
+    }
+  }
+
   return (
-    <div className="animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Library className="h-6 w-6 text-primary" />
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Library className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">Knowledge Base</h1>
-            <p className="text-xs md:text-sm text-muted">Documentazione interna e guide operative</p>
+            <h1 className="text-xl font-bold">Knowledge Base</h1>
+            <p className="text-sm text-muted">Documentazione interna e know-how aziendale</p>
           </div>
         </div>
         {canWrite && (
-          <Button size="sm" onClick={() => router.push('/kb/new')}>
-            <Plus className="h-4 w-4" />
+          <button
+            onClick={() => router.push('/kb/new')}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
             Nuovo Articolo
-          </Button>
+          </button>
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-          <Input
-            placeholder="Cerca articoli, tag..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select
-          options={CATEGORY_OPTIONS}
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full sm:w-48"
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Cerca nella Knowledge Base..."
+          className="w-full h-10 pl-9 pr-4 text-sm rounded-xl border border-border/40 bg-card placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
         />
       </div>
 
+      {/* Category pills */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setCategory('')}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            !category ? 'bg-primary text-white' : 'bg-secondary/50 text-muted hover:text-foreground'
+          }`}
+        >
+          Tutti
+        </button>
+        {KB_CATEGORIES.map(cat => (
+          <button
+            key={cat.value}
+            onClick={() => setCategory(category === cat.value ? '' : cat.value)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+              category === cat.value
+                ? 'text-white'
+                : 'bg-secondary/50 text-muted hover:text-foreground'
+            }`}
+            style={category === cat.value ? { backgroundColor: cat.color } : undefined}
+          >
+            <cat.icon className="h-3 w-3" />
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Loading */}
       {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-44 rounded-xl border border-border/40 bg-card animate-pulse" />
           ))}
         </div>
-      ) : pages.length === 0 ? (
-        <EmptyState
-          icon={Library}
-          title="Nessun articolo trovato"
-          description={search || category ? 'Prova a modificare i filtri di ricerca.' : 'Crea il primo articolo della Knowledge Base.'}
-          action={
-            canWrite && !search && !category ? (
-              <Button onClick={() => router.push('/kb/new')}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nuovo Articolo
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : (
-        <>
-          <div className="space-y-3">
-            {pages.map((item) => (
-              <Card
-                key={item.id}
-                className="!p-4 cursor-pointer hover:shadow-[var(--shadow-md)] transition-all duration-200 touch-manipulation active:scale-[0.98]"
-                onClick={() => router.push(`/kb/${item.id}`)}
-              >
-                <div className="flex items-start gap-3">
-                  <Avatar
-                    name={`${item.author.firstName} ${item.author.lastName}`}
-                    src={item.author.avatarUrl || undefined}
-                    size="sm"
-                    className="hidden sm:flex"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start sm:items-center gap-2 mb-1">
-                      <h3 className="font-medium text-sm line-clamp-2 sm:truncate">{item.title}</h3>
-                      {item.isPublished ? (
-                        <span className="flex items-center gap-1 text-[10px] text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">
-                          <Eye className="h-3 w-3" /> Pubblicato
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-xs text-muted bg-secondary/60 px-1.5 py-0.5 rounded-full">
-                          <EyeOff className="h-3 w-3" /> Bozza
-                        </span>
-                      )}
-                    </div>
-                    {item.excerpt && (
-                      <p className="text-xs text-muted line-clamp-2 mb-2">{item.excerpt}</p>
-                    )}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className="text-[10px]">
-                        {CATEGORY_OPTIONS.find(c => c.value === item.category)?.label || item.category}
-                      </Badge>
-                      {item.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                          {tag}
-                        </span>
-                      ))}
-                      {item.tags.length > 3 && (
-                        <span className="text-xs text-muted">+{item.tags.length - 3}</span>
-                      )}
-                      <span className="text-xs text-muted ml-auto">
-                        {new Date(item.updatedAt).toLocaleDateString('it-IT')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 gap-2">
-              <p className="text-sm text-muted">
-                {total} articol{total !== 1 ? 'i' : 'o'} totali
-              </p>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm text-muted">{page} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0">
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+      ) : parentArticles.length === 0 ? (
+        <div className="text-center py-16">
+          <Library className="h-12 w-12 text-muted/30 mx-auto mb-4" />
+          <p className="text-sm text-muted">
+            {search || category ? 'Nessun articolo trovato con questi filtri.' : 'La Knowledge Base e vuota.'}
+          </p>
+          {canWrite && !search && !category && (
+            <button
+              onClick={() => router.push('/kb/new')}
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-hover transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Crea il primo articolo
+            </button>
           )}
-        </>
+        </div>
+      ) : (
+        /* Article cards grid */
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {parentArticles.map((article, i) => {
+            const meta = getCategoryMeta(article.category)
+            const Icon = meta.icon
+            const children = childrenMap.get(article.id) ?? []
+
+            return (
+              <motion.div
+                key={article.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06, duration: 0.4 }}
+              >
+                <button
+                  onClick={() => router.push(`/kb/${article.id}`)}
+                  className="group block w-full text-left h-full rounded-xl border border-border/40 bg-card p-5 hover:border-border/60 hover:shadow-lg hover:shadow-black/5 transition-all"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div
+                      className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
+                      style={{ backgroundColor: `${meta.color}15` }}
+                    >
+                      <Icon className="h-5 w-5" style={{ color: meta.color }} />
+                    </div>
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white flex-shrink-0"
+                      style={{ backgroundColor: meta.color }}
+                    >
+                      {meta.label}
+                    </span>
+                  </div>
+
+                  <h3 className="text-sm font-semibold mb-1.5 line-clamp-2">{article.title}</h3>
+                  {article.excerpt && (
+                    <p className="text-xs text-muted mb-3 line-clamp-2 leading-relaxed">{article.excerpt}</p>
+                  )}
+
+                  <div className="flex items-center gap-3 text-[10px] text-muted mt-auto">
+                    {children.length > 0 && (
+                      <>
+                        <span className="flex items-center gap-1">
+                          <FileText className="h-3 w-3" />
+                          {children.length} sotto-pagine
+                        </span>
+                        <span className="h-1 w-1 rounded-full bg-muted/40" />
+                      </>
+                    )}
+                    {article.tags.length > 0 && (
+                      <>
+                        <span>{article.tags.length} tag</span>
+                        <span className="h-1 w-1 rounded-full bg-muted/40" />
+                      </>
+                    )}
+                    <span>{new Date(article.updatedAt).toLocaleDateString('it-IT')}</span>
+                  </div>
+                </button>
+              </motion.div>
+            )
+          })}
+        </div>
       )}
     </div>
   )
