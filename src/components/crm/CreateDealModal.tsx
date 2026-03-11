@@ -159,7 +159,12 @@ export function CreateDealModal({ open, onOpenChange, onSuccess }: CreateDealMod
         setSourceType('client')
       } else {
         const data = await res.json().catch(() => ({}))
-        setError(data.error || 'Errore nella creazione dell\'opportunità')
+        if (data.details) {
+          const fieldErrors = Object.values(data.details).flat().join(', ')
+          setError(fieldErrors || data.error || 'Errore nella creazione dell\'opportunità')
+        } else {
+          setError(data.error || 'Errore nella creazione dell\'opportunità')
+        }
       }
     } catch {
       setError('Errore di rete')
