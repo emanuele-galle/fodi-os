@@ -79,7 +79,12 @@ const SortableDealCard = memo(function SortableDealCard({ deal, onClick }: { dea
       <h3 className="font-medium text-sm truncate mb-2">{deal.title}</h3>
 
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted truncate flex-1">{deal.client?.companyName || deal.lead?.name || deal.lead?.company || '—'}</span>
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          {deal.leadId && !deal.clientId && (
+            <span className="text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded flex-shrink-0">Lead</span>
+          )}
+          <span className="text-xs text-muted truncate">{deal.client?.companyName || deal.lead?.name || deal.lead?.company || '—'}</span>
+        </div>
         <span className="text-sm font-bold ml-2 flex-shrink-0">{formatCurrency(deal.value)}</span>
       </div>
 
