@@ -64,7 +64,7 @@ export function PipelineFunnel() {
         <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--color-muted)' }} stroke="transparent" tickLine={false} axisLine={false} allowDecimals={false} />
         <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: 'var(--color-foreground)', fontWeight: 500 }} stroke="transparent" tickLine={false} axisLine={false} width={60} />
         <Tooltip
-          formatter={(value?: number) => [value ?? 0, 'Clienti']}
+          formatter={(value) => [value ?? 0, 'Clienti'] as [React.ReactNode, string]}
           contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 10, boxShadow: 'var(--shadow-lg)', fontSize: 13 }}
           cursor={{ fill: 'var(--color-primary)', fillOpacity: 0.04 }}
         />
