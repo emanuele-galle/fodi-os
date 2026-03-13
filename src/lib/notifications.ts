@@ -7,16 +7,6 @@ import type { Prisma } from '@/generated/prisma/client'
 // TYPES
 // ============================================================
 
-interface CreateNotificationParams {
-  userId: string
-  type: string
-  title: string
-  message: string
-  link?: string
-  metadata?: Record<string, unknown>
-  projectId?: string
-}
-
 interface NotificationIntent {
   type: string
   title: string
@@ -260,66 +250,6 @@ export class NotificationBatch {
     }
 
     this.intents = []
-  }
-}
-
-// ============================================================
-// LEGACY API (kept for backward compatibility during migration)
-// ============================================================
-
-/**
- * @deprecated Use dispatchNotification instead
- */
-export async function createNotification(params: CreateNotificationParams) {
-  const { userId, type, title, message, link, metadata, projectId } = params
-
-  const notification = await prisma.notification.create({
-    data: { userId, type, title, message, link, metadata: (metadata ?? undefined) as Prisma.InputJsonValue | undefined, projectId: projectId ?? null },
-  })
-
-  sseManager.sendToUser(userId, {
-    type: 'notification',
-    data: { id: notification.id, type, title, message, link, metadata },
-  })
-
-  const unreadCount = await prisma.notification.count({ where: { userId, isRead: false } })
-  sendBadgeUpdate(userId, { notifications: unreadCount })
-
-  sendPush(userId, { title, message, link })
-
-  return notification
-}
-
-/**
- * @deprecated Use dispatchNotification instead
- */
-export async function notifyUsers(
-  userIds: string[],
-  excludeUserId: string | null,
-  params: Omit<CreateNotificationParams, 'userId'>
-) {
-  const recipients = userIds.filter((id) => id !== excludeUserId)
-  if (recipients.length === 0) return
-
-  const data = recipients.map((userId) => ({
-    userId,
-    type: params.type,
-    title: params.title,
-    message: params.message,
-    link: params.link,
-    metadata: (params.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
-    projectId: params.projectId ?? null,
-  }))
-  await prisma.notification.createMany({ data })
-
-  for (const userId of recipients) {
-    sseManager.sendToUser(userId, {
-      type: 'notification',
-      data: { type: params.type, title: params.title, message: params.message, link: params.link, metadata: params.metadata },
-    })
-    const unreadCount = await prisma.notification.count({ where: { userId, isRead: false } })
-    sendBadgeUpdate(userId, { notifications: unreadCount })
-    sendPush(userId, { title: params.title, message: params.message, link: params.link })
   }
 }
 

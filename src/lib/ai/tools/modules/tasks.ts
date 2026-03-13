@@ -30,9 +30,12 @@ function buildTaskUpdateData(input: AiToolInput): Record<string, unknown> | { su
 async function notifyTaskUpdate(
   taskId: string,
   input: AiToolInput,
-  task: { title: string; projectId: string | null },
+  task: { title: string; status: string; projectId: string | null },
   context: AiToolContext,
 ) {
+  // Skip notifications for completed/cancelled tasks
+  if (task.status === 'DONE' || task.status === 'CANCELLED') return
+
   const changes: string[] = []
   if (input.status) changes.push(`stato → ${input.status}`)
   if (input.priority) changes.push(`priorità → ${input.priority}`)
@@ -179,6 +182,7 @@ export const taskTools: AiToolDefinition[] = [
           message: `${creatorName} ti ha assegnato "${task.title}"`,
           link: `/tasks?taskId=${task.id}`,
           projectId: (input.projectId as string) || undefined,
+          groupKey: `task_assigned:${task.id}`,
           recipientIds: [assigneeId],
           excludeUserId: context.userId,
         })
@@ -283,7 +287,7 @@ export const taskTools: AiToolDefinition[] = [
     requiredPermission: 'write',
     execute: async (input: AiToolInput, context: AiToolContext) => {
       const taskId = input.taskId as string
-      const task = await prisma.task.findUnique({ where: { id: taskId }, select: { id: true, title: true, projectId: true } })
+      const task = await prisma.task.findUnique({ where: { id: taskId }, select: { id: true, title: true, status: true, projectId: true } })
       if (!task) return { success: false, error: 'Task non trovato' }
 
       const comment = await prisma.comment.create({
@@ -297,20 +301,22 @@ export const taskTools: AiToolDefinition[] = [
         },
       })
 
-      // Notify task participants (same as regular comment flow)
-      const recipients = await getTaskParticipants(taskId)
-      const authorName = `${comment.author.firstName} ${comment.author.lastName}`
-      await dispatchNotification({
-        type: 'task_comment',
-        title: 'Nuovo commento',
-        message: `${authorName} ha commentato "${task.title}"`,
-        link: `/tasks?taskId=${taskId}&commentId=${comment.id}`,
-        projectId: task.projectId ?? undefined,
-        groupKey: `task_comment:${taskId}`,
-        actorName: authorName,
-        recipientIds: recipients,
-        excludeUserId: context.userId,
-      })
+      // Notify task participants (skip for completed/cancelled tasks)
+      if (task.status !== 'DONE' && task.status !== 'CANCELLED') {
+        const recipients = await getTaskParticipants(taskId)
+        const authorName = `${comment.author.firstName} ${comment.author.lastName}`
+        await dispatchNotification({
+          type: 'task_comment',
+          title: 'Nuovo commento',
+          message: `${authorName} ha commentato "${task.title}"`,
+          link: `/tasks?taskId=${taskId}&commentId=${comment.id}`,
+          projectId: task.projectId ?? undefined,
+          groupKey: `task_comment:${taskId}`,
+          actorName: authorName,
+          recipientIds: recipients,
+          excludeUserId: context.userId,
+        })
+      }
 
       return { success: true, data: { id: comment.id, content: comment.content, createdAt: comment.createdAt } }
     },

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePortalClient, handlePortalError } from '@/lib/portal-auth'
-import { createNotification } from '@/lib/notifications'
+import { dispatchNotification } from '@/lib/notifications'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ quoteId: string }> }) {
   try {
@@ -58,8 +58,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Notify the quote creator
     if (quote.creator?.id) {
-      await createNotification({
-        userId: quote.creator.id,
+      await dispatchNotification({
         type: action === 'approve' ? 'QUOTE_APPROVED' : 'QUOTE_REJECTED',
         title: action === 'approve'
           ? `Preventivo ${quote.number} approvato`
@@ -67,6 +66,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         message: `Il cliente ${client.companyName} ha ${action === 'approve' ? 'approvato' : 'rifiutato'} il preventivo ${quote.number}.`,
         link: `/erp/quotes/${quoteId}`,
         metadata: { clientName: client.companyName, quoteNumber: quote.number, total: quote.total?.toString() },
+        groupKey: `quote_action:${quoteId}`,
+        actorName: client.companyName,
+        recipientIds: [quote.creator.id],
       })
     }
 

@@ -71,20 +71,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    // Notify task participants only (not all project members) with grouping
-    const recipients = await getTaskParticipants(taskId)
-    const authorName = `${comment.author.firstName} ${comment.author.lastName}`
-    await dispatchNotification({
-      type: 'task_comment',
-      title: 'Nuovo commento',
-      message: `${authorName} ha commentato "${task.title}"`,
-      link: `/tasks?taskId=${taskId}&commentId=${comment.id}`,
-      projectId: task.projectId ?? undefined,
-      groupKey: `task_comment:${taskId}`,
-      actorName: authorName,
-      recipientIds: recipients,
-      excludeUserId: userId,
-    })
+    // Skip notifications for completed/cancelled tasks
+    if (task.status !== 'DONE' && task.status !== 'CANCELLED') {
+      const recipients = await getTaskParticipants(taskId)
+      const authorName = `${comment.author.firstName} ${comment.author.lastName}`
+      await dispatchNotification({
+        type: 'task_comment',
+        title: 'Nuovo commento',
+        message: `${authorName} ha commentato "${task.title}"`,
+        link: `/tasks?taskId=${taskId}&commentId=${comment.id}`,
+        projectId: task.projectId ?? undefined,
+        groupKey: `task_comment:${taskId}`,
+        actorName: authorName,
+        recipientIds: recipients,
+        excludeUserId: userId,
+      })
+    }
 
     return NextResponse.json(comment, { status: 201 })
   } catch (e) {

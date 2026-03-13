@@ -82,7 +82,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    if (task && toAdd.length > 0) {
+    if (task && toAdd.length > 0 && task.status !== 'DONE' && task.status !== 'CANCELLED') {
       await dispatchNotification({
         type: 'task_assigned',
         title: 'Task assegnato',

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePortalClient, handlePortalError } from '@/lib/portal-auth'
-import { notifyUsers } from '@/lib/notifications'
+import { dispatchNotification } from '@/lib/notifications'
 import { sendDataChanged } from '@/lib/sse'
 import { z } from 'zod'
 
@@ -118,17 +118,17 @@ export async function POST(request: NextRequest) {
       },
       select: { id: true },
     })
-    await notifyUsers(
-      supportUsers.map((u) => u.id),
-      client.userId,
-      {
-        type: 'ticket_created',
-        title: 'Nuovo ticket dal portale',
-        message: `${client.companyName} ha aperto il ticket "${subject}" (${number})`,
-        link: `/support/${ticket.id}`,
-        metadata: { clientName: client.companyName, ticketNumber: number },
-      }
-    )
+    await dispatchNotification({
+      type: 'ticket_created',
+      title: 'Nuovo ticket dal portale',
+      message: `${client.companyName} ha aperto il ticket "${subject}" (${number})`,
+      link: `/support/${ticket.id}`,
+      metadata: { clientName: client.companyName, ticketNumber: number },
+      groupKey: `portal_ticket:${ticket.id}`,
+      actorName: client.companyName,
+      recipientIds: supportUsers.map((u) => u.id),
+      excludeUserId: client.userId,
+    })
 
     sendDataChanged(supportUsers.map((u) => u.id), 'ticket', ticket.id)
 

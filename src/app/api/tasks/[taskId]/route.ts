@@ -240,6 +240,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const effectiveProjectId = task.projectId as string | null
     const notifMetadata = { projectName: taskProjectName, taskStatus: status || (previousTask?.status ?? undefined), priority: previousTask?.priority ?? task.priority }
 
+    // Skip non-status notifications for completed/cancelled tasks
+    const effectiveStatus = status ?? previousTask?.status
+    const isTaskClosed = effectiveStatus === 'DONE' || effectiveStatus === 'CANCELLED'
+
     // Use task participants (not all project members) for reduced audience
     const needsNotification = (status !== undefined && previousTask && status !== previousTask.status)
       || priority !== undefined || dueDate !== undefined || description !== undefined
@@ -280,8 +284,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
-    // Priority/dueDate/description change notification
-    if (priority !== undefined || dueDate !== undefined || description !== undefined) {
+    // Priority/dueDate/description change notification (skip for closed tasks)
+    if ((priority !== undefined || dueDate !== undefined || description !== undefined) && !isTaskClosed) {
       const changeDetails: string[] = []
       const priorityLabels: Record<string, string> = { LOW: 'Bassa', MEDIUM: 'Media', HIGH: 'Alta', URGENT: 'Urgente' }
 

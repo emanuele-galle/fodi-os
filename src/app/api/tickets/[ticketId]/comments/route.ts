@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
-import { notifyUsers } from '@/lib/notifications'
+import { dispatchNotification } from '@/lib/notifications'
 import { z } from 'zod'
 import type { Role } from '@/generated/prisma/client'
 
@@ -89,17 +89,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     for (const c of previousCommenters) recipients.add(c.authorId)
 
     const authorName = `${comment.author.firstName} ${comment.author.lastName}`
-    await notifyUsers(
-      Array.from(recipients),
-      userId,
-      {
-        type: 'ticket_comment',
-        title: 'Nuovo commento su ticket',
-        message: `${authorName} ha commentato il ticket "${ticket.subject}"`,
-        link: `/support/${ticketId}?commentId=${comment.id}`,
-        metadata: { ticketNumber: ticket.number },
-      }
-    )
+    await dispatchNotification({
+      type: 'ticket_comment',
+      title: 'Nuovo commento su ticket',
+      message: `${authorName} ha commentato il ticket "${ticket.subject}"`,
+      link: `/support/${ticketId}?commentId=${comment.id}`,
+      metadata: { ticketNumber: ticket.number },
+      groupKey: `ticket_comment:${ticketId}`,
+      actorName: authorName,
+      recipientIds: Array.from(recipients),
+      excludeUserId: userId,
+    })
 
     // Notify portal user if comment is not internal
     if (!isInternal && ticket.clientId) {
@@ -108,17 +108,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         select: { portalUserId: true, companyName: true },
       })
       if (client?.portalUserId && client.portalUserId !== userId) {
-        await notifyUsers(
-          [client.portalUserId],
-          userId,
-          {
-            type: 'ticket_comment',
-            title: 'Risposta al tuo ticket',
-            message: `${authorName} ha risposto al ticket "${ticket.subject}"`,
-            link: `/portal/tickets/${ticketId}`,
-            metadata: { ticketNumber: ticket.number },
-          }
-        )
+        await dispatchNotification({
+          type: 'ticket_comment',
+          title: 'Risposta al tuo ticket',
+          message: `${authorName} ha risposto al ticket "${ticket.subject}"`,
+          link: `/portal/tickets/${ticketId}`,
+          metadata: { ticketNumber: ticket.number },
+          groupKey: `ticket_comment:${ticketId}`,
+          actorName: authorName,
+          recipientIds: [client.portalUserId],
+          excludeUserId: userId,
+        })
       }
     }
 

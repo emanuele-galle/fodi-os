@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { updateTicketSchema } from '@/lib/validation'
-import { notifyUsers, dispatchNotification } from '@/lib/notifications'
+import { dispatchNotification } from '@/lib/notifications'
 import { sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 import { TICKET_STATUS_LABELS } from '@/lib/constants'
@@ -97,32 +97,30 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       // Status change notification
       if (status !== undefined && status !== previousTicket.status) {
-        await notifyUsers(
-          Array.from(recipients),
-          currentUserId,
-          {
-            type: 'ticket_status_changed',
-            title: 'Stato ticket cambiato',
-            message: `Ticket "${previousTicket.subject}" cambiato in "${TICKET_STATUS_LABELS[status] || status}"`,
-            link: ticketLink,
-            metadata: { clientName: previousTicket.client?.companyName, ticketNumber: previousTicket.number, ticketStatus: status },
-          }
-        )
+        await dispatchNotification({
+          type: 'ticket_status_changed',
+          title: 'Stato ticket cambiato',
+          message: `Ticket "${previousTicket.subject}" cambiato in "${TICKET_STATUS_LABELS[status] || status}"`,
+          link: ticketLink,
+          metadata: { clientName: previousTicket.client?.companyName, ticketNumber: previousTicket.number, ticketStatus: status },
+          groupKey: `ticket_update:${ticketId}`,
+          recipientIds: Array.from(recipients),
+          excludeUserId: currentUserId,
+        })
       }
 
       // Assignee change notification
       if (assigneeId !== undefined && assigneeId !== previousTicket.assigneeId && assigneeId) {
-        await notifyUsers(
-          [assigneeId],
-          currentUserId,
-          {
-            type: 'ticket_assigned',
-            title: 'Ticket assegnato',
-            message: `Ti è stato assegnato il ticket "${previousTicket.subject}"`,
-            link: ticketLink,
-            metadata: { clientName: previousTicket.client?.companyName, ticketNumber: previousTicket.number },
-          }
-        )
+        await dispatchNotification({
+          type: 'ticket_assigned',
+          title: 'Ticket assegnato',
+          message: `Ti è stato assegnato il ticket "${previousTicket.subject}"`,
+          link: ticketLink,
+          metadata: { clientName: previousTicket.client?.companyName, ticketNumber: previousTicket.number },
+          groupKey: `ticket_update:${ticketId}`,
+          recipientIds: [assigneeId],
+          excludeUserId: currentUserId,
+        })
       }
 
       // Notify portal user about status change

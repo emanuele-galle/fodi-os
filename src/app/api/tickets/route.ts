@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission } from '@/lib/permissions'
 import { createTicketSchema } from '@/lib/validation'
-import { notifyUsers } from '@/lib/notifications'
+import { dispatchNotification } from '@/lib/notifications'
 import { sendDataChanged } from '@/lib/sse'
 import type { Role } from '@/generated/prisma/client'
 
@@ -112,31 +112,29 @@ export async function POST(request: NextRequest) {
       },
       select: { id: true },
     })
-    await notifyUsers(
-      supportUsers.map((u) => u.id),
-      userId,
-      {
-        type: 'ticket_created',
-        title: 'Nuovo ticket',
-        message: `Nuovo ticket "${subject}" (${number})`,
-        link: `/support/${ticket.id}`,
-        metadata: { clientName: ticket.client?.companyName, ticketNumber: ticket.number },
-      }
-    )
+    await dispatchNotification({
+      type: 'ticket_created',
+      title: 'Nuovo ticket',
+      message: `Nuovo ticket "${subject}" (${number})`,
+      link: `/support/${ticket.id}`,
+      metadata: { clientName: ticket.client?.companyName, ticketNumber: ticket.number },
+      groupKey: `new_ticket:${ticket.id}`,
+      recipientIds: supportUsers.map((u) => u.id),
+      excludeUserId: userId,
+    })
 
     // Notify assignee if set at creation
     if (assigneeId && !supportUsers.some((u) => u.id === assigneeId)) {
-      await notifyUsers(
-        [assigneeId],
-        userId,
-        {
-          type: 'ticket_assigned',
-          title: 'Ticket assegnato',
-          message: `Ti è stato assegnato il ticket "${subject}" (${number})`,
-          link: `/support/${ticket.id}`,
-          metadata: { clientName: ticket.client?.companyName, ticketNumber: ticket.number },
-        }
-      )
+      await dispatchNotification({
+        type: 'ticket_assigned',
+        title: 'Ticket assegnato',
+        message: `Ti è stato assegnato il ticket "${subject}" (${number})`,
+        link: `/support/${ticket.id}`,
+        metadata: { clientName: ticket.client?.companyName, ticketNumber: ticket.number },
+        groupKey: `new_ticket:${ticket.id}`,
+        recipientIds: [assigneeId],
+        excludeUserId: userId,
+      })
     }
 
     // Notify connected users about new ticket
