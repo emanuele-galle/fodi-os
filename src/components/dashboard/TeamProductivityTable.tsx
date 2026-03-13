@@ -54,7 +54,7 @@ export function TeamProductivityTable({ data, loading }: TeamProductivityTablePr
         {sortedData.map((user) => {
           const completionPct = user.assigned > 0 ? Math.round((user.completed / user.assigned) * 100) : 0
           return (
-            <div key={user.userId} className="rounded-lg border border-border/30 p-3 bg-secondary/10">
+            <div key={user.userId} className="rounded-lg border border-border/50 p-3 bg-secondary/10">
               <div className="flex items-center gap-2 mb-2">
                 <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold flex-shrink-0">
                   {user.userName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
@@ -91,7 +91,7 @@ export function TeamProductivityTable({ data, loading }: TeamProductivityTablePr
       <div className="hidden lg:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border/30">
+            <tr className="border-b border-border/50">
               <th className={`text-left ${thClass}`} onClick={() => handleSort('userName')}>Membro{sortIcon('userName')}</th>
               <th className={`text-right ${thClass}`} onClick={() => handleSort('assigned')}>Assegnate{sortIcon('assigned')}</th>
               <th className={`text-right ${thClass}`} onClick={() => handleSort('completed')}>Completate{sortIcon('completed')}</th>
@@ -103,7 +103,7 @@ export function TeamProductivityTable({ data, loading }: TeamProductivityTablePr
             {sortedData.map((user) => {
               const completionPct = user.assigned > 0 ? Math.round((user.completed / user.assigned) * 100) : 0
               return (
-                <tr key={user.userId} className="border-b border-border/20 last:border-0 hover:bg-secondary/30 transition-colors">
+                <tr key={user.userId} className="border-b border-border/40 last:border-0 hover:bg-secondary/30 transition-colors">
                   <td className="py-2.5 px-3">
                     <div className="flex items-center gap-2">
                       <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold flex-shrink-0">

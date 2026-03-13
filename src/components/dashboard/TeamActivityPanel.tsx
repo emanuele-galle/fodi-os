@@ -206,7 +206,7 @@ export function TeamActivityPanel() {
         </ChartContainer>
 
         {/* Members section */}
-        <div className="border-t border-border/30 pt-4">
+        <div className="border-t border-border/50 pt-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Users className="h-3.5 w-3.5 text-muted" />

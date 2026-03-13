@@ -8,32 +8,33 @@ html {
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* === Apple-Style Palette === */
+  /* === Corporate Clarity Palette === */
+  /* Slate-tinted neutrals replace pure grays for depth and professionalism */
   --color-primary: #007AFF;
-  --color-primary-hover: #0066D6;
+  --color-primary-hover: #0062CC;
   --color-primary-foreground: #FFFFFF;
-  --color-secondary: #E5E5EA;
-  --color-secondary-foreground: #1D1D1F;
+  --color-secondary: #F1F5F9;
+  --color-secondary-foreground: #1E293B;
   --color-accent: #34C759;
-  --color-destructive: #FF3B30;
-  --color-muted: #6E6E73;
-  --color-border: #C7C7CC;
-  --color-background: #F2F2F7;
-  --color-foreground: #1D1D1F;
+  --color-destructive: #EF4444;
+  --color-muted: #64748B;
+  --color-border: #E2E8F0;
+  --color-background: #F8FAFC;
+  --color-foreground: #0F172A;
   --color-card: #FFFFFF;
-  --color-sidebar: #F2F2F7;
-  --color-sidebar-foreground: #1D1D1F;
+  --color-sidebar: #FFFFFF;
+  --color-sidebar-foreground: #0F172A;
   --color-sidebar-active: #007AFF;
-  --color-sidebar-muted: #6E6E73;
-  --color-sidebar-hover: rgba(0, 0, 0, 0.04);
-  --color-sidebar-active-bg: rgba(0, 122, 255, 0.10);
-  --color-sidebar-border: rgba(0, 0, 0, 0.06);
-  --color-sidebar-divider: rgba(0, 0, 0, 0.08);
-  --color-warning: #FF9500;
+  --color-sidebar-muted: #64748B;
+  --color-sidebar-hover: rgba(15, 23, 42, 0.04);
+  --color-sidebar-active-bg: rgba(0, 122, 255, 0.08);
+  --color-sidebar-border: #E2E8F0;
+  --color-sidebar-divider: #F1F5F9;
+  --color-warning: #F59E0B;
 
-  /* Apple label hierarchy */
-  --color-label-secondary: rgba(60, 60, 67, 0.60);
-  --color-label-tertiary: rgba(60, 60, 67, 0.36);
+  /* Label hierarchy (slate-based for better contrast) */
+  --color-label-secondary: rgba(15, 23, 42, 0.64);
+  --color-label-tertiary: rgba(15, 23, 42, 0.44);
 
   /* Brand colors (overridden by inline style on <html> from env vars) */
   --brand-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -46,34 +47,34 @@ html {
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
 
-  /* Shadow system - Apple HIG (softer, more diffused) */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-  --shadow-lg: 0 10px 28px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
-  --shadow-xl: 0 20px 48px rgba(0,0,0,0.10), 0 8px 16px rgba(0,0,0,0.05);
+  /* Shadow system — slightly more pronounced for clear card elevation */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 14px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.05);
+  --shadow-xl: 0 24px 56px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.06);
 }
 
 /* ===== Theme System ===== */
 
-/* Light theme (default) - Apple HIG */
+/* Light theme (default) - Corporate Clarity */
 :root, [data-theme="light"] {
-  --color-background: #F2F2F7;
-  --color-foreground: #1D1D1F;
+  --color-background: #F8FAFC;
+  --color-foreground: #0F172A;
   --color-card: #FFFFFF;
-  --color-secondary: #E5E5EA;
-  --color-secondary-foreground: #1D1D1F;
-  --color-border: #C7C7CC;
-  --color-muted: #6E6E73;
-  --color-sidebar: #F2F2F7;
-  --color-sidebar-foreground: #1D1D1F;
+  --color-secondary: #F1F5F9;
+  --color-secondary-foreground: #1E293B;
+  --color-border: #E2E8F0;
+  --color-muted: #64748B;
+  --color-sidebar: #FFFFFF;
+  --color-sidebar-foreground: #0F172A;
   --color-sidebar-active: #007AFF;
-  --color-sidebar-muted: #6E6E73;
-  --color-sidebar-hover: rgba(0, 0, 0, 0.04);
-  --color-sidebar-active-bg: rgba(0, 122, 255, 0.10);
-  --color-sidebar-border: rgba(0, 0, 0, 0.06);
-  --color-sidebar-divider: rgba(0, 0, 0, 0.08);
-  --color-label-secondary: rgba(60, 60, 67, 0.60);
-  --color-label-tertiary: rgba(60, 60, 67, 0.36);
+  --color-sidebar-muted: #64748B;
+  --color-sidebar-hover: rgba(15, 23, 42, 0.04);
+  --color-sidebar-active-bg: rgba(0, 122, 255, 0.08);
+  --color-sidebar-border: #E2E8F0;
+  --color-sidebar-divider: #F1F5F9;
+  --color-label-secondary: rgba(15, 23, 42, 0.64);
+  --color-label-tertiary: rgba(15, 23, 42, 0.44);
 }
 
 /* Dark theme - Apple true black */
@@ -108,9 +109,9 @@ html {
 /* ===== Sheet (theme-aware) ===== */
 :root, [data-theme="light"] {
   --color-sheet: #FFFFFF;
-  --color-sheet-foreground: #1D1D1F;
-  --color-sheet-muted: #6E6E73;
-  --color-sheet-border: rgba(0, 0, 0, 0.08);
+  --color-sheet-foreground: #0F172A;
+  --color-sheet-muted: #64748B;
+  --color-sheet-border: rgba(15, 23, 42, 0.08);
 }
 [data-theme="dark"] {
   --color-sheet: #1C1C1E;
@@ -619,7 +620,7 @@ html {
 /* ===== Enterprise Card Utilities ===== */
 
 .card-elevated {
-  border: 1px solid color-mix(in srgb, var(--color-border) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
   background: var(--color-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
@@ -630,7 +631,7 @@ html {
 }
 
 .card-flat {
-  border: 1px solid color-mix(in srgb, var(--color-border) 35%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
   background: var(--color-card);
   border-radius: var(--radius-lg);
 }
@@ -945,7 +946,7 @@ body,
   padding: 1rem;
   border-radius: var(--radius-lg);
   background: var(--color-card);
-  border: 1px solid color-mix(in srgb, var(--color-border) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
   box-shadow: var(--shadow-sm);
 }
 
@@ -962,7 +963,7 @@ body,
 .ios-grouped-section {
   border-radius: var(--radius-lg);
   background: var(--color-card);
-  border: 1px solid color-mix(in srgb, var(--color-border) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }

@@ -89,7 +89,7 @@ export function TeamActivityCard({
         </div>
 
         {/* Team members */}
-        <div className="pt-4 border-t border-border/30">
+        <div className="pt-4 border-t border-border/50">
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted">{members.length} memb{members.length === 1 ? 'ro' : 'ri'}</span>
             <div className="flex -space-x-2">

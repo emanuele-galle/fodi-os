@@ -41,7 +41,7 @@ export function StatCarousel({ stats, loading }: StatCarouselProps) {
             <div
               key={stat.label}
               onClick={() => router.push(stat.href)}
-              className="relative overflow-hidden rounded-2xl bg-card border border-border/25 p-3.5 cursor-pointer active:scale-[0.96] active:opacity-80 transition-all touch-manipulation min-w-[130px] flex-shrink-0 snap-start shadow-[var(--shadow-sm)]"
+              className="relative overflow-hidden rounded-2xl bg-card border border-border/50 p-3.5 cursor-pointer active:scale-[0.96] active:opacity-80 transition-all touch-manipulation min-w-[130px] flex-shrink-0 snap-start shadow-[var(--shadow-sm)]"
             >
               <div className={`flex flex-col gap-2.5 ${stat.color}`}>
                 <div className="p-1.5 rounded-[10px] w-fit" style={{ background: `color-mix(in srgb, currentColor 10%, transparent)` }}>
@@ -64,7 +64,7 @@ export function StatCarousel({ stats, loading }: StatCarouselProps) {
           <div
             key={stat.label}
             onClick={() => router.push(stat.href)}
-            className="relative overflow-hidden rounded-2xl border border-border/25 bg-card p-5 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-border/40 transition-all duration-200 group touch-manipulation active:scale-[0.98]"
+            className="relative overflow-hidden rounded-2xl border border-border/50 bg-card p-5 cursor-pointer hover:shadow-[var(--shadow-md)] hover:border-border/70 transition-all duration-200 group touch-manipulation active:scale-[0.98]"
           >
             <div className={`flex items-start justify-between gap-3 ${stat.color}`}>
               <div className="min-w-0">

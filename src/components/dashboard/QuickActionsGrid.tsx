@@ -37,7 +37,7 @@ export function QuickActionsGrid({ actions }: QuickActionsGridProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 onClick={action.onClick}
-                className="flex items-center gap-3 p-3.5 rounded-xl border border-border/25 hover:border-primary/20 hover:bg-primary/5 hover:shadow-[var(--shadow-sm)] transition-all text-left group active:scale-[0.98]"
+                className="flex items-center gap-3 p-3.5 rounded-xl border border-border/50 hover:border-primary/20 hover:bg-primary/5 hover:shadow-[var(--shadow-sm)] transition-all text-left group active:scale-[0.98]"
               >
                 <div className="p-2 rounded-lg bg-secondary group-hover:bg-primary/10 transition-colors">
                   <Icon className="h-4 w-4 text-muted group-hover:text-primary transition-colors" />

@@ -43,7 +43,7 @@ export function DashboardQuickActions({ actions }: DashboardQuickActionsProps) {
             <button
               key={action.key}
               onClick={() => router.push(action.href)}
-              className={`group relative flex flex-col items-center gap-2 p-5 rounded-2xl border border-border/30 ${action.hoverBorder} bg-card hover:shadow-[var(--shadow-md)] transition-all duration-200 cursor-pointer active:scale-[0.97]`}
+              className={`group relative flex flex-col items-center gap-2 p-5 rounded-2xl border border-border/50 ${action.hoverBorder} bg-card hover:shadow-[var(--shadow-md)] transition-all duration-200 cursor-pointer active:scale-[0.97]`}
             >
               <div className={`p-3 rounded-xl ${action.bg} ${action.color} transition-transform duration-200 group-hover:scale-110`}>
                 <Icon className="h-6 w-6" />
