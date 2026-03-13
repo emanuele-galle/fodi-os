@@ -29,7 +29,7 @@ function emailLayout(options: EmailLayoutOptions): string {
   const logoRow = showLogo ? `
   <!-- LOGO -->
   <tr><td style="padding:0 0 28px;text-align:center;">
-    <img src="${LOGO_URL}" alt="${escapeHtml(brand.name)}" width="160" height="26" style="display:inline-block;" />
+    <img src="${LOGO_URL}" alt="${escapeHtml(brand.name)}" width="160" style="display:inline-block;height:auto;" />
   </td></tr>` : ''
 
   return `<!DOCTYPE html>
