@@ -10,6 +10,16 @@ function parseDate(value: unknown): Date | null {
   return isNaN(d.getTime()) ? null : d
 }
 
+async function getOrRecalcHealth(clientId: string) {
+  const existing = await prisma.clientHealthScore.findUnique({ where: { clientId } })
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  if (existing && existing.lastCalculatedAt > twentyFourHoursAgo) return existing
+  // Recalculate if stale
+  const { updateClientHealthScore } = await import('@/lib/crm/health-score')
+  await updateClientHealthScore(clientId)
+  return prisma.clientHealthScore.findUnique({ where: { clientId } })
+}
+
 export const crmTools: AiToolDefinition[] = [
   {
     name: 'list_leads',
@@ -695,6 +705,80 @@ export const crmTools: AiToolDefinition[] = [
       })
 
       return { success: true, data: { client, leadId: lead.id, status: 'CONVERTED' } }
+    },
+  },
+
+  // --- get_client_health ---
+  {
+    name: 'get_client_health',
+    description: 'Ottieni l\'health score di un cliente con breakdown dei sub-score e livello di rischio.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente (obbligatorio)' },
+      },
+      required: ['clientId'],
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const health = await getOrRecalcHealth(input.clientId as string)
+      if (!health) return { success: false, error: 'Health score non disponibile' }
+      return {
+        success: true,
+        data: {
+          overallScore: health.overallScore,
+          riskLevel: health.riskLevel,
+          interactionScore: health.interactionScore,
+          pipelineScore: health.pipelineScore,
+          projectScore: health.projectScore,
+          revenueScore: health.revenueScore,
+          engagementScore: health.engagementScore,
+          lastCalculatedAt: health.lastCalculatedAt,
+          nextActions: health.nextActions,
+        },
+      }
+    },
+  },
+
+  // --- get_at_risk_clients ---
+  {
+    name: 'get_at_risk_clients',
+    description: 'Lista i clienti a rischio (AT_RISK, CRITICAL, CHURNING) ordinati per score crescente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Numero massimo risultati (default: 10)' },
+      },
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const limit = Math.min(Number(input.limit) || 10, 30)
+      const atRisk = await prisma.clientHealthScore.findMany({
+        where: { riskLevel: { in: ['AT_RISK', 'CRITICAL', 'CHURNING'] } },
+        orderBy: { overallScore: 'asc' },
+        take: limit,
+        select: {
+          overallScore: true,
+          riskLevel: true,
+          interactionScore: true,
+          pipelineScore: true,
+          lastCalculatedAt: true,
+          nextActions: true,
+          client: { select: { id: true, companyName: true, status: true, totalRevenue: true } },
+        },
+      })
+      return {
+        success: true,
+        data: {
+          clients: atRisk.map((h) => ({
+            ...h,
+            client: { ...h.client, totalRevenue: h.client.totalRevenue.toString() },
+          })),
+          total: atRisk.length,
+        },
+      }
     },
   },
 ]

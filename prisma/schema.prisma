@@ -244,6 +244,7 @@ model Client {
   expenses        Expense[]
   incomes         Income[]
   convertedLeads  Lead[]    @relation("LeadConverted")
+  healthScore     ClientHealthScore?
 
   @@index([status])
   @@index([slug])
@@ -256,6 +257,30 @@ enum ClientStatus {
   ACTIVE
   INACTIVE
   CHURNED
+}
+
+model ClientHealthScore {
+  id                String   @id @default(uuid())
+  clientId          String   @unique
+  overallScore      Int      @default(50)
+  interactionScore  Int      @default(50)
+  pipelineScore     Int      @default(50)
+  projectScore      Int      @default(50)
+  revenueScore      Int      @default(50)
+  engagementScore   Int      @default(50)
+  riskLevel         String   @default("HEALTHY")
+  lastCalculatedAt  DateTime @default(now())
+  scoreHistory      Json?
+  aiInsights        String?  @db.Text
+  aiInsightsAt      DateTime?
+  nextActions       Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([overallScore])
+  @@index([riskLevel])
+  @@map("client_health_scores")
 }
 
 model Contact {

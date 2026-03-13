@@ -22,6 +22,7 @@ import {
   CheckSquare,
   Target,
   CalendarClock,
+  Activity,
 } from 'lucide-react'
 
 const DealsFunnelChart = dynamic(() => import('@/components/crm/CrmCharts').then(m => ({ default: m.DealsFunnelChart })), { ssr: false })
@@ -71,6 +72,18 @@ interface StatsData {
     expectedCloseDate: string
     client?: { id: string; companyName: string } | null
   }[]
+}
+
+interface AtRiskClient {
+  clientId: string
+  overallScore: number
+  riskLevel: string
+  client: { id: string; companyName: string; status: string }
+}
+
+interface HealthAggData {
+  riskCounts: Record<string, number>
+  atRiskClients: AtRiskClient[]
 }
 
 interface TaskItem {
@@ -167,6 +180,7 @@ export default function CrmDashboardPage() {
   const { data: dealsRaw, refetch: refetchDeals } = useFetch<{ success: boolean; data?: DealItem[]; items?: DealItem[] }>(
     '/api/deals?limit=100'
   )
+  const { data: healthRaw } = useFetch<{ success: boolean; data: HealthAggData }>('/api/crm/health')
 
   const refetchAll = useCallback(() => { refetchStats(); refetchTasks(); refetchDeals() }, [refetchStats, refetchTasks, refetchDeals])
   useRealtimeRefresh('client', refetchAll)
@@ -177,6 +191,7 @@ export default function CrmDashboardPage() {
   const stats = statsRaw?.success ? statsRaw.data : null
   const myTasks = tasksRaw?.success ? (tasksRaw.data || tasksRaw.items || []).slice(0, 5) : []
   const deals = dealsRaw?.success ? (dealsRaw.data || dealsRaw.items || []) : []
+  const healthData = healthRaw?.success ? healthRaw.data : null
 
   if (loading) {
     return (
@@ -467,6 +482,60 @@ export default function CrmDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Health Score Overview */}
+      {healthData && healthData.atRiskClients.length > 0 && (
+        <Card>
+          <CardContent>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold flex items-center gap-2">
+                <Activity className="h-4 w-4 text-red-500" />
+                Clienti a Rischio
+              </h2>
+              {healthData.riskCounts && (
+                <div className="flex items-center gap-2 text-xs">
+                  {healthData.riskCounts.CHURNING ? (
+                    <span className="bg-red-600/15 text-red-600 px-2 py-0.5 rounded-full font-medium">
+                      {healthData.riskCounts.CHURNING} abbandono
+                    </span>
+                  ) : null}
+                  {healthData.riskCounts.CRITICAL ? (
+                    <span className="bg-red-500/15 text-red-500 px-2 py-0.5 rounded-full font-medium">
+                      {healthData.riskCounts.CRITICAL} critici
+                    </span>
+                  ) : null}
+                  {healthData.riskCounts.AT_RISK ? (
+                    <span className="bg-amber-500/15 text-amber-600 px-2 py-0.5 rounded-full font-medium">
+                      {healthData.riskCounts.AT_RISK} a rischio
+                    </span>
+                  ) : null}
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              {healthData.atRiskClients.map((item) => {
+                const scoreColor = item.riskLevel === 'CHURNING' ? 'text-red-600' : item.riskLevel === 'CRITICAL' ? 'text-red-500' : 'text-amber-500'
+                return (
+                  <Link
+                    key={item.clientId}
+                    href={`/crm/${item.client.id}`}
+                    className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/10 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`text-sm font-bold tabular-nums ${scoreColor}`}>{item.overallScore}</span>
+                      <span className="text-sm font-medium truncate">{item.client.companyName}</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge status={item.client.status}>{item.client.status}</Badge>
+                      <ArrowUpRight className="h-3.5 w-3.5 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts */}
       {stats.dealsByStage.length > 0 && (

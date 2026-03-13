@@ -18,6 +18,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { STATUS_OPTIONS, STATUS_LABELS, INDUSTRY_OPTIONS, SOURCE_OPTIONS } from '@/lib/crm-constants'
 import { CreateClientModal } from '@/components/crm/CreateClientModal'
+import { ClientHealthBadge } from '@/components/crm/ClientHealthBadge'
 
 interface Client {
   id: string
@@ -601,6 +602,7 @@ export default function CrmPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Cliente</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Stato</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Settore</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden xl:table-cell">Health</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden xl:table-cell">Ultimo Contatto</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Contatti</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Progetti</th>
@@ -686,6 +688,9 @@ export default function CrmPage() {
                       </td>
                       <td className="px-4 py-3.5 text-muted">
                         {client.industry || '—'}
+                      </td>
+                      <td className="px-4 py-3.5 hidden xl:table-cell" onClick={(e) => e.stopPropagation()}>
+                        <ClientHealthBadge clientId={client.id} />
                       </td>
                       <td className="px-4 py-3.5 hidden xl:table-cell">
                         {lastInteraction ? (

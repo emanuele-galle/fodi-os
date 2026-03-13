@@ -42,6 +42,7 @@ const MODULE_CAPABILITIES: Record<string, { condition: Module; description: stri
     { condition: 'crm', description: '**CRM**: gestire lead, clienti, deal, contatti, registrare interazioni, convertire lead in clienti' },
     { condition: 'crm', description: '**Dettagli CRM**: informazioni complete su clienti e deal' },
     { condition: 'crm', description: '**Report CRM**: statistiche CRM, pipeline' },
+    { condition: 'crm', description: '**Health Score**: health score clienti, clienti a rischio, insights AI per retention' },
   ],
   erp: [
     { condition: 'erp', description: '**ERP & Finanza**: preventivi (da template), spese, entrate, report mensile, fatture ricorrenti, dashboard contabile, obiettivi profitto' },

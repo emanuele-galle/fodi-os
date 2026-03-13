@@ -143,6 +143,44 @@ export async function POST(request: NextRequest) {
       generated.deals = dealNotifsToCreate.length
     }
 
+    // --- 4. Health score-based reminders ---
+    const criticalClients = await prisma.clientHealthScore.findMany({
+      where: { riskLevel: { in: ['CRITICAL', 'CHURNING'] } },
+      select: {
+        clientId: true,
+        riskLevel: true,
+        overallScore: true,
+        client: { select: { id: true, companyName: true } },
+      },
+    })
+
+    if (criticalClients.length > 0) {
+      const healthLinks = criticalClients.map((c) => `/crm/${c.clientId}`)
+      const existingHealthNotifs = await prisma.notification.findMany({
+        where: { link: { in: healthLinks }, isRead: false, createdAt: { gte: twentyFourHoursAgo } },
+        select: { link: true },
+      })
+      const existingHealthLinks = new Set(existingHealthNotifs.map((n) => n.link))
+
+      const healthNotifsToCreate = criticalClients
+        .filter((c) => !existingHealthLinks.has(`/crm/${c.clientId}`))
+        .flatMap((c) =>
+          adminUsers.map((admin) => ({
+            userId: admin.id,
+            type: 'reminder',
+            title: c.riskLevel === 'CHURNING'
+              ? `URGENTE: ${c.client.companyName} a rischio abbandono`
+              : `Cliente critico: ${c.client.companyName}`,
+            message: `Health score: ${c.overallScore}/100. Richiede attenzione immediata.`,
+            link: `/crm/${c.clientId}`,
+          }))
+        )
+
+      if (healthNotifsToCreate.length > 0) {
+        await prisma.notification.createMany({ data: healthNotifsToCreate })
+      }
+    }
+
     return NextResponse.json({ generated })
   } catch (e) {
     console.error('[reminders/generate]', e)

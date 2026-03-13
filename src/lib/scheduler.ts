@@ -13,6 +13,7 @@ const SCHEDULES = {
   reminders:      process.env.CRON_REMINDERS       || '0 9,15 * * 1-5', // Mon-Fri 09:00, 15:00
   reports:        process.env.CRON_REPORTS         || '0 21 * * 1-5',  // Mon-Fri 21:00
   recurringTasks: process.env.CRON_RECURRING_TASKS || '0 6 * * *',     // Daily 06:00
+  healthScores:   process.env.CRON_HEALTH_SCORES   || '0 3 * * *',     // Daily 03:00
 }
 
 async function callEndpoint(path: string, label: string) {
@@ -52,6 +53,7 @@ export function startScheduler() {
     reminders: SCHEDULES.reminders,
     reports: SCHEDULES.reports,
     recurringTasks: SCHEDULES.recurringTasks,
+    healthScores: SCHEDULES.healthScores,
   })
 
   jobs.push(
@@ -69,6 +71,9 @@ export function startScheduler() {
     }),
     new Cron(SCHEDULES.recurringTasks, { timezone: 'Europe/Rome' }, () => {
       callEndpoint('/api/tasks/generate-recurring', 'recurring-tasks')
+    }),
+    new Cron(SCHEDULES.healthScores, { timezone: 'Europe/Rome' }, () => {
+      callEndpoint('/api/crm/health/recalculate', 'health-scores')
     }),
   )
 
