@@ -229,7 +229,7 @@ model Client {
   tags         String[]     @default([])
   totalRevenue Decimal      @default(0) @db.Decimal(12, 2)
   portalUserId String?      @unique
-  portalUser   User?        @relation("ClientPortalUser", fields: [portalUserId], references: [id])
+  portalUser   User?        @relation("ClientPortalUser", fields: [portalUserId], references: [id], onDelete: SetNull)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -306,7 +306,7 @@ model AiSuggestion {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  acceptedBy   User?     @relation("SuggestionAcceptor", fields: [acceptedById], references: [id])
+  acceptedBy   User?     @relation("SuggestionAcceptor", fields: [acceptedById], references: [id], onDelete: SetNull)
 
   @@index([clientId])
   @@index([status, brandSlug])
@@ -367,7 +367,7 @@ model CampaignSend {
 
   client    Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
   contact   Contact?        @relation(fields: [contactId], references: [id])
-  sentBy    User?           @relation("EmailSentBy", fields: [sentById], references: [id])
+  sentBy    User?           @relation("EmailSentBy", fields: [sentById], references: [id], onDelete: SetNull)
   template  EmailTemplate?  @relation(fields: [templateId], references: [id])
 
   @@index([campaignName])
@@ -442,7 +442,7 @@ model Lead {
   status     String   @default("NEW")
   notes      String?  @db.Text
   assigneeId        String?
-  assignee          User?    @relation("LeadAssignee", fields: [assigneeId], references: [id])
+  assignee          User?    @relation("LeadAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   convertedClientId String?
   convertedClient   Client?  @relation("LeadConverted", fields: [convertedClientId], references: [id])
   deals             Deal[]
@@ -470,14 +470,14 @@ model Deal {
   clientId          String?
   leadId            String?
   contactId         String?
-  ownerId           String
+  ownerId           String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   client  Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
   lead    Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
   contact Contact? @relation(fields: [contactId], references: [id])
-  owner   User     @relation("DealOwner", fields: [ownerId], references: [id])
+  owner   User?    @relation("DealOwner", fields: [ownerId], references: [id], onDelete: SetNull)
 
   @@index([clientId])
   @@index([leadId])
@@ -608,7 +608,7 @@ model Task {
   milestoneId    String?
   parentId       String?
   assigneeId     String?
-  creatorId      String
+  creatorId      String?
   folderId       String?
   clientId       String?
   title          String
@@ -635,8 +635,8 @@ model Task {
   milestone  Milestone? @relation(fields: [milestoneId], references: [id])
   parent     Task?      @relation("TaskSubtasks", fields: [parentId], references: [id])
   subtasks   Task[]     @relation("TaskSubtasks")
-  assignee   User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  creator    User       @relation("TaskCreator", fields: [creatorId], references: [id])
+  assignee   User?      @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  creator    User?      @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: SetNull)
   folder     Folder?    @relation(fields: [folderId], references: [id])
   client     Client?    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   timeEntries    TimeEntry[]
@@ -702,7 +702,7 @@ model TaskAssignment {
   taskId     String
   task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   userId     String
-  user       User     @relation("TaskAssignments", fields: [userId], references: [id])
+  user       User     @relation("TaskAssignments", fields: [userId], references: [id], onDelete: Cascade)
   role       String   @default("assignee")
   assignedAt DateTime @default(now())
   assignedBy String?
@@ -716,7 +716,7 @@ model TaskAssignment {
 model TaskAttachment {
   id           String         @id @default(uuid())
   taskId       String
-  uploadedById String
+  uploadedById String?
   fileName     String
   fileUrl      String
   fileSize     Int
@@ -726,7 +726,7 @@ model TaskAttachment {
   createdAt    DateTime       @default(now())
 
   task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  uploadedBy User @relation(fields: [uploadedById], references: [id])
+  uploadedBy User? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 
   @@index([taskId])
   @@map("task_attachments")
@@ -773,7 +773,7 @@ model Folder {
 model ProjectAttachment {
   id           String         @id @default(uuid())
   projectId    String
-  uploadedById String
+  uploadedById String?
   folderId     String?
   fileName     String
   fileUrl      String
@@ -785,7 +785,7 @@ model ProjectAttachment {
   createdAt    DateTime       @default(now())
 
   project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  uploadedBy User    @relation(fields: [uploadedById], references: [id])
+  uploadedBy User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
   folder     Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
@@ -814,7 +814,7 @@ model TimeEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user User  @relation(fields: [userId], references: [id])
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   task Task? @relation(fields: [taskId], references: [id])
 
   @@index([userId])
@@ -849,7 +849,7 @@ model Quote {
   id                 String      @id @default(uuid())
   clientId           String
   projectId          String?
-  creatorId          String
+  creatorId          String?
   approverId         String?
   templateId         String?
   number             String      @unique
@@ -874,8 +874,8 @@ model Quote {
 
   client    Client          @relation(fields: [clientId], references: [id])
   project   Project?        @relation(fields: [projectId], references: [id])
-  creator   User            @relation("QuoteCreator", fields: [creatorId], references: [id])
-  approver  User?           @relation("QuoteApprover", fields: [approverId], references: [id])
+  creator   User?           @relation("QuoteCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  approver  User?           @relation("QuoteApprover", fields: [approverId], references: [id], onDelete: SetNull)
   template  QuoteTemplate?  @relation("QuoteFromTemplate", fields: [templateId], references: [id])
   lineItems QuoteLineItem[]
 
@@ -1135,7 +1135,7 @@ model Ticket {
   id          String       @id @default(uuid())
   clientId    String
   projectId   String?
-  creatorId   String
+  creatorId   String?
   assigneeId  String?
   number      String       @unique
   subject     String
@@ -1149,8 +1149,8 @@ model Ticket {
 
   client   Client   @relation(fields: [clientId], references: [id])
   project  Project? @relation(fields: [projectId], references: [id])
-  creator  User     @relation("TicketCreator", fields: [creatorId], references: [id])
-  assignee User?    @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  creator  User?    @relation("TicketCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  assignee User?    @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   comments Comment[]
 
   @@index([clientId])
@@ -1178,7 +1178,7 @@ enum TicketStatus {
 
 model Comment {
   id          String   @id @default(uuid())
-  authorId    String
+  authorId    String?
   taskId      String?
   ticketId    String?
   content     String   @db.Text
@@ -1187,7 +1187,7 @@ model Comment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  author   User      @relation(fields: [authorId], references: [id])
+  author   User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
   task     Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   ticket   Ticket?   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
@@ -1291,7 +1291,7 @@ model ActivityLog {
   metadata   Json?
   createdAt  DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([entityType, entityId])
@@ -1333,12 +1333,12 @@ model ChatChannel {
   type        ChannelType @default(PUBLIC)
   projectId   String?
   folderId    String?
-  createdById String
+  createdById String?
   isArchived  Boolean     @default(false)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  createdBy User          @relation("ChannelCreator", fields: [createdById], references: [id])
+  createdBy User?         @relation("ChannelCreator", fields: [createdById], references: [id], onDelete: SetNull)
   project   Project?      @relation(fields: [projectId], references: [id])
   folder    Folder?       @relation(fields: [folderId], references: [id], onDelete: SetNull)
   members   ChatMember[]
@@ -1372,7 +1372,7 @@ model ChatMember {
 model ChatMessage {
   id        String          @id @default(uuid())
   channelId String
-  authorId  String
+  authorId  String?
   content   String          @db.Text
   type      ChatMessageType @default(TEXT)
   metadata  Json?
@@ -1381,7 +1381,7 @@ model ChatMessage {
   createdAt DateTime        @default(now())
 
   channel ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  author  User        @relation(fields: [authorId], references: [id])
+  author  User?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([channelId, createdAt])
   @@index([authorId])
@@ -1500,7 +1500,7 @@ model SignatureRequest {
   documentTitle   String
   documentUrl     String    // PDF originale su MinIO
   signedPdfUrl    String?   // PDF firmato
-  requesterId     String
+  requesterId     String?
   signerName      String
   signerEmail     String
   signerPhone     String?
@@ -1514,7 +1514,7 @@ model SignatureRequest {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  requester       User      @relation("SignatureRequester", fields: [requesterId], references: [id])
+  requester       User?     @relation("SignatureRequester", fields: [requesterId], references: [id], onDelete: SetNull)
   signerClient    Client?   @relation("SignatureClient", fields: [signerClientId], references: [id])
   otpAttempts     SignatureOtp[]
   auditTrail      SignatureAudit[]
@@ -1755,14 +1755,14 @@ model WikiPage {
   excerpt     String?
   category    String     @default("general")
   tags        String[]   @default([])
-  authorId    String
+  authorId    String?
   isPublished Boolean    @default(false)
   sortOrder   Int        @default(0)
   parentId    String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  author      User       @relation(fields: [authorId], references: [id])
+  author      User?      @relation(fields: [authorId], references: [id], onDelete: SetNull)
   parent      WikiPage?  @relation("WikiHierarchy", fields: [parentId], references: [id])
   children    WikiPage[] @relation("WikiHierarchy")
 
@@ -1779,7 +1779,7 @@ model ProjectLink {
   id          String   @id @default(uuid())
   projectId   String
   folderId    String?
-  creatorId   String
+  creatorId   String?
   title       String
   url         String
   description String?  @db.Text
@@ -1789,7 +1789,7 @@ model ProjectLink {
 
   project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   folder  Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  creator User     @relation("ProjectLinkCreator", fields: [creatorId], references: [id])
+  creator User?    @relation("ProjectLinkCreator", fields: [creatorId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([folderId])

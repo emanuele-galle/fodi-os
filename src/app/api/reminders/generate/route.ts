@@ -46,9 +46,9 @@ export async function POST(request: NextRequest) {
     const existingTaskLinks = new Set(existingTaskNotifs.map((n) => n.link))
 
     const taskNotifsToCreate = dueTasks
-      .filter((task) => !existingTaskLinks.has(`/tasks?id=${task.id}`))
+      .filter((task) => task.assigneeId && !existingTaskLinks.has(`/tasks?id=${task.id}`))
       .map((task) => ({
-        userId: task.assigneeId!,
+        userId: task.assigneeId as string,
         type: 'reminder',
         title: `Task in scadenza: ${task.title}`,
         message: 'Questo task scade entro 24 ore.',
@@ -129,9 +129,9 @@ export async function POST(request: NextRequest) {
     const existingDealLinks = new Set(existingDealNotifs.map((n) => n.link))
 
     const dealNotifsToCreate = staleDeals
-      .filter((deal) => !existingDealLinks.has(`/crm/deals?id=${deal.id}`))
+      .filter((deal) => deal.ownerId && !existingDealLinks.has(`/crm/deals?id=${deal.id}`))
       .map((deal) => ({
-        userId: deal.ownerId,
+        userId: deal.ownerId as string,
         type: 'reminder',
         title: `Deal fermo: ${deal.title}`,
         message: 'Questo deal non viene aggiornato da oltre 30 giorni.',

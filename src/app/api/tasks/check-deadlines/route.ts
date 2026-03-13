@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     ) {
       for (const task of tasks) {
         const userIds = new Set<string>()
-        userIds.add(task.creatorId)
+        if (task.creatorId) userIds.add(task.creatorId)
         for (const a of task.assignments) userIds.add(a.userId)
 
         // Use groupKey for dedup: same task won't generate duplicate deadline notifications

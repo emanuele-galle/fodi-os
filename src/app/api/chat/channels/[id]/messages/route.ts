@@ -163,7 +163,7 @@ export async function POST(
       (id) => id !== userId && !sseManager.isUserConnected(id)
     )
     if (offlineMembers.length > 0) {
-      const authorName = `${message.author.firstName} ${message.author.lastName}`
+      const authorName = `${message.author?.firstName ?? ''} ${message.author?.lastName ?? ''}`.trim()
       for (const memberId of offlineMembers) {
         sendPush(memberId, {
           title: `Nuovo messaggio da ${authorName}`,
@@ -192,7 +192,7 @@ export async function POST(
           userId: u.id,
           type: 'MENTION',
           title: 'Menzione in chat',
-          message: `${author.firstName} ${author.lastName} ti ha menzionato in un messaggio`,
+          message: `${author?.firstName ?? ''} ${author?.lastName ?? ''} ti ha menzionato in un messaggio`.trim(),
           link: `/chat?channel=${channelId}`,
         }))
         await prisma.notification.createMany({ data: mentionNotifs })

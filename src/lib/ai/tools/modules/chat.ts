@@ -53,7 +53,7 @@ export const chatTools: AiToolDefinition[] = [
           memberCount: ch._count.members,
           lastMessage: lastMsg ? {
             content: lastMsg.content.slice(0, 100),
-            author: `${lastMsg.author.firstName} ${lastMsg.author.lastName}`,
+            author: `${lastMsg.author?.firstName ?? ''} ${lastMsg.author?.lastName ?? ''}`.trim(),
             createdAt: lastMsg.createdAt,
           } : null,
         }
@@ -149,7 +149,7 @@ export const chatTools: AiToolDefinition[] = [
         (id) => id !== context.userId && !sseManager.isUserConnected(id)
       )
       if (offlineMembers.length > 0) {
-        const authorName = `${message.author.firstName} ${message.author.lastName}`
+        const authorName = `${message.author?.firstName ?? ''} ${message.author?.lastName ?? ''}`.trim()
         for (const memberId of offlineMembers) {
           sendPush(memberId, {
             title: `Nuovo messaggio da ${authorName}`,
@@ -257,7 +257,7 @@ export const chatTools: AiToolDefinition[] = [
       })
 
       if (!sseManager.isUserConnected(targetUserId)) {
-        const authorName = `${message.author.firstName} ${message.author.lastName}`
+        const authorName = `${message.author?.firstName ?? ''} ${message.author?.lastName ?? ''}`.trim()
         sendPush(targetUserId, {
           title: `Messaggio da ${authorName}`,
           message: content.length > 100 ? content.slice(0, 100) + '...' : content,

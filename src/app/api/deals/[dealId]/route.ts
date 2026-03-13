@@ -93,7 +93,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         dealTitle: deal.title,
         oldStage: existing.stage,
         newStage: stage,
-        ownerId: existing.ownerId,
+        ownerId: existing.ownerId ?? userId,
         clientId: existing.clientId,
       }).catch((err) => console.error('[deals/PATCH] auto-task error:', err))
     }

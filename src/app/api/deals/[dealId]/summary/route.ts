@@ -66,7 +66,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     contextParts.push(`OPPORTUNITÀ: "${deal.title}"`)
     contextParts.push(`Valore: €${deal.value} | Fase: ${deal.stage} | Probabilità: ${deal.probability}%`)
-    contextParts.push(`Owner: ${deal.owner.firstName} ${deal.owner.lastName}`)
+    contextParts.push(`Owner: ${deal.owner?.firstName ?? ''} ${deal.owner?.lastName ?? ''}`.trim())
     if (deal.client) contextParts.push(`Cliente: ${deal.client.companyName}`)
     if (deal.lead) contextParts.push(`Lead: ${deal.lead.name}${deal.lead.company ? ` (${deal.lead.company})` : ''}`)
     if (deal.contact) contextParts.push(`Contatto: ${deal.contact.firstName} ${deal.contact.lastName}`)

@@ -304,7 +304,7 @@ export const taskTools: AiToolDefinition[] = [
       // Notify task participants (skip for completed/cancelled tasks)
       if (task.status !== 'DONE' && task.status !== 'CANCELLED') {
         const recipients = await getTaskParticipants(taskId)
-        const authorName = `${comment.author.firstName} ${comment.author.lastName}`
+        const authorName = `${comment.author?.firstName} ${comment.author?.lastName}`
         await dispatchNotification({
           type: 'task_comment',
           title: 'Nuovo commento',

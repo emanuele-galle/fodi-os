@@ -95,7 +95,9 @@ export async function POST(
       select: { authorId: true },
       distinct: ['authorId'],
     })
-    for (const c of previousCommenters) recipients.add(c.authorId)
+    for (const c of previousCommenters) {
+      if (c.authorId) recipients.add(c.authorId)
+    }
 
     if (recipients.size > 0) {
       await dispatchNotification({

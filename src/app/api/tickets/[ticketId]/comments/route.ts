@@ -41,6 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- ticket notification logic with null checks
 export async function POST(request: NextRequest, { params }: { params: Promise<{ ticketId: string }> }) {
   try {
     const role = request.headers.get('x-user-role') as Role
@@ -86,9 +87,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       select: { authorId: true },
       distinct: ['authorId'],
     })
-    for (const c of previousCommenters) recipients.add(c.authorId)
+    for (const c of previousCommenters) {
+      if (c.authorId) recipients.add(c.authorId)
+    }
 
-    const authorName = `${comment.author.firstName} ${comment.author.lastName}`
+    const authorName = `${comment.author?.firstName ?? ''} ${comment.author?.lastName ?? ''}`.trim()
     await dispatchNotification({
       type: 'ticket_comment',
       title: 'Nuovo commento su ticket',

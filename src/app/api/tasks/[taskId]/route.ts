@@ -504,7 +504,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     // Collect participants before deletion
     const deleteParticipants = [
-      existing.creatorId,
+      ...(existing.creatorId ? [existing.creatorId] : []),
       ...(existing.assigneeId ? [existing.assigneeId] : []),
       ...existing.assignments.map((a) => a.userId),
     ]

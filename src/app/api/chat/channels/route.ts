@@ -68,8 +68,8 @@ export async function GET(request: NextRequest) {
         lastMessage: lastMessage
           ? {
               content: lastMessage.content.slice(0, 100),
-              authorName: `${lastMessage.author.firstName} ${lastMessage.author.lastName}`,
-              authorId: lastMessage.author.id,
+              authorName: `${lastMessage.author?.firstName ?? ''} ${lastMessage.author?.lastName ?? ''}`.trim(),
+              authorId: lastMessage.author?.id,
               createdAt: lastMessage.createdAt,
             }
           : null,

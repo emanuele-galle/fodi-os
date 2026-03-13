@@ -6,7 +6,7 @@ import { sendDataChanged } from '@/lib/sse'
 
 const CRON_SECRET = process.env.CRON_SECRET
 
-async function generateInstanceForRule(rule: Awaited<ReturnType<typeof prisma.recurrenceRule.findFirst>> & { task: { id: string; title: string; description: string | null; priority: string; projectId: string | null; folderId: string | null; clientId: string | null; creatorId: string; isPersonal: boolean; tags: string[]; taskType: string | null; assignments: { userId: string; role: string }[] } }) {
+async function generateInstanceForRule(rule: Awaited<ReturnType<typeof prisma.recurrenceRule.findFirst>> & { task: { id: string; title: string; description: string | null; priority: string; projectId: string | null; folderId: string | null; clientId: string | null; creatorId: string | null; isPersonal: boolean; tags: string[]; taskType: string | null; assignments: { userId: string; role: string }[] } }) {
   if (!rule) return null
 
   const { task } = rule
@@ -33,14 +33,14 @@ async function generateInstanceForRule(rule: Awaited<ReturnType<typeof prisma.re
         projectId: task.projectId,
         folderId: task.folderId,
         clientId: task.clientId,
-        creatorId: task.creatorId,
+        creatorId: task.creatorId ?? '',
         isPersonal: task.isPersonal,
         tags: task.tags,
         taskType: task.taskType,
         status: 'TODO',
         boardColumn: 'todo',
         recurrenceTemplateId: task.id,
-        assigneeId: task.assignments[0]?.userId ?? task.creatorId,
+        assigneeId: task.assignments[0]?.userId ?? task.creatorId ?? '',
       },
     })
 
@@ -51,7 +51,7 @@ async function generateInstanceForRule(rule: Awaited<ReturnType<typeof prisma.re
           taskId: newTask.id,
           userId: a.userId,
           role: a.role,
-          assignedBy: task.creatorId,
+          assignedBy: task.creatorId ?? '',
         })),
         skipDuplicates: true,
       })

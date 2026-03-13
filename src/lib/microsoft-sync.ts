@@ -117,7 +117,7 @@ export async function pushTaskToMicrosoftTodo(taskId: string, action: 'create' |
     // Get all users connected to Microsoft that are involved with this task
     const userIds = new Set<string>()
     if (task) {
-      userIds.add(task.creatorId)
+      if (task.creatorId) userIds.add(task.creatorId)
       if (task.assigneeId) userIds.add(task.assigneeId)
       task.assignments.forEach((a) => userIds.add(a.userId))
     }

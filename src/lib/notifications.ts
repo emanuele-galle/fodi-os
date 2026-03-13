@@ -272,9 +272,11 @@ export async function getTaskParticipants(taskId: string): Promise<string[]> {
   if (!task) return []
 
   const ids = new Set<string>()
-  ids.add(task.creatorId)
+  if (task.creatorId) ids.add(task.creatorId)
   for (const a of task.assignments) ids.add(a.userId)
-  for (const c of task.comments) ids.add(c.authorId)
+  for (const c of task.comments) {
+    if (c.authorId) ids.add(c.authorId)
+  }
 
   return Array.from(ids)
 }
