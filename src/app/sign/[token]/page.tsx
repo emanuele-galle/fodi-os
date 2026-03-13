@@ -153,7 +153,7 @@ export default function SignPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col">
       {/* Header with logo */}
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
+      <header className="border-b border-slate-200 bg-white">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
           {company?.logoUrl ? (
             <Image src={company.logoUrl} alt={company.ragioneSociale} width={120} height={40} className="h-10 w-auto max-w-[120px] object-contain" unoptimized />

@@ -31,14 +31,6 @@ html {
   --color-sidebar-divider: rgba(0, 0, 0, 0.08);
   --color-warning: #FF9500;
 
-  /* iOS 26 Liquid Glass material */
-  --glass-blur: 20px;
-  --glass-saturation: 180%;
-  --glass-bg-light: rgba(255, 255, 255, 0.72);
-  --glass-bg-dark: rgba(28, 28, 30, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.18);
-  --glass-border-dark: rgba(255, 255, 255, 0.08);
-
   /* Apple label hierarchy */
   --color-label-secondary: rgba(60, 60, 67, 0.60);
   --color-label-tertiary: rgba(60, 60, 67, 0.36);
@@ -113,15 +105,15 @@ html {
   --color-label-tertiary: rgba(235, 235, 245, 0.36);
 }
 
-/* ===== Sheet — Glass translucent (theme-aware) ===== */
+/* ===== Sheet (theme-aware) ===== */
 :root, [data-theme="light"] {
-  --color-sheet: rgba(255, 255, 255, 0.85);
+  --color-sheet: #FFFFFF;
   --color-sheet-foreground: #1D1D1F;
   --color-sheet-muted: #6E6E73;
   --color-sheet-border: rgba(0, 0, 0, 0.08);
 }
 [data-theme="dark"] {
-  --color-sheet: rgba(28, 28, 30, 0.85);
+  --color-sheet: #1C1C1E;
   --color-sheet-foreground: #F5F5F7;
   --color-sheet-muted: #8E8E93;
   --color-sheet-border: rgba(255, 255, 255, 0.08);
@@ -353,10 +345,9 @@ html {
   animation-delay: -4s;
 }
 
-/* Glassmorphism card */
+/* AI glass card (no blur) */
 .ai-glass {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -651,18 +642,11 @@ html {
   border-color: var(--color-border);
 }
 
-/* iOS 26 Liquid Glass — Card (floating elements only) */
+/* Card (solid background) */
 .glass-card {
-  background: var(--glass-bg-light);
-  backdrop-filter: saturate(160%) blur(16px);
-  -webkit-backdrop-filter: saturate(160%) blur(16px);
-  border: 1px solid var(--glass-border);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: 1rem;
-}
-
-[data-theme="dark"] .glass-card {
-  background: var(--glass-bg-dark);
-  border-color: var(--glass-border-dark);
 }
 
 .shadow-lift {
@@ -758,28 +742,15 @@ html {
   display: none;
 }
 
-/* iOS 26 Liquid Glass — Header */
+/* Header (solid background) */
 .glass-header {
-  background: var(--glass-bg-light);
-  backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur));
-  -webkit-backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur));
-  border-bottom: 1px solid var(--glass-border);
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
 }
 
-[data-theme="dark"] .glass-header {
-  background: var(--glass-bg-dark);
-  border-bottom-color: var(--glass-border-dark);
-}
-
-/* iOS 26 Liquid Glass — Sidebar */
+/* Sidebar (solid background) */
 .glass-sidebar {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur));
-  -webkit-backdrop-filter: saturate(var(--glass-saturation)) blur(var(--glass-blur));
-}
-
-[data-theme="dark"] .glass-sidebar {
-  background: rgba(28, 28, 30, 0.85);
+  background: var(--color-sidebar);
 }
 
 /* Stat card hover */
@@ -943,9 +914,6 @@ body.modal-open [data-bottom-nav] {
 
 /* Smooth color transitions only for theme-aware containers */
 body,
-.glass-card,
-.glass-header,
-.glass-sidebar,
 [data-theme] > div {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }

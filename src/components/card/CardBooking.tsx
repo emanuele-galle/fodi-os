@@ -127,7 +127,7 @@ export default function CardBooking({ slug, duration }: CardBookingProps) {
         <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/[0.06]" />
       </div>
 
-      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm p-5 overflow-hidden">
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 overflow-hidden">
         {error && step !== 'success' && (
           <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/15 text-red-400 text-sm text-center">
             {error}

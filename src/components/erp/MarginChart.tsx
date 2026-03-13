@@ -19,7 +19,7 @@ interface MarginData {
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; dataKey: string }[]; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border border-border/50 bg-card/95 backdrop-blur-sm px-4 py-3 shadow-lg">
+    <div className="rounded-xl border border-border/50 bg-card px-4 py-3 shadow-lg">
       <p className="text-xs font-medium text-muted mb-2">{label}</p>
       {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center justify-between gap-4 text-sm">

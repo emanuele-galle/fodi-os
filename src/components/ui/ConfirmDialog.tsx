@@ -47,10 +47,10 @@ export function ConfirmDialog({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 backdrop-blur-xl animate-fade-in"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 animate-fade-in"
       onClick={(e) => e.target === overlayRef.current && onCancel()}
     >
-      <div role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" className="bg-card/80 backdrop-blur-2xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in rounded-2xl w-full max-w-sm mx-4 p-6">
+      <div role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" className="bg-card shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in rounded-2xl w-full max-w-sm mx-4 p-6">
         <div className="flex items-start gap-4">
           {variant === 'danger' && (
             <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">

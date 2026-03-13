@@ -70,7 +70,7 @@ export function AiChatSidebar({ open, onClose }: AiChatSidebarProps) {
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 400, damping: 35 }}
             style={{ width: `${width}px` }}
-            className="fixed top-0 right-0 h-full sm:w-auto w-full backdrop-blur-xl bg-background/95 border-l border-border z-50 flex flex-col shadow-2xl shadow-black/20"
+            className="fixed top-0 right-0 h-full sm:w-auto w-full bg-background border-l border-border z-50 flex flex-col shadow-2xl shadow-black/20"
           >
             {/* Resize handle — desktop only */}
             <div

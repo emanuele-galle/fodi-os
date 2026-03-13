@@ -89,12 +89,12 @@ export function MobileNotificationsPanel({ onClose }: MobileNotificationsPanelPr
     <div className="fixed inset-0 z-[60] md:hidden">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-xl"
+        className="absolute inset-0 bg-black/30"
         onClick={onClose}
       />
 
       {/* Panel - slides up from bottom */}
-      <div className="absolute bottom-0 left-0 right-0 bg-[var(--color-sheet)] backdrop-blur-2xl saturate-[var(--glass-saturation)] rounded-t-xl shadow-[var(--shadow-xl)] animate-slide-up max-h-[85vh] flex flex-col">
+      <div className="absolute bottom-0 left-0 right-0 bg-[var(--color-sheet)] rounded-t-xl shadow-[var(--shadow-xl)] animate-slide-up max-h-[85vh] flex flex-col">
         {/* Drag handle */}
         <div className="flex justify-center pt-2.5 pb-1">
           <div className="w-10 h-1.5 rounded-full bg-border/40" />

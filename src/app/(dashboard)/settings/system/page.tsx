@@ -47,7 +47,7 @@ const CHANGELOG: ChangelogEntry[] = [
         icon: Sparkles,
         items: [
           'Nuovi campi social: Facebook, TikTok, YouTube, Telegram',
-          'Redesign dark premium completo: sfondo #0a0a0f, gradient ring avatar, glassmorphism',
+          'Redesign dark premium completo: sfondo #0a0a0f, gradient ring avatar',
           'Anteprima card nelle impostazioni riscritta con stile dark realistico',
           'vCard: aggiunto campo PHOTO per salvare immagine profilo nel contatto',
           'Sezione Prenotazione Appuntamenti: grafica sincronizzata con tema dark',

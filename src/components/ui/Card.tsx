@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'glass'
+  variant?: 'default'
 }
 
 export function Card({

@@ -30,7 +30,7 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { name:
   if (!active || !payload?.length) return null
   const item = payload[0]
   return (
-    <div className="rounded-xl border border-border/50 bg-card/95 backdrop-blur-sm px-4 py-3 shadow-lg">
+    <div className="rounded-xl border border-border/50 bg-card px-4 py-3 shadow-lg">
       <div className="flex items-center gap-2 text-sm">
         <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS[item.payload.status] || '#8C8680' }} />
         <span className="text-muted">{STATUS_LABELS[item.payload.status] || item.payload.status}</span>

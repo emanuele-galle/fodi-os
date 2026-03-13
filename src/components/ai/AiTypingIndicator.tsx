@@ -74,7 +74,7 @@ export function AiTypingIndicator({ activeToolName }: AiTypingIndicatorProps) {
     <div className="flex gap-3 ai-bubble-in">
       <AiAnimatedAvatar size="sm" className="flex-shrink-0" />
       <div className="flex flex-col gap-1.5">
-        <div className="rounded-2xl rounded-tl-md bg-white/[0.04] backdrop-blur-sm border border-white/[0.06] px-4 py-3 flex items-center gap-1.5">
+        <div className="rounded-2xl rounded-tl-md bg-white/[0.04] border border-white/[0.06] px-4 py-3 flex items-center gap-1.5">
           {DOT_STYLES.map((style, i) => (
             <div
               key={i}

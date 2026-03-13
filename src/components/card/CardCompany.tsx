@@ -16,7 +16,7 @@ export default function CardCompany({ company }: CardCompanyProps) {
   if (!company) return null
 
   const content = (
-    <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm p-5">
+    <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5">
       {/* Top accent line */}
       <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
 

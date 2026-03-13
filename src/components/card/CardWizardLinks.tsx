@@ -42,7 +42,7 @@ export default function CardWizardLinks({ wizards, cardSlug }: CardWizardLinksPr
             className="block group"
             style={{ animationDelay: `${index * 60}ms` }}
           >
-            <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm p-5 transition-all duration-300 hover:bg-white/[0.05] hover:border-white/[0.1]">
+            <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all duration-300 hover:bg-white/[0.05] hover:border-white/[0.1]">
               {/* Top accent */}
               <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 

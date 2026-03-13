@@ -75,7 +75,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[60] flex items-stretch md:items-center justify-center bg-black/30 backdrop-blur-xl animate-fade-in"
+      className="fixed inset-0 z-[60] flex items-stretch md:items-center justify-center bg-black/40 animate-fade-in"
       onClick={(e) => e.target === overlayRef.current && attemptClose()}
     >
       <div
@@ -83,7 +83,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md', 
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
         className={cn(
-          'glass-card bg-card/95 backdrop-blur-2xl shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in flex flex-col',
+          'bg-card shadow-[var(--shadow-xl)] border border-border/30 animate-scale-in flex flex-col',
           // Mobile fallback (forceDialog or preventAccidentalClose): full-screen
           'w-full h-[100dvh] rounded-none',
           // Desktop: centered dialog

@@ -161,7 +161,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
         <div className="fixed inset-0 z-40 md:hidden">
           <div
             className={cn(
-              'absolute inset-0 bg-black/30 backdrop-blur-xl transition-opacity duration-250',
+              'absolute inset-0 bg-black/30 transition-opacity duration-250',
               closing ? 'opacity-0' : 'opacity-100'
             )}
             onClick={closeMenu}
@@ -292,7 +292,7 @@ export function BottomNav({ userRole, sectionAccess, customRoleSectionAccess, un
       )}
 
       {/* Bottom Nav Bar */}
-      <nav data-bottom-nav aria-label="Navigazione inferiore" className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[var(--color-sheet)] backdrop-blur-2xl saturate-[var(--glass-saturation)] border-t border-[var(--color-sheet-border)] pb-[max(env(safe-area-inset-bottom,0px),8px)]">
+      <nav data-bottom-nav aria-label="Navigazione inferiore" className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[var(--color-sheet)] border-t border-[var(--color-sheet-border)] pb-[max(env(safe-area-inset-bottom,0px),8px)]">
         <div className="flex items-center justify-around h-[50px]">
           {TAB_ITEMS.map((tab) => {
             const active = isTabActive(tab.href)

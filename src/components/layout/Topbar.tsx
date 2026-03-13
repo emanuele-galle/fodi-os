@@ -193,7 +193,7 @@ export function Topbar({ user, onOpenCommandPalette, onToggleAiSidebar }: Topbar
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-[var(--shadow-xl)] z-50 animate-scale-in">
+            <div className="absolute right-0 mt-2 w-80 bg-card border border-border/40 rounded-2xl shadow-[var(--shadow-xl)] z-50 animate-scale-in">
               <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
                 <p className="text-sm font-medium">Notifiche</p>
                 {unreadCount > 0 && (
@@ -307,7 +307,7 @@ export function Topbar({ user, onOpenCommandPalette, onToggleAiSidebar }: Topbar
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-[var(--shadow-xl)] py-1 z-50 animate-scale-in">
+            <div className="absolute right-0 mt-2 w-56 bg-card border border-border/40 rounded-2xl shadow-[var(--shadow-xl)] py-1 z-50 animate-scale-in">
               <div className="px-4 py-2.5 border-b border-border/30">
                 <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
                 <p className="text-xs text-muted">{user.email}</p>

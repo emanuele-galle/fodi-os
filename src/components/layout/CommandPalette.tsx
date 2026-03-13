@@ -218,7 +218,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40"
       />
 
       {/* Dialog */}
@@ -227,7 +227,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           initial={{ opacity: 0, scale: 0.95, y: -10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          className="w-full max-w-lg mx-4 glass-card bg-card/95 backdrop-blur-2xl rounded-2xl border border-border/30 shadow-2xl overflow-hidden"
+          className="w-full max-w-lg mx-4 bg-card rounded-2xl border border-border/30 shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Search input */}

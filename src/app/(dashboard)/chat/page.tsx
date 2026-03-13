@@ -35,7 +35,7 @@ export default function ChatPage() {
   return (
     <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-5rem)] lg:h-[calc(100vh-4rem)] h-[calc(100dvh-7.5rem)] md:h-[calc(100dvh-5rem)] lg:h-[calc(100dvh-4rem)] -mx-5 -mt-4 -mb-24 md:-mx-6 lg:-mx-8 md:-mt-6 lg:-mt-8 md:-mb-6 lg:-mb-8 relative overflow-hidden">
       {/* Left panel - Channel list */}
-      <div className={`w-full md:w-[320px] lg:w-[340px] border-r border-border/50 flex-shrink-0 bg-card/95 backdrop-blur-sm ${chat.selectedId ? 'hidden lg:flex lg:flex-col' : 'flex flex-col'}`}>
+      <div className={`w-full md:w-[320px] lg:w-[340px] border-r border-border/50 flex-shrink-0 bg-card ${chat.selectedId ? 'hidden lg:flex lg:flex-col' : 'flex flex-col'}`}>
         {chat.channelError && (
           <div className="mx-3 mt-3 flex items-center justify-between rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2">
             <p className="text-xs text-destructive">{chat.channelError}</p>
@@ -58,7 +58,7 @@ export default function ChatPage() {
         {chat.selectedId ? (
           <>
             {/* Channel header */}
-            <div className="border-b border-border/50 px-4 md:px-4 lg:px-6 py-2.5 flex items-center gap-3 bg-card/80 backdrop-blur-sm">
+            <div className="border-b border-border/50 px-4 md:px-4 lg:px-6 py-2.5 flex items-center gap-3 bg-card">
               <button
                 onClick={chat.handleBack}
                 className="lg:hidden p-1.5 rounded-lg hover:bg-secondary/80 mr-1 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"

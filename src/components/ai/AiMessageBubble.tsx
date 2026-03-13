@@ -168,7 +168,7 @@ export function AiMessageBubble({ message }: AiMessageBubbleProps) {
               'rounded-2xl px-4 py-3 text-sm leading-relaxed',
               isUser
                 ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/15 rounded-tr-md border border-blue-400/10'
-                : 'bg-white/[0.04] backdrop-blur-sm border border-white/[0.06] text-foreground rounded-tl-md',
+                : 'bg-white/[0.04] border border-white/[0.06] text-foreground rounded-tl-md',
             )}>
               {isUser ? (
                 <div className="whitespace-pre-wrap break-words">{message.content}</div>

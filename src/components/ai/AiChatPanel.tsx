@@ -200,7 +200,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
     >
       {/* Drag overlay */}
       {isDragOver && (
-        <div className="absolute inset-0 z-20 bg-blue-500/10 border-2 border-dashed border-blue-400/40 rounded-xl flex items-center justify-center backdrop-blur-sm">
+        <div className="absolute inset-0 z-20 bg-blue-500/10 border-2 border-dashed border-blue-400/40 rounded-xl flex items-center justify-center">
           <div className="text-center">
             <Paperclip className="h-8 w-8 text-blue-400 mx-auto mb-2" />
             <p className="text-sm font-medium text-blue-300">Rilascia per allegare</p>
@@ -267,7 +267,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
 
       {/* History Panel */}
       {showHistory && (
-        <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-xl flex flex-col">
+        <div className="absolute inset-0 z-10 bg-background flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
             <h3 className="text-sm font-semibold">Conversazioni</h3>
             <button onClick={closeHistory} className="p-1 rounded-lg hover:bg-white/[0.06]">
@@ -348,7 +348,7 @@ export function AiChatPanel({ compact = false, onExpand, onCollapse, initialConv
 
       {/* Input */}
       <div className="px-3 py-3 border-t border-white/[0.06]">
-        <div className="ai-input-container rounded-2xl border border-border/50 bg-card/60 backdrop-blur-xl">
+        <div className="ai-input-container rounded-2xl border border-border/50 bg-card">
           {/* File preview cards */}
           {pendingFiles.length > 0 && (
             <div className="flex gap-2 px-3 pt-3 pb-1">

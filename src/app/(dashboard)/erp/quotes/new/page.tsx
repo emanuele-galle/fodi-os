@@ -472,7 +472,7 @@ export default function NewQuotePage() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-3 sticky bottom-0 bg-background/95 backdrop-blur-sm py-4 -mx-5 px-5 lg:static lg:bg-transparent lg:backdrop-blur-none lg:py-0 lg:mx-0 lg:px-0 border-t border-border/50 lg:border-0">
+        <div className="flex justify-end gap-3 sticky bottom-0 bg-background py-4 -mx-5 px-5 lg:static lg:bg-transparent lg:py-0 lg:mx-0 lg:px-0 border-t border-border/50 lg:border-0">
           <Button type="button" variant="outline" onClick={() => router.push('/erp/quotes')}>
             Annulla
           </Button>

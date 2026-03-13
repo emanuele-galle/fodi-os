@@ -96,7 +96,7 @@ export default async function WizardPage({ params }: PageProps) {
         </div>
 
         {/* Wizard card */}
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm p-6 card-fade-in card-delay-3">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 card-fade-in card-delay-3">
           {/* Top accent */}
           <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 

@@ -220,7 +220,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
             animate={{ width: 280, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="hidden md:flex flex-shrink-0 border-r border-white/[0.06] flex-col bg-background/60 backdrop-blur-xl overflow-hidden"
+            className="hidden md:flex flex-shrink-0 border-r border-white/[0.06] flex-col bg-background overflow-hidden"
           >
             {sidebarContent}
           </motion.div>
@@ -235,7 +235,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30"
+              className="md:hidden fixed inset-0 bg-black/40 z-30"
               onClick={toggleSidebar}
             />
             <motion.div
@@ -243,7 +243,7 @@ export function AiFullscreenLayout({ userName }: AiFullscreenLayoutProps) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-              className="md:hidden fixed inset-y-0 left-0 w-[85%] max-w-[320px] z-40 flex flex-col bg-background/95 backdrop-blur-xl border-r border-white/[0.06] shadow-2xl"
+              className="md:hidden fixed inset-y-0 left-0 w-[85%] max-w-[320px] z-40 flex flex-col bg-background border-r border-white/[0.06] shadow-2xl"
             >
               {sidebarContent}
             </motion.div>
@@ -350,7 +350,7 @@ function WelcomeScreen({ userName, onAction, onOpenHistory }: { userName?: strin
     >
       {/* Drag overlay */}
       {isDragOver && (
-        <div className="absolute inset-0 z-20 bg-blue-500/10 border-2 border-dashed border-blue-400/40 rounded-xl flex items-center justify-center backdrop-blur-sm">
+        <div className="absolute inset-0 z-20 bg-blue-500/10 border-2 border-dashed border-blue-400/40 rounded-xl flex items-center justify-center">
           <div className="text-center">
             <Paperclip className="h-8 w-8 text-blue-400 mx-auto mb-2" />
             <p className="text-sm font-medium text-blue-300">Rilascia per allegare</p>
@@ -416,7 +416,7 @@ function WelcomeScreen({ userName, onAction, onOpenHistory }: { userName?: strin
           className="ai-fade-in-blur"
           style={{ animationDelay: '0.2s' }}
         >
-          <div className="ai-input-container rounded-2xl border border-border/60 bg-card/80 backdrop-blur-xl">
+          <div className="ai-input-container rounded-2xl border border-border/60 bg-card">
             {/* File preview cards */}
             {pendingFiles.length > 0 && (
               <div className="flex gap-2 px-4 pt-3 pb-1">

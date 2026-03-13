@@ -79,7 +79,7 @@ export default function CardActions({
               href={action.href}
               target={action.external ? '_blank' : undefined}
               rel={action.external ? 'noopener noreferrer' : undefined}
-              className="group relative flex flex-col items-center gap-3 py-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm transition-all duration-300 hover:bg-white/[0.06] hover:border-white/[0.1] active:scale-[0.97]"
+              className="group relative flex flex-col items-center gap-3 py-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] transition-all duration-300 hover:bg-white/[0.06] hover:border-white/[0.1] active:scale-[0.97]"
             >
               {/* Glow on hover */}
               <div
