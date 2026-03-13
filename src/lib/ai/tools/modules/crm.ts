@@ -956,4 +956,109 @@ export const crmTools: AiToolDefinition[] = [
       return { success: true, data: cs }
     },
   },
+
+  // Phase 5: Communication Center
+  {
+    name: 'compose_email',
+    description: 'Genera un\'email AI personalizzata per un cliente. Scenari: followup, reengagement, thank_you, project_update, proposta_consulenza, presentazione_servizi, richiesta_feedback, invito_evento, proposta_collaborazione, custom.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente (obbligatorio)' },
+        scenario: { type: 'string', description: 'Scenario email (obbligatorio)' },
+        contactId: { type: 'string', description: 'ID del contatto destinatario (opzionale, usa primario)' },
+        customPrompt: { type: 'string', description: 'Prompt personalizzato (solo per scenario custom)' },
+        send: { type: 'boolean', description: 'Se true, invia immediatamente l\'email (default: false)' },
+      },
+      required: ['clientId', 'scenario'],
+    },
+    module: 'crm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput, context: AiToolContext) => {
+      const { composeEmail } = await import('@/lib/crm/email-composer')
+      const composed = await composeEmail({
+        clientId: input.clientId as string,
+        contactId: input.contactId as string | undefined,
+        scenario: input.scenario as 'followup',
+        customPrompt: input.customPrompt as string | undefined,
+      })
+
+      if (input.send) {
+        const { sendViaSMTP } = await import('@/lib/email')
+        const sent = await sendViaSMTP(composed.contactEmail, composed.subject, composed.bodyHtml)
+        await prisma.campaignSend.create({
+          data: {
+            campaignName: `ai-agent-${input.scenario}`,
+            clientId: input.clientId as string,
+            contactId: composed.contactId,
+            contactEmail: composed.contactEmail,
+            subject: composed.subject,
+            bodyHtml: composed.bodyHtml,
+            scenario: input.scenario as string,
+            status: sent ? 'SENT' : 'FAILED',
+            sentAt: sent ? new Date() : null,
+            sentById: context.userId,
+          },
+        })
+        await prisma.interaction.create({
+          data: {
+            clientId: input.clientId as string,
+            contactId: composed.contactId,
+            type: 'EMAIL',
+            subject: `Email inviata: ${composed.subject}`,
+            content: `Destinatario: ${composed.contactEmail} | Scenario: ${input.scenario} | Via: AI Agent`,
+          },
+        })
+        return { success: true, data: { ...composed, sent, status: sent ? 'SENT' : 'FAILED' } }
+      }
+
+      return { success: true, data: composed }
+    },
+  },
+  {
+    name: 'get_communication_history',
+    description: 'Cronologia comunicazioni email inviate a un cliente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente (obbligatorio)' },
+        limit: { type: 'number', description: 'Max risultati (default 10)' },
+      },
+      required: ['clientId'],
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const limit = Math.min(Number(input.limit) || 10, 30)
+      const sends = await prisma.campaignSend.findMany({
+        where: { clientId: input.clientId as string },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        select: {
+          id: true, campaignName: true, contactEmail: true, subject: true,
+          scenario: true, status: true, sentAt: true, createdAt: true,
+          sentBy: { select: { firstName: true, lastName: true } },
+        },
+      })
+      return { success: true, data: { communications: sends, total: sends.length } }
+    },
+  },
+  {
+    name: 'suggest_communication_plan',
+    description: 'Genera un piano di comunicazione AI personalizzato per un cliente con 3-5 step.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente (obbligatorio)' },
+      },
+      required: ['clientId'],
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const { generateCommunicationPlan } = await import('@/lib/crm/communication-planner')
+      const plan = await generateCommunicationPlan(input.clientId as string)
+      return { success: true, data: plan }
+    },
+  },
 ]

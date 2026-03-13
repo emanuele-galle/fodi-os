@@ -8,6 +8,7 @@ import { ClientAiInsights } from './ClientAiInsights'
 import { ClientBriefing } from './ClientBriefing'
 import { AiSuggestionsPanel } from './AiSuggestionsPanel'
 import { GenerateEmailButton } from './GenerateEmailButton'
+import { CommunicationPlanPanel } from './CommunicationPlanPanel'
 import type { ClientDetail } from './types'
 
 interface ClientOverviewTabProps {
@@ -38,6 +39,9 @@ export function ClientOverviewTab({ client }: ClientOverviewTabProps) {
               <GenerateEmailButton clientId={client.id} />
             </div>
             <ClientBriefing clientId={client.id} />
+            <div className="mt-4 pt-4 border-t border-border">
+              <CommunicationPlanPanel clientId={client.id} />
+            </div>
           </CardContent>
         </Card>
       </div>

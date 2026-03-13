@@ -45,6 +45,7 @@ const MODULE_CAPABILITIES: Record<string, { condition: Module; description: stri
     { condition: 'crm', description: '**Health Score**: health score clienti, clienti a rischio, insights AI per retention' },
     { condition: 'crm', description: '**AI Proattiva**: suggerimenti AI, briefing pre-meeting, analisi churn risk' },
     { condition: 'crm', description: '**Catalogo Servizi & Cross-sell**: catalogo servizi, servizi assegnati ai clienti, suggerimenti cross-sell AI' },
+    { condition: 'crm', description: '**Centro Comunicazioni**: componi email AI, cronologia invii, piano comunicazioni personalizzato' },
   ],
   erp: [
     { condition: 'erp', description: '**ERP & Finanza**: preventivi (da template), spese, entrate, report mensile, fatture ricorrenti, dashboard contabile, obiettivi profitto' },

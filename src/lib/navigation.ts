@@ -106,6 +106,7 @@ export const navigation: NavItem[] = [
       { label: 'Pipeline', href: '/crm/pipeline' },
       { label: 'Attività', href: '/crm/tasks' },
       { label: 'Leads', href: '/crm/leads' },
+      { label: 'Comunicazioni', href: '/crm/comunicazioni' },
       { label: 'Gestione Tag', href: '/crm/settings/tags' },
     ],
     group: 'admin',

@@ -75,6 +75,7 @@ model User {
   aiConversations      AiConversation[]
   aiPreferences        AiUserPreference[]
   acceptedSuggestions  AiSuggestion[]   @relation("SuggestionAcceptor")
+  sentEmails           CampaignSend[]   @relation("EmailSentBy")
 
   workSchedule     Json?    @default("{\"1\":{\"start\":9,\"end\":18},\"2\":{\"start\":9,\"end\":18},\"3\":{\"start\":9,\"end\":18},\"4\":{\"start\":9,\"end\":18},\"5\":{\"start\":9,\"end\":18}}")
 
@@ -249,6 +250,7 @@ model Client {
   healthScore     ClientHealthScore?
   aiSuggestions   AiSuggestion[]
   clientServices  ClientService[]
+  campaignSends   CampaignSend[]
 
   @@index([status])
   @@index([slug])
@@ -341,6 +343,8 @@ model EmailTemplate {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  campaignSends CampaignSend[]
+
   @@index([brandSlug, category])
   @@map("email_templates")
 }
@@ -349,14 +353,27 @@ model CampaignSend {
   id           String    @id @default(uuid())
   campaignName String
   clientId     String
+  contactId    String?
   contactEmail String
   subject      String
+  bodyHtml     String?   @db.Text
+  scenario     String?
+  templateId   String?
   status       String    @default("PENDING")
   sentAt       DateTime?
+  sentById     String?
+  metadata     Json?
   createdAt    DateTime  @default(now())
+
+  client    Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contact   Contact?        @relation(fields: [contactId], references: [id])
+  sentBy    User?           @relation("EmailSentBy", fields: [sentById], references: [id])
+  template  EmailTemplate?  @relation(fields: [templateId], references: [id])
 
   @@index([campaignName])
   @@index([clientId])
+  @@index([sentById])
+  @@index([createdAt])
   @@map("campaign_sends")
 }
 
@@ -374,9 +391,10 @@ model Contact {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  interactions Interaction[]
-  deals        Deal[]
+  client         Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  interactions   Interaction[]
+  deals          Deal[]
+  campaignSends  CampaignSend[]
 
   @@index([clientId])
   @@index([email])
