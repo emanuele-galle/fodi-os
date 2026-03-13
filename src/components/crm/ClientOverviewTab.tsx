@@ -7,6 +7,7 @@ import { ClientHealthCard } from './ClientHealthCard'
 import { ClientAiInsights } from './ClientAiInsights'
 import { ClientBriefing } from './ClientBriefing'
 import { AiSuggestionsPanel } from './AiSuggestionsPanel'
+import { GenerateEmailButton } from './GenerateEmailButton'
 import type { ClientDetail } from './types'
 
 interface ClientOverviewTabProps {
@@ -32,7 +33,10 @@ export function ClientOverviewTab({ client }: ClientOverviewTabProps) {
         <AiSuggestionsPanel clientId={client.id} limit={3} />
         <Card>
           <CardContent>
-            <h3 className="text-sm font-semibold mb-3">Briefing</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold">Briefing</h3>
+              <GenerateEmailButton clientId={client.id} />
+            </div>
             <ClientBriefing clientId={client.id} />
           </CardContent>
         </Card>
