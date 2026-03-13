@@ -152,10 +152,14 @@ ${ctx.join('\n')}`,
   return saveSuggestions(text, clientId, brandSlug)
 }
 
-async function saveSuggestions(text: string, clientId: string, brandSlug: string): Promise<number> {
+function stripCodeFences(raw: string): string {
+  return raw.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim()
+}
+
+async function saveSuggestions(rawText: string, clientId: string, brandSlug: string): Promise<number> {
   let suggestions: SuggestionResult[]
   try {
-    suggestions = JSON.parse(text)
+    suggestions = JSON.parse(stripCodeFences(rawText))
     if (!Array.isArray(suggestions)) suggestions = []
   } catch {
     return 0

@@ -125,11 +125,12 @@ function buildCrossSellContext(
 }
 
 function parseSuggestions(
-  text: string,
+  rawText: string,
   availableServices: { id: string; name: string }[],
 ): CrossSellResult[] {
   try {
-    const parsed = JSON.parse(text)
+    const cleaned = rawText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim()
+    const parsed = JSON.parse(cleaned)
     if (!Array.isArray(parsed)) return []
     const validIds = new Set(availableServices.map(s => s.id))
     return parsed
