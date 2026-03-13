@@ -17,24 +17,24 @@ interface ClientOverviewTabProps {
 export function ClientOverviewTab({ client }: ClientOverviewTabProps) {
   return (
     <div className="space-y-4">
-      {/* Health Score + AI Insights */}
+      {/* Salute + Analisi AI */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ClientHealthCard clientId={client.id} />
         <Card>
           <CardContent>
-            <h3 className="text-sm font-semibold mb-3">Insights AI</h3>
+            <h3 className="text-sm font-semibold mb-3">Analisi AI</h3>
             <ClientAiInsights clientId={client.id} />
           </CardContent>
         </Card>
       </div>
 
-      {/* AI Suggestions + Briefing */}
+      {/* Suggerimenti AI + Preparazione Incontro */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <AiSuggestionsPanel clientId={client.id} limit={3} />
         <Card>
           <CardContent>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold">Briefing</h3>
+              <h3 className="text-sm font-semibold">Preparazione Incontro</h3>
               <GenerateEmailButton clientId={client.id} />
             </div>
             <ClientBriefing clientId={client.id} />
@@ -67,7 +67,7 @@ export function ClientOverviewTab({ client }: ClientOverviewTabProps) {
             </div>
           )}
           <div className="mt-4 pt-4 border-t border-border flex justify-between text-sm text-muted">
-            <span>Revenue totale: <strong className="text-foreground">{formatCurrency(client.totalRevenue)}</strong></span>
+            <span>Fatturato totale: <strong className="text-foreground">{formatCurrency(client.totalRevenue)}</strong></span>
             <span>Creato il {new Date(client.createdAt).toLocaleDateString('it-IT')}</span>
           </div>
         </CardContent>

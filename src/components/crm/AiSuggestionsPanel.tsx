@@ -20,10 +20,10 @@ interface Suggestion {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  FOLLOWUP: 'Follow-up',
-  OPPORTUNITY: 'Opportunita',
-  CHURN_RISK: 'Rischio churn',
-  TOUCHPOINT: 'Touchpoint',
+  FOLLOWUP: 'Seguito',
+  OPPORTUNITY: 'Opportunità',
+  CHURN_RISK: 'Rischio perdita',
+  TOUCHPOINT: 'Punto di contatto',
 }
 
 const PRIORITY_STYLES: Record<string, string> = {

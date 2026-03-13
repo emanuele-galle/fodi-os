@@ -43,7 +43,7 @@ export function ClientFinancesTab({ clientId, quotes }: ClientFinancesTabProps) 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="text-center py-4">
-            <p className="text-xs text-muted">Revenue</p>
+            <p className="text-xs text-muted">Fatturato</p>
             <p className="text-xl font-bold text-emerald-600">{formatCurrency(revenue)}</p>
           </CardContent>
         </Card>

@@ -199,7 +199,7 @@ export default function ClientDetailPage() {
 
       <div className="grid grid-cols-3 gap-2 md:gap-3 mb-6">
         <div className="bg-card border border-border/40 rounded-lg p-2.5 md:p-3">
-          <p className="text-[10px] md:text-xs text-muted mb-0.5">Revenue Totale</p>
+          <p className="text-[10px] md:text-xs text-muted mb-0.5">Fatturato Totale</p>
           <p className="text-base md:text-lg font-bold text-emerald-500 tabular-nums">{formatCurrency(client.totalRevenue)}</p>
         </div>
         <div className="bg-card border border-border/40 rounded-lg p-2.5 md:p-3">

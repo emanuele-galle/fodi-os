@@ -40,10 +40,10 @@ const RISK_LABELS: Record<string, string> = {
 
 const SUB_SCORES = [
   { key: 'interactionScore' as const, label: 'Interazioni', weight: '30%' },
-  { key: 'pipelineScore' as const, label: 'Pipeline', weight: '25%' },
+  { key: 'pipelineScore' as const, label: 'Trattative', weight: '25%' },
   { key: 'projectScore' as const, label: 'Progetti', weight: '20%' },
-  { key: 'revenueScore' as const, label: 'Revenue', weight: '15%' },
-  { key: 'engagementScore' as const, label: 'Engagement', weight: '10%' },
+  { key: 'revenueScore' as const, label: 'Fatturato', weight: '15%' },
+  { key: 'engagementScore' as const, label: 'Coinvolgimento', weight: '10%' },
 ] as const
 
 function scoreBarColor(score: number): string {
@@ -84,7 +84,7 @@ export function ClientHealthCard({ clientId }: ClientHealthCardProps) {
       <CardContent>
         <div className="flex items-center gap-2 mb-4">
           <Activity className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold">Health Score</h3>
+          <h3 className="text-sm font-semibold">Indice di Salute</h3>
         </div>
 
         <div className="flex items-center gap-4 mb-4">

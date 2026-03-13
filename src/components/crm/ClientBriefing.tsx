@@ -41,7 +41,7 @@ export function ClientBriefing({ clientId }: ClientBriefingProps) {
         className="gap-1.5 text-xs"
       >
         <FileText className="h-3.5 w-3.5" />
-        Prepara Briefing
+        Prepara Incontro
       </Button>
     )
   }
@@ -50,7 +50,7 @@ export function ClientBriefing({ clientId }: ClientBriefingProps) {
     <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 text-sm">
       <div className="flex items-center gap-1.5 mb-2">
         <FileText className="h-3.5 w-3.5 text-blue-500" />
-        <span className="text-xs font-semibold text-blue-500">Briefing Pre-Meeting</span>
+        <span className="text-xs font-semibold text-blue-500">Preparazione Pre-Incontro</span>
         {briefing && (
           <button
             type="button"
@@ -65,7 +65,7 @@ export function ClientBriefing({ clientId }: ClientBriefingProps) {
       {loading && (
         <div className="flex items-center gap-2 text-muted">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          <span className="text-xs">Preparazione briefing...</span>
+          <span className="text-xs">Preparazione in corso...</span>
         </div>
       )}
       {error && <p className="text-xs text-destructive">{error}</p>}

@@ -68,7 +68,7 @@ export function DealsFunnelChart({ data }: { data: DealsByStageData[] }) {
   return (
     <Card>
       <CardContent>
-        <CardTitle className="mb-4 text-base">Pipeline Deals</CardTitle>
+        <CardTitle className="mb-4 text-base">Trattative per Fase</CardTitle>
         <ResponsiveContainer width="100%" height={200} minWidth={0} minHeight={0}>
           <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
             <defs>

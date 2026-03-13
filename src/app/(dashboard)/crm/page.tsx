@@ -602,11 +602,11 @@ export default function CrmPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Cliente</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Stato</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Settore</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden xl:table-cell">Health</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden xl:table-cell">Salute</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden xl:table-cell">Ultimo Contatto</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Contatti</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider hidden lg:table-cell">Progetti</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Revenue</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Fatturato</th>
                 </tr>
               </thead>
               <tbody>

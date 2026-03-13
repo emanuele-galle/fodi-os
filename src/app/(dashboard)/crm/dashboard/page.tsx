@@ -205,7 +205,7 @@ function DealPipelineSummary({ deals }: { deals: DealItem[] }) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <Target className="h-4 w-4 text-blue-500" />
-            Pipeline Opportunità
+            Trattative in Corso
           </h2>
           <Link href="/crm/pipeline" className="text-xs text-blue-500 hover:underline">Vedi tutte</Link>
         </div>
@@ -220,7 +220,7 @@ function DealPipelineSummary({ deals }: { deals: DealItem[] }) {
               </div>
               <div>
                 <p className="text-lg font-bold text-emerald-500">{formatCurrency(totalOpen)}</p>
-                <p className="text-xs text-muted">Valore Pipeline</p>
+                <p className="text-xs text-muted">Valore Trattative</p>
               </div>
               <div>
                 <p className="text-lg font-bold text-blue-500">{formatCurrency(totalWon)}</p>
@@ -386,7 +386,7 @@ export default function CrmDashboardPage() {
               <Euro className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-xs text-muted">Revenue Totale</p>
+              <p className="text-xs text-muted">Fatturato Totale</p>
               <p className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
             </div>
           </CardContent>
@@ -413,7 +413,7 @@ export default function CrmDashboardPage() {
               <Target className="h-5 w-5 text-indigo-500" />
             </div>
             <div>
-              <p className="text-xs text-muted">Valore Pipeline</p>
+              <p className="text-xs text-muted">Valore Trattative</p>
               <p className="text-2xl font-bold">{formatCurrency(stats.totalPipelineValue)}</p>
             </div>
           </CardContent>
@@ -449,7 +449,7 @@ export default function CrmDashboardPage() {
               <Euro className="h-5 w-5 text-cyan-500" />
             </div>
             <div>
-              <p className="text-xs text-muted">Valore Medio Deal</p>
+              <p className="text-xs text-muted">Valore Medio Trattativa</p>
               <p className="text-2xl font-bold">{formatCurrency(stats.avgDealValue)}</p>
             </div>
           </CardContent>
@@ -461,7 +461,7 @@ export default function CrmDashboardPage() {
         {/* Pipeline */}
         <Card>
           <CardContent>
-            <h2 className="text-sm font-semibold mb-4">Pipeline</h2>
+            <h2 className="text-sm font-semibold mb-4">Stato Clienti</h2>
             <div className="space-y-3">
               {STATUS_ORDER.map((status) => {
                 const count = stats.clientsByStatus[status] || 0
@@ -666,7 +666,7 @@ export default function CrmDashboardPage() {
         {/* Top Clients by Revenue */}
         <Card>
           <CardContent>
-            <h2 className="text-sm font-semibold mb-4">Top Clienti per Revenue</h2>
+            <h2 className="text-sm font-semibold mb-4">Migliori Clienti per Fatturato</h2>
             {stats.topClientsByRevenue.length === 0 ? (
               <p className="text-xs text-muted">Nessun dato disponibile.</p>
             ) : (
