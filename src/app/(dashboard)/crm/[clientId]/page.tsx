@@ -23,6 +23,7 @@ import { ClientTasksTab } from '@/components/crm/ClientTasksTab'
 import { ClientDealsTab } from '@/components/crm/ClientDealsTab'
 import { ClientDocumentsTab } from '@/components/crm/ClientDocumentsTab'
 import { ClientTimelineTab } from '@/components/crm/ClientTimelineTab'
+import { ClientSuccessTimeline } from '@/components/crm/ClientSuccessTimeline'
 import { ClientFinancesTab } from '@/components/crm/ClientFinancesTab'
 import { ClientExpensesTab } from '@/components/crm/ClientExpensesTab'
 import { ClientSignaturesTab } from '@/components/crm/ClientSignaturesTab'
@@ -154,6 +155,12 @@ export default function ClientDetailPage() {
           </div>
         )}
       </div>
+    )},
+    { id: 'services', label: 'Servizi', content: (
+      <ClientSuccessTimeline
+        clientId={clientId}
+        clientData={{ createdAt: client.createdAt, totalRevenue: client.totalRevenue }}
+      />
     )},
     { id: 'documents', label: 'Documenti', content: <ClientDocumentsTab clientId={clientId} /> },
     { id: 'timeline', label: 'Cronologia', content: <ClientTimelineTab clientId={clientId} /> },

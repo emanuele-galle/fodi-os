@@ -248,6 +248,7 @@ model Client {
   anniversaryDate DateTime? @db.Date
   healthScore     ClientHealthScore?
   aiSuggestions   AiSuggestion[]
+  clientServices  ClientService[]
 
   @@index([status])
   @@index([slug])
@@ -1975,4 +1976,45 @@ model BrandSettings {
   updatedAt        DateTime @updatedAt
 
   @@map("brand_settings")
+}
+
+// ============================================================
+// SERVICE CATALOG & CROSS-SELL
+// ============================================================
+
+model ServiceCatalog {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  category    String
+  priceType   String   @default("FIXED")
+  priceMin    Decimal? @db.Decimal(12, 2)
+  priceMax    Decimal? @db.Decimal(12, 2)
+  brandSlug   String
+  tags        String[] @default([])
+  relatedIds  String[] @default([])
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  clientServices ClientService[]
+  @@index([brandSlug, isActive])
+  @@map("service_catalog")
+}
+
+model ClientService {
+  id        String    @id @default(uuid())
+  clientId  String
+  serviceId String
+  status    String    @default("ACTIVE")
+  startDate DateTime? @db.Date
+  value     Decimal?  @db.Decimal(12, 2)
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  service   ServiceCatalog @relation(fields: [serviceId], references: [id])
+  @@unique([clientId, serviceId])
+  @@map("client_services")
 }

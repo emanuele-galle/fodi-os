@@ -864,4 +864,96 @@ export const crmTools: AiToolDefinition[] = [
       return { success: true, data: { briefing } }
     },
   },
+
+  // Phase 4: Service Catalog & Cross-sell
+  {
+    name: 'list_services',
+    description: 'Lista i servizi del catalogo del brand corrente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', description: 'Filtra per categoria (opzionale)' },
+      },
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const { brand } = await import('@/lib/branding')
+      const where: Record<string, unknown> = { brandSlug: brand.slug, isActive: true }
+      if (input.category) where.category = input.category
+      const services = await prisma.serviceCatalog.findMany({
+        where,
+        orderBy: { sortOrder: 'asc' },
+        select: { id: true, name: true, category: true, description: true, priceType: true, priceMin: true, priceMax: true, tags: true },
+      })
+      return { success: true, data: services }
+    },
+  },
+  {
+    name: 'get_client_services',
+    description: 'Lista i servizi attivi di un cliente specifico.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente (obbligatorio)' },
+      },
+      required: ['clientId'],
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const services = await prisma.clientService.findMany({
+        where: { clientId: input.clientId as string },
+        include: { service: { select: { name: true, category: true, priceType: true } } },
+      })
+      return { success: true, data: services }
+    },
+  },
+  {
+    name: 'get_cross_sell_suggestions',
+    description: 'Genera suggerimenti di cross-sell AI per un cliente basandosi sul suo profilo e servizi attivi.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente (obbligatorio)' },
+      },
+      required: ['clientId'],
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const { generateCrossSellSuggestions } = await import('@/lib/crm/cross-sell-engine')
+      const suggestions = await generateCrossSellSuggestions(input.clientId as string)
+      return { success: true, data: suggestions }
+    },
+  },
+  {
+    name: 'assign_service_to_client',
+    description: 'Assegna un servizio del catalogo a un cliente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente' },
+        serviceId: { type: 'string', description: 'ID del servizio dal catalogo' },
+        value: { type: 'number', description: 'Valore del servizio (opzionale)' },
+        notes: { type: 'string', description: 'Note aggiuntive (opzionale)' },
+      },
+      required: ['clientId', 'serviceId'],
+    },
+    module: 'crm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput, _ctx: AiToolContext) => {
+      const cs = await prisma.clientService.create({
+        data: {
+          clientId: input.clientId as string,
+          serviceId: input.serviceId as string,
+          value: input.value ? new Prisma.Decimal(input.value as number) : null,
+          notes: (input.notes as string) || null,
+          startDate: new Date(),
+        },
+        include: { service: { select: { name: true } } },
+      })
+      return { success: true, data: cs }
+    },
+  },
 ]
