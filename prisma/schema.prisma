@@ -245,6 +245,7 @@ model Client {
   expenses        Expense[]
   incomes         Income[]
   convertedLeads  Lead[]    @relation("LeadConverted")
+  anniversaryDate DateTime? @db.Date
   healthScore     ClientHealthScore?
   aiSuggestions   AiSuggestion[]
 
@@ -310,16 +311,65 @@ model AiSuggestion {
   @@map("ai_suggestions")
 }
 
+model TouchpointRule {
+  id            String   @id @default(uuid())
+  name          String
+  triggerType   String
+  triggerConfig Json
+  actionType    String
+  actionConfig  Json
+  brandSlug     String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([brandSlug, isActive])
+  @@map("touchpoint_rules")
+}
+
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  subject     String
+  bodyHtml    String   @db.Text
+  category    String   @default("general")
+  brandSlug   String
+  variables   String[] @default([])
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([brandSlug, category])
+  @@map("email_templates")
+}
+
+model CampaignSend {
+  id           String    @id @default(uuid())
+  campaignName String
+  clientId     String
+  contactEmail String
+  subject      String
+  status       String    @default("PENDING")
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([campaignName])
+  @@index([clientId])
+  @@map("campaign_sends")
+}
+
 model Contact {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   clientId  String
   firstName String
   lastName  String
   email     String?
   phone     String?
   role      String?
-  isPrimary Boolean  @default(false)
+  isPrimary Boolean   @default(false)
   notes     String?
+  birthday  DateTime? @db.Date
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

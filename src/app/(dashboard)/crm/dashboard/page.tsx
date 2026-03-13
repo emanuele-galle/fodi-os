@@ -174,6 +174,118 @@ function StatCardSkeleton() {
   )
 }
 
+const RISK_BADGES: { key: string; label: string; className: string }[] = [
+  { key: 'CHURNING', label: 'abbandono', className: 'bg-red-600/15 text-red-600' },
+  { key: 'CRITICAL', label: 'critici', className: 'bg-red-500/15 text-red-500' },
+  { key: 'AT_RISK', label: 'a rischio', className: 'bg-amber-500/15 text-amber-600' },
+]
+
+const RISK_SCORE_COLORS: Record<string, string> = {
+  CHURNING: 'text-red-600',
+  CRITICAL: 'text-red-500',
+}
+
+function DealPipelineSummary({ deals }: { deals: DealItem[] }) {
+  const openDeals = deals.filter(d => !['CLOSED_WON', 'CLOSED_LOST'].includes(d.stage))
+  const wonDeals = deals.filter(d => d.stage === 'CLOSED_WON')
+  const totalOpen = openDeals.reduce((sum, d) => sum + parseFloat(String(d.value || 0)), 0)
+  const totalWon = wonDeals.reduce((sum, d) => sum + parseFloat(String(d.value || 0)), 0)
+  const stageGroups = Object.entries(
+    openDeals.reduce<Record<string, { count: number; value: number }>>((acc, d) => {
+      if (!acc[d.stage]) acc[d.stage] = { count: 0, value: 0 }
+      acc[d.stage].count++
+      acc[d.stage].value += parseFloat(String(d.value || 0))
+      return acc
+    }, {})
+  )
+
+  return (
+    <Card>
+      <CardContent>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold flex items-center gap-2">
+            <Target className="h-4 w-4 text-blue-500" />
+            Pipeline Opportunità
+          </h2>
+          <Link href="/crm/pipeline" className="text-xs text-blue-500 hover:underline">Vedi tutte</Link>
+        </div>
+        {deals.length === 0 ? (
+          <p className="text-xs text-muted">Nessuna opportunità attiva.</p>
+        ) : (
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <p className="text-lg font-bold">{openDeals.length}</p>
+                <p className="text-xs text-muted">Aperte</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-emerald-500">{formatCurrency(totalOpen)}</p>
+                <p className="text-xs text-muted">Valore Pipeline</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-blue-500">{formatCurrency(totalWon)}</p>
+                <p className="text-xs text-muted">Vinto</p>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              {stageGroups.map(([stage, data]) => (
+                <div key={stage} className="flex items-center justify-between text-xs py-1">
+                  <span className="text-muted">{DEAL_STAGE_LABELS[stage] || stage}</span>
+                  <span className="font-medium">{data.count} ({formatCurrency(data.value)})</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function AtRiskClientsSection({ healthData }: { healthData: HealthAggData }) {
+  return (
+    <Card>
+      <CardContent>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold flex items-center gap-2">
+            <Activity className="h-4 w-4 text-red-500" />
+            Clienti a Rischio
+          </h2>
+          {healthData.riskCounts && (
+            <div className="flex items-center gap-2 text-xs">
+              {RISK_BADGES.map(({ key, label, className }) =>
+                healthData.riskCounts[key] ? (
+                  <span key={key} className={`${className} px-2 py-0.5 rounded-full font-medium`}>
+                    {healthData.riskCounts[key]} {label}
+                  </span>
+                ) : null
+              )}
+            </div>
+          )}
+        </div>
+        <div className="space-y-2">
+          {healthData.atRiskClients.map((item) => (
+            <Link
+              key={item.clientId}
+              href={`/crm/${item.client.id}`}
+              className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/10 transition-colors group"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={`text-sm font-bold tabular-nums ${RISK_SCORE_COLORS[item.riskLevel] || 'text-amber-500'}`}>{item.overallScore}</span>
+                <span className="text-sm font-medium truncate">{item.client.companyName}</span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Badge status={item.client.status}>{item.client.status}</Badge>
+                <ArrowUpRight className="h-3.5 w-3.5 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export default function CrmDashboardPage() {
   const { data: statsRaw, loading, refetch: refetchStats } = useFetch<{ success: boolean; data: StatsData }>('/api/crm/stats')
   const { data: tasksRaw, refetch: refetchTasks } = useFetch<{ success: boolean; data?: TaskItem[]; items?: TaskItem[] }>(
@@ -485,58 +597,8 @@ export default function CrmDashboardPage() {
         </Card>
       </div>
 
-      {/* Health Score Overview */}
       {healthData && healthData.atRiskClients.length > 0 && (
-        <Card>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold flex items-center gap-2">
-                <Activity className="h-4 w-4 text-red-500" />
-                Clienti a Rischio
-              </h2>
-              {healthData.riskCounts && (
-                <div className="flex items-center gap-2 text-xs">
-                  {healthData.riskCounts.CHURNING ? (
-                    <span className="bg-red-600/15 text-red-600 px-2 py-0.5 rounded-full font-medium">
-                      {healthData.riskCounts.CHURNING} abbandono
-                    </span>
-                  ) : null}
-                  {healthData.riskCounts.CRITICAL ? (
-                    <span className="bg-red-500/15 text-red-500 px-2 py-0.5 rounded-full font-medium">
-                      {healthData.riskCounts.CRITICAL} critici
-                    </span>
-                  ) : null}
-                  {healthData.riskCounts.AT_RISK ? (
-                    <span className="bg-amber-500/15 text-amber-600 px-2 py-0.5 rounded-full font-medium">
-                      {healthData.riskCounts.AT_RISK} a rischio
-                    </span>
-                  ) : null}
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              {healthData.atRiskClients.map((item) => {
-                const scoreColor = item.riskLevel === 'CHURNING' ? 'text-red-600' : item.riskLevel === 'CRITICAL' ? 'text-red-500' : 'text-amber-500'
-                return (
-                  <Link
-                    key={item.clientId}
-                    href={`/crm/${item.client.id}`}
-                    className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/10 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className={`text-sm font-bold tabular-nums ${scoreColor}`}>{item.overallScore}</span>
-                      <span className="text-sm font-medium truncate">{item.client.companyName}</span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Badge status={item.client.status}>{item.client.status}</Badge>
-                      <ArrowUpRight className="h-3.5 w-3.5 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        <AtRiskClientsSection healthData={healthData} />
       )}
 
       {/* AI Suggestions */}
@@ -596,60 +658,7 @@ export default function CrmDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Deal Pipeline Summary */}
-        <Card>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold flex items-center gap-2">
-                <Target className="h-4 w-4 text-blue-500" />
-                Pipeline Opportunità
-              </h2>
-              <Link href="/crm/pipeline" className="text-xs text-blue-500 hover:underline">Vedi tutte</Link>
-            </div>
-            {deals.length === 0 ? (
-              <p className="text-xs text-muted">Nessuna opportunità attiva.</p>
-            ) : (() => {
-              const openDeals = deals.filter(d => !['CLOSED_WON', 'CLOSED_LOST'].includes(d.stage))
-              const wonDeals = deals.filter(d => d.stage === 'CLOSED_WON')
-              const totalOpen = openDeals.reduce((sum, d) => sum + parseFloat(String(d.value || 0)), 0)
-              const totalWon = wonDeals.reduce((sum, d) => sum + parseFloat(String(d.value || 0)), 0)
-              const stageGroups = Object.entries(
-                openDeals.reduce<Record<string, { count: number; value: number }>>((acc, d) => {
-                  if (!acc[d.stage]) acc[d.stage] = { count: 0, value: 0 }
-                  acc[d.stage].count++
-                  acc[d.stage].value += parseFloat(String(d.value || 0))
-                  return acc
-                }, {})
-              )
-              return (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div>
-                      <p className="text-lg font-bold">{openDeals.length}</p>
-                      <p className="text-xs text-muted">Aperte</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-emerald-500">{formatCurrency(totalOpen)}</p>
-                      <p className="text-xs text-muted">Valore Pipeline</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-blue-500">{formatCurrency(totalWon)}</p>
-                      <p className="text-xs text-muted">Vinto</p>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    {stageGroups.map(([stage, data]) => (
-                      <div key={stage} className="flex items-center justify-between text-xs py-1">
-                        <span className="text-muted">{DEAL_STAGE_LABELS[stage] || stage}</span>
-                        <span className="font-medium">{data.count} ({formatCurrency(data.value)})</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
-            })()}
-          </CardContent>
-        </Card>
+        <DealPipelineSummary deals={deals} />
       </div>
 
       {/* Bottom Section */}

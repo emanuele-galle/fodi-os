@@ -15,6 +15,7 @@ const SCHEDULES = {
   recurringTasks: process.env.CRON_RECURRING_TASKS || '0 6 * * *',     // Daily 06:00
   healthScores:   process.env.CRON_HEALTH_SCORES   || '0 3 * * *',     // Daily 03:00
   aiSuggestions:  process.env.CRON_AI_SUGGESTIONS  || '0 7 * * 1-5',   // Mon-Fri 07:00
+  touchpoints:    process.env.CRON_TOUCHPOINTS     || '0 8 * * *',     // Daily 08:00
 }
 
 async function callEndpoint(path: string, label: string) {
@@ -56,6 +57,7 @@ export function startScheduler() {
     recurringTasks: SCHEDULES.recurringTasks,
     healthScores: SCHEDULES.healthScores,
     aiSuggestions: SCHEDULES.aiSuggestions,
+    touchpoints: SCHEDULES.touchpoints,
   })
 
   jobs.push(
@@ -79,6 +81,9 @@ export function startScheduler() {
     }),
     new Cron(SCHEDULES.aiSuggestions, { timezone: 'Europe/Rome' }, () => {
       callEndpoint('/api/crm/suggestions/generate', 'ai-suggestions')
+    }),
+    new Cron(SCHEDULES.touchpoints, { timezone: 'Europe/Rome' }, () => {
+      callEndpoint('/api/crm/touchpoints/process', 'touchpoints')
     }),
   )
 

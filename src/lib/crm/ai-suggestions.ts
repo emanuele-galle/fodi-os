@@ -16,6 +16,69 @@ interface SuggestionResult {
   actionData?: Record<string, unknown>
 }
 
+interface ClientContext {
+  companyName: string
+  status: string
+  industry: string | null
+  totalRevenue: Prisma.Decimal
+  source: string | null
+  tags: string[]
+  contacts: { firstName: string; lastName: string; role: string | null; isPrimary: boolean }[]
+}
+
+interface InteractionContext {
+  type: string
+  subject: string
+  date: Date
+}
+
+interface DealContext {
+  title: string
+  stage: string
+  value: Prisma.Decimal
+  probability: number
+}
+
+// ============================================================
+// CONTEXT BUILDERS
+// ============================================================
+
+function buildClientLines(client: ClientContext, healthScore: { overallScore: number; riskLevel: string; interactionScore: number; pipelineScore: number } | null): string[] {
+  const lines: string[] = []
+  lines.push(`CLIENTE: ${client.companyName} (${client.status})`)
+  lines.push(`Settore: ${client.industry || 'N/D'} | Revenue: €${client.totalRevenue} | Fonte: ${client.source || 'N/D'}`)
+  if (client.tags.length > 0) lines.push(`Tag: ${client.tags.join(', ')}`)
+  if (healthScore) {
+    lines.push(`\nHEALTH: ${healthScore.overallScore}/100 (${healthScore.riskLevel})`)
+    lines.push(`Interazioni: ${healthScore.interactionScore} | Pipeline: ${healthScore.pipelineScore}`)
+  }
+  if (client.contacts.length > 0) {
+    lines.push('\nCONTATTI:')
+    for (const c of client.contacts) {
+      lines.push(`- ${c.firstName} ${c.lastName}${c.role ? ` (${c.role})` : ''}${c.isPrimary ? ' [primario]' : ''}`)
+    }
+  }
+  return lines
+}
+
+function buildInteractionLines(interactions: InteractionContext[]): string[] {
+  if (interactions.length === 0) return []
+  const lines = ['\nINTERAZIONI RECENTI:']
+  for (const i of interactions) {
+    lines.push(`- [${new Date(i.date).toLocaleDateString('it-IT')}] ${i.type}: ${i.subject}`)
+  }
+  return lines
+}
+
+function buildDealLines(deals: DealContext[]): string[] {
+  if (deals.length === 0) return []
+  const lines = ['\nDEAL:']
+  for (const d of deals) {
+    lines.push(`- ${d.title} — ${d.stage} (€${d.value}, ${d.probability}%)`)
+  }
+  return lines
+}
+
 // ============================================================
 // GENERATE SUGGESTIONS FOR A CLIENT
 // ============================================================
@@ -23,7 +86,6 @@ interface SuggestionResult {
 async function generateClientSuggestions(clientId: string): Promise<number> {
   const brandSlug = brand.slug
 
-  // Gather client context
   const [client, interactions, deals, healthScore] = await Promise.all([
     prisma.client.findUnique({
       where: { id: clientId },
@@ -56,37 +118,11 @@ async function generateClientSuggestions(clientId: string): Promise<number> {
 
   if (!client) return 0
 
-  // Build context
-  const ctx: string[] = []
-  ctx.push(`CLIENTE: ${client.companyName} (${client.status})`)
-  ctx.push(`Settore: ${client.industry || 'N/D'} | Revenue: €${client.totalRevenue} | Fonte: ${client.source || 'N/D'}`)
-  if (client.tags.length > 0) ctx.push(`Tag: ${client.tags.join(', ')}`)
-
-  if (healthScore) {
-    ctx.push(`\nHEALTH: ${healthScore.overallScore}/100 (${healthScore.riskLevel})`)
-    ctx.push(`Interazioni: ${healthScore.interactionScore} | Pipeline: ${healthScore.pipelineScore}`)
-  }
-
-  if (client.contacts.length > 0) {
-    ctx.push('\nCONTATTI:')
-    for (const c of client.contacts) {
-      ctx.push(`- ${c.firstName} ${c.lastName}${c.role ? ` (${c.role})` : ''}${c.isPrimary ? ' [primario]' : ''}`)
-    }
-  }
-
-  if (interactions.length > 0) {
-    ctx.push('\nINTERAZIONI RECENTI:')
-    for (const i of interactions) {
-      ctx.push(`- [${new Date(i.date).toLocaleDateString('it-IT')}] ${i.type}: ${i.subject}`)
-    }
-  }
-
-  if (deals.length > 0) {
-    ctx.push('\nDEAL:')
-    for (const d of deals) {
-      ctx.push(`- ${d.title} — ${d.stage} (€${d.value}, ${d.probability}%)`)
-    }
-  }
+  const ctx = [
+    ...buildClientLines(client, healthScore),
+    ...buildInteractionLines(interactions),
+    ...buildDealLines(deals),
+  ]
 
   const brandContext = brandSlug === 'fodi'
     ? 'FODI è un\'agenzia di comunicazione/marketing. Servizi: campagne, branding, eventi, digital marketing, social media.'
@@ -113,6 +149,10 @@ ${ctx.join('\n')}`,
   })
 
   const text = response.content[0].type === 'text' ? response.content[0].text : '[]'
+  return saveSuggestions(text, clientId, brandSlug)
+}
+
+async function saveSuggestions(text: string, clientId: string, brandSlug: string): Promise<number> {
   let suggestions: SuggestionResult[]
   try {
     suggestions = JSON.parse(text)
@@ -121,13 +161,11 @@ ${ctx.join('\n')}`,
     return 0
   }
 
-  // Expire old pending suggestions for this client
   await prisma.aiSuggestion.updateMany({
     where: { clientId, status: 'PENDING', brandSlug },
     data: { status: 'EXPIRED' },
   })
 
-  // Create new suggestions
   let created = 0
   for (const s of suggestions) {
     if (!s.type || !s.title || !s.description) continue
@@ -141,7 +179,7 @@ ${ctx.join('\n')}`,
         actionType: s.actionType || null,
         actionData: s.actionData ? (s.actionData as Prisma.InputJsonValue) : undefined,
         brandSlug,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     })
     created++
@@ -155,12 +193,11 @@ ${ctx.join('\n')}`,
 // ============================================================
 
 export async function batchGenerateSuggestions(): Promise<{ processed: number; suggestions: number; errors: number }> {
-  // Focus on active/prospect clients + at-risk
   const clients = await prisma.client.findMany({
     where: { status: { in: ['ACTIVE', 'PROSPECT'] } },
     select: { id: true },
     orderBy: { updatedAt: 'desc' },
-    take: 50, // Limit to avoid API cost explosion
+    take: 50,
   })
 
   let processed = 0
@@ -221,44 +258,7 @@ export async function generateClientBriefing(clientId: string): Promise<string> 
 
   if (!client) throw new Error('Client not found')
 
-  const ctx: string[] = []
-  ctx.push(`BRIEFING PRE-MEETING: ${client.companyName}`)
-  ctx.push(`Stato: ${client.status} | Settore: ${client.industry || 'N/D'} | Revenue: €${client.totalRevenue}`)
-  ctx.push(`Cliente dal: ${new Date(client.createdAt).toLocaleDateString('it-IT')}`)
-  if (client.notes) ctx.push(`Note: ${client.notes}`)
-
-  if (healthScore) {
-    ctx.push(`\nHealth Score: ${healthScore.overallScore}/100 (${healthScore.riskLevel})`)
-    if (healthScore.aiInsights) ctx.push(`AI Insights: ${healthScore.aiInsights}`)
-  }
-
-  if (client.contacts.length > 0) {
-    ctx.push('\nCONTATTI:')
-    for (const c of client.contacts) {
-      ctx.push(`- ${c.firstName} ${c.lastName} — ${c.role || 'N/D'} | ${c.email || ''} | ${c.phone || ''}${c.isPrimary ? ' [primario]' : ''}`)
-    }
-  }
-
-  if (interactions.length > 0) {
-    ctx.push('\nSTORICO INTERAZIONI:')
-    for (const i of interactions) {
-      ctx.push(`- [${new Date(i.date).toLocaleDateString('it-IT')}] ${i.type}: ${i.subject}${i.content ? ` — ${i.content.slice(0, 150)}` : ''}`)
-    }
-  }
-
-  if (deals.length > 0) {
-    ctx.push('\nDEAL:')
-    for (const d of deals) {
-      ctx.push(`- ${d.title} — ${d.stage} (€${d.value}, ${d.probability}%)${d.description ? `: ${d.description.slice(0, 100)}` : ''}`)
-    }
-  }
-
-  if (projects.length > 0) {
-    ctx.push('\nPROGETTI:')
-    for (const p of projects) {
-      ctx.push(`- ${p.name} — ${p.status} (${p.priority})`)
-    }
-  }
+  const ctx = buildBriefingContext(client, interactions, deals, projects, healthScore)
 
   const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
@@ -282,4 +282,88 @@ ${ctx.join('\n')}`,
   })
 
   return response.content[0].type === 'text' ? response.content[0].text : ''
+}
+
+interface BriefingClient {
+  companyName: string
+  status: string
+  industry: string | null
+  totalRevenue: Prisma.Decimal
+  notes: string | null
+  createdAt: Date
+  contacts: { firstName: string; lastName: string; email: string | null; phone: string | null; role: string | null; isPrimary: boolean }[]
+}
+
+interface BriefingDeal {
+  title: string
+  stage: string
+  value: Prisma.Decimal
+  probability: number
+  description: string | null
+}
+
+function buildBriefingContext(
+  client: BriefingClient,
+  interactions: { type: string; subject: string; content: string | null; date: Date }[],
+  deals: BriefingDeal[],
+  projects: { name: string; status: string; priority: string }[],
+  healthScore: { overallScore: number; riskLevel: string; aiInsights: string | null } | null,
+): string[] {
+  return [
+    ...buildBriefingHeader(client, healthScore),
+    ...buildContactsSection(client.contacts),
+    ...buildBriefingInteractions(interactions),
+    ...buildBriefingDeals(deals),
+    ...buildProjectsSection(projects),
+  ]
+}
+
+function buildBriefingHeader(client: BriefingClient, healthScore: { overallScore: number; riskLevel: string; aiInsights: string | null } | null): string[] {
+  const lines = [
+    `BRIEFING PRE-MEETING: ${client.companyName}`,
+    `Stato: ${client.status} | Settore: ${client.industry || 'N/D'} | Revenue: €${client.totalRevenue}`,
+    `Cliente dal: ${new Date(client.createdAt).toLocaleDateString('it-IT')}`,
+  ]
+  if (client.notes) lines.push(`Note: ${client.notes}`)
+  if (healthScore) {
+    lines.push(`\nHealth Score: ${healthScore.overallScore}/100 (${healthScore.riskLevel})`)
+    if (healthScore.aiInsights) lines.push(`AI Insights: ${healthScore.aiInsights}`)
+  }
+  return lines
+}
+
+function buildContactsSection(contacts: BriefingClient['contacts']): string[] {
+  if (contacts.length === 0) return []
+  const lines = ['\nCONTATTI:']
+  for (const c of contacts) {
+    lines.push(`- ${c.firstName} ${c.lastName} — ${c.role || 'N/D'} | ${c.email || ''} | ${c.phone || ''}${c.isPrimary ? ' [primario]' : ''}`)
+  }
+  return lines
+}
+
+function buildBriefingInteractions(interactions: { type: string; subject: string; content: string | null; date: Date }[]): string[] {
+  if (interactions.length === 0) return []
+  const lines = ['\nSTORICO INTERAZIONI:']
+  for (const i of interactions) {
+    lines.push(`- [${new Date(i.date).toLocaleDateString('it-IT')}] ${i.type}: ${i.subject}${i.content ? ` — ${i.content.slice(0, 150)}` : ''}`)
+  }
+  return lines
+}
+
+function buildBriefingDeals(deals: BriefingDeal[]): string[] {
+  if (deals.length === 0) return []
+  const lines = ['\nDEAL:']
+  for (const d of deals) {
+    lines.push(`- ${d.title} — ${d.stage} (€${d.value}, ${d.probability}%)${d.description ? `: ${d.description.slice(0, 100)}` : ''}`)
+  }
+  return lines
+}
+
+function buildProjectsSection(projects: { name: string; status: string; priority: string }[]): string[] {
+  if (projects.length === 0) return []
+  const lines = ['\nPROGETTI:']
+  for (const p of projects) {
+    lines.push(`- ${p.name} — ${p.status} (${p.priority})`)
+  }
+  return lines
 }
