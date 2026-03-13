@@ -25,6 +25,8 @@ import {
   Activity,
 } from 'lucide-react'
 
+import { AiSuggestionsPanel } from '@/components/crm/AiSuggestionsPanel'
+
 const DealsFunnelChart = dynamic(() => import('@/components/crm/CrmCharts').then(m => ({ default: m.DealsFunnelChart })), { ssr: false })
 const WonDealsChart = dynamic(() => import('@/components/crm/CrmCharts').then(m => ({ default: m.WonDealsChart })), { ssr: false })
 const InteractionsByTypeChart = dynamic(() => import('@/components/crm/CrmCharts').then(m => ({ default: m.InteractionsByTypeChart })), { ssr: false })
@@ -536,6 +538,9 @@ export default function CrmDashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* AI Suggestions */}
+      <AiSuggestionsPanel />
 
       {/* Charts */}
       {stats.dealsByStage.length > 0 && (

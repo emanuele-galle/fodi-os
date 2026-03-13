@@ -5,6 +5,8 @@ import { formatCurrency } from '@/lib/utils'
 import { InfoRow } from './InfoRow'
 import { ClientHealthCard } from './ClientHealthCard'
 import { ClientAiInsights } from './ClientAiInsights'
+import { ClientBriefing } from './ClientBriefing'
+import { AiSuggestionsPanel } from './AiSuggestionsPanel'
 import type { ClientDetail } from './types'
 
 interface ClientOverviewTabProps {
@@ -21,6 +23,17 @@ export function ClientOverviewTab({ client }: ClientOverviewTabProps) {
           <CardContent>
             <h3 className="text-sm font-semibold mb-3">Insights AI</h3>
             <ClientAiInsights clientId={client.id} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* AI Suggestions + Briefing */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <AiSuggestionsPanel clientId={client.id} limit={3} />
+        <Card>
+          <CardContent>
+            <h3 className="text-sm font-semibold mb-3">Briefing</h3>
+            <ClientBriefing clientId={client.id} />
           </CardContent>
         </Card>
       </div>

@@ -781,4 +781,87 @@ export const crmTools: AiToolDefinition[] = [
       }
     },
   },
+
+  // --- list_ai_suggestions ---
+  {
+    name: 'list_ai_suggestions',
+    description: 'Lista i suggerimenti AI proattivi per clienti (follow-up, opportunità, rischi churn).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'Filtra per cliente specifico' },
+        type: { type: 'string', description: 'Filtra per tipo: FOLLOWUP, OPPORTUNITY, CHURN_RISK, TOUCHPOINT' },
+        limit: { type: 'number', description: 'Max risultati (default: 10)' },
+      },
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const { brand } = await import('@/lib/branding')
+      const limit = Math.min(Number(input.limit) || 10, 30)
+      const where: Record<string, unknown> = { brandSlug: brand.slug, status: 'PENDING' }
+      if (input.clientId) where.clientId = input.clientId
+      if (input.type) where.type = input.type
+
+      const suggestions = await prisma.aiSuggestion.findMany({
+        where,
+        orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+        take: limit,
+        select: {
+          id: true, type: true, title: true, description: true,
+          priority: true, actionType: true, status: true,
+          client: { select: { id: true, companyName: true } },
+        },
+      })
+      return { success: true, data: { suggestions, total: suggestions.length } }
+    },
+  },
+
+  // --- accept_ai_suggestion ---
+  {
+    name: 'accept_ai_suggestion',
+    description: 'Accetta o ignora un suggerimento AI.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        suggestionId: { type: 'string', description: 'ID del suggerimento (obbligatorio)' },
+        action: { type: 'string', description: 'ACCEPTED o DISMISSED (obbligatorio)' },
+      },
+      required: ['suggestionId', 'action'],
+    },
+    module: 'crm',
+    requiredPermission: 'write',
+    execute: async (input: AiToolInput, context: AiToolContext) => {
+      const status = input.action as string
+      if (!['ACCEPTED', 'DISMISSED'].includes(status)) {
+        return { success: false, error: 'Azione non valida. Usa ACCEPTED o DISMISSED.' }
+      }
+      const suggestion = await prisma.aiSuggestion.update({
+        where: { id: input.suggestionId as string },
+        data: { status, acceptedById: status === 'ACCEPTED' ? context.userId : null },
+        select: { id: true, title: true, status: true, actionType: true },
+      })
+      return { success: true, data: suggestion }
+    },
+  },
+
+  // --- generate_client_briefing ---
+  {
+    name: 'generate_client_briefing',
+    description: 'Genera un briefing pre-meeting dettagliato per un cliente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        clientId: { type: 'string', description: 'ID del cliente (obbligatorio)' },
+      },
+      required: ['clientId'],
+    },
+    module: 'crm',
+    requiredPermission: 'read',
+    execute: async (input: AiToolInput) => {
+      const { generateClientBriefing } = await import('@/lib/crm/ai-suggestions')
+      const briefing = await generateClientBriefing(input.clientId as string)
+      return { success: true, data: { briefing } }
+    },
+  },
 ]

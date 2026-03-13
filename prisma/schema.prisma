@@ -74,6 +74,7 @@ model User {
   projectLinks         ProjectLink[]    @relation("ProjectLinkCreator")
   aiConversations      AiConversation[]
   aiPreferences        AiUserPreference[]
+  acceptedSuggestions  AiSuggestion[]   @relation("SuggestionAcceptor")
 
   workSchedule     Json?    @default("{\"1\":{\"start\":9,\"end\":18},\"2\":{\"start\":9,\"end\":18},\"3\":{\"start\":9,\"end\":18},\"4\":{\"start\":9,\"end\":18},\"5\":{\"start\":9,\"end\":18}}")
 
@@ -245,6 +246,7 @@ model Client {
   incomes         Income[]
   convertedLeads  Lead[]    @relation("LeadConverted")
   healthScore     ClientHealthScore?
+  aiSuggestions   AiSuggestion[]
 
   @@index([status])
   @@index([slug])
@@ -281,6 +283,31 @@ model ClientHealthScore {
   @@index([overallScore])
   @@index([riskLevel])
   @@map("client_health_scores")
+}
+
+model AiSuggestion {
+  id           String    @id @default(uuid())
+  clientId     String
+  type         String
+  title        String
+  description  String    @db.Text
+  priority     String    @default("MEDIUM")
+  actionType   String?
+  actionData   Json?
+  status       String    @default("PENDING")
+  expiresAt    DateTime?
+  acceptedById String?
+  brandSlug    String
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  acceptedBy   User?     @relation("SuggestionAcceptor", fields: [acceptedById], references: [id])
+
+  @@index([clientId])
+  @@index([status, brandSlug])
+  @@index([type])
+  @@map("ai_suggestions")
 }
 
 model Contact {
