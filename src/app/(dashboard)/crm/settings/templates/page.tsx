@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useFetch } from '@/hooks/useFetch'
+import { sanitizeEmailHtml } from '@/lib/sanitize-email-html'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -233,7 +234,7 @@ export default function TemplatesSettingsPage() {
       {/* Preview Modal */}
       <Modal open={!!previewHtml} onClose={closePreview} title="Anteprima Template" size="lg">
         {previewHtml && (
-          <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+          <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeEmailHtml(previewHtml) }} />
         )}
       </Modal>
 

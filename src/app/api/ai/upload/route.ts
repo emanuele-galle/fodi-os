@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthHeaders } from '@/lib/api-utils'
 import { uploadFile } from '@/lib/s3'
+import { validateFile } from '@/lib/file-validation'
 import crypto from 'crypto'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -46,11 +47,17 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      const buffer = Buffer.from(await file.arrayBuffer())
+
+      // Validate file with magic byte check and blocked extension list
+      const validationError = validateFile(file.name, file.size, file.type, buffer)
+      if (validationError) {
+        return NextResponse.json({ error: validationError.message }, { status: 400 })
+      }
+
       const ext = file.name.split('.').pop()?.toLowerCase() || 'bin'
       const randomId = crypto.randomBytes(8).toString('hex')
       const key = `ai-attachments/${auth.userId}/${Date.now()}-${randomId}.${ext}`
-
-      const buffer = Buffer.from(await file.arrayBuffer())
       const url = await uploadFile(key, buffer, file.type)
 
       results.push({

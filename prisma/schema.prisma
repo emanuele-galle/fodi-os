@@ -254,6 +254,7 @@ model Client {
 
   @@index([status])
   @@index([slug])
+  @@index([anniversaryDate])
   @@map("clients")
 }
 

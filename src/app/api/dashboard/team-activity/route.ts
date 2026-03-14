@@ -131,6 +131,7 @@ export async function GET(request: NextRequest) {
         where: { createdAt: { gte: start }, ...(canSeeTeam ? {} : { userId }) },
         select: { userId: true, action: true, entityType: true, entityId: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
+        take: 5000,
       }),
       prisma.user.findMany({
         where: canSeeTeam ? { isActive: true } : { id: userId },

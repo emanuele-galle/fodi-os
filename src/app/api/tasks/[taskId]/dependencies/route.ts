@@ -7,6 +7,11 @@ export async function GET(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
+    const role = request.headers.get('x-user-role') as Role
+    if (!role) {
+      return NextResponse.json({ error: 'Non autorizzato' }, { status: 401 })
+    }
+
     const { taskId } = await params
     const dependencies = await prisma.taskDependency.findMany({
       where: { taskId },
@@ -45,18 +50,19 @@ export async function POST(
       return NextResponse.json({ error: 'Un task non può dipendere da se stesso' }, { status: 400 })
     }
 
-    // Check for circular dependency
+    // Check for circular dependency (with depth limit to prevent DoS)
+    const MAX_DEPTH = 20
     const visited = new Set<string>()
-    async function hasCircular(currentId: string): Promise<boolean> {
+    async function hasCircular(currentId: string, depth = 0): Promise<boolean> {
       if (currentId === taskId) return true
-      if (visited.has(currentId)) return false
+      if (visited.has(currentId) || depth >= MAX_DEPTH) return false
       visited.add(currentId)
       const deps = await prisma.taskDependency.findMany({
         where: { taskId: currentId },
         select: { dependsOnId: true },
       })
       for (const dep of deps) {
-        if (await hasCircular(dep.dependsOnId)) return true
+        if (await hasCircular(dep.dependsOnId, depth + 1)) return true
       }
       return false
     }

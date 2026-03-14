@@ -55,6 +55,15 @@ export async function POST(request: NextRequest) {
     }
     const { username, password } = parsed.data
     const credential = username.toLowerCase().trim()
+
+    // Rate limit per credential to prevent IP-rotation brute-force
+    const credRl = rateLimit(`login-cred:${credential}`, 10, 300000) // 10 attempts per 5 min per account
+    if (!credRl.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Troppi tentativi per questo account. Riprova tra qualche minuto.' },
+        { status: 429 },
+      )
+    }
     const isEmail = credential.includes('@')
 
     const user = await prisma.user.findUnique({

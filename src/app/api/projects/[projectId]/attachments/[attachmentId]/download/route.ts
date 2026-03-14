@@ -23,6 +23,21 @@ export async function GET(
       return NextResponse.json({ error: 'Allegato non trovato' }, { status: 404 })
     }
 
+    // Validate URL to prevent SSRF — only allow known storage origins
+    const allowedOrigins = [
+      process.env.S3_PUBLIC_URL,
+      process.env.R2_PUBLIC_URL,
+      process.env.NEXT_PUBLIC_BRAND_STORAGE_URL,
+    ].filter(Boolean).map(u => new URL(u!).origin)
+    try {
+      const fileOrigin = new URL(attachment.fileUrl).origin
+      if (allowedOrigins.length > 0 && !allowedOrigins.includes(fileOrigin)) {
+        return NextResponse.json({ error: 'URL di storage non valido' }, { status: 400 })
+      }
+    } catch {
+      return NextResponse.json({ error: 'URL file non valido' }, { status: 400 })
+    }
+
     // Fetch the file from storage (R2/MinIO)
     const fileRes = await fetch(attachment.fileUrl, {
       signal: AbortSignal.timeout(30000),

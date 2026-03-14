@@ -5,6 +5,7 @@ import { Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucid
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/utils'
+import { sanitizeEmailHtml } from '@/lib/sanitize-email-html'
 
 interface Communication {
   id: string
@@ -143,7 +144,7 @@ export function CommunicationHistory() {
               </button>
               {expandedId === comm.id && comm.bodyHtml && (
                 <div className="px-4 py-3 border-t border-border bg-secondary/10">
-                  <div className="prose prose-sm max-w-none text-sm" dangerouslySetInnerHTML={{ __html: comm.bodyHtml }} />
+                  <div className="prose prose-sm max-w-none text-sm" dangerouslySetInnerHTML={{ __html: sanitizeEmailHtml(comm.bodyHtml) }} />
                 </div>
               )}
             </div>

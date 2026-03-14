@@ -30,6 +30,7 @@ interface NotificationIntent {
 
 const prefCache = new Map<string, { prefs: Map<string, boolean>; ts: number }>()
 const PREF_TTL = 5 * 60 * 1000
+const PREF_CACHE_MAX = 500
 
 async function getUserPrefs(userId: string): Promise<Map<string, boolean>> {
   const cached = prefCache.get(userId)
@@ -43,6 +44,11 @@ async function getUserPrefs(userId: string): Promise<Map<string, boolean>> {
   const prefs = new Map<string, boolean>()
   for (const row of rows) {
     prefs.set(`${row.type}:${row.channel}`, row.enabled)
+  }
+  // Evict oldest entries if cache exceeds max size
+  if (prefCache.size >= PREF_CACHE_MAX) {
+    const firstKey = prefCache.keys().next().value
+    if (firstKey) prefCache.delete(firstKey)
   }
   prefCache.set(userId, { prefs, ts: Date.now() })
   return prefs

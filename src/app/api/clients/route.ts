@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const createdBefore = searchParams.get('createdBefore')
     const neglected = searchParams.get('neglected')
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-    const limit = Math.min(500, Math.max(1, parseInt(searchParams.get('limit') || '20')))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
     const skip = (page - 1) * limit
 
     const AND: Record<string, unknown>[] = []

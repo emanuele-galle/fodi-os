@@ -121,7 +121,17 @@ export function sendBadgeUpdate(userId: string, badge: BadgeUpdate) {
   sseManager.sendToUser(userId, { type: 'badge_update', data: badge })
 }
 
+// Track last presence status per user to avoid redundant broadcasts
+const lastPresence = new Map<string, string>()
+
 export function sendPresenceUpdate(userId: string, status: 'online' | 'offline') {
+  // Skip broadcast if status unchanged (prevents M×M writes on every heartbeat)
+  if (lastPresence.get(userId) === status) return
+  lastPresence.set(userId, status)
+  if (status === 'offline') {
+    // Clean up tracking for offline users after broadcast
+    setTimeout(() => lastPresence.delete(userId), 60000)
+  }
   sseManager.broadcastToAll({
     type: 'presence',
     data: { userId, status, timestamp: new Date().toISOString() },

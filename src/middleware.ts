@@ -86,6 +86,11 @@ function setSecurityHeaders(response: NextResponse, isHtmlPage = false): NextRes
 }
 
 function buildUrl(request: NextRequest, path: string): URL {
+  // Validate host against expected site URL to prevent host header injection
+  const expectedOrigin = process.env.NEXT_PUBLIC_SITE_URL
+  if (expectedOrigin) {
+    return new URL(path, expectedOrigin)
+  }
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host
   const proto = request.headers.get('x-forwarded-proto') || 'https'
   return new URL(path, `${proto}://${host}`)

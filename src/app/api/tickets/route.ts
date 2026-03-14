@@ -76,32 +76,35 @@ export async function POST(request: NextRequest) {
     }
     const { clientId, projectId, assigneeId, subject, description, priority, category } = parsed.data
 
-    // Generate ticket number: T-YYYY-NNN
-    const year = new Date().getFullYear()
-    const count = await prisma.ticket.count({
-      where: {
-        number: { startsWith: `T-${year}-` },
-      },
-    })
-    const number = `T-${year}-${String(count + 1).padStart(3, '0')}`
+    // Generate ticket number in transaction to prevent race conditions
+    const ticket = await prisma.$transaction(async (tx) => {
+      const year = new Date().getFullYear()
+      const lastTicket = await tx.ticket.findFirst({
+        where: { number: { startsWith: `T-${year}-` } },
+        orderBy: { number: 'desc' },
+        select: { number: true },
+      })
+      const seq = lastTicket ? parseInt(lastTicket.number.split('-')[2]) + 1 : 1
+      const number = `T-${year}-${String(seq).padStart(3, '0')}`
 
-    const ticket = await prisma.ticket.create({
-      data: {
-        clientId,
-        projectId: projectId || null,
-        creatorId: userId,
-        assigneeId: assigneeId || null,
-        number,
-        subject,
-        description,
-        priority: priority || 'MEDIUM',
-        category: category || 'general',
-      },
-      include: {
-        client: { select: { id: true, companyName: true } },
-        assignee: { select: { id: true, firstName: true, lastName: true } },
-        creator: { select: { id: true, firstName: true, lastName: true } },
-      },
+      return tx.ticket.create({
+        data: {
+          clientId,
+          projectId: projectId || null,
+          creatorId: userId,
+          assigneeId: assigneeId || null,
+          number,
+          subject,
+          description,
+          priority: priority || 'MEDIUM',
+          category: category || 'general',
+        },
+        include: {
+          client: { select: { id: true, companyName: true } },
+          assignee: { select: { id: true, firstName: true, lastName: true } },
+          creator: { select: { id: true, firstName: true, lastName: true } },
+        },
+      })
     })
 
     // Notify support team (ADMIN + SUPPORT roles) about new ticket
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
     await dispatchNotification({
       type: 'ticket_created',
       title: 'Nuovo ticket',
-      message: `Nuovo ticket "${subject}" (${number})`,
+      message: `Nuovo ticket "${subject}" (${ticket.number})`,
       link: `/support/${ticket.id}`,
       metadata: { clientName: ticket.client?.companyName, ticketNumber: ticket.number },
       groupKey: `new_ticket:${ticket.id}`,
@@ -128,7 +131,7 @@ export async function POST(request: NextRequest) {
       await dispatchNotification({
         type: 'ticket_assigned',
         title: 'Ticket assegnato',
-        message: `Ti è stato assegnato il ticket "${subject}" (${number})`,
+        message: `Ti è stato assegnato il ticket "${subject}" (${ticket.number})`,
         link: `/support/${ticket.id}`,
         metadata: { clientName: ticket.client?.companyName, ticketNumber: ticket.number },
         groupKey: `new_ticket:${ticket.id}`,

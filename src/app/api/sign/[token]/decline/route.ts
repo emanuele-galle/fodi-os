@@ -93,7 +93,7 @@ export async function POST(
         title: 'Firma rifiutata',
         message: `${reqWithRequester.signerName} ha rifiutato di firmare "${reqWithRequester.documentTitle}"`,
         link: '/erp/signatures',
-      })
+      }).catch(() => {})
       if (r.email) {
         const html = buildSignatureDeclinedEmail({
           recipientFirstName: r.firstName,
@@ -101,7 +101,7 @@ export async function POST(
           documentTitle: reqWithRequester.documentTitle,
           reason: parsed.data.reason,
         })
-        sendViaSMTP(r.email, `Firma rifiutata: ${reqWithRequester.documentTitle}`, html)
+        sendViaSMTP(r.email, `Firma rifiutata: ${reqWithRequester.documentTitle}`, html).catch(() => {})
       }
     }
 

@@ -223,14 +223,14 @@ export async function POST(
         title: 'Documento firmato',
         message: `${reqWithRequester.signerName} ha firmato "${reqWithRequester.documentTitle}"`,
         link: '/erp/signatures',
-      })
+      }).catch(() => {})
       if (r.email) {
         const html = buildSignatureCompletedEmail({
           recipientFirstName: r.firstName,
           signerName: reqWithRequester.signerName,
           documentTitle: reqWithRequester.documentTitle,
         })
-        sendViaSMTP(r.email, `Documento firmato: ${reqWithRequester.documentTitle}`, html)
+        sendViaSMTP(r.email, `Documento firmato: ${reqWithRequester.documentTitle}`, html).catch(() => {})
       }
     }
 

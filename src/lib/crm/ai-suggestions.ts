@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { anthropic } from '@/lib/ai/anthropic'
 import { brand } from '@/lib/branding'
-import type { Prisma } from '@/generated/prisma/client'
+import { Prisma } from '@/generated/prisma/client'
 
 // ============================================================
 // TYPES
@@ -170,26 +170,25 @@ async function saveSuggestions(rawText: string, clientId: string, brandSlug: str
     data: { status: 'EXPIRED' },
   })
 
-  let created = 0
-  for (const s of suggestions) {
-    if (!s.type || !s.title || !s.description) continue
-    await prisma.aiSuggestion.create({
-      data: {
-        clientId,
-        type: s.type,
-        title: s.title,
-        description: s.description,
-        priority: s.priority || 'MEDIUM',
-        actionType: s.actionType || null,
-        actionData: s.actionData ? (s.actionData as Prisma.InputJsonValue) : undefined,
-        brandSlug,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    })
-    created++
+  const validSuggestions = suggestions
+    .filter(s => s.type && s.title && s.description)
+    .map(s => ({
+      clientId,
+      type: s.type!,
+      title: s.title!,
+      description: s.description!,
+      priority: s.priority || 'MEDIUM',
+      actionType: s.actionType || null,
+      actionData: s.actionData ? (s.actionData as Prisma.InputJsonValue) : Prisma.JsonNull,
+      brandSlug,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    }))
+
+  if (validSuggestions.length > 0) {
+    await prisma.aiSuggestion.createMany({ data: validSuggestions })
   }
 
-  return created
+  return validSuggestions.length
 }
 
 // ============================================================

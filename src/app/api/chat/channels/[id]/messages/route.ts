@@ -201,7 +201,7 @@ export async function POST(
             type: 'notification',
             data: { type: nd.type, title: nd.title, message: nd.message, link: nd.link },
           })
-          sendPush(nd.userId, { title: nd.title, message: nd.message, link: nd.link })
+          sendPush(nd.userId, { title: nd.title, message: nd.message, link: nd.link }).catch(() => {})
         }
       }
     }
