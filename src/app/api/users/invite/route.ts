@@ -49,29 +49,42 @@ export async function POST(request: NextRequest) {
     const tempPassword = generateTempPassword()
     const hashedPassword = await hashPassword(tempPassword)
 
-    const user = await prisma.user.create({
-      data: {
-        username,
-        email,
-        firstName,
-        lastName,
-        password: hashedPassword,
-        role: assignedRole,
-        ...(customRoleId && { customRoleId }),
-        isActive: true,
-        ...(phone && { phone: phone.trim() }),
-      },
-      select: {
-        id: true,
-        username: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-      },
-    })
+    const userData = {
+      username,
+      email,
+      firstName,
+      lastName,
+      password: hashedPassword,
+      role: assignedRole,
+      ...(customRoleId && { customRoleId }),
+      isActive: true,
+      ...(phone && { phone: phone.trim() }),
+    }
+    const userSelect = {
+      id: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+    }
+
+    let user
+    try {
+      user = await prisma.user.create({ data: userData, select: userSelect })
+    } catch (err: unknown) {
+      // Handle race condition: another concurrent invite created the same username
+      if (err && typeof err === 'object' && 'code' in err && err.code === 'P2002' &&
+          'meta' in err && err.meta && typeof err.meta === 'object' && 'target' in err.meta &&
+          Array.isArray(err.meta.target) && err.meta.target.includes('username')) {
+        username = `${baseUsername}${Date.now().toString(36)}`
+        user = await prisma.user.create({ data: { ...userData, username }, select: userSelect })
+      } else {
+        throw err
+      }
+    }
 
     const requesterId = request.headers.get('x-user-id')
     if (requesterId) {
@@ -84,7 +97,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({ success: true, data: { user, tempPassword }, user, tempPassword }, { status: 201 })
+    return NextResponse.json({ success: true, data: { user, tempPassword } }, { status: 201 })
   } catch (error) {
     console.error('[users/invite]', error)
     return NextResponse.json({ success: false, error: 'Errore interno del server' }, { status: 500 })

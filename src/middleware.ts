@@ -30,12 +30,15 @@ async function verifyToken(token: string) {
 }
 
 /**
- * Check if there's a valid refresh token present (JWT signature only).
- * The actual refresh (with DB revocation check) happens via /api/auth/refresh.
+ * Check if there's a plausible refresh token present (basic JWT format check).
+ * The actual refresh (with DB revocation check + signature) happens via /api/auth/refresh.
  */
 function hasValidRefreshToken(request: NextRequest): boolean {
   const refreshToken = request.cookies.get(brand.cookies.refresh)?.value
-  return !!refreshToken
+  if (!refreshToken) return false
+  // Basic JWT format: three base64url segments separated by dots
+  const parts = refreshToken.split('.')
+  return parts.length === 3 && parts.every(p => p.length > 0)
 }
 
 const CSP_SCRIPT_SRC = process.env.NODE_ENV === 'production'
@@ -67,7 +70,7 @@ const CSP_HEADER = `default-src 'self'; script-src ${CSP_SCRIPT_SRC} https://cha
 
 function setSecurityHeaders(response: NextResponse, isHtmlPage = false): NextResponse {
   response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('X-Frame-Options', 'SAMEORIGIN')
+  response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
   response.headers.set('X-XSS-Protection', '1; mode=block')

@@ -6,6 +6,108 @@ import type { Role } from '@/generated/prisma/client'
 
 type Params = { params: Promise<{ dealId: string }> }
 
+interface DealContext {
+  deal: {
+    title: string
+    value: unknown
+    stage: string
+    probability: number | null
+    description: string | null
+    expectedCloseDate: Date | null
+    client: { companyName: string } | null
+    lead: { name: string; company: string | null } | null
+    contact: { firstName: string; lastName: string } | null
+    owner: { firstName: string; lastName: string } | null
+  }
+  interactions: Array<{ type: string; subject: string; content: string | null; date: Date }>
+  tasks: Array<{ title: string; status: string; priority: string; dueDate: Date | null }>
+  activities: Array<{ action: string; createdAt: Date }>
+}
+
+function formatDealHeader(deal: DealContext['deal']): string[] {
+  const parts: string[] = []
+  parts.push(`OPPORTUNITÀ: "${deal.title}"`)
+  parts.push(`Valore: €${deal.value} | Fase: ${deal.stage} | Probabilità: ${deal.probability}%`)
+  parts.push(`Owner: ${deal.owner?.firstName ?? ''} ${deal.owner?.lastName ?? ''}`.trim())
+  if (deal.client) parts.push(`Cliente: ${deal.client.companyName}`)
+  if (deal.lead) parts.push(`Lead: ${deal.lead.name}${deal.lead.company ? ` (${deal.lead.company})` : ''}`)
+  if (deal.contact) parts.push(`Contatto: ${deal.contact.firstName} ${deal.contact.lastName}`)
+  if (deal.expectedCloseDate) parts.push(`Chiusura prevista: ${new Date(deal.expectedCloseDate).toLocaleDateString('it-IT')}`)
+  if (deal.description) parts.push(`Descrizione: ${deal.description}`)
+  return parts
+}
+
+function formatInteractions(interactions: DealContext['interactions']): string[] {
+  if (interactions.length === 0) return []
+  return [
+    '\nINTERAZIONI RECENTI:',
+    ...interactions.map(i => {
+      const date = new Date(i.date).toLocaleDateString('it-IT')
+      return `- [${date}] ${i.type}: ${i.subject}${i.content ? ` — ${i.content.slice(0, 200)}` : ''}`
+    }),
+  ]
+}
+
+function formatTasks(tasks: DealContext['tasks']): string[] {
+  if (tasks.length === 0) return []
+  return [
+    '\nTASK CORRELATI:',
+    ...tasks.map(t => {
+      const due = t.dueDate ? ` (scad. ${new Date(t.dueDate).toLocaleDateString('it-IT')})` : ''
+      return `- [${t.status}] ${t.title} — ${t.priority}${due}`
+    }),
+  ]
+}
+
+function formatActivities(activities: DealContext['activities']): string[] {
+  if (activities.length === 0) return []
+  return [
+    '\nATTIVITÀ RECENTI:',
+    ...activities.map(a => `- [${new Date(a.createdAt).toLocaleDateString('it-IT')}] ${a.action}`),
+  ]
+}
+
+function buildSummaryContext(ctx: DealContext): string {
+  return [
+    ...formatDealHeader(ctx.deal),
+    ...formatInteractions(ctx.interactions),
+    ...formatTasks(ctx.tasks),
+    ...formatActivities(ctx.activities),
+  ].join('\n')
+}
+
+async function fetchDealContextData(dealId: string, clientId: string | null) {
+  return Promise.all([
+    clientId
+      ? prisma.interaction.findMany({
+          where: { clientId },
+          orderBy: { date: 'desc' },
+          take: 20,
+          select: { type: true, subject: true, content: true, date: true },
+        })
+      : Promise.resolve([]),
+
+    prisma.task.findMany({
+      where: {
+        OR: [
+          { tags: { has: `deal:${dealId}` } },
+          ...(clientId ? [{ clientId }] : []),
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 15,
+      select: { title: true, status: true, priority: true, dueDate: true, createdAt: true },
+    }),
+
+    prisma.activityLog.findMany({
+      where: { entityType: 'DEAL', entityId: dealId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: { action: true, metadata: true, createdAt: true },
+    }),
+  ] as const)
+}
+
 export async function GET(request: NextRequest, { params }: Params) {
   try {
     const role = request.headers.get('x-user-role') as Role
@@ -27,75 +129,8 @@ export async function GET(request: NextRequest, { params }: Params) {
       return NextResponse.json({ success: false, error: 'Opportunità non trovata' }, { status: 404 })
     }
 
-    // Gather context data in parallel
-    const [interactions, tasks, activities] = await Promise.all([
-      // Interactions with the client (last 20)
-      deal.clientId
-        ? prisma.interaction.findMany({
-            where: { clientId: deal.clientId },
-            orderBy: { date: 'desc' },
-            take: 20,
-            select: { type: true, subject: true, content: true, date: true },
-          })
-        : Promise.resolve([]),
-
-      // Tasks related to this deal (tagged with deal ID)
-      prisma.task.findMany({
-        where: {
-          OR: [
-            { tags: { has: `deal:${dealId}` } },
-            ...(deal.clientId ? [{ clientId: deal.clientId }] : []),
-          ],
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 15,
-        select: { title: true, status: true, priority: true, dueDate: true, createdAt: true },
-      }),
-
-      // Activity log entries for this deal (last 20)
-      prisma.activityLog.findMany({
-        where: { entityType: 'DEAL', entityId: dealId },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-        select: { action: true, metadata: true, createdAt: true },
-      }),
-    ])
-
-    // Build context for AI
-    const contextParts: string[] = []
-
-    contextParts.push(`OPPORTUNITÀ: "${deal.title}"`)
-    contextParts.push(`Valore: €${deal.value} | Fase: ${deal.stage} | Probabilità: ${deal.probability}%`)
-    contextParts.push(`Owner: ${deal.owner?.firstName ?? ''} ${deal.owner?.lastName ?? ''}`.trim())
-    if (deal.client) contextParts.push(`Cliente: ${deal.client.companyName}`)
-    if (deal.lead) contextParts.push(`Lead: ${deal.lead.name}${deal.lead.company ? ` (${deal.lead.company})` : ''}`)
-    if (deal.contact) contextParts.push(`Contatto: ${deal.contact.firstName} ${deal.contact.lastName}`)
-    if (deal.expectedCloseDate) contextParts.push(`Chiusura prevista: ${new Date(deal.expectedCloseDate).toLocaleDateString('it-IT')}`)
-    if (deal.description) contextParts.push(`Descrizione: ${deal.description}`)
-
-    if (interactions.length > 0) {
-      contextParts.push('\nINTERAZIONI RECENTI:')
-      for (const i of interactions) {
-        const date = new Date(i.date).toLocaleDateString('it-IT')
-        contextParts.push(`- [${date}] ${i.type}: ${i.subject}${i.content ? ` — ${i.content.slice(0, 200)}` : ''}`)
-      }
-    }
-
-    if (tasks.length > 0) {
-      contextParts.push('\nTASK CORRELATI:')
-      for (const t of tasks) {
-        const due = t.dueDate ? ` (scad. ${new Date(t.dueDate).toLocaleDateString('it-IT')})` : ''
-        contextParts.push(`- [${t.status}] ${t.title} — ${t.priority}${due}`)
-      }
-    }
-
-    if (activities.length > 0) {
-      contextParts.push('\nATTIVITÀ RECENTI:')
-      for (const a of activities) {
-        const date = new Date(a.createdAt).toLocaleDateString('it-IT')
-        contextParts.push(`- [${date}] ${a.action}`)
-      }
-    }
+    const [interactions, tasks, activities] = await fetchDealContextData(dealId, deal.clientId)
+    const contextText = buildSummaryContext({ deal, interactions, tasks, activities })
 
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
@@ -110,7 +145,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 Rispondi in massimo 4-5 frasi, diretto e utile. Non usare heading o elenchi puntati, solo testo fluido.
 
-${contextParts.join('\n')}`,
+${contextText}`,
         },
       ],
     })

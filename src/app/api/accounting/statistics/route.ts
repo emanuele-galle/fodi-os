@@ -14,40 +14,48 @@ export async function GET(request: NextRequest) {
     const startDate = new Date(year, 0, 1)
     const endDate = new Date(year, 11, 31)
 
-    const [incomes, expenses] = await Promise.all([
-      prisma.income.findMany({
-        where: { date: { gte: startDate, lte: endDate } },
-        select: { date: true, amount: true, netAmount: true, vatAmount: true },
-      }),
-      prisma.expense.findMany({
-        where: { date: { gte: startDate, lte: endDate }, isRecurring: false },
-        select: { date: true, amount: true, netAmount: true, vatDeductible: true },
-      }),
+    // Aggregate at DB level to avoid loading all rows into memory
+    const [incomeByMonth, expenseByMonth] = await Promise.all([
+      prisma.$queryRaw<Array<{ m: number; sum_amount: number; sum_net: number; sum_vat: number }>>`
+        SELECT EXTRACT(MONTH FROM date)::int AS m,
+               COALESCE(SUM(amount), 0)::float AS sum_amount,
+               COALESCE(SUM("netAmount"), 0)::float AS sum_net,
+               COALESCE(SUM("vatAmount"), 0)::float AS sum_vat
+        FROM incomes
+        WHERE date >= ${startDate} AND date <= ${endDate}
+        GROUP BY m ORDER BY m`,
+      prisma.$queryRaw<Array<{ m: number; sum_amount: number; sum_net: number; sum_vat_ded: number }>>`
+        SELECT EXTRACT(MONTH FROM date)::int AS m,
+               COALESCE(SUM(amount), 0)::float AS sum_amount,
+               COALESCE(SUM("netAmount"), 0)::float AS sum_net,
+               COALESCE(SUM("vatDeductible"), 0)::float AS sum_vat_ded
+        FROM expenses
+        WHERE date >= ${startDate} AND date <= ${endDate} AND "isRecurring" = false
+        GROUP BY m ORDER BY m`,
     ])
 
-    // Build monthly stats
+    const incMap = new Map(incomeByMonth.map(r => [r.m, r]))
+    const expMap = new Map(expenseByMonth.map(r => [r.m, r]))
+
     const months = Array.from({ length: 12 }, (_, i) => {
-      const monthIncomes = incomes.filter(inc => new Date(inc.date).getMonth() === i)
-      const monthExpenses = expenses.filter(exp => new Date(exp.date).getMonth() === i)
-
-      const incomeNet = monthIncomes.reduce((s, inc) => s + Number(inc.netAmount || 0), 0)
-      const incomeVat = monthIncomes.reduce((s, inc) => s + Number(inc.vatAmount || 0), 0)
-      const expenseNet = monthExpenses.reduce((s, exp) => s + Number(exp.netAmount || 0), 0)
-      const expenseVatDeductible = monthExpenses.reduce((s, exp) => s + Number(exp.vatDeductible || 0), 0)
-
+      const inc = incMap.get(i + 1)
+      const exp = expMap.get(i + 1)
+      const incomeNet = inc?.sum_net ?? 0
+      const incomeVat = inc?.sum_vat ?? 0
+      const expenseNet = exp?.sum_net ?? 0
+      const expenseVatDeductible = exp?.sum_vat_ded ?? 0
       const profit = incomeNet - expenseNet
-      const vatToPayOrRecover = incomeVat - expenseVatDeductible
 
       return {
         month: i + 1,
         profit: Math.round(profit * 100) / 100,
         incomeNet: Math.round(incomeNet * 100) / 100,
         expenseNet: Math.round(expenseNet * 100) / 100,
-        incomeGross: Math.round(monthIncomes.reduce((s, inc) => s + Number(inc.amount), 0) * 100) / 100,
-        expenseGross: Math.round(monthExpenses.reduce((s, exp) => s + Number(exp.amount), 0) * 100) / 100,
+        incomeGross: Math.round((inc?.sum_amount ?? 0) * 100) / 100,
+        expenseGross: Math.round((exp?.sum_amount ?? 0) * 100) / 100,
         vatCollected: Math.round(incomeVat * 100) / 100,
         vatDeductible: Math.round(expenseVatDeductible * 100) / 100,
-        vatBalance: Math.round(vatToPayOrRecover * 100) / 100,
+        vatBalance: Math.round((incomeVat - expenseVatDeductible) * 100) / 100,
       }
     })
 

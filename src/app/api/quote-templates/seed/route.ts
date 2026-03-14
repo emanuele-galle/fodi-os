@@ -145,6 +145,9 @@ const SEED_TEMPLATES: SeedTemplate[] = [
 export async function POST(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
+    if (role !== 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Solo gli Admin possono eseguire il seed' }, { status: 403 })
+    }
     requirePermission(role, 'erp', 'write')
 
     const userId = request.headers.get('x-user-id')!
@@ -169,46 +172,48 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    let createdCount = 0
+    const createdCount = await prisma.$transaction(async (tx) => {
+      let count = 0
+      for (const template of templatesToCreate) {
+        let slug = slugify(template.name)
+        const existingSlug = await tx.quoteTemplate.findUnique({ where: { slug } })
+        if (existingSlug) {
+          slug = `${slug}-${Date.now().toString(36)}`
+        }
 
-    for (const template of templatesToCreate) {
-      let slug = slugify(template.name)
-      const existingSlug = await prisma.quoteTemplate.findUnique({ where: { slug } })
-      if (existingSlug) {
-        slug = `${slug}-${Date.now().toString(36)}`
-      }
-
-      await prisma.quoteTemplate.create({
-        data: {
-          name: template.name,
-          slug,
-          description: template.description,
-          isGlobal: true,
-          isActive: true,
-          creatorId: userId,
-          primaryColor: '#1a1a2e',
-          secondaryColor: '#16213e',
-          logoUrl: '/logo-official.png',
-          numberPrefix: 'PRV',
-          numberFormat: '{PREFIX}-{YYYY}-{NNN}',
-          defaultTaxRate: 22,
-          defaultDiscount: 0,
-          defaultValidDays: 30,
-          defaultNotes: DEFAULT_NOTES,
-          termsAndConditions: TERMS_AND_CONDITIONS,
-          lineItems: {
-            create: template.lineItems.map((item, i) => ({
-              description: item.description,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              sortOrder: i,
-            })),
+        await tx.quoteTemplate.create({
+          data: {
+            name: template.name,
+            slug,
+            description: template.description,
+            isGlobal: true,
+            isActive: true,
+            creatorId: userId,
+            primaryColor: '#1a1a2e',
+            secondaryColor: '#16213e',
+            logoUrl: '/logo-official.png',
+            numberPrefix: 'PRV',
+            numberFormat: '{PREFIX}-{YYYY}-{NNN}',
+            defaultTaxRate: 22,
+            defaultDiscount: 0,
+            defaultValidDays: 30,
+            defaultNotes: DEFAULT_NOTES,
+            termsAndConditions: TERMS_AND_CONDITIONS,
+            lineItems: {
+              create: template.lineItems.map((item, i) => ({
+                description: item.description,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                sortOrder: i,
+              })),
+            },
           },
-        },
-      })
+        })
 
-      createdCount++
-    }
+        count++
+      }
+      return count
+    })
 
     return NextResponse.json({
       success: true,

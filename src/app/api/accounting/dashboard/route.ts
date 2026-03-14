@@ -38,23 +38,36 @@ export async function GET(request: NextRequest) {
 
     const entityFilter = businessEntityId ? { businessEntityId } : {}
 
-    const [incomes, expenses, prevIncomes, prevExpenses, pendingIncomes] = await Promise.all([
-      prisma.income.findMany({
-        where: { date: { gte: startDate, lte: endDate }, ...entityFilter },
-        select: { category: true, amount: true, netAmount: true, vatAmount: true },
-      }),
-      prisma.expense.findMany({
-        where: { date: { gte: startDate, lte: endDate }, isRecurring: false, ...entityFilter },
-        select: { category: true, amount: true, netAmount: true, vatDeductible: true },
-      }),
-      prisma.income.findMany({
-        where: { date: { gte: prevStartDate, lte: prevEndDate }, ...entityFilter },
-        select: { amount: true, netAmount: true },
-      }),
-      prisma.expense.findMany({
-        where: { date: { gte: prevStartDate, lte: prevEndDate }, isRecurring: false, ...entityFilter },
-        select: { amount: true, netAmount: true },
-      }),
+    // Aggregate at DB level by category to avoid loading all rows
+    const [incomeByCat, expenseByCat, prevTotals, pendingIncomes] = await Promise.all([
+      prisma.$queryRaw<Array<{ category: string; sum_amount: number; sum_net: number; sum_vat: number }>>`
+        SELECT category,
+               COALESCE(SUM(amount), 0)::float AS sum_amount,
+               COALESCE(SUM("netAmount"), 0)::float AS sum_net,
+               COALESCE(SUM("vatAmount"), 0)::float AS sum_vat
+        FROM incomes
+        WHERE date >= ${startDate} AND date <= ${endDate}
+          ${businessEntityId ? prisma.$queryRaw`AND "businessEntityId" = ${businessEntityId}` : prisma.$queryRaw``}
+        GROUP BY category`,
+      prisma.$queryRaw<Array<{ category: string; sum_amount: number; sum_net: number; sum_vat_ded: number }>>`
+        SELECT category,
+               COALESCE(SUM(amount), 0)::float AS sum_amount,
+               COALESCE(SUM("netAmount"), 0)::float AS sum_net,
+               COALESCE(SUM("vatDeductible"), 0)::float AS sum_vat_ded
+        FROM expenses
+        WHERE date >= ${startDate} AND date <= ${endDate} AND "isRecurring" = false
+          ${businessEntityId ? prisma.$queryRaw`AND "businessEntityId" = ${businessEntityId}` : prisma.$queryRaw``}
+        GROUP BY category`,
+      prisma.$queryRaw<Array<{ prev_inc: number; prev_exp: number }>>`
+        SELECT
+          (SELECT COALESCE(SUM(amount), 0)::float FROM incomes
+           WHERE date >= ${prevStartDate} AND date <= ${prevEndDate}
+             ${businessEntityId ? prisma.$queryRaw`AND "businessEntityId" = ${businessEntityId}` : prisma.$queryRaw``}
+          ) AS prev_inc,
+          (SELECT COALESCE(SUM(amount), 0)::float FROM expenses
+           WHERE date >= ${prevStartDate} AND date <= ${prevEndDate} AND "isRecurring" = false
+             ${businessEntityId ? prisma.$queryRaw`AND "businessEntityId" = ${businessEntityId}` : prisma.$queryRaw``}
+          ) AS prev_exp`,
       prisma.income.findMany({
         where: { isPaid: false, date: { gte: startDate, lte: endDate }, ...entityFilter },
         select: { id: true, clientName: true, date: true, amount: true, category: true },
@@ -63,30 +76,23 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
-    // Aggregate by category
+    // Build category breakdowns from DB aggregates
     const incomeByCategory: Record<string, { gross: number; net: number; vat: number }> = {}
     let totalIncomeGross = 0, totalIncomeNet = 0, totalIncomeVat = 0
-    for (const i of incomes) {
-      const cat = i.category
-      if (!incomeByCategory[cat]) incomeByCategory[cat] = { gross: 0, net: 0, vat: 0 }
-      const g = Number(i.amount); const n = Number(i.netAmount || 0); const v = Number(i.vatAmount || 0)
-      incomeByCategory[cat].gross += g; incomeByCategory[cat].net += n; incomeByCategory[cat].vat += v
-      totalIncomeGross += g; totalIncomeNet += n; totalIncomeVat += v
+    for (const r of incomeByCat) {
+      incomeByCategory[r.category] = { gross: r.sum_amount, net: r.sum_net, vat: r.sum_vat }
+      totalIncomeGross += r.sum_amount; totalIncomeNet += r.sum_net; totalIncomeVat += r.sum_vat
     }
 
     const expenseByCategory: Record<string, { gross: number; net: number; vatDeductible: number }> = {}
     let totalExpenseGross = 0, totalExpenseNet = 0, totalExpenseVatDeductible = 0
-    for (const e of expenses) {
-      const cat = e.category
-      if (!expenseByCategory[cat]) expenseByCategory[cat] = { gross: 0, net: 0, vatDeductible: 0 }
-      const g = Number(e.amount); const n = Number(e.netAmount || 0); const vd = Number(e.vatDeductible || 0)
-      expenseByCategory[cat].gross += g; expenseByCategory[cat].net += n; expenseByCategory[cat].vatDeductible += vd
-      totalExpenseGross += g; totalExpenseNet += n; totalExpenseVatDeductible += vd
+    for (const r of expenseByCat) {
+      expenseByCategory[r.category] = { gross: r.sum_amount, net: r.sum_net, vatDeductible: r.sum_vat_ded }
+      totalExpenseGross += r.sum_amount; totalExpenseNet += r.sum_net; totalExpenseVatDeductible += r.sum_vat_ded
     }
 
-    // Previous period totals
-    const prevTotalIncomeGross = prevIncomes.reduce((s, i) => s + Number(i.amount), 0)
-    const prevTotalExpenseGross = prevExpenses.reduce((s, e) => s + Number(e.amount), 0)
+    const prevTotalIncomeGross = prevTotals[0]?.prev_inc ?? 0
+    const prevTotalExpenseGross = prevTotals[0]?.prev_exp ?? 0
 
     const profitNet = totalIncomeNet - totalExpenseNet
 

@@ -1294,7 +1294,7 @@ model ActivityLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([entityType, entityId])
+  @@index([entityType, entityId, createdAt(sort: Desc)])
   @@index([createdAt])
   @@index([userId, createdAt])
   @@map("activity_logs")

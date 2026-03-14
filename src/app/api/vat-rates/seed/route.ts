@@ -17,16 +17,22 @@ const DEFAULT_VAT_RATES = [
 export async function POST(request: NextRequest) {
   try {
     const role = request.headers.get('x-user-role') as Role
+    if (role !== 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Solo gli Admin possono eseguire il seed' }, { status: 403 })
+    }
     requirePermission(role, 'erp', 'write')
 
-    let created = 0
-    for (const vr of DEFAULT_VAT_RATES) {
-      const existing = await prisma.vatRate.findUnique({ where: { code: vr.code } })
-      if (!existing) {
-        await prisma.vatRate.create({ data: vr })
-        created++
+    const created = await prisma.$transaction(async (tx) => {
+      let count = 0
+      for (const vr of DEFAULT_VAT_RATES) {
+        const existing = await tx.vatRate.findUnique({ where: { code: vr.code } })
+        if (!existing) {
+          await tx.vatRate.create({ data: vr })
+          count++
+        }
       }
-    }
+      return count
+    })
 
     return NextResponse.json({ success: true, created, message: `${created} aliquote create` })
   } catch (e) {

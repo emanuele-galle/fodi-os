@@ -110,13 +110,19 @@ export async function PUT(
       cardBio: data.cardBio || null,
     }
 
-    // Update or create card
+    // Generate slug from user name if creating
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true, lastName: true },
+    })
+    const slug = user ? generateSlug(user.firstName, user.lastName) : userId
+
     const card = await prisma.digitalCard.upsert({
       where: { userId },
       update: cleanData,
       create: {
         userId,
-        slug: '', // Will be set properly if needed
+        slug,
         ...cleanData,
       },
     })

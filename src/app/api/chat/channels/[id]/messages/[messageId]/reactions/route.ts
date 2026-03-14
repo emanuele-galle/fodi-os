@@ -25,8 +25,8 @@ export async function POST(
 
     const body = await request.json()
     const { emoji } = body
-    if (!emoji || typeof emoji !== 'string') {
-      return NextResponse.json({ error: 'Emoji obbligatorio' }, { status: 400 })
+    if (!emoji || typeof emoji !== 'string' || emoji.length > 8) {
+      return NextResponse.json({ error: 'Emoji obbligatorio (max 8 caratteri)' }, { status: 400 })
     }
 
     const message = await prisma.chatMessage.findUnique({
@@ -51,6 +51,10 @@ export async function POST(
     if (emojiReactions.includes(userId)) {
       newEmojiReactions = emojiReactions.filter((id) => id !== userId)
     } else {
+      // Cap distinct emoji keys per message to 20
+      if (!reactions[emoji] && Object.keys(reactions).length >= 20) {
+        return NextResponse.json({ error: 'Massimo 20 emoji diverse per messaggio' }, { status: 400 })
+      }
       newEmojiReactions = [...emojiReactions, userId]
     }
 

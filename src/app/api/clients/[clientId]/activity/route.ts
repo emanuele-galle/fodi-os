@@ -37,9 +37,9 @@ export async function GET(request: NextRequest, { params }: Params) {
       throw new ApiError(404, 'Cliente non trovato')
     }
 
-    // DB-level pagination: fetch only needed records with orderBy + take
-    // Over-fetch slightly to fill the page across all types, then merge and trim
-    const perTypeLimit = limit + 1 // fetch 1 extra to know if there are more
+    // Fetch enough records per type to fill the requested page after merge+sort.
+    // We need (page * limit) items total across all types, so each type fetches that many.
+    const perTypeLimit = page * limit + 1
 
     const [interactions, activityLogs, tasks, deals, documents, counts] = await Promise.all([
       // 1. Interactions (ordered by date desc, limited)

@@ -14,6 +14,40 @@ interface AiLineItem {
   unitPrice: number
 }
 
+type DealWithRelations = NonNullable<Awaited<ReturnType<typeof prisma.deal.findUnique>>>
+
+function buildQuoteContext(
+  deal: DealWithRelations & { client: { companyName: string; industry: string | null } | null },
+  interactions: Array<{ type: string; subject: string; content: string | null }>,
+  pastQuotes: Array<{ title: string; total: unknown; lineItems: Array<{ description: string; quantity: number; unitPrice: unknown }> }>,
+): string {
+  const parts: string[] = []
+  parts.push(`OPPORTUNITÀ: "${deal.title}"`)
+  parts.push(`Valore target: €${deal.value}`)
+  parts.push(`Cliente: ${deal.client!.companyName}`)
+  if (deal.client!.industry) parts.push(`Settore: ${deal.client!.industry}`)
+  if (deal.description) parts.push(`Descrizione: ${deal.description}`)
+
+  if (interactions.length > 0) {
+    parts.push('\nINTERAZIONI RECENTI:')
+    for (const i of interactions) {
+      parts.push(`- ${i.type}: ${i.subject}${i.content ? ` — ${i.content.slice(0, 150)}` : ''}`)
+    }
+  }
+
+  if (pastQuotes.length > 0) {
+    parts.push('\nPREVENTIVI PRECEDENTI (per riferimento prezzi):')
+    for (const q of pastQuotes) {
+      parts.push(`- "${q.title}" (€${q.total})`)
+      for (const li of q.lineItems.slice(0, 5)) {
+        parts.push(`  • ${li.description}: ${li.quantity}x €${li.unitPrice}`)
+      }
+    }
+  }
+
+  return parts.join('\n')
+}
+
 /**
  * POST /api/deals/[dealId]/generate-quote
  * Uses AI to generate a draft quote from deal data, then creates it.
@@ -64,30 +98,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       include: { lineItems: { orderBy: { sortOrder: 'asc' } } },
     })
 
-    // Build AI prompt
-    const contextParts: string[] = []
-    contextParts.push(`OPPORTUNITÀ: "${deal.title}"`)
-    contextParts.push(`Valore target: €${deal.value}`)
-    contextParts.push(`Cliente: ${deal.client!.companyName}`)
-    if (deal.client!.industry) contextParts.push(`Settore: ${deal.client!.industry}`)
-    if (deal.description) contextParts.push(`Descrizione: ${deal.description}`)
-
-    if (interactions.length > 0) {
-      contextParts.push('\nINTERAZIONI RECENTI:')
-      for (const i of interactions) {
-        contextParts.push(`- ${i.type}: ${i.subject}${i.content ? ` — ${i.content.slice(0, 150)}` : ''}`)
-      }
-    }
-
-    if (pastQuotes.length > 0) {
-      contextParts.push('\nPREVENTIVI PRECEDENTI (per riferimento prezzi):')
-      for (const q of pastQuotes) {
-        contextParts.push(`- "${q.title}" (€${q.total})`)
-        for (const li of q.lineItems.slice(0, 5)) {
-          contextParts.push(`  • ${li.description}: ${li.quantity}x €${li.unitPrice}`)
-        }
-      }
-    }
+    const contextText = buildQuoteContext(deal, interactions, pastQuotes)
 
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
@@ -107,7 +118,7 @@ REGOLE:
 Rispondi SOLO con un JSON valido nel formato:
 {"title": "Preventivo per ...", "lineItems": [{"description": "...", "quantity": 1, "unitPrice": 1000}], "notes": "Nota opzionale per il cliente"}
 
-${contextParts.join('\n')}`,
+${contextText}`,
         },
       ],
     })

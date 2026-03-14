@@ -34,9 +34,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    // Verify Turnstile token (if provided)
+    // Verify Turnstile token (mandatory when TURNSTILE_SECRET_KEY is configured)
     const turnstileToken = body.turnstileToken
-    if (turnstileToken) {
+    if (process.env.TURNSTILE_SECRET_KEY) {
+      if (!turnstileToken) {
+        return NextResponse.json({ success: false, error: 'Token di sicurezza mancante. Ricarica la pagina.' }, { status: 403 })
+      }
       const turnstileValid = await verifyTurnstile(turnstileToken, ip)
       if (!turnstileValid) {
         return NextResponse.json({ success: false, error: 'Verifica di sicurezza fallita. Ricarica la pagina.' }, { status: 403 })

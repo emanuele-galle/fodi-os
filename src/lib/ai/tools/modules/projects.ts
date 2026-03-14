@@ -619,8 +619,56 @@ export const projectTools: AiToolDefinition[] = [
         return text.replace(new RegExp(replaceText, 'gi'), replaceWith)
       }
 
+      const duplicateFolders = async (
+        tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+        projectId: string,
+        folders: typeof sourceFolders,
+        replaceFn: (t: string) => string,
+      ) => {
+        const idMap = new Map<string, string>()
+        for (const folder of folders.filter((f) => !f.parentId)) {
+          const created = await tx.folder.create({
+            data: { projectId, name: replaceFn(folder.name), description: folder.description ? replaceFn(folder.description) : null, color: folder.color, sortOrder: folder.sortOrder, parentId: null },
+          })
+          idMap.set(folder.id, created.id)
+        }
+        for (const folder of folders.filter((f) => f.parentId)) {
+          const created = await tx.folder.create({
+            data: { projectId, name: replaceFn(folder.name), description: folder.description ? replaceFn(folder.description) : null, color: folder.color, sortOrder: folder.sortOrder, parentId: idMap.get(folder.parentId!) || null },
+          })
+          idMap.set(folder.id, created.id)
+        }
+        return idMap
+      }
+
+      const duplicateTasks = async (
+        tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+        projectId: string,
+        tasks: typeof sourceTasks,
+        folderIdMap: Map<string, string>,
+        creatorId: string,
+        replaceFn: (t: string) => string,
+      ) => {
+        let taskCount = 0
+        let subtaskCount = 0
+        for (const task of tasks) {
+          const newFolderId = task.folderId ? (folderIdMap.get(task.folderId) || null) : null
+          const newTask = await tx.task.create({
+            data: { title: replaceFn(task.title), description: task.description ? replaceFn(task.description) : null, priority: task.priority, status: 'TODO', projectId, folderId: newFolderId, creatorId, assigneeId: task.assigneeId, dueDate: task.dueDate, estimatedHours: task.estimatedHours, sortOrder: task.sortOrder },
+          })
+          taskCount++
+          for (const sub of task.subtasks) {
+            const subFolderId = sub.folderId ? (folderIdMap.get(sub.folderId) || null) : null
+            await tx.task.create({
+              data: { title: replaceFn(sub.title), description: sub.description ? replaceFn(sub.description) : null, priority: sub.priority, status: 'TODO', projectId, parentId: newTask.id, folderId: subFolderId, creatorId, assigneeId: sub.assigneeId, dueDate: sub.dueDate },
+            })
+            subtaskCount++
+          }
+        }
+        return { taskCount, subtaskCount }
+      }
+
       const result = await prisma.$transaction(async (tx) => {
-        // 1. Create project
         const newProject = await tx.project.create({
           data: {
             name: newName,
@@ -638,7 +686,6 @@ export const projectTools: AiToolDefinition[] = [
           select: { id: true, name: true, slug: true },
         })
 
-        // 2. Add members
         if (source.members.length > 0) {
           await tx.projectMember.createMany({
             data: source.members.map((m) => ({
@@ -649,80 +696,8 @@ export const projectTools: AiToolDefinition[] = [
           })
         }
 
-        // 3. Duplicate folders (preserving hierarchy)
-        const folderIdMap = new Map<string, string>() // old ID → new ID
-        // First pass: root folders
-        for (const folder of sourceFolders.filter((f) => !f.parentId)) {
-          const newFolder = await tx.folder.create({
-            data: {
-              projectId: newProject.id,
-              name: applyReplace(folder.name),
-              description: folder.description ? applyReplace(folder.description) : null,
-              color: folder.color,
-              sortOrder: folder.sortOrder,
-              parentId: null,
-            },
-          })
-          folderIdMap.set(folder.id, newFolder.id)
-        }
-        // Second pass: child folders (supports 1 level of nesting for common case)
-        for (const folder of sourceFolders.filter((f) => f.parentId)) {
-          const newParentId = folderIdMap.get(folder.parentId!)
-          const newFolder = await tx.folder.create({
-            data: {
-              projectId: newProject.id,
-              name: applyReplace(folder.name),
-              description: folder.description ? applyReplace(folder.description) : null,
-              color: folder.color,
-              sortOrder: folder.sortOrder,
-              parentId: newParentId || null,
-            },
-          })
-          folderIdMap.set(folder.id, newFolder.id)
-        }
-
-        // 4. Duplicate tasks + subtasks
-        let taskCount = 0
-        let subtaskCount = 0
-        for (const task of sourceTasks) {
-          const newFolderId = task.folderId ? (folderIdMap.get(task.folderId) || null) : null
-          const newTask = await tx.task.create({
-            data: {
-              title: applyReplace(task.title),
-              description: task.description ? applyReplace(task.description) : null,
-              priority: task.priority,
-              status: 'TODO',
-              projectId: newProject.id,
-              folderId: newFolderId,
-              creatorId: context.userId,
-              assigneeId: task.assigneeId,
-              dueDate: task.dueDate,
-              estimatedHours: task.estimatedHours,
-              sortOrder: task.sortOrder,
-            },
-          })
-          taskCount++
-
-          // Duplicate subtasks
-          for (const sub of task.subtasks) {
-            const subFolderId = sub.folderId ? (folderIdMap.get(sub.folderId) || null) : null
-            await tx.task.create({
-              data: {
-                title: applyReplace(sub.title),
-                description: sub.description ? applyReplace(sub.description) : null,
-                priority: sub.priority,
-                status: 'TODO',
-                projectId: newProject.id,
-                parentId: newTask.id,
-                folderId: subFolderId,
-                creatorId: context.userId,
-                assigneeId: sub.assigneeId,
-                dueDate: sub.dueDate,
-              },
-            })
-            subtaskCount++
-          }
-        }
+        const folderIdMap = await duplicateFolders(tx, newProject.id, sourceFolders, applyReplace)
+        const { taskCount, subtaskCount } = await duplicateTasks(tx, newProject.id, sourceTasks, folderIdMap, context.userId, applyReplace)
 
         return {
           project: newProject,

@@ -98,16 +98,18 @@ export async function POST(
     const valid = await verifyOtp(otp, latestOtp.otpHash)
 
     if (!valid) {
+      // latestOtp.attempts is the pre-increment value; actual attempts = latestOtp.attempts + 1
+      const currentAttempts = latestOtp.attempts + 1
+      const remaining = latestOtp.maxAttempts - currentAttempts
       await prisma.signatureAudit.create({
         data: {
           requestId,
           action: 'otp_failed',
           ipAddress: ip,
           userAgent: request.headers.get('user-agent'),
-          metadata: { remainingAttempts: latestOtp.maxAttempts - latestOtp.attempts - 1 },
+          metadata: { remainingAttempts: remaining },
         },
       })
-      const remaining = latestOtp.maxAttempts - latestOtp.attempts - 1
       return NextResponse.json(
         { error: `Codice OTP non valido. ${remaining} tentativi rimasti.` },
         { status: 400 }

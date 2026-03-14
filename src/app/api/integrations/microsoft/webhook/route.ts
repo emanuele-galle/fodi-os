@@ -7,6 +7,9 @@ export async function POST(request: NextRequest) {
   // Microsoft Graph sends a validation request on subscription creation
   const validationToken = request.nextUrl.searchParams.get('validationToken')
   if (validationToken) {
+    if (!/^[a-zA-Z0-9_\-]{1,512}$/.test(validationToken)) {
+      return new NextResponse('Invalid validation token', { status: 400 })
+    }
     return new NextResponse(validationToken, {
       status: 200,
       headers: { 'Content-Type': 'text/plain' },
