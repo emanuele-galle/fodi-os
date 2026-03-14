@@ -26,23 +26,32 @@ jobs:
           script: |
             cd $PROJECT_PATH
             git pull origin main
-            docker compose build
-            docker compose up -d
+
+            # Tag current image for rollback
+            docker tag fodi-os-app:latest fodi-os-app:previous 2>/dev/null || true
+
+            docker compose build --no-cache app
+            docker compose up -d app
             echo "Waiting for container to be healthy..."
             for i in $(seq 1 30); do
-              if curl -sf http://localhost:$(docker compose port app 3000 | cut -d: -f2)/api/health > /dev/null 2>&1; then
+              CONTAINER_NAME=$(docker compose ps -q app 2>/dev/null)
+              if [ -n "$CONTAINER_NAME" ] && docker exec "$CONTAINER_NAME" wget -q --spider http://127.0.0.1:3000/api/health 2>/dev/null; then
                 echo "Health check passed"
-                exit 0
+                break
+              fi
+              if [ "$i" -eq 30 ]; then
+                echo "ERROR: Container is not healthy after 150s"
+                docker compose logs --tail=50 app
+                # Attempt rollback
+                if docker image inspect fodi-os-app:previous > /dev/null 2>&1; then
+                  echo "Rolling back to previous image..."
+                  docker tag fodi-os-app:previous fodi-os-app:latest
+                  docker compose up -d app
+                fi
+                exit 1
               fi
               sleep 5
             done
-            if docker compose ps app | grep -q healthy; then
-              echo "Container healthy (health endpoint not available)"
-            else
-              echo "ERROR: Container is not healthy after 150s"
-              docker compose logs --tail=50 app
-              exit 1
-            fi
 
             # Docker cleanup - remove old images and build cache
             echo "Cleaning up old Docker resources..."

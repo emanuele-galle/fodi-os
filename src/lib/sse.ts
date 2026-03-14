@@ -22,7 +22,8 @@ class SSEManager {
       try {
         controller.enqueue(new TextEncoder().encode(':keepalive\n\n'))
       } catch {
-        // Client disconnected, will be cleaned up
+        // Client disconnected — clean up immediately
+        this.removeClient(userId, controller)
       }
     }, 15000)
     this.heartbeats.set(controller, intervalId)
@@ -44,20 +45,24 @@ class SSEManager {
     }
   }
 
+  private safeSend(userId: string, controller: ReadableStreamDefaultController, data: Uint8Array): boolean {
+    try {
+      controller.enqueue(data)
+      return true
+    } catch {
+      this.removeClient(userId, controller)
+      return false
+    }
+  }
+
   broadcast(channelId: string, memberUserIds: string[], event: SSEEvent) {
-    const payload = `data: ${JSON.stringify({ ...event, channelId })}\n\n`
-    const encoder = new TextEncoder()
-    const encoded = encoder.encode(payload)
+    const encoded = new TextEncoder().encode(`data: ${JSON.stringify({ ...event, channelId })}\n\n`)
 
     for (const userId of memberUserIds) {
       const controllers = this.clients.get(userId)
       if (controllers) {
-        for (const controller of controllers) {
-          try {
-            controller.enqueue(encoded)
-          } catch {
-            // Client disconnected, will be cleaned up
-          }
+        for (const controller of Array.from(controllers)) {
+          this.safeSend(userId, controller, encoded)
         }
       }
     }
@@ -72,16 +77,10 @@ class SSEManager {
     const controllers = this.clients.get(userId)
     if (!controllers) return
 
-    const payload = `data: ${JSON.stringify(event)}\n\n`
-    const encoder = new TextEncoder()
-    const encoded = encoder.encode(payload)
+    const encoded = new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`)
 
-    for (const controller of controllers) {
-      try {
-        controller.enqueue(encoded)
-      } catch {
-        // Client disconnected
-      }
+    for (const controller of Array.from(controllers)) {
+      this.safeSend(userId, controller, encoded)
     }
   }
 
@@ -92,16 +91,11 @@ class SSEManager {
   }
 
   broadcastToAll(event: SSEEvent) {
-    const payload = `data: ${JSON.stringify(event)}\n\n`
-    const encoded = new TextEncoder().encode(payload)
+    const encoded = new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`)
 
-    for (const controllers of this.clients.values()) {
-      for (const controller of controllers) {
-        try {
-          controller.enqueue(encoded)
-        } catch {
-          // Client disconnected
-        }
+    for (const [userId, controllers] of this.clients) {
+      for (const controller of Array.from(controllers)) {
+        this.safeSend(userId, controller, encoded)
       }
     }
   }

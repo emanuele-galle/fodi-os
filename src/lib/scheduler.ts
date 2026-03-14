@@ -16,6 +16,7 @@ const SCHEDULES = {
   healthScores:   process.env.CRON_HEALTH_SCORES   || '0 3 * * *',     // Daily 03:00
   aiSuggestions:  process.env.CRON_AI_SUGGESTIONS  || '0 7 * * 1-5',   // Mon-Fri 07:00
   touchpoints:    process.env.CRON_TOUCHPOINTS     || '0 8 * * *',     // Daily 08:00
+  cleanup:        process.env.CRON_CLEANUP         || '0 4 * * *',     // Daily 04:00
 }
 
 async function callEndpoint(path: string, label: string) {
@@ -58,6 +59,7 @@ export function startScheduler() {
     healthScores: SCHEDULES.healthScores,
     aiSuggestions: SCHEDULES.aiSuggestions,
     touchpoints: SCHEDULES.touchpoints,
+    cleanup: SCHEDULES.cleanup,
   })
 
   jobs.push(
@@ -84,6 +86,9 @@ export function startScheduler() {
     }),
     new Cron(SCHEDULES.touchpoints, { timezone: 'Europe/Rome' }, () => {
       callEndpoint('/api/crm/touchpoints/process', 'touchpoints')
+    }),
+    new Cron(SCHEDULES.cleanup, { timezone: 'Europe/Rome' }, () => {
+      callEndpoint('/api/cleanup', 'cleanup')
     }),
   )
 

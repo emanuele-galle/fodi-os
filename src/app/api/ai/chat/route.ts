@@ -3,10 +3,20 @@ import { getAuthHeaders } from '@/lib/api-utils'
 import { prisma } from '@/lib/prisma'
 import { runAgent } from '@/lib/ai/agent'
 import { createAiStream } from '@/lib/ai/stream'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   const auth = getAuthHeaders(request)
   if (!auth.ok) return auth.response
+
+  // Rate limit AI requests: 20 per minute per user
+  const rl = rateLimit(`ai-chat:${auth.userId}`, 20, 60000)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Troppi messaggi AI. Riprova tra qualche secondo.' },
+      { status: 429, headers: { 'Retry-After': String(Math.max(0, rl.resetAt - Math.floor(Date.now() / 1000))) } },
+    )
+  }
 
   try {
     const { message, conversationId, currentPage, attachments } = await request.json()

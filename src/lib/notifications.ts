@@ -78,11 +78,38 @@ export async function dispatchNotification(intent: NotificationIntent) {
   const recipients = intent.recipientIds.filter((id) => id !== intent.excludeUserId)
   if (recipients.length === 0) return
 
+  // Pre-fetch preferences for all recipients in parallel (leverages cache)
+  const prefsMap = new Map<string, Map<string, boolean>>()
+  await Promise.all(
+    recipients.map(async (userId) => {
+      prefsMap.set(userId, await getUserPrefs(userId))
+    })
+  )
+
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
+  // Batch: find all existing grouped notifications in one query
+  let existingGrouped: Array<{ id: string; userId: string; groupCount: number }> = []
+  if (intent.groupKey) {
+    existingGrouped = await prisma.notification.findMany({
+      where: {
+        userId: { in: recipients },
+        groupKey: intent.groupKey,
+        isRead: false,
+        createdAt: { gte: twentyFourHoursAgo },
+      },
+      orderBy: { updatedAt: 'desc' },
+      distinct: ['userId'],
+      select: { id: true, userId: true, groupCount: true },
+    })
+  }
+  const existingByUser = new Map(existingGrouped.map(e => [e.userId, e]))
+
+  // Track users who received notifications for badge update
+  const notifiedUsers: string[] = []
+
   for (const userId of recipients) {
-    // Check user preferences
-    const prefs = await getUserPrefs(userId)
+    const prefs = prefsMap.get(userId)!
     if (!isEnabled(prefs, intent.type, 'in_app')) continue
 
     let notificationId: string
@@ -90,19 +117,9 @@ export async function dispatchNotification(intent: NotificationIntent) {
     let newGroupCount = 1
 
     if (intent.groupKey) {
-      // Try to find existing unread notification with same groupKey
-      const existing = await prisma.notification.findFirst({
-        where: {
-          userId,
-          groupKey: intent.groupKey,
-          isRead: false,
-          createdAt: { gte: twentyFourHoursAgo },
-        },
-        orderBy: { updatedAt: 'desc' },
-      })
+      const existing = existingByUser.get(userId)
 
       if (existing) {
-        // UPDATE existing grouped notification
         newGroupCount = existing.groupCount + 1
         const updated = await prisma.notification.update({
           where: { id: existing.id },
@@ -117,7 +134,6 @@ export async function dispatchNotification(intent: NotificationIntent) {
         notificationId = updated.id
         isUpdate = true
       } else {
-        // CREATE new grouped notification
         const created = await prisma.notification.create({
           data: {
             userId,
@@ -135,7 +151,6 @@ export async function dispatchNotification(intent: NotificationIntent) {
         notificationId = created.id
       }
     } else {
-      // Non-grouped: simple create
       const created = await prisma.notification.create({
         data: {
           userId,
@@ -153,9 +168,8 @@ export async function dispatchNotification(intent: NotificationIntent) {
     }
 
     // SSE: send appropriate event type
-    const sseEventType = isUpdate ? 'update_notification' : 'notification'
     sseManager.sendToUser(userId, {
-      type: sseEventType,
+      type: isUpdate ? 'update_notification' : 'notification',
       data: {
         id: notificationId,
         type: intent.type,
@@ -169,14 +183,24 @@ export async function dispatchNotification(intent: NotificationIntent) {
       },
     })
 
-    // Badge update
-    const unreadCount = await prisma.notification.count({ where: { userId, isRead: false } })
-    sendBadgeUpdate(userId, { notifications: unreadCount })
+    notifiedUsers.push(userId)
 
     // Push: only at thresholds (1, 3, 5) and if enabled
-    const pushThresholds = [1, 3, 5]
-    if (isEnabled(prefs, intent.type, 'push') && pushThresholds.includes(newGroupCount)) {
+    if (isEnabled(prefs, intent.type, 'push') && [1, 3, 5].includes(newGroupCount)) {
       sendPush(userId, { title: intent.title, message: intent.message, link: intent.link })
+    }
+  }
+
+  // Batch badge update: one query for all notified users
+  if (notifiedUsers.length > 0) {
+    const badgeCounts = await prisma.notification.groupBy({
+      by: ['userId'],
+      where: { userId: { in: notifiedUsers }, isRead: false },
+      _count: true,
+    })
+    const countMap = new Map(badgeCounts.map(b => [b.userId, b._count]))
+    for (const userId of notifiedUsers) {
+      sendBadgeUpdate(userId, { notifications: countMap.get(userId) ?? 0 })
     }
   }
 }

@@ -133,7 +133,12 @@ export async function middleware(request: NextRequest) {
       pathname === '/api/digest/send' ||
       pathname === '/api/tasks/check-deadlines' ||
       pathname === '/api/team/reports/generate' ||
-      pathname === '/api/reminders/generate'
+      pathname === '/api/reminders/generate' ||
+      pathname === '/api/tasks/generate-recurring' ||
+      pathname === '/api/crm/health/recalculate' ||
+      pathname === '/api/crm/suggestions/generate' ||
+      pathname === '/api/crm/touchpoints/process' ||
+      pathname === '/api/cleanup'
     )) {
       return setSecurityHeaders(NextResponse.next())
     }

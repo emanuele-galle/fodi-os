@@ -12,11 +12,18 @@ export async function GET(
   const { conversationId } = await params
 
   try {
+    // Support pagination for messages via ?limit=N&offset=N (default: last 100 messages)
+    const { searchParams } = request.nextUrl
+    const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 500)
+    const offset = parseInt(searchParams.get('offset') || '0', 10)
+
     const conversation = await prisma.aiConversation.findUnique({
       where: { id: conversationId },
       include: {
         messages: {
           orderBy: { createdAt: 'asc' },
+          skip: offset,
+          take: limit,
           select: {
             id: true,
             role: true,
@@ -38,6 +45,7 @@ export async function GET(
             },
           },
         },
+        _count: { select: { messages: true } },
       },
     })
 

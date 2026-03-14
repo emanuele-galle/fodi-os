@@ -990,6 +990,7 @@ model BankAccount {
   transfersTo       BankTransfer[] @relation("TransferTo")
   recurringInvoices RecurringInvoice[]
 
+  @@index([isActive])
   @@map("bank_accounts")
 }
 
@@ -1003,6 +1004,7 @@ model BusinessEntity {
   expenses          Expense[]
   recurringInvoices RecurringInvoice[]
 
+  @@index([isActive])
   @@map("business_entities")
 }
 
@@ -1383,7 +1385,7 @@ model ChatMessage {
   channel ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
   author  User?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
-  @@index([channelId, createdAt])
+  @@index([channelId, deletedAt, createdAt])
   @@index([authorId])
   @@map("chat_messages")
 }
@@ -1649,6 +1651,7 @@ model WizardSubmission {
   @@index([leadId])
   @@index([status])
   @@index([templateId, status])
+  @@index([submitterId])
   @@index([createdAt])
   @@map("wizard_submissions")
 }
@@ -1905,7 +1908,7 @@ model AiConversation {
   user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages AiMessage[]
 
-  @@index([userId])
+  @@index([userId, isArchived])
   @@index([channel])
   @@index([externalId])
   @@index([createdAt])

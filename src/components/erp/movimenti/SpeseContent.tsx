@@ -132,12 +132,13 @@ export function SpeseContent() {
   useRealtimeRefresh('expense', fetchExpenses)
 
   useEffect(() => {
-    fetch('/api/clients?limit=200').then(r => r.json()).then(d => setClients(d.items || []))
-    fetch('/api/projects?limit=200').then(r => r.json()).then(d => setProjects(d.items || []))
-    fetch('/api/bank-accounts').then(r => r.json()).then(d => setBankAccounts(d.items || []))
-    fetch('/api/business-entities').then(r => r.json()).then(d => setBusinessEntities(d.items || []))
-    fetch('/api/accounting-categories?type=expense').then(r => r.json()).then(d => setCategories(d.items || []))
-    fetch('/api/vat-rates').then(r => r.json()).then(d => {
+    const safeFetch = (url: string) => fetch(url).then(r => r.json()).catch(() => ({ items: [] }))
+    safeFetch('/api/clients?limit=200').then(d => setClients(d.items || []))
+    safeFetch('/api/projects?limit=200').then(d => setProjects(d.items || []))
+    safeFetch('/api/bank-accounts').then(d => setBankAccounts(d.items || []))
+    safeFetch('/api/business-entities').then(d => setBusinessEntities(d.items || []))
+    safeFetch('/api/accounting-categories?type=expense').then(d => setCategories(d.items || []))
+    safeFetch('/api/vat-rates').then(d => {
       const items = d.items || []
       if (items.length > 0) {
         setVatOptions(items.map((v: { code: string; label: string }) => ({ value: v.code, label: v.label })))
